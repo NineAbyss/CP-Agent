@@ -1,0 +1,94 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+bool check(int l1, int b1, int l2, int b2, int l3, int b3) {
+    int total = l1*b1 + l2*b2 + l3*b3;
+    int S = 0;
+    for (int i = 1; i <= 300; i++) {
+        if (i*i == total) {
+            S = i;
+            break;
+        }
+    }
+    if (S == 0) return false;
+    
+    int L[3] = {l1, l2, l3};
+    int B[3] = {b1, b2, b3};
+    
+    int order[3] = {0,1,2};
+    do {
+        int a = order[0], b = order[1], c = order[2];
+        
+        // 情况1：三个矩形竖直堆叠，每个宽度 = S
+        if (L[a] == S && L[b] == S && L[c] == S && B[a] + B[b] + B[c] == S) {
+            return true;
+        }
+        // 情况2：三个矩形水平并排，每个高度 = S
+        if (B[a] == S && B[b] == S && B[c] == S && L[a] + L[b] + L[c] == S) {
+            return true;
+        }
+        
+        // 方式 A：水平切割，第一个矩形在上方占满宽度
+        if (L[a] == S) {
+            int h1 = B[a];
+            if (h1 < S) {
+                int h_rem = S - h1;
+                if (B[b] == h_rem && B[c] == h_rem && L[b] + L[c] == S) {
+                    return true;
+                }
+            }
+        }
+        
+        // 方式 B：垂直切割，第一个矩形在左侧占满高度
+        if (B[a] == S) {
+            int w1 = L[a];
+            if (w1 < S) {
+                int w_rem = S - w1;
+                if (L[b] == w_rem && L[c] == w_rem && B[b] + B[c] == S) {
+                    return true;
+                }
+            }
+        }
+        
+        // 方式 A 变体：第一个矩形在下方占满宽度
+        if (L[a] == S) {
+            int h1 = B[a];
+            if (h1 < S) {
+                int h_rem = S - h1;
+                if (B[b] == h_rem && B[c] == h_rem && L[b] + L[c] == S) {
+                    return true;
+                }
+            }
+        }
+        
+        // 方式 B 变体：第一个矩形在右侧占满高度
+        if (B[a] == S) {
+            int w1 = L[a];
+            if (w1 < S) {
+                int w_rem = S - w1;
+                if (L[b] == w_rem && L[c] == w_rem && B[b] + B[c] == S) {
+                    return true;
+                }
+            }
+        }
+        
+    } while (next_permutation(order, order+3));
+    
+    return false;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int l1, b1, l2, b2, l3, b3;
+        cin >> l1 >> b1 >> l2 >> b2 >> l3 >> b3;
+        if (check(l1, b1, l2, b2, l3, b3)) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

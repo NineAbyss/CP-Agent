@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+#include <unordered_map>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n);
+    for (int &x : a) cin >> x;
+    for (int &x : b) cin >> x;
+    
+    unordered_map<int, int> count_a, count_b;
+    for (int x : a) count_a[x]++;
+    for (int x : b) count_b[x]++;
+
+    for (int i = 0; i < n; ++i) {
+        if ((count_a[a[i]] > 1 && count_b[a[i]] == 0) || (count_b[b[i]] > 1 && count_a[b[i]] == 0)) {
+            swap(a[i], b[i]);
+            count_a[a[i]]++;
+            count_a[b[i]]--;
+            count_b[b[i]]++;
+            count_b[a[i]]--;
+        }
+    }
+
+    unordered_set<int> unique_a(a.begin(), a.end());
+    unordered_set<int> unique_b(b.begin(), b.end());
+
+    cout << unique_a.size() + unique_b.size() << "\n";
+    for (int x : a) cout << x << " ";
+    cout << "\n";
+    for (int x : b) cout << x << " ";
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) solve();
+
+    return 0;
+}

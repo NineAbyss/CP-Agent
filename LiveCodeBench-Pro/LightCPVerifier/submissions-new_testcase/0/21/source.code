@@ -1,0 +1,28 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, x;
+        cin >> n >> x;
+        vector<int> a(n);
+        int min_idx = n + 1, max_idx = 0;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            if (a[i] == 1) {
+                min_idx = min(min_idx, i + 1);
+                max_idx = max(max_idx, i + 1);
+            }
+        }
+        if (max_idx - min_idx <= x - 1) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

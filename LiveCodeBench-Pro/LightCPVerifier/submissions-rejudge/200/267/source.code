@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+ll mul_mod(ll a, ll b, ll mod) {
+    return (__int128)a * b % mod;
+}
+
+ll pow_mod(ll a, ll d, ll mod) {
+    ll res = 1;
+    while (d) {
+        if (d & 1) res = mul_mod(res, a, mod);
+        a = mul_mod(a, a, mod);
+        d >>= 1;
+    }
+    return res;
+}
+
+bool miller_rabin(ll n) {
+    if (n < 2) return false;
+    if (n == 2 || n == 3) return true;
+    if (n % 2 == 0 || n % 3 == 0) return false;
+    
+    ll d = n - 1;
+    int r = 0;
+    while (d % 2 == 0) {
+        d /= 2;
+        r++;
+    }
+    
+    ll bases[] = {2, 7, 61};
+    for (ll a : bases) {
+        if (a >= n) continue;
+        ll x = pow_mod(a, d, n);
+        if (x == 1 || x == n - 1) continue;
+        bool comp = true;
+        for (int j = 0; j < r - 1; j++) {
+            x = mul_mod(x, x, n);
+            if (x == n - 1) {
+                comp = false;
+                break;
+            }
+        }
+        if (comp) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        ll x;
+        int k;
+        cin >> x >> k;
+        
+        if (k == 1) {
+            cout << (miller_rabin(x) ? "YES" : "NO") << '\n';
+        } else {
+            if (x == 1 && k == 2) {
+                cout << "YES\n";
+            } else {
+                cout << "NO\n";
+            }
+        }
+    }
+    return 0;
+}

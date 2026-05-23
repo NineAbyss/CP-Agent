@@ -1,0 +1,137 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr);
+    int t; cin >> t;
+    while (t--) {
+        int n; cin >> n;
+        vector<vector<int>> adj(n+1);
+        vector<bool> alive(n+1, true);
+
+        for (int i = 0; i < n-1; i++) {
+            int u, v; cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+
+        vector<int> result;
+
+        while (true) {
+            int start = -1;
+            for (int i = 1; i <= n; i++) {
+                if (alive[i]) {
+                    start = i;
+                    break;
+                }
+            }
+            if (start == -1) break;
+
+            vector<bool> visited(n+1, false);
+            int best_d = 0, best_u = 0, best_v = 0;
+
+            for (int i = 1; i <= n; i++) {
+                if (!alive[i] || visited[i]) continue;
+
+                vector<int> comp;
+                queue<int> q_comp;
+                q_comp.push(i);
+                visited[i] = true;
+                while (!q_comp.empty()) {
+                    int u = q_comp.front(); q_comp.pop();
+                    comp.push_back(u);
+                    for (int v : adj[u]) {
+                        if (alive[v] && !visited[v]) {
+                            visited[v] = true;
+                            q_comp.push(v);
+                        }
+                    }
+                }
+
+                vector<int> parent(n+1, -1);
+                vector<bool> vis(n+1, false);
+                int u1 = comp[0];
+                queue<int> q;
+                q.push(u1); vis[u1] = true;
+                while (!q.empty()) {
+                    u1 = q.front(); q.pop();
+                    for (int v : adj[u1]) {
+                        if (alive[v] && !vis[v]) {
+                            vis[v] = true;
+                            parent[v] = u1;
+                            q.push(v);
+                        }
+                    }
+                }
+
+                int u2 = u1;
+                fill(vis.begin(), vis.end(), false);
+                fill(parent.begin(), parent.end(), -1);
+                q.push(u1); vis[u1] = true;
+                while (!q.empty()) {
+                    u2 = q.front(); q.pop();
+                    for (int v : adj[u2]) {
+                        if (alive[v] && !vis[v]) {
+                            vis[v] = true;
+                            parent[v] = u2;
+                            q.push(v);
+                        }
+                    }
+                }
+
+                vector<int> path;
+                int cur = u2;
+                while (cur != -1) {
+                    path.push_back(cur);
+                    cur = parent[cur];
+                }
+                reverse(path.begin(), path.end());
+                int d = path.size();
+
+                int eu = u1, ev = u2;
+                if (make_pair(eu, ev) < make_pair(ev, eu)) swap(eu, ev);
+
+                if (d > best_d || (d == best_d && make_pair(eu, ev) > make_pair(best_u, best_v))) {
+                    best_d = d;
+                    best_u = eu;
+                    best_v = ev;
+                }
+            }
+
+            if (best_d == 0) break;
+            result.push_back(best_d);
+            result.push_back(best_u);
+            result.push_back(best_v);
+
+            vector<int> parent(n+1, -1);
+            vector<bool> vis(n+1, false);
+            queue<int> q_path;
+            q_path.push(best_u);
+            vis[best_u] = true;
+            while (!q_path.empty()) {
+                int u = q_path.front(); q_path.pop();
+                for (int v : adj[u]) {
+                    if (alive[v] && !vis[v]) {
+                        vis[v] = true;
+                        parent[v] = u;
+                        q_path.push(v);
+                    }
+                }
+            }
+            int cur = best_v;
+            while (cur != -1) {
+                alive[cur] = false;
+                cur = parent[cur];
+            }
+        }
+
+        for (size_t i = 0; i < result.size(); i++) {
+            cout << result[i] << " ";
+        }
+        cout << "\n";
+    }
+    return 0;
+}

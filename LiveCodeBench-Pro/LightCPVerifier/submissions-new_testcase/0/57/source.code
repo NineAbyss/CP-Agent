@@ -1,0 +1,105 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+int calc_min_ge(const string &A, const string &B) {
+    int m = A.size();
+    int ans = INT_MAX;
+    // full match
+    int sum = 0;
+    for (int i = 0; i < m; i++) {
+        sum += 1 + (A[i] == B[i]);
+    }
+    ans = min(ans, sum);
+    // try deviate at j
+    for (int j = 0; j < m; j++) {
+        if (A[j] == '9') continue; // cannot choose digit greater than 9
+        int cur = 0;
+        for (int i = 0; i < j; i++) {
+            cur += 1 + (A[i] == B[i]);
+        }
+        int aj = A[j] - '0';
+        int bj = B[j] - '0';
+        int min_c = 1;
+        for (int d = aj + 1; d <= 9; d++) {
+            if (d != bj) {
+                min_c = 0;
+                break;
+            }
+        }
+        cur += min_c;
+        ans = min(ans, cur);
+    }
+    return ans;
+}
+
+int calc_min_le(const string &A, const string &B) {
+    int m = A.size();
+    int ans = INT_MAX;
+    // full match
+    int sum = 0;
+    for (int i = 0; i < m; i++) {
+        sum += 1 + (B[i] == A[i]);
+    }
+    ans = min(ans, sum);
+    // try deviate at j
+    for (int j = 0; j < m; j++) {
+        if (B[j] == '0') continue; // cannot choose digit less than 0
+        int cur = 0;
+        for (int i = 0; i < j; i++) {
+            cur += 1 + (B[i] == A[i]);
+        }
+        int bj = B[j] - '0';
+        int aj = A[j] - '0';
+        int min_c = 1;
+        for (int d = 0; d < bj; d++) {
+            if (d != aj) {
+                min_c = 0;
+                break;
+            }
+        }
+        cur += min_c;
+        ans = min(ans, cur);
+    }
+    return ans;
+}
+
+int solve_case(const string &l, const string &r) {
+    int n = l.size();
+    int d = 0;
+    while (d < n && l[d] == r[d]) d++;
+    if (d == n) { // l == r
+        return 2 * n;
+    }
+    int prefix = 2 * d; // contribution from common prefix
+    int m = n - d - 1; // length of suffix after first differing digit
+    string A = l.substr(d + 1);
+    string B = r.substr(d + 1);
+    int ans = INT_MAX;
+    // case c: choose a middle digit at position d
+    if (l[d] + 1 <= r[d] - 1) {
+        ans = min(ans, prefix);
+    }
+    // case a: choose x_d = l[d]
+    int best_a = calc_min_ge(A, B);
+    ans = min(ans, prefix + 1 + best_a);
+    // case b: choose x_d = r[d]
+    int best_b = calc_min_le(A, B);
+    ans = min(ans, prefix + 1 + best_b);
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        string l, r;
+        cin >> l >> r;
+        cout << solve_case(l, r) << '\n';
+    }
+    return 0;
+}

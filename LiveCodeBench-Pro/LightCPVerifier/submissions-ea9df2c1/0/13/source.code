@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        
+        vector<pair<int, int>> ops;
+        
+        // Step 1: Ensure a_i < b_i for each column
+        for (int i = 0; i < n; i++) {
+            if (a[i] > b[i]) {
+                ops.push_back({3, i + 1});
+                swap(a[i], b[i]);
+            }
+        }
+        
+        // Step 2: Bubble sort rows a and b together (swap whole columns)
+        // This makes row a strictly increasing while preserving a_i < b_i
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n - 1 - i; j++) {
+                if (a[j] > a[j + 1]) {
+                    ops.push_back({1, j + 1}); // swap a_j, a_{j+1}
+                    swap(a[j], a[j + 1]);
+                    ops.push_back({2, j + 1}); // swap b_j, b_{j+1}
+                    swap(b[j], b[j + 1]);
+                }
+            }
+        }
+        
+        // Step 3: Bubble sort row b separately // Since row a is already increasing and a_i < b_i, swapping adjacent b's preserves the column condition
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n - 1 - i; j++) {
+                if (b[j] > b[j + 1]) {
+                    ops.push_back({2, j + 1});
+                    swap(b[j], b[j + 1]);
+                }
+            }
+        }
+        
+        // Output
+        cout << ops.size() << '\n';
+        for (auto [type, idx] : ops) {
+            cout << type << ' ' << idx << '\n';
+        }
+    }
+    return 0;
+}

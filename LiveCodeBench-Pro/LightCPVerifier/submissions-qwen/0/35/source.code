@@ -1,0 +1,153 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, k;
+        string s;
+        cin >> n >> k >> s;
+
+        // Count number of '0' and '1'
+        int zeros = count(s.begin(), s.end(), '0');
+        int ones = n - zeros;
+
+        // Total number of pairs is n/2
+        int total_pairs = n / 2;
+
+        // For a pair (i, n-i+1) to be good: s[i] == s[n-i+1] // Each good pair requires two identical characters.
+        // We can form at most floor(zeros/2) good pairs using '0's // and floor(ones/2) good pairs using '1's.
+        int max_good_pairs = (zeros / 2) + (ones / 2);
+
+        // The minimum number of good pairs? // To minimize good pairs, we try to make as many mismatched pairs as possible.
+        // But we are limited by the smaller count.
+        // Maximum mismatched pairs we can form is 2 * min(zeros, ones)
+        // So the number of matched (good) pairs will be: // total_pairs - (number of mismatched pairs / 2), but wait:
+        // // Actually, each mismatched pair uses one '0' and one '1'.
+        // So maximum mismatched pairs = 2 * min(zeros, ones)? No — each pair has two elements. // Number of mismatched pairs cannot exceed min(zeros, ones) * 2? Let's think:
+        // // Each mismatched pair uses 1 zero and 1 one. So maximum number of mismatched pairs
+        // is min(zeros, ones) * 2? No — each pair uses two positions: one from left half, one from right. // But in terms of character usage: each mismatched pair uses one '0' and one '1'.
+        // So maximum number of mismatched pairs is limited by min(zeros, ones) * 2? No. //
+        // Actually: if we want to create a mismatched pair (i, n-i+1), we need two characters: one '0' and one '1'.
+        // So the maximum number of mismatched pairs we can form is limited by how many such pairs we can make,
+        // which is at most min(zeros, ones) * 2? No — each mismatched pair uses one '0' and one '1', so we can form // at most min(zeros, ones) mismatched pairs? Wait — no: each pair uses two characters: one '0' and one '1'.
+        // So yes: maximum mismatched pairs = min(zeros, ones) * 2? No — each pair uses one '0' and one '1', so // we can have at most min(zeros, ones) such mismatched pairs? That doesn't sound right either.
+        //
+        // Let me clarify:
+        // There are total_pairs = n/2 pairs. // Each pair has two positions: i and n-i+1.
+        // For a mismatched pair, we assign different characters: one '0' and one '1'. // So each mismatched pair consumes one '0' and one '1'.
+        // Therefore, the maximum number of mismatched pairs we can form is min(zeros, ones).
+        // Why? Because we are limited by the smaller count: if we have only 2 zeros, we can form at most 2 mismatched pairs.
+        //
+        // Then the remaining zeros and ones must form matched (good) pairs.
+        // So:
+        // mismatched_pairs_max = min(zeros, ones);
+        // Then the minimum number of good pairs we can have is:
+        // total_good_pairs_min = total_pairs - mismatched_pairs_max;
+        // Because: total pairs = good pairs + bad (mismatched) pairs // => good pairs = total_pairs - mismatched_pairs
+        // So minimum good pairs = total_pairs - min(zeros, ones) //
+        // Example: n=4, s="01", zeros=1, ones=1 -> mismatched_pairs_max = 1, so min_good = 2 - 1 = 1?  // But we can also make both pairs mismatched? Wait — there is only one pair: (1,4) and (2,3) — two pairs.
+        // But we only have one '0' and one '1'. We cannot form two mismatched pairs because that would require two '0's and two '1's. // Actually: two mismatched pairs would require 2 zeros and 2 ones? No: each mismatched pair uses one '0' and one '1'.
+        // So two mismatched pairs require 2 zeros and 2 ones.
+        // With only 1 zero and 1 one, we can form at most 1 mismatched pair.
+        // Then the other pair must be formed with the remaining characters — but we have no remaining characters.
+        // Wait — we used both! So we can only form one mismatched pair? But we have two pairs to fill.
+        // // Correction: we have two pairs: (1,4) and (2,3). Each pair needs two characters.
+        // Total: 4 characters. We have one '0' and one '1'? That’s only two characters — contradiction. //
+        // Let me re-read: the string length is n. In this example n=4, so string has 4 characters.
+        // So "01" is not valid for n=4. The input says: second line contains binary string of length n.
+        // // So back: zeros and ones sum to n.
+        // We have zeros and ones. // We want to assign characters to n/2 pairs.
+        // Each pair can be: //   - good: '00' or '11'
+        //   - bad: '01' or '10' //
+        // Constraints: //   - Number of '0's used = 2 * (number of '00' pairs) + 1 * (number of '01'/'10' pairs that use a '0')
+        //     But in bad pairs, exactly one '0' per bad pair.
+        //   Similarly for '1's.
+        // // Let:
+        //   x = number of '00' pairs //   y = number of '11' pairs
+        //   z = number of mismatched pairs ('01' or '10') //
+        // Then: //   x + y + z = n/2   [total pairs]
+        //   2x + z = zeros     [total zeros used] //   2y + z = ones      [total ones used]
+        // // From these:
+        //   Adding: 2x + 2y + 2z = zeros + ones = n //   => 2(x+y+z) = n => x+y+z = n/2 — consistent.
+        // // We can solve:
+        //   From 2x + z = zeros  => x = (zeros - z)/2 //   From 2y + z = ones   => y = (ones - z)/2
+        // // x >= 0 => zeros - z >= 0 => z <= zeros
+        // y >= 0 => ones - z >= 0 => z <= ones // Also z >= 0
+        // So z <= min(zeros, ones) //
+        // And z must have same parity as zeros and ones? Not necessarily: (zeros - z) must be even. //
+        // But note: we are free to choose z as long as 0 <= z <= min(zeros, ones) and (zeros - z) is even and (ones - z) is even. //
+        // However, we are not required to iterate over z. We want to know if we can achieve exactly k good pairs. // Good pairs = x + y = (zeros - z)/2 + (ones - z)/2 = (zeros + ones - 2z)/2 = (n - 2z)/2 = n/2 - z
+        // // So: good_pairs = total_pairs - z
+        // => z = total_pairs - good_pairs = (n/2) - k //
+        // So we need: //   z = n/2 - k
+        // Conditions: //   1. z >= 0  => k <= n/2 (given)
+        //   2. z <= min(zeros, ones) //   3. (zeros - z) must be non-negative and even? Actually from equation x=(zeros-z)/2, we need (zeros - z) >= 0 and even?
+        //      But condition 2 already implies zeros >= z and ones >= z. //      However, we also need (zeros - z) to be even so that x is integer, similarly (ones - z) must be even.
+        // // But wait: do we really need both to be even? Let's check:
+        //   zeros - z must be even? Yes, because 2x = zeros - z → must be even. //   Similarly, ones - z must be even.
+        // // Alternatively, note:
+        //   zeros + ones = n → even //   zeros - z and ones - z must both be even → their sum: (zeros+ones) - 2z = n - 2z → even, always.
+        //   So if one is even, the other is automatically even? No: even - even = even, odd - even = odd. //   But: (zeros - z) + (ones - z) = n - 2z → even.
+        //   So (zeros - z) and (ones - z) have the same parity.
+        //   Therefore, we only need to check one of them is even? But actually: if their sum is even, then they are both even or both odd.
+        //   But we require both even. So we need (zeros - z) even. //
+        // However, let me test: //   Suppose zeros=3, ones=5, n=8, z=1 → then zeros-z=2 (even), ones-z=4 (even) → ok.
+        //   zeros=3, ones=5, z=2 → zeros-z=1 (odd), ones-z=3 (odd) → both odd → not acceptable. //   So we require (zeros - z) to be even.
+        // // But note: (zeros - z) mod 2 = (zeros mod 2) - (z mod 2) mod 2.
+        // So condition: (zeros % 2) == (z % 2) //
+        // Alternatively, we can just compute (zeros - z) % 2 == 0. //
+        // Therefore, conditions for YES: //   Let z = n/2 - k
+        //   Then we need: //     1. z >= 0  → k <= n/2 (given)
+        //     2. z <= min(zeros, ones) //     3. (zeros - z) >= 0 → but this is implied by z <= zeros (from #2)
+        //     4. (zeros - z) % 2 == 0   [which implies (ones - z) % 2 == 0, because (zeros+ones-2z) is even] //
+        // But wait: condition 2 ensures z <= zeros and z <= ones, so (zeros - z) >= 0 and (ones - z) >= 0. //
+        // However, let me test with provided examples.
+
+        // Example 1: n=6, k=2, s="000000" //   zeros = 6, ones = 0
+        //   z = 6/2 - 2 = 3 - 2 = 1 //   Condition 2: z <= min(6,0) = 0 → 1 <= 0 → false → NO → matches.
+
+        // Example 2: n=2, k=1, s="01" //   zeros=1, ones=1
+        //   z = 1 - 1 = 0 //   z <= min(1,1)=1 → true
+        //   (zeros - z) = 1 - 0 = 1 → odd → condition fails → NO → matches.
+
+        // Example 3: n=4, k=1, s="1011" //   zeros=1, ones=3
+        //   z = 2 - 1 = 1 //   z <= min(1,3)=1 → true
+        //   (zeros - z) = 1 - 1 = 0 → even → YES → matches.
+
+        // Example 4: n=10, k=2, s="1101011001" //   Count:
+        //     '1': 1,1,1,1,1,1,1,1 → 8 ones?  //     s = "1101011001" ->
+        //         1,1,0,1,0,1,1,0,0,1 -> zeros: 4, ones: 6 //   z = 5 - 2 = 3
+        //   z <= min(4,6)=4 → true //   (zeros - z) = 4 - 3 = 1 → odd → NO → matches.
+
+        // Example 5: n=10, k=1, s="1101011001" //   zeros=4, ones=6
+        //   z = 5 - 1 = 4 //   z <= min(4,6)=4 → true
+        //   (zeros - z)=4-4=0 → even → YES → matches.
+
+        // Example 6: n=2, k=1, s="11" //   zeros=0, ones=2
+        //   z = 1 - 1 = 0 //   z <= min(0,2)=0 → 0<=0 → true
+        //   (zeros - z)=0-0=0 → even → YES → matches.
+
+        // So algorithm:
+        int z = n/2 - k;  // required number of mismatched pairs
+
+        if (z < 0) {
+            cout << "NO\n";
+        } else if (z > min(zeros, ones)) {
+            cout << "NO\n";
+        } else if ((zeros - z) % 2 != 0) {
+            cout << "NO\n";
+        } else {
+            cout << "YES\n";
+        }
+    }
+
+    return 0;
+}

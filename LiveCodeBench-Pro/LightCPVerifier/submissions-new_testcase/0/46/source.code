@@ -1,0 +1,43 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+long long solve(long long k, long long a, long long b, long long x, long long y) {
+    long long n1 = 0, n2 = 0;
+    // order: type1 then type2
+    if (k >= a) {
+        n1 = (k - a) / x + 1;
+    }
+    long long T1 = k - n1 * x;
+    if (T1 >= b) {
+        n2 = (T1 - b) / y + 1;
+    }
+    long long total1 = n1 + n2;
+    
+    // order: type2 then type1
+    long long n2p = 0, n1p = 0;
+    if (k >= b) {
+        n2p = (k - b) / y + 1;
+    }
+    long long T2 = k - n2p * y;
+    if (T2 >= a) {
+        n1p = (T2 - a) / x + 1;
+    }
+    long long total2 = n2p + n1p;
+    
+    return max(total1, total2);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        long long k, a, b, x, y;
+        cin >> k >> a >> b >> x >> y;
+        cout << solve(k, a, b, x, y) << '\n';
+    }
+    return 0;
+}

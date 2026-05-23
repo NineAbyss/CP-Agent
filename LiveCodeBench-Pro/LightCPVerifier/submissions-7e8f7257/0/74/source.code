@@ -1,0 +1,28 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, l, r;
+        cin >> n >> m >> l >> r;
+        int d = n - m;
+        int left_len = -l;
+        int right_len = r;
+        int a, b;
+        if (left_len > right_len) {
+            a = d;
+            if (d - a > right_len) a = d - right_len;
+        } else if (right_len > left_len) {
+            a = max(0, d - right_len);
+        } else {
+            a = d / 2;
+        }
+        b = d - a;
+        int L = l + a;
+        int R = r - b;
+        cout << L << " " << R << endl;
+    }
+    return 0;
+}

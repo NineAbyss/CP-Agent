@@ -1,0 +1,25 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+string norm(string s) {
+    if (s.size() & 1) return s;
+    int mid = s.size() / 2;
+    string a = norm(s.substr(0, mid));
+    string b = norm(s.substr(mid));
+    return min(a + b, b + a);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s, t_str;
+        cin >> s >> t_str;
+        cout << (norm(s) == norm(t_str) ? "Yes" : "No") << '\n';
+    }
+    return 0;
+}

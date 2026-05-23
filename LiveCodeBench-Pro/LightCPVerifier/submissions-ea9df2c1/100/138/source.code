@@ -1,0 +1,218 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <set>
+#include <algorithm>
+#include <cstring>
+#include <queue>
+using namespace std;
+
+const int MOD = 1e9+7;
+
+struct Point {
+    int x, y;
+    Point(int x=0, int y=0) : x(x), y(y) {}
+    bool operator<(const Point& other) const {
+        if (x != other.x) return x < other.x;
+        return y < other.y;
+    }
+    bool operator==(const Point& other) const {
+        return x == other.x && y == other.y;
+    }
+};
+
+// 计算共同邻居，使用几何性质
+vector<Point> common_neighbors(Point a, Point b, int n, int m) {
+    vector<Point> res;
+    int dx = abs(a.x - b.x);
+    int dy = abs(a.y - b.y);
+    if (dx + dy != 2) return res;
+    if (dx == 2 && dy == 0) {
+        int x1 = min(a.x, b.x);
+        int y = a.y;
+        Point p(x1+1, y);
+        if (p.x >= 1 && p.x <= n && p.y >= 1 && p.y <= m) res.push_back(p);
+    } else if (dx == 0 && dy == 2) {
+        int x = a.x;
+        int y1 = min(a.y, b.y);
+        Point p(x, y1+1);
+        if (p.x >= 1 && p.x <= n && p.y >= 1 && p.y <= m) res.push_back(p);
+    } else if (dx == 1 && dy == 1) {
+        Point p1(a.x, b.y);
+        Point p2(b.x, a.y);
+        if (p1.x >= 1 && p1.x <= n && p1.y >= 1 && p1.y <= m) res.push_back(p1);
+        if (p2.x >= 1 && p2.x <= n && p2.y >= 1 && p2.y <= m) res.push_back(p2);
+    }
+    return res;
+}
+
+// 回溯计算一个分量的方式数，使用剪枝
+int solve_component(const vector<pair<int,int>>& edges) {
+    int m = edges.size();
+    if (m == 0) return 1;
+    // 收集所有节点
+    set<int> nodes_set;
+    for (auto& e : edges) {
+        nodes_set.insert(e.first);
+        nodes_set.insert(e.second);
+    }
+    vector<int> nodes(nodes_set.begin(), nodes_set.end());
+    int n = nodes.size();
+    // 映射节点索引到0..n-1
+    map<int,int> node_id;
+    for (int i=0; i<n; i++) node_id[nodes[i]] = i;
+    vector<pair<int,int>> edges2;
+    for (auto& e : edges) {
+        int u = node_id[e.first];
+        int v = node_id[e.second];
+        edges2.push_back({u, v});
+    }
+    // 使用递归回溯
+    vector<bool> used_node(n, false);
+    long long count = 0;
+    function<void(int, int)> dfs = [&](int idx, int free_nodes) {
+        if (idx == m) {
+            count++;
+            return;
+        }
+        // 剪枝：如果剩余边数 > 剩余未使用节点数，则不可能
+        int remaining_edges = m - idx;
+        if (remaining_edges > free_nodes) {
+            return;
+        }
+        int u = edges2[idx].first, v = edges2[idx].second;
+        if (u == v) {
+            if (!used_node[u]) {
+                used_node[u] = true;
+                dfs(idx+1, free_nodes-1);
+                used_node[u] = false;
+            }
+        } else {
+            if (!used_node[u]) {
+                used_node[u] = true;
+                dfs(idx+1, free_nodes-1);
+                used_node[u] = false;
+            }
+            if (!used_node[v]) {
+                used_node[v] = true;
+                dfs(idx+1, free_nodes-1);
+                used_node[v] = false;
+            }
+        }
+    };
+    dfs(0, n);
+    return count % MOD;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<Point> odd(k+1);
+        for (int i=0; i<=k; i++) {
+            cin >> odd[i].x >> odd[i].y;
+        }
+        // 计算候选
+        vector<vector<Point>> candidates(k);
+        bool impossible = false;
+        for (int i=0; i<k; i++) {
+            candidates[i] = common_neighbors(odd[i], odd[i+1], n, m);
+            // 移除奇数点
+            vector<Point> filtered;
+            for (Point& p : candidates[i]) {
+                bool is_odd = false;
+                for (int j=0; j<=k; j++) {
+                    if (p == odd[j]) {
+                        is_odd = true;
+                        break;
+                    }
+                }
+                if (!is_odd) filtered.push_back(p);
+            }
+            candidates[i] = filtered;
+            if (candidates[i].empty()) {
+                impossible = true;
+                break;
+            }
+        }
+        if (impossible) {
+            cout << "0" << endl;
+            continue;
+        }
+        // 构建图
+        map<Point, int> node_id_map;
+        vector<Point> node_list;
+        vector<pair<int,int>> edges;
+        for (int i=0; i<k; i++) {
+            vector<int> ids;
+            for (Point& p : candidates[i]) {
+                if (!node_id_map.count(p)) {
+                    node_id_map[p] = node_list.size();
+                    node_list.push_back(p);
+                }
+                ids.push_back(node_id_map[p]);
+            }
+            if (ids.size() == 1) {
+                edges.push_back({ids[0], ids[0]});
+            } else {
+                edges.push_back({ids[0], ids[1]});
+            }
+        }
+        // 找到连通分量
+        int node_cnt = node_list.size();
+        vector<vector<int>> adj(node_cnt);
+        for (int i=0; i<edges.size(); i++) {
+            int u = edges[i].first, v = edges[i].second;
+            adj[u].push_back(i);
+            if (u != v) adj[v].push_back(i);
+        }
+        vector<bool> vis_edge(edges.size(), false);
+        long long ans = 1;
+        for (int i=0; i<edges.size(); i++) {
+            if (!vis_edge[i]) {
+                // BFS收集分量中的边
+                vector<int> comp_edges;
+                queue<int> q;
+                q.push(i);
+                vis_edge[i] = true;
+                while (!q.empty()) {
+                    int e = q.front(); q.pop();
+                    comp_edges.push_back(e);
+                    int u = edges[e].first, v = edges[e].second;
+                    for (int e2 : adj[u]) {
+                        if (!vis_edge[e2]) {
+                            vis_edge[e2] = true;
+                            q.push(e2);
+                        }
+                    }
+                    if (u != v) {
+                        for (int e2 : adj[v]) {
+                            if (!vis_edge[e2]) {
+                                vis_edge[e2] = true;
+                                q.push(e2);
+                            }
+                        }
+                    }
+                }
+                // 构建分量的边列表
+                vector<pair<int,int>> comp_edge_list;
+                for (int e : comp_edges) {
+                    comp_edge_list.push_back(edges[e]);
+                }
+                // 如果分量边数超过15，使用动态规划可能太慢，但假设分量较小 // 实际上，如果分量太大，回溯法会超时，但这里我们假设数据允许
+                int ways = solve_component(comp_edge_list);
+                if (ways == 0) {
+                    ans = 0;
+                    break;
+                }
+                ans = (ans * ways) % MOD;
+            }
+        }
+        cout << ans << endl;
+    }
+    return 0;
+}

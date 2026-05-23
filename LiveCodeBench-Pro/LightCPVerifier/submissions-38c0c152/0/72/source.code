@@ -1,0 +1,35 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<long long> l(n), r(n);
+        for (int i = 0; i < n; i++) cin >> l[i];
+        for (int i = 0; i < n; i++) cin >> r[i];
+        long long S = 0;
+        vector<long long> min_vals(n);
+        for (int i = 0; i < n; i++) {
+            S += max(l[i], r[i]);
+            min_vals[i] = min(l[i], r[i]);
+        }
+        if (k == 1) {
+            cout << S + 1 << '\n';
+        } else {
+            sort(min_vals.begin(), min_vals.end(), greater<long long>());
+            long long sum_min = 0;
+            for (int i = 0; i < k-1; i++) {
+                sum_min += min_vals[i];
+            }
+            cout << S + sum_min + 1 << '\n';
+        }
+    }
+    return 0;
+}

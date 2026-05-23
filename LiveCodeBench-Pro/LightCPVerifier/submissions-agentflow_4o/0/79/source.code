@@ -1,0 +1,38 @@
+#include <iostream>
+#include <vector>
+#include <tuple>
+using namespace std;
+
+void determine_winner(int t, const vector<tuple<int, int, int, int>>& test_cases) {
+    for (const auto& [a, b, c, d] : test_cases) {
+        
+        // Calculate rounds needed to disable each other's knights
+        int roundsToDisableFlowerKnight = (d + c - 1) / c;  // Rounds for Gellyfish's knight to disable Flower's knight
+        int roundsToDisableGellyKnight = (c + d - 1) / d;   // Rounds for Flower's knight to disable Gellyfish's knight
+        
+        // Calculate rounds needed to directly defeat opponent
+        int roundsForGellyToWin = roundsToDisableFlowerKnight + (b + c - 1) / c;
+        int roundsForFlowerToWin = roundsToDisableGellyKnight + (a + d - 1) / d;
+        
+        if (roundsForGellyToWin < roundsForFlowerToWin) {
+            cout << "Gellyfish" << '\n';
+        } else {
+            cout << "Flower" << '\n';
+        }
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+    vector<tuple<int, int, int, int>> test_cases(t);
+    
+    for (int i = 0; i < t; ++i) {
+        int a, b, c, d;
+        cin >> a >> b >> c >> d;
+        test_cases[i] = make_tuple(a, b, c, d);
+    }
+    
+    determine_winner(t, test_cases);
+    return 0;
+}

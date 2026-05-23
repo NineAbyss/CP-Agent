@@ -1,0 +1,97 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        vector<int> p(n+1);
+        vector<int> pos_val(n+1);
+        for (int i = 1; i <= n; i++) {
+            cin >> p[i];
+            pos_val[p[i]] = i;
+        }
+
+        vector<long long> ans_list;
+        for (int iq = 0; iq < q; iq++) {
+            int l, r, k;
+            cin >> l >> r >> k;
+            int pk = pos_val[k];
+
+            if (pk < l || pk > r) {
+                ans_list.push_back(-1);
+                continue;
+            }
+
+            int l0 = l, r0 = r;
+            vector<int> P;
+            while (l0 <= r0) {
+                int m = (l0 + r0) / 2;
+                if (m == pk) {
+                    break;
+                }
+                P.push_back(m);
+                if (m < pk) {
+                    l0 = m + 1;
+                } else {
+                    r0 = m - 1;
+                }
+            }
+
+            int R_low = 0, R_high = 0;
+            for (int m : P) {
+                if (m < pk) R_low++;
+                else R_high++;
+            }
+
+            if (R_low > k-1 || R_high > n-k) {
+                ans_list.push_back(-1);
+                continue;
+            }
+
+            vector<int> D;
+            for (int m : P) {
+                if (m < pk) {
+                    if (p[m] >= k) {
+                        D.push_back(m);
+                    }
+                } else {
+                    if (p[m] <= k) {
+                        D.push_back(m);
+                    }
+                }
+            }
+
+            int low_need = 0, high_need = 0;
+            for (int m : D) {
+                if (m < pk) low_need++;
+                else high_need++;
+            }
+
+            int A = 0, B = 0;
+            for (int idx : D) {
+                if (p[idx] < k) A++;
+                else if (p[idx] > k) B++;
+            }
+
+            int req_low = max(0, low_need - A);
+            int req_high = max(0, high_need - B);
+            int d = (int)D.size() + req_low + req_high;
+            ans_list.push_back(d);
+        }
+
+        for (int i = 0; i < ans_list.size(); i++) {
+            if (i > 0) cout << " ";
+            cout << ans_list[i];
+        }
+        cout << "\n";
+    }
+    return 0;
+}

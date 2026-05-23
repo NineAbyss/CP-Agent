@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool solveOne(long long a, const vector<long long>& p, const vector<int>& d, int k) {
+    int n = p.size();
+    // 找到 a 所在的灯或右边第一个灯
+    int idx = lower_bound(p.begin(), p.end(), a) - p.begin();
+    int dir = 1; // 初始向右
+    int tmod = 0;
+    if (idx < n && p[idx] == a) {
+        // 起始在灯上
+        if (tmod == d[idx]) {
+            dir = -1;
+        }
+        // 当前灯索引 idx，方向 dir，时间模 tmod
+    } else {
+        // 不在灯上，右边第一个灯是 idx
+        if (idx == n) return true; // 右边无灯
+        long long dist = p[idx] - a;
+        tmod = dist % k;
+        // 到达灯 idx
+        if (tmod == d[idx]) {
+            dir = -1;
+        }
+        // 现在在灯 idx，方向 dir，时间模 tmod
+    }
+    // 开始模拟灯间运动
+    set<tuple<int, int, int>> vis;
+    int curIdx = idx;
+    vis.insert({curIdx, dir, tmod});
+    while (true) {
+        if (dir == -1) {
+            // 向左走
+            int nextIdx = curIdx - 1;
+            if (nextIdx < 0) return true;
+            long long L = p[curIdx] - p[nextIdx];
+            tmod = (tmod + L) % k;
+            if (tmod == d[nextIdx]) {
+                dir = 1;
+            }
+            curIdx = nextIdx;
+        } else {
+            // 向右走
+            int nextIdx = curIdx + 1;
+            if (nextIdx >= n) return true;
+            long long L = p[nextIdx] - p[curIdx];
+            tmod = (tmod + L) % k;
+            if (tmod == d[nextIdx]) {
+                dir = -1;
+            }
+            curIdx = nextIdx;
+        }
+        tuple<int, int, int> state = {curIdx, dir, tmod};
+        if (vis.count(state)) return false;
+        vis.insert(state);
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<long long> p(n);
+        vector<int> d(n);
+        for (int i = 0; i < n; i++) cin >> p[i];
+        for (int i = 0; i < n; i++) cin >> d[i];
+        int q;
+        cin >> q;
+        while (q--) {
+            long long a;
+            cin >> a;
+            cout << (solveOne(a, p, d, k) ? "YES" : "NO") << '\n';
+        }
+    }
+    return 0;
+}

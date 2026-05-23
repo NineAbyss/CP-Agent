@@ -1,0 +1,17 @@
+#include <bits/stdc++.h>
+using namespace std;
+int main() {
+    int t; cin >> t;
+    while (t--) {
+        long long n, m, a, b;
+        cin >> n >> m >> a >> b;
+        long long. 
+        // the answer is the number of turns is the number of times you can cut, and it's the number of times you can halve the space. // but the solution is:
+        long long ans = 0;
+        ans = max(ans, a + b);
+        ans = max(ans, a + m - b + 1);
+        ans = max(ans, n - a + 1 + b);
+        ans = max(ans, n - a + 1 + m - b + 1);
+        cout << ans << '\n';
+    }
+}

@@ -1,0 +1,112 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <limits>
+#include <queue>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, m;
+    cin >> n >> m;
+    
+    vector<int> c(n + 1), w(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> c[i] >> w[i];
+    }
+    
+    vector<vector<int>> adj(n + 1);
+    vector<int> in_degree(n + 1, 0);
+    
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        ++in_degree[v];
+    }
+    
+    // Topological sort
+    vector<int> top_sort;
+    queue<int> q;
+    for (int i = 1; i <= n; ++i) {
+        if (in_degree[i] == 0) {
+            q.push(i);
+        }
+    }
+    
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        top_sort.push_back(u);
+        
+        for (int v : adj[u]) {
+            if (--in_degree[v] == 0) {
+                q.push(v);
+            }
+        }
+    }
+    
+    // Dynamic Programming
+    long long INF = numeric_limits<long long>::max();
+    vector<vector<long long>> dp(n + 1);
+    
+    int q_input;
+    cin >> q_input;
+
+    vector<vector<pair<int, int>>> queries_by_vertex(n + 1);
+    for (int i = 0; i < q_input; ++i) {
+        int p, r;
+        cin >> p >> r;
+        queries_by_vertex[p].emplace_back(i, r);
+
+        // Initialize dp array
+        dp[p].resize(r + 1, 0);
+    }
+
+    vector<long long> results(q_input);
+
+    for (int idx = top_sort.size() - 1; idx >= 0; --idx) {
+        int u = top_sort[idx];
+        
+        vector<pair<int, int>> queries = queries_by_vertex[u];
+        if (queries.empty()) continue;
+        
+        int max_r = 0;
+        for (auto& [_, r] : queries) {
+            max_r = max(max_r, r);
+        }
+        
+        dp[u].resize(max_r + 1, 0);
+
+        // Reverse iterate coins to correctly apply knapsack
+        for (int r = max_r; r >= 0; --r) {
+            // Buy cards at vertex u
+            int max_cards = (r / c[u]);
+            long long max_power = dp[u][r];
+            for (int k = 1; k <= max_cards; ++k) {
+                max_power = max(max_power, dp[u][r - k * c[u]] + k * w[u]);
+            }
+            dp[u][r] = max_power;
+        }
+        
+        // Propagate to adjacent vertices
+        for (int v : adj[u]) {
+            dp[v] = dp[u]; // Because we only care of maximum achievable below each vertex
+            dp[u].clear();
+        }
+
+        // Answer queries on vertex u
+        for (auto& [index, coins] : queries) {
+            results[index] = dp[u][coins];
+        }
+    }
+
+    for (auto res : results) {
+        cout << res << "\n";
+    }
+
+    return 0;
+}

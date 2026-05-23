@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), c(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        for (int i = 0; i; i++) {
+            cin >> c[i];
+        }
+
+        vector<int> used(n+1, false);
+        for (int i = 0; i < n; i++) {
+            if (c[i] != 0) {
+                used[c[i]] = true;
+            }
+        }
+        vector<int> rem;
+        for (int i = 1; i <= n; i++) {
+            if (!used[i]) {
+                rem.push_back(i);
+            }
+        }
+        sort(rem.begin(), rem.end());
+        vector<int> b = c;
+        int it = 0;
+        for (int i = 0; i < n; i++) {
+            if (b[i] == 0) {
+                b[i] = rem[it++];
+            }
+        }
+
+        // Check using stack
+        vector<int> st;
+        int j = 0;
+        for (int i = 0; i < n; i++) {
+            while (!st.empty() && st.back() == a[j]) {
+                st.pop_back();
+                j++;
+            }
+            if (b[i] == a[j]) {
+                j++;
+            } else {
+                st.push_back(b[i]);
+            }
+        }
+        while (!st.empty() && st.back() == a[j]) {
+            st.pop_back();
+            j++;
+        }
+        if (j == n) {
+            for (int i = 0; i < n; i++) {
+                cout << b[i] << " \n"[i==n-1];
+            }
+        } else {
+            cout << "-1\n";
+        }
+    }
+}

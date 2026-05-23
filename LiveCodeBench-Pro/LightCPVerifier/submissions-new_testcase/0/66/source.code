@@ -1,0 +1,168 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <set>
+#include <algorithm>
+#include <tuple>
+using namespace std;
+
+using ll = long long;
+
+const ll INF = 1e15;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<ll> p(n);
+        for (int i=0; i<n; i++) cin >> p[i];
+        vector<int> d(n);
+        for (int i=0; i<n; i++) cin >> d[i];
+        
+        // 位置到索引的映射
+        map<ll, int> pos_idx;
+        for (int i=0; i<n; i++) pos_idx[p[i]] = i;
+        
+        // 预计算转换表 trans[i][dir][tau] -> (next_i, next_dir, next_tau) 或 (-1,0,0) 表示离开 // dir: 0 表示左，1 表示右
+        vector<vector<vector<tuple<int,int,int>>>> trans(n, vector<vector<tuple<int,int,int>>>(2, vector<tuple<int,int,int>>(k, make_tuple(-2,0,0))));
+        
+        // 辅助函数：下一个交通灯
+        auto next_traffic = [&](int i, int dir_out) -> pair<int, ll> {
+            // dir_out: 实际方向，-1 表示左，1 表示右
+            ll x = p[i] + dir_out;
+            // 如果 x 超出条带范围，则离开
+            if (x < 1 || x > INF) return {-1, 0};
+            auto it = pos_idx.find(x);
+            if (it != pos_idx.end()) {
+                return {it->second, 0};
+            }
+            if (dir_out == 1) {
+                // 向右
+                auto it2 = upper_bound(p.begin(), p.end(), x);
+                if (it2 == p.end()) return {-1, 0};
+                int j = it2 - p.begin();
+                return {j, p[j] - x};
+            } else {
+                // 向左
+                auto it2 = lower_bound(p.begin(), p.end(), x);
+                if (it2 == p.begin()) return {-1, 0};
+                int j = (it2 - p.begin()) - 1;
+                return {j, x - p[j]};
+            }
+        };
+        
+        // 填充转换表
+        for (int i=0; i<n; i++) {
+            for (int dir_in_idx=0; dir_in_idx<2; dir_in_idx++) {
+                int dir_in = (dir_in_idx==0) ? -1 : 1;
+                for (int tau=0; tau<k; tau++) {
+                    bool red = (tau == d[i]);
+                    int dir_out = red ? -dir_in : dir_in;
+                    int tau1 = (tau + 1) % k;
+                    auto [j, dist] = next_traffic(i, dir_out);
+                    if (j == -1) {
+                        trans[i][dir_in_idx][tau] = make_tuple(-1, 0, 0);
+                    } else {
+                        int next_tau = (tau1 + dist) % k;
+                        int next_dir_in_idx = (dir_out == -1) ? 0 : 1;
+                        trans[i][dir_in_idx][tau] = make_tuple(j, next_dir_in_idx, next_tau);
+                    }
+                }
+            }
+        }
+        
+        int q;
+        cin >> q;
+        while (q--) {
+            ll a;
+            cin >> a;
+            // 找到初始状态
+            int init_i, init_dir_idx, init_tau;
+            auto it = pos_idx.find(a);
+            if (it == pos_idx.end()) {
+                // 没有交通灯
+                auto it2 = upper_bound(p.begin(), p.end(), a);
+                if (it2 == p.end()) {
+                    cout << "YES" << '\n';
+                    continue;
+                }
+                init_i = it2 - p.begin();
+                ll dist = p[init_i] - a;
+                init_tau = dist % k;
+                init_dir_idx = 1; // 右
+            } else {
+                init_i = it->second;
+                // 时间 0
+                bool red = (0 == d[init_i]);
+                int dir_out = red ? -1 : 1;
+                int tau1 = (0 + 1) % k;
+                ll x = a + dir_out;
+                // 如果 x 超出条带范围，则离开
+                if (x < 1 || x > INF) {
+                    cout << "YES" << '\n';
+                    continue;
+                }
+                // 找到下一个交通灯
+                int j;
+                ll dist;
+                auto it2 = pos_idx.find(x);
+                if (it2 != pos_idx.end()) {
+                    j = it2->second;
+                    dist = 0;
+                } else {
+                    if (dir_out == 1) {
+                        auto it3 = upper_bound(p.begin(), p.end(), x);
+                        if (it3 == p.end()) {
+                            cout << "YES" << '\n';
+                            continue;
+                        }
+                        j = it3 - p.begin();
+                        dist = p[j] - x;
+                    } else {
+                        auto it3 = lower_bound(p.begin(), p.end(), x);
+                        if (it3 == p.begin()) {
+                            cout << "YES" << '\n';
+                            continue;
+                        }
+                        j = (it3 - p.begin()) - 1;
+                        dist = x - p[j];
+                    }
+                }
+                init_i = j;
+                init_tau = (tau1 + dist) % k;
+                init_dir_idx = (dir_out == -1) ? 0 : 1;
+            }
+            
+            // 模拟
+            set<tuple<int,int,int>> visited;
+            int cur_i = init_i;
+            int cur_dir_idx = init_dir_idx;
+            int cur_tau = init_tau;
+            bool leave = false;
+            while (true) {
+                auto state = make_tuple(cur_i, cur_dir_idx, cur_tau);
+                if (visited.count(state)) {
+                    // 循环
+                    leave = false;
+                    break;
+                }
+                visited.insert(state);
+                auto [next_i, next_dir_idx, next_tau] = trans[cur_i][cur_dir_idx][cur_tau];
+                if (next_i == -1) {
+                    leave = true;
+                    break;
+                }
+                cur_i = next_i;
+                cur_dir_idx = next_dir_idx;
+                cur_tau = next_tau;
+            }
+            cout << (leave ? "YES" : "NO") << '\n';
+        }
+    }
+    return 0;
+}

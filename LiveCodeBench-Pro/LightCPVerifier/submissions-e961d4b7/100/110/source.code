@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    string s;
+    cin >> s;
+    vector<pair<char, char>> ops(q);
+    for (int i = 0; i < q; i++) {
+        cin >> ops[i].first >> ops[i].second;
+    }
+    // suffix_min[i][ch]: 从操作 i 开始，字符 ch 能变成的最小字符（0:a,1:b,2:c）
+    vector<array<int, 3>> suffix_min(q + 1);
+    for (int ch = 0; ch < 3; ch++) suffix_min[q][ch] = ch;
+    for (int i = q - 1; i >= 0; i--) {
+        int x = ops[i].first - 'a';
+        int y = ops[i].second - 'a';
+        suffix_min[i] = suffix_min[i + 1];
+        if (suffix_min[i + 1][y] < suffix_min[i][x]) {
+            suffix_min[i][x] = suffix_min[i + 1][y];
+        }
+    }
+    // 位置队列
+    vector<deque<int>> pos(3);
+    for (int i = 0; i < n; i++) {
+        pos[s[i] - 'a'].push_back(i);
+    }
+    string res = s;
+    for (int i = 0; i < q; i++) {
+        int x = ops[i].first - 'a';
+        int y = ops[i].second - 'a';
+        if (pos[x].empty()) continue;
+        bool use = false;
+        if (y < x) use = true;
+        else if (suffix_min[i + 1][y] < x) use = true;
+        if (!use) continue;
+        int idx;
+        if (y < x) {
+            idx = pos[x].front();
+            pos[x].pop_front();
+        } else {
+            idx = pos[x].back();
+            pos[x].pop_back();
+        }
+        res[idx] = 'a' + y;
+        pos[y].push_back(idx);
+    }
+    cout << res << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

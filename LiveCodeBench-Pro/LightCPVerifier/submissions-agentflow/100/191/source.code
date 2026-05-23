@@ -1,0 +1,140 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+ll solve_one_case(const vector<pair<int,int>>& points) {
+    int n = points.size();
+    if (n == 1) return 1;
+    
+    // 原始面积
+    int min_x = 1e9, max_x = -1e9, min_y = 1e9, max_y = -1e9;
+    for (auto [x,y] : points) {
+        min_x = min(min_x, x); max_x = max(max_x, x);
+        min_y = min(min_y, y); max_y = max(max_y, y);
+    }
+    ll original = (ll)(max_x - min_x + 1) * (max_y - min_y + 1);
+    ll best = original;
+    
+    // 预处理：排序的x和y值
+    vector<int> xs, ys;
+    for (auto [x,y] : points) {
+        xs.push_back(x);
+        ys.push_back(y);
+    }
+    sort(xs.begin(), xs.end());
+    sort(ys.begin(), ys.end());
+    
+    // 辅助函数：计算移动点p后的最小面积
+    auto compute_area = [&](pair<int,int> p) -> ll {
+        // 计算移除p后的矩形
+        int L = 1e9, R = -1e9, D = 1e9, U = -1e9;
+        for (auto q : points) {
+            if (q == p) continue;
+            L = min(L, q.first); R = max(R, q.first);
+            D = min(D, q.second); U = max(U, q.second);
+        }
+        
+        ll area = (ll)(R - L + 1) * (U - D + 1);
+        
+        // 检查是否需要扩展 // 情况1: 所有剩余点在同一列 (L == R)
+        if (L == R) {
+            // 收集该列的所有y值
+            vector<int> ys_col;
+            for (auto q : points) {
+                if (q != p && q.first == L) ys_col.push_back(q.second);
+            }
+            sort(ys_col.begin(), ys_col.end());
+            
+            // 检查是否连续填满D到U
+            bool full = true;
+            for (int i = 0; i < (int)ys_col.size(); i++) {
+                if (ys_col[i] != D + i) { full = false; break; }
+            }
+            if (full && (int)ys_col.size() == U - D + 1) {
+                // 需要扩展
+                ll area1 = (ll)(R - L + 2) * (U - D + 1); // 扩展x
+                ll area2 = (ll)(R - L + 1) * (U - D + 2); // 扩展y
+                area = min(area1, area2);
+            }
+        }
+        // 情况2: 所有剩余点在同一行 (D == U)
+        else if (D == U) {
+            // 收集该行的所有x值
+            vector<int> xs_row;
+            for (auto q : points) {
+                if (q != p && q.second == D) xs_row.push_back(q.first);
+            }
+            sort(xs_row.begin(), xs_row.end());
+            
+            bool full = true;
+            for (int i = 0; i < (int)xs_row.size(); i++) {
+                if (xs_row[i] != L + i) { full = false; break; }
+            }
+            if (full && (int)xs_row.size() == R - L + 1) {
+                ll area1 = (ll)(R - L + 2) * (U - D + 1); // 扩展x
+                ll area2 = (ll)(R - L + 1) * (U - D + 2); // 扩展y
+                area = min(area1, area2);
+            }
+        }
+        
+        return area;
+    };
+    
+    // 尝试移动x最小的点
+    int x_min_val = xs[0];
+    // 找到所有x最小的点，但只需要尝试一个（如果多个，移除一个不会改变min_x）
+    for (auto p : points) {
+        if (p.first == x_min_val) {
+            best = min(best, compute_area(p));
+            break;
+        }
+    }
+    
+    // 尝试移动x最大的点
+    int x_max_val = xs[n-1];
+    for (auto p : points) {
+        if (p.first == x_max_val) {
+            best = min(best, compute_area(p));
+            break;
+        }
+    }
+    
+    // 尝试移动y最小的点
+    int y_min_val = ys[0];
+    for (auto p : points) {
+        if (p.second == y_min_val) {
+            best = min(best, compute_area(p));
+            break;
+        }
+    }
+    
+    // 尝试移动y最大的点
+    int y_max_val = ys[n-1];
+    for (auto p : points) {
+        if (p.second == y_max_val) {
+            best = min(best, compute_area(p));
+            break;
+        }
+    }
+    
+    return best;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<pair<int,int>> points(n);
+        for (int i = 0; i < n; i++) {
+            cin >> points[i].first >> points[i].second;
+        }
+        cout << solve_one_case(points) << '\n';
+    }
+    
+    return 0;
+}

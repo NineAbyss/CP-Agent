@@ -1,0 +1,100 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+const int MAXN = 200005;
+const int LOG = 20;
+
+int n;
+int p[MAXN];
+int pos[MAXN]; // pos[value] = index
+int st_max[LOG][MAXN], st_min[LOG][MAXN];
+int log2v[MAXN];
+
+void build() {
+    log2v[1] = 0;
+    for (int i = 2; i <= n; ++i) log2v[i] = log2v[i/2] + 1;
+    for (int i = 1; i <= n; ++i) {
+        st_max[0][i] = st_min[0][i] = p[i];
+    }
+    for (int j = 1; j < LOG; ++j) {
+        for (int i = 1; i + (1<<j) - 1 <= n; ++i) {
+            st_max[j][i] = max(st_max[j-1][i], st_max[j-1][i + (1<<(j-1))]);
+            st_min[j][i] = min(st_min[j-1][i], st_min[j-1][i + (1<<(j-1))]);
+        }
+    }
+}
+
+int query_max(int l, int r) {
+    int k = log2v[r-l+1];
+    return max(st_max[k][l], st_max[k][r - (1<<k) + 1]);
+}
+
+int query_min(int l, int r) {
+    int k = log2v[r-l+1];
+    return min(st_min[k][l], st_min[k][r - (1<<k) + 1]);
+}
+
+bool check(int l, int r, int i) {
+    // i in [1, r-l]
+    int max_left = query_max(l, l+i-1);
+    int min_right = query_min(l+i, r);
+    if (max_left < min_right) return true;
+    int min_left = query_min(l, l+i-1);
+    int max_right = query_max(l+i, r);
+    if (min_left > max_right) return true;
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    cin >> n;
+    for (int i = 1; i <= n; ++i) {
+        cin >> p[i];
+        pos[p[i]] = i;
+    }
+    build();
+    
+    int q;
+    cin >> q;
+    for (int t = 0; t < q; ++t) {
+        int l, r;
+        cin >> l >> r;
+        int m = r - l + 1;
+        int val_min = query_min(l, r);
+        int val_max = query_max(l, r);
+        int pos_min_rel = pos[val_min] - l + 1;
+        int pos_max_rel = pos[val_max] - l + 1;
+        
+        int L_cand = max(1, min(pos_min_rel, pos_max_rel) - 2);
+        int R_cand = min(m-1, max(pos_min_rel, pos_max_rel) + 2);
+        vector<int> candidates;
+        for (int i = L_cand; i <= R_cand; ++i) {
+            candidates.push_back(i);
+        }
+        candidates.push_back(1);
+        candidates.push_back(m-1);
+        sort(candidates.begin(), candidates.end());
+        candidates.erase(unique(candidates.begin(), candidates.end()), candidates.end());
+        
+        bool ok = false;
+        for (int i : candidates) {
+            if (i >= 1 && i < m) {
+                if (check(l, r, i)) {
+                    ok = true;
+                    break;
+                }
+            }
+        }
+        cout << (ok ? "YES" : "NO") << '\n';
+        
+        if ((t+1) % 10 == 0) {
+            cout.flush();
+        }
+    }
+    return 0;
+}

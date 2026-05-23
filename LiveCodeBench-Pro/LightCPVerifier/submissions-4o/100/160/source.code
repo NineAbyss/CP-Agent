@@ -1,0 +1,78 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+
+const int MOD = 998244353;
+
+using namespace std;
+
+vector<vector<int>> adj;
+vector<vector<int>> dist;
+int dp[3001][3001];
+
+void dfs(int v, int p, int n) {
+    for (auto u : adj[v]) {
+        if (u != p) {
+            dist[v][u] = dist[u][v] = dist[v][p] + 1;
+            dfs(u, v, n);
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        adj.assign(n + 1, vector<int>());
+        dist.assign(n + 1, vector<int>(n + 1, 0));
+        
+        for (int i = 1; i < n; ++i) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+        
+        // Calculating distances between every pair of vertices using DFS.
+        for (int i = 1; i <= n; ++i) {
+            dfs(i, 0, n);
+        }
+        
+        int totalCoolness = 0;
+        
+        // Compute dp[v][d] meaning number of ways to color subtree of v with // maximum distance from v equal d (v as red, children various colors).
+        for (int v = 1; v <= n; ++v) {
+            memset(dp[v], 0, sizeof(dp[v]));
+            dp[v][0] = 1;
+            
+            for (auto u : adj[v]) {
+                for (int d = n; d >= 0; --d) {
+                    for (int child_d = 0; child_d <= d; ++child_d) {
+                        dp[v][d] += dp[u][child_d];
+                        if (dp[v][d] >= MOD) dp[v][d] -= MOD;
+                    }
+                }
+            }
+        }
+        
+        for (int u = 1; u <= n; ++u) {
+            for (int v = 1; v <= n; ++v) {
+                if (u != v) {
+                    totalCoolness = (totalCoolness + dist[u][v] * dp[u][dist[u][v]]) % MOD;
+                }
+            }
+        }
+        
+        cout << totalCoolness << "\n";
+    }
+    
+    return 0;
+}

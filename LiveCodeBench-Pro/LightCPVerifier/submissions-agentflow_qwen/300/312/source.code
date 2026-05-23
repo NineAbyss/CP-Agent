@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i]; // fixed
+
+        map<int, int> freq;
+        for (int x : a) freq[x]++;
+        for (int x : b) freq[x]++;
+
+        vector<int> idx(n);
+        iota(idx.begin(), idx.end(), 0);
+        sort(idx.begin(), idx.end(), [&](int i, int j) {
+            return min(freq[a[i]], freq[b[i]]) < min(freq[a[j]], freq[b[j]]);
+        });
+
+        set<int> inA, inB;
+        vector<int> res_a = a, res_b = b;
+
+        for (int i : idx) {
+            int x = a[i], y = b[i];
+            int gain1 = 0, gain2 = 0;
+            if (!inA.count(x)) gain1++;
+            if (!inB.count(y)) gain1++;
+            if (!inA.count(y)) gain2++;
+            if (!inB.count(x)) gain2++;
+
+            if (gain1 > gain2) {
+                inA.insert(x);
+                inB.insert(y);
+            } else {
+                // gain2 >= gain1, including tie
+                swap(res_a[i], res_b[i]);
+                inA.insert(y);
+                inB.insert(x);
+            }
+        }
+
+        cout << inA.size() + inB.size() << '\n';
+        for (int i = 0; i < n; i++) {
+            cout << res_a[i];
+            if (i < n-1) cout << ' ';
+        }
+        cout << '\n';
+        for (int i = 0; i < n; i++) {
+            cout << res_b[i];
+            if (i < n-1) cout << ' ';
+        }
+        cout << '\n';
+    }
+    return 0;
+}

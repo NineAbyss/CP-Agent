@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int f(long long a, long long b) {
+    string sa = to_string(a);
+    string sb = to_string(b);
+    int cnt = 0;
+    for (int i = 0; i < sa.size(); i++) {
+        if (sa[i] == sb[i]) cnt++;
+    }
+    return cnt;
+}
+
+void solve() {
+    long long l, r;
+    cin >> l >> r;
+
+    // 如果范围较小，直接暴力枚举
+    if (r - l <= 100) {
+        long long best = 1e18;
+        for (long long x = l; x <= r; x++) {
+            long long cur = f(l, x) + f(x, r);
+            if (cur < best) best = cur;
+        }
+        cout << best << '\n';
+        return;
+    }
+
+    set<long long> candidates;
+    candidates.insert(l);
+    candidates.insert(r);
+
+    string sl = to_string(l);
+    string sr = to_string(r);
+    int n = sl.size();
+
+    // 候选类型1：从 l 出发，在第 i 位增加
+    for (int i = 0; i < n; i++) {
+        if (sl[i] == '9') continue;
+        string cand = sl.substr(0, i);
+        cand += (char)(sl[i] + 1);
+        while ((int)cand.size() < n) {
+            cand += '0';
+        }
+        try {
+            long long val = stoll(cand);
+            if (val >= l && val <= r) {
+                candidates.insert(val);
+            }
+        } catch (...) {
+            continue;
+        }
+    }
+
+    // 候选类型2：从 r 出发，在第 i 位减少
+    for (int i = 0; i < n; i++) {
+        if (sr[i] == '0') continue;
+        string cand = sr.substr(0, i);
+        cand += (char)(sr[i] - 1);
+        while ((int)cand.size() < n) {
+            cand += '9';
+        }
+        try {
+            long long val = stoll(cand);
+            if (val >= l && val <= r) {
+                candidates.insert(val);
+            }
+        } catch (...) {
+            continue;
+        }
+    }
+
+    long long best = 1e18;
+    for (long long x : candidates) {
+        long long cur = f(l, x) + f(x, r);
+        if (cur < best) best = cur;
+    }
+    cout << best << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,113 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+bool compute_parity(const vector<int>& p, const vector<int>& original, const vector<int>& original_idx) {
+    int k = p.size();
+    vector<bool> visited(k, false);
+    int cycles = 0;
+    for (int i = 0; i < k; i++) {
+        if (!visited[i]) {
+            cycles++;
+            int j = i;
+            while (!visited[j]) {
+                visited[j] = true;
+                j = original_idx[p[j]];
+            }
+        }
+    }
+    return (k - cycles) % 2 == 0;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        vector<int> O, E;
+        for (int i = 0; i < n; i++) {
+            if (i % 2 == 0) O.push_back(a[i]);
+            else E.push_back(a[i]);
+        }
+        
+        vector<int> original_O = O;
+        vector<int> original_E = E;
+        
+        sort(O.begin(), O.end());
+        sort(E.begin(), E.end());
+        
+        vector<int> idx_O(n+1), idx_E(n+1);
+        for (int i = 0; i < (int)original_O.size(); i++) {
+            idx_O[original_O[i]] = i;
+        }
+        for (int i = 0; i < (int)original_E.size(); i++) {
+            idx_E[original_E[i]] = i;
+        }
+        
+        bool par_O = compute_parity(O, original_O, idx_O);
+        bool par_E = compute_parity(E, original_E, idx_E);
+        
+        vector<int> candidate;
+        
+        if (par_O == par_E) {
+            candidate.resize(n);
+            int io = 0, ie = 0;
+            for (int i = 0; i < n; i++) {
+                if (i % 2 == 0) candidate[i] = O[io++];
+                else candidate[i] = E[ie++];
+            }
+        } else {
+            vector<int> cand1, cand2;
+            if (E.size() >= 2) {
+                vector<int> E_adj = E;
+                swap(E_adj[E_adj.size()-1], E_adj[E_adj.size()-2]);
+                bool par_E_adj = compute_parity(E_adj, original_E, idx_E);
+                if (par_O == par_E_adj) {
+                    cand1.resize(n);
+                    int io = 0, ie = 0;
+                    for (int i = 0; i < n; i++) {
+                        if (i % 2 == 0) cand1[i] = O[io++];
+                        else cand1[i] = E_adj[ie++];
+                    }
+                }
+            }
+            if (O.size() >= 2) {
+                vector<int> O_adj = O;
+                swap(O_adj[O_adj.size()-1], O_adj[O_adj.size()-2]);
+                bool par_O_adj = compute_parity(O_adj, original_O, idx_O);
+                if (par_O_adj == par_E) {
+                    cand2.resize(n);
+                    int io = 0, ie = 0;
+                    for (int i = 0; i < n; i++) {
+                        if (i % 2 == 0) cand2[i] = O_adj[io++];
+                        else cand2[i] = E[ie++];
+                    }
+                }
+            }
+            
+            if (!cand1.empty() && !cand2.empty()) {
+                candidate = (cand1 < cand2) ? cand1 : cand2;
+            } else if (!cand1.empty()) {
+                candidate = cand1;
+            } else {
+                candidate = cand2;
+            }
+        }
+        
+        for (int i = 0; i < n; i++) {
+            cout << candidate[i] << " \n"[i == n-1];
+        }
+    }
+    
+    return 0;
+}

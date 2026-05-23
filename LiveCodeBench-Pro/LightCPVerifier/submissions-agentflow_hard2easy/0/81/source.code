@@ -1,0 +1,82 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+ll getNum(int n, int x, int y) {
+    ll r = x - 1, c = y - 1;
+    ll ans = 1;
+    for (int k = n; k >= 1; k--) {
+        ll half = 1LL << (k - 1);
+        ll block = half * half;
+        if (r < half && c < half) {
+            // top-left
+        } else if (r >= half && c >= half) {
+            // bottom-right
+            ans += block;
+            r -= half;
+            c -= half;
+        } else if (r >= half && c < half) {
+            // bottom-left
+            ans += 2 * block;
+            r -= half;
+        } else {
+            // top-right
+            ans += 3 * block;
+            c -= half;
+        }
+    }
+    return ans;
+}
+
+pair<ll, ll> getCoord(int n, ll d) {
+    ll r = 0, c = 0;
+    ll base = 0;
+    for (int k = n; k >= 1; k--) {
+        ll half = 1LL << (k - 1);
+        ll block = half * half;
+        ll offset = d - base - 1;
+        ll quadrant = offset / block;
+        base += quadrant * block;
+        if (quadrant == 0) {
+            // top-left
+        } else if (quadrant == 1) {
+            // bottom-right
+            r += half;
+            c += half;
+        } else if (quadrant == 2) {
+            // bottom-left
+            r += half;
+        } else {
+            // top-right
+            c += half;
+        }
+    }
+    return {r + 1, c + 1};
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        while (q--) {
+            string op;
+            cin >> op;
+            if (op == "->") {
+                int x, y;
+                cin >> x >> y;
+                cout << getNum(n, x, y) << '\n';
+            } else {
+                ll d;
+                cin >> d;
+                auto [x, y] = getCoord(n, d);
+                cout << x << ' ' << y << '\n';
+            }
+        }
+    }
+    return 0;
+}

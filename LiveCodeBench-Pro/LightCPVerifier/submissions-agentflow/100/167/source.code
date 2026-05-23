@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool solve(int w, int h, int a, int b, int x1, int y1, int x2, int y2) {
+    long long dx = abs(1LL * x1 - x2);
+    long long dy = abs(1LL * y1 - y2);
+    
+    if (dx % a == 0 && dy % b == 0) return true;
+    if (dx % a == 0) {
+        long long rem = h - dy;
+        if (rem >= 0 && rem % b == 0) return true;
+    }
+    if (dy % b == 0) {
+        long long rem = w - dx;
+        if (rem >= 0 && rem % a == 0) {
+            if (dy == 0) {
+                if (h % b == 0) return true;
+                else return false;
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int w, h, a, b, x1, y1, x2, y2;
+        cin >> w >> h >> a >> b >> x1 >> y1 >> x2 >> y2;
+        cout << (solve(w, h, a, b, x1, y1, x2, y2) ? "Yes" : "No") << '\n';
+    }
+    return 0;
+}

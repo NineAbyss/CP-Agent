@@ -1,0 +1,35 @@
+#include <iostream>
+#include <vector>
+
+void fillGrid(std::vector<std::vector<int>>& grid, int n) {
+    int num = 0;
+    for (int i = 0; i < n; ++i) {
+        for (int j = i, k = 0; j >= 0 && k < n; --j, ++k) {
+            grid[k][j] = num++;
+        }
+    }
+    for (int i = 1; i < n; ++i) {
+        for (int j = n - 1, k = i; j >= 0 && k < n; --j, ++k) {
+            grid[k][j] = num++;
+        }
+    }
+}
+
+int main() {
+    int t;
+    std::cin >> t;
+    while (t--) {
+        int n;
+        std::cin >> n;
+        
+        std::vector<std::vector<int>> grid(n, std::vector<int>(n, 0));
+        fillGrid(grid, n);
+
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
+                std::cout << grid[i][j] << (j == n-1 ? "\n" : " ");
+            }
+        }
+    }
+    return 0;
+}

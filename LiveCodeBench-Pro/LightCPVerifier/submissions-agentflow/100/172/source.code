@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int a, x, y;
+        cin >> a >> x >> y;
+        
+        // 确保 x <= y 以便比较
+        int x1 = min(x, y);
+        int y1 = max(x, y);
+        
+        // 如果 a 严格在 x1 和 y1 之间，则 Bob 无法保证获胜
+        if (x1 < a && a < y1) {
+            cout << "NO" << endl;
+        } else {
+            cout << "YES" << endl;
+        }
+    }
+    
+    return 0;
+}

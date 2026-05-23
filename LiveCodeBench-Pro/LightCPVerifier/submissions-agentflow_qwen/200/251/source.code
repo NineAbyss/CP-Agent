@@ -1,0 +1,99 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<int> d(n);
+        for (int i = 0; i < n; i++) {
+            cin >> d[i];
+        }
+        
+        vector<pair<int, int>> obstacles(n);
+        for (int i = 0; i < n; i++) {
+            cin >> obstacles[i].first >> obstacles[i].second;
+        }
+        
+        // First pass: check feasibility with range tracking
+        int min_h = 0, max_h = 0;
+        bool possible = true;
+        
+        for (int i = 0; i < n && possible; i++) {
+            // Update height range based on d[i]
+            if (d[i] == 1) {
+                min_h++;
+                max_h++;
+            } else if (d[i] == 0) {
+                // min_h and max_h stay the same
+            } else { // d[i] == -1, can choose 0 or 1
+                max_h++; // if we choose to increase
+                // min_h stays the same (if we choose not to increase)
+            }
+            
+            // Check if current range intersects with obstacle constraints
+            if (max_h < obstacles[i].first || min_h > obstacles[i].second) {
+                possible = false;
+            }
+            
+            // Constrain within the obstacle
+            min_h = max(min_h, obstacles[i].first);
+            max_h = min(max_h, obstacles[i].second);
+            
+            // Ensure valid range
+            if (min_h > max_h) {
+                possible = false;
+            }
+        }
+        
+        if (!possible) {
+            cout << "-1\n";
+        } else {
+            // Second pass: reconstruct the solution
+            int curr_h = 0;
+            vector<int> result = d;
+            
+            for (int i = 0; i < n; i++) {
+                if (result[i] == -1) {
+                    // Try to set to 1 if it doesn't violate constraints
+                    if (curr_h + 1 <= obstacles[i].second) {
+                        result[i] = 1;
+                        curr_h++;
+                    } else {
+                        result[i] = 0;
+                        // curr_h stays the same
+                    }
+                } else {
+                    curr_h += result[i];
+                }
+                
+                // Ensure we're within the obstacle constraints
+                if (curr_h < obstacles[i].first || curr_h > obstacles[i].second) {
+                    possible = false;
+                    break;
+                }
+            }
+            
+            if (!possible) {
+                cout << "-1\n";
+            } else {
+                for (int i = 0; i < n; i++) {
+                    cout << result[i];
+                    if (i < n-1) cout << " ";
+                }
+                cout << "\n";
+            }
+        }
+    }
+    
+    return 0;
+}

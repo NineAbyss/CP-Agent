@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool feasible(int m, const vector<int>& a, int k) {
+    if (m == 0) return true;
+    int n = a.size();
+    vector<bool> found(m, false);
+    vector<int> current_list;
+    int collected = 0;
+    int segments = 0;
+
+    for (int i = 0; i < n; i++) {
+        if (a[i] < m) {
+            if (!found[a[i]]) {
+                found[a[i]] = true;
+                collected++;
+                current_list.push_back(a[i]);
+            }
+        }
+        if (collected == m) {
+            segments++;
+            // reset
+            for (int x : current_list) {
+                found[x] = false;
+            }
+            current_list.clear();
+            collected = 0;
+            if (segments >= k) {
+                break;
+            }
+        }
+    }
+    return segments >= k;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // We'll compute frequency for values in [0, maybe n+1] // We only care up to n+1
+        vector<int> freq(n+2, 0); // index from 0 to n+1
+        for (int x : a) {
+            if (x <= n+1) {
+                freq[x]++;
+            }
+        }
+
+        // Compute m_upper: the maximum m such that for all i in [0, m-1], freq[i] >= k.
+        int m_upper = 0;
+        while (m_upper <= n+1 && freq[m_upper] >= k) {
+            m_upper++;
+        }
+        // now m_upper is the first integer such that freq[m_upper] < k
+
+        // Binary search on m in [0, m_upper]
+        int low = 0, high = m_upper;
+        int ans = 0;
+        while (low <= high) {
+            int mid = (low + high) / 2;
+            if (feasible(mid, a, k)) {
+                ans = mid;
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

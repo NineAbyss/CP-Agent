@@ -1,0 +1,19 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, p, q;
+        cin >> n >> m >> p >> q;
+        int d = n / p;
+        int r = n % p;
+        if (r == 0) {
+            cout << (m == d * q ? "YES" : "NO") << '\n';
+        } else {
+            cout << "YES" << '\n';
+        }
+    }
+    return 0;
+}

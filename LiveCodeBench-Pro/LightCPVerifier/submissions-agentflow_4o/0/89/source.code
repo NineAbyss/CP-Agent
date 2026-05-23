@@ -1,0 +1,62 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        long long n;
+        cin >> n;
+        
+        // Initial reduction of x using the "digit" command to reduce complexity
+        cout << "digit" << endl;
+        cout.flush();
+        int response;
+        cin >> response;
+
+        long long x = S(x); // Hypothetical transformation via "digit" to simulate a baseline
+        
+        // If `digit` alone doesn't reach `n`, explore further commands
+        while (n != x && commands_left > 0) {
+            // If `x` needs to be scaled to `n`
+            if (x < n) {
+                long long scale_factor = n / x;
+                if (scale_factor > 1 && x * scale_factor <= 1e9) {
+                    cout << "mul " << scale_factor << endl;
+                    cout.flush();
+                    cin >> response;
+                    if (response == 1) {
+                        x *= scale_factor;
+                    }
+                } else {
+                    // Add what's needed if direct multiply isn't viable
+                    long long to_add = n - x;
+                    cout << "add " << to_add << endl;
+                    cout.flush();
+                    cin >> response;
+                    if (response == 1) {
+                        x += to_add;
+                    }
+                }
+            } else {
+                // Handle cases if `x` overshoots `n`
+                cout << "div " << x/n << endl;
+                cout.flush();
+                cin >> response;
+                if (response == 1) {
+                    x /= x/n;
+                }
+            }
+        }
+        
+        cout << "!" << endl;
+        cout.flush();
+        cin >> response; // Validate if `x` has reached `n`
+        if (response != 1) {
+            cerr << "Mismatch occurred. Adjust approach!" << endl;
+            return -1;
+        }
+    }
+    return 0;
+}

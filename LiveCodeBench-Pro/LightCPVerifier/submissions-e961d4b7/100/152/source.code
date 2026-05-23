@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+map<ll, int> memo;
+int zebra_value(ll e) {
+    if (e == 0) return 0;
+    if (memo.count(e)) return memo[e];
+    int d = e % 4;
+    int res = 1000;
+    for (int p = d; p <= 100; p += 4) {
+        if (p == 0) continue;
+        if ((e - p) % 4 != 0) continue;
+        ll nxt = (e - p) / 4;
+        if (nxt < 0) break;
+        int val = zebra_value(nxt);
+        if (val <= p) {
+            res = p;
+            break;
+        }
+    }
+    return memo[e] = res;
+}
+
+ll dp[64][128][128][2];
+ll count_up_to(ll x, int k) {
+    if (x < 0 || k > 100) return 0;
+    vector<int> digits;
+    ll tmp = x;
+    while (tmp) {
+        digits.push_back(tmp % 4);
+        tmp /= 4;
+    }
+    reverse(digits.begin(), digits.end());
+    if (digits.empty()) digits.push_back(0);
+    int n = digits.size();
+    memset(dp, 0, sizeof dp);
+    dp[0][0][k][1] = 1;
+    for (int pos = 0; pos < n; ++pos) {
+        for (int carry = 0; carry < 128; ++carry) {
+            for (int need = 0; need <= k; ++need) {
+                for (int tight = 0; tight < 2; ++tight) {
+                    ll cur = dp[pos][carry][need][tight];
+                    if (cur == 0) continue;
+                    int max_digit = tight ? digits[pos] : 3;
+                    for (int d = 0; d <= max_digit; ++d) {
+                        int cur_digit = d + carry;
+                        for (int t = 0; cur_digit + 4*t <= need; ++t) {
+                            int p = cur_digit + 4*t;
+                            int new_carry = t;
+                            int new_need = p;
+                            int new_tight = tight && (d == digits[pos]);
+                            dp[pos+1][new_carry][new_need][new_tight] += cur;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    ll ans = 0;
+    for (int carry = 0; carry < 128; ++carry) {
+        for (int tight = 0; tight < 2; ++tight) {
+            ans += dp[n][carry][0][tight];
+        }
+    }
+    return ans;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        ll l, r, k;
+        cin >> l >> r >> k;
+        if (k > 100) {
+            cout << 0 << '\n';
+            continue;
+        }
+        ll ans = count_up_to(r, k) - count_up_to(l-1, k);
+        cout << ans << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

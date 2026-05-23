@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool canFormSquare(int l1, int b1, int l2, int b2, int l3, int b3) {
+    int total = l1 * b1 + l2 * b2 + l3 * b3;
+    int s = sqrt(total);
+    if (s * s != total) return false;
+    
+    vector<pair<int, int>> a = {{l1, b1}, {l2, b2}, {l3, b3}};
+    vector<int> p = {0, 1, 2};
+    do {
+        int L1 = a[p[0]].first, B1 = a[p[0]].second;
+        int L2 = a[p[1]].first, B2 = a[p[1]].second;
+        int L3 = a[p[2]].first, B3 = a[p[2]].second;
+        
+        // Three vertical strips
+        if (B1 == s && B2 == s && B3 == s && L1 + L2 + L3 == s) return true;
+        // Three horizontal strips
+        if (L1 == s && L2 == s && L3 == s && B1 + B2 + B3 == s) return true;
+        
+        // Left column first rect, right side two rects stacked
+        if (L1 == s && B2 == B3 && B1 + B2 == s && L2 + L3 == s) return true;
+        // Right column first rect, left side two rects stacked
+        if (L1 == s && B2 == B3 && B1 == B2 && B1 + B2 == s && L2 + L3 == s) return true;
+        
+        // Top row first rect, bottom side two rects side‑by‑side
+        if (B1 == s && L2 == L3 && L1 + L2 == s && B2 + B3 == s) return true;
+        // Bottom row first rect, top side two rects side‑by‑side
+        if (B1 == s && L2 == L3 && L1 == L2 && L1 + L2 == s && B2 + B3 == s) return true;
+        
+    } while (next_permutation(p.begin(), p.end()));
+    
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int l1, b1, l2, b2, l3, b3;
+        cin >> l1 >> b1 >> l2 >> b2 >> l3 >> b3;
+        cout << (canFormSquare(l1, b1, l2, b2, l3, b3) ? "YES" : "NO") << "\n";
+    }
+    return 0;
+}

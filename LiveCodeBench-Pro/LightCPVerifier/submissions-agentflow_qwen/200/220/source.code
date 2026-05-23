@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long solve(const vector<long long>& a, long long s, long long x, bool strict_less) {
+    long long res = 0;
+    int n = a.size();
+    unordered_map<long long, int> freq;
+    long long prefix = 0;
+    freq[0] = 1;
+
+    for (int i = 0; i < n; i++) {
+        if (strict_less) {
+            if (a[i] >= x) {
+                // Reset: clear the map and restart from next
+                freq.clear();
+                freq[0] = 1;
+                prefix = 0;
+                continue;
+            }
+        } else {
+            if (a[i] > x) {
+                freq.clear();
+                freq[0] = 1;
+                prefix = 0;
+                continue;
+            }
+        }
+
+        prefix += a[i];
+        if (freq.find(prefix - s) != freq.end()) {
+            res += freq[prefix - s];
+        }
+        freq[prefix]++;
+    }
+
+    return res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        long long s, x;
+        cin >> n >> s >> x;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        long long ans = solve(a, s, x, false) - solve(a, s, x, true);
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

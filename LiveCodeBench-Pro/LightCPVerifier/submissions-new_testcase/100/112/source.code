@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+ll solve_one(int n, int k, vector<int>& a, vector<int>& b) {
+    ll known_x = -1;
+    bool conflict = false;
+    for (int i = 0; i < n; i++) {
+        if (b[i] != -1) {
+            ll x = (ll)a[i] + b[i];
+            if (known_x == -1) known_x = x;
+            else if (known_x != x) conflict = true;
+        }
+    }
+    if (conflict) return 0;
+    if (known_x != -1) {
+        for (int i = 0; i < n; i++) {
+            ll bi = known_x - (ll)a[i];
+            if (bi < 0 || bi > (ll)k) return 0;
+        }
+        return 1;
+    }
+    ll L = 0, R = 1e18;
+    for (int i = 0; i < n; i++) {
+        ll li = a[i];
+        ll ri = (ll)a[i] + k;
+        if (li > R || ri < L) return 0;
+        L = max(L, li);
+        R = min(R, ri);
+    }
+    if (L > R) return 0;
+    return R - L + 1;
+}
+
+int main() {
+    // 测试 known_x = 0 且 a_i 都为 0
+    int n = 3, k = 10;
+    vector<int> a = {0,0,0};
+    vector<int> b = {0,0,0};
+    cout << "Test1: " << solve_one(n,k,a,b) << endl;
+    // 测试 known_x = 0 但 a_i 有正数
+    a = {0,1,2};
+    b = {0,-1,-1};
+    cout << "Test2: " << solve_one(n,k,a,b) << endl;
+    // 测试 known_x 由多个已知位置给出
+    a = {1,2,3};
+    b = {4,3,2};
+    cout << "Test3: " << solve_one(n,k,a,b) << endl;
+    // 测试没有已知 x，区间交集
+    a = {1,2,3};
+    k = 1;
+    b = {-1,-1,-1};
+    cout << "Test4: " << solve_one(n,k,a,b) << endl;
+    return 0;
+}

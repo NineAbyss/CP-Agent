@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int nor(int x, int y, int k) {
+    return ((1 << k) - 1) & (~(x | y));
+}
+
+struct SegTree {
+    int n;
+    vector<int> tree;
+    SegTree(int size) {
+        n = size;
+        tree.assign(4 * n, 0);
+    }
+    void update(int idx, int l, int r, int ql, int qr, int val) {
+        if (ql > r || qr < l) return;
+        if (ql <= l && r <= qr) {
+            tree[idx] = max(tree[idx], val);
+            return;
+        }
+        int mid = (l + r) / 2;
+        update(idx*2, l, mid, ql, qr, val);
+        update(idx*2+1, mid+1, r, ql, qr, val);
+    }
+    void update(int l, int r, int val) {
+        update(1, 0, n-1, l, r, val);
+    }
+    int query(int idx, int l, int r, int pos) {
+        if (l == r) return tree[idx];
+        int mid = (l + r) / 2;
+        int res = tree[idx];
+        if (pos <= mid) res = max(res, query(idx*2, l, mid, pos));
+        else res = max(res, query(idx*2+1, mid+1, r, pos));
+        return res;
+    }
+    int query(int pos) {
+        return query(1, 0, n-1, pos);
+    }
+};
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    
+    SegTree seg(n);
+    // 单元素子数组
+    for (int i = 0; i < n; i++) {
+        seg.update(i, i, a[i]);
+    }
+    
+    // 对于每个起点 l
+    for (int l = 0; l < n; l++) {
+        int cur = a[l];
+        // 对于每个右端点 r
+        for (int r = l; r < n; r++) {
+            if (r > l) cur = nor(cur, a[r], k);
+            seg.update(l, r, cur);
+        }
+    }
+    
+    for (int i = 0; i < n; i++) {
+        cout << seg.query(i) << (i == n-1 ? '\n' : ' ');
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

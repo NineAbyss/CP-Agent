@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n), c(n), b(n);
+    set<int> missingNumbers;
+
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    for (int i = 0; i < n; ++i) {
+        cin >> c[i];
+        if (c[i] == 0) {
+            missingNumbers.insert(i + 1); // Collect potential missing numbers
+        } else {
+            b[i] = c[i]; // Already fixed in position
+        }
+    }
+
+    // Check which numbers are missing in b from 1 to n
+    for (int i = 1; i <= n; ++i) {
+        if (find(c.begin(), c.end(), i) == c.end()) {
+            // If i is not found in c, it's a missing number
+            missingNumbers.insert(i);
+        }
+    }
+
+    // Try to place missing numbers in the positions of zero
+    for (int i = 0; i < n; ++i) {
+        if (c[i] == 0) {
+            b[i] = *missingNumbers.begin();
+            missingNumbers.erase(missingNumbers.begin());
+        }
+    }
+
+    // Validate if b can be rearranged into a using the described operations:
+    if (is_permutation(a.begin(), a.end(), b.begin())) {
+        for (int i = 0; i < n; ++i) {
+            cout << b[i] << " ";
+        }
+        cout << "\n";
+    } else {
+        cout << -1 << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    for (int i = 0; i < t; ++i) {
+        solve();
+    }
+
+    return 0;
+}

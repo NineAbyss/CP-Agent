@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        // check if already beautiful
+        bool beautiful = false;
+        for (int i = 0; i < n - 1; i++) {
+            if (abs(a[i] - a[i+1]) <= 1) {
+                beautiful = true;
+                break;
+            }
+        }
+        if (beautiful) {
+            cout << 0 << '\n';
+            continue;
+        }
+        // check if one operation can make beautiful
+        bool one_op = false;
+        for (int i = 0; i < n - 2; i++) {
+            int p = a[i], q = a[i+1], r = a[i+2];
+            // merge q and r, check with p
+            int L1 = min(q, r), R1 = max(q, r);
+            if (max(L1, p-1) <= min(R1, p+1)) {
+                one_op = true;
+                break;
+            }
+            // merge p and q, check with r
+            int L2 = min(p, q), R2 = max(p, q);
+            if (max(L2, r-1) <= min(R2, r+1)) {
+                one_op = true;
+                break;
+            }
+        }
+        if (one_op) {
+            cout << 1 << '\n';
+        } else {
+            cout << -1 << '\n';
+        }
+    }
+    return 0;
+}

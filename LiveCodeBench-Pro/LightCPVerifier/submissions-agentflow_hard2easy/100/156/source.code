@@ -1,0 +1,190 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+
+bool check_queries(int n, const vector<vector<int>>& queries) {
+    int q = queries.size();
+    
+    for (int x = 1; x <= n; x++) {
+        string responses(q, ' ');
+        for (int i = 0; i < q; i++) {
+            auto& arr = queries[i];
+            int k = arr.size();
+            auto it = find(arr.begin(), arr.end(), x);
+            if (it == arr.end()) {
+                responses[i] = 'N';
+            } else {
+                int pos = it - arr.begin();
+                if (pos < k/2) responses[i] = 'L';
+                else responses[i] = 'R';
+            }
+        }
+        
+        for (int ignore = 0; ignore < q; ignore++) {
+            string mod_resp = responses;
+            mod_resp[ignore] = '?';
+            
+            vector<int> candidates;
+            for (int y = 1; y <= n; y++) {
+                bool ok = true;
+                int ignore_count = 0;
+                for (int i = 0; i < q; i++) {
+                    char actual = mod_resp[i];
+                    if (actual == '?') {
+                        ignore_count++;
+                        if (ignore_count > 1) { ok = false; break; }
+                        continue;
+                    }
+                    
+                    char expected;
+                    auto& arr = queries[i];
+                    int k = arr.size();
+                    auto it = find(arr.begin(), arr.end(), y);
+                    if (it == arr.end()) expected = 'N';
+                    else {
+                        int pos = it - arr.begin();
+                        if (pos < k/2) expected = 'L';
+                        else expected = 'R';
+                    }
+                    
+                    if (actual != expected) { ok = false; break; }
+                }
+                
+                if (ok && ignore_count <= 1) {
+                    candidates.push_back(y);
+                }
+            }
+            
+            if (candidates.size() != 1 || candidates[0] != x) {
+                return false;
+            }
+        }
+    }
+    
+    return true;
+}
+
+pair<int, vector<vector<int>>> generate_queries(int n) {
+    if (n == 3) return {2, {{1, 2}, {1, 2}}};
+    if (n == 4) return {3, {{2, 1}, {1, 4, 3, 2}, {3, 1}}};
+    if (n == 5) return {3, {{3, 2, 4, 1}, {5, 4, 3, 1}, {1, 5, 3, 4}}};
+    
+    int min_q = 0;
+    long long pow3 = 1;
+    while (pow3 < n) {
+        min_q++;
+        pow3 *= 3;
+    }
+    min_q++;
+    
+    for (int q = min_q; q <= 20; q++) {
+        rng.seed(n * 1000000ULL + q * 123456ULL);
+        
+        for (int attempt = 0; attempt < 500; attempt++) {
+            vector<vector<int>> queries(q);
+            
+            for (int i = 0; i < q; i++) {
+                int k = uniform_int_distribution<int>(2, n)(rng);
+                if (k % 2 != 0) k--;
+                if (k < 2) k = 2;
+                
+                vector<int> arr(k);
+                vector<int> all_numbers(n);
+                iota(all_numbers.begin(), all_numbers.end(), 1);
+                shuffle(all_numbers.begin(), all_numbers.end(), rng);
+                copy(all_numbers.begin(), all_numbers.begin() + k, arr.begin());
+                
+                queries[i] = arr;
+            }
+            
+            if (check_queries(n, queries)) {
+                return {q, queries};
+            }
+        }
+    }
+    
+    int q_fallback = 20;
+    vector<vector<int>> queries_fallback(q_fallback);
+    for (int i = 0; i < q_fallback; i++) {
+        int k = (n % 2 == 0) ? n : n-1;
+        vector<int> arr(k);
+        iota(arr.begin(), arr.end(), 1);
+        rotate(arr.begin(), arr.begin() + (i % k), arr.end());
+        queries_fallback[i] = arr;
+    }
+    return {q_fallback, queries_fallback};
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        auto [q, queries] = generate_queries(n);
+        
+        cout << q << '\n';
+        for (int i = 0; i < q; i++) {
+            cout << queries[i].size();
+            for (int x : queries[i]) {
+                cout << ' ' << x;
+            }
+            cout << '\n';
+        }
+        cout.flush();
+        
+        string responses;
+        cin >> responses;
+        
+        int answer = -1;
+        for (int x = 1; x <= n; x++) {
+            int ignore_count = 0;
+            bool ok = true;
+            
+            for (int i = 0; i < q; i++) {
+                char actual = responses[i];
+                if (actual == '?') {
+                    ignore_count++;
+                    if (ignore_count > 1) {
+                        ok = false;
+                        break;
+                    }
+                    continue;
+                }
+                
+                char expected;
+                auto& arr = queries[i];
+                int k = arr.size();
+                auto it = find(arr.begin(), arr.end(), x);
+                if (it == arr.end()) {
+                    expected = 'N';
+                } else {
+                    int pos = it - arr.begin();
+                    if (pos < k/2) expected = 'L';
+                    else expected = 'R';
+                }
+                
+                if (actual != expected) {
+                    ok = false;
+                    break;
+                }
+            }
+            
+            if (ok && ignore_count <= 1) {
+                answer = x;
+                break;
+            }
+        }
+        
+        cout << answer << '\n';
+        cout.flush();
+    }
+    
+    return 0;
+}

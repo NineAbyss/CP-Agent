@@ -1,0 +1,89 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct ApplePath {
+    int length;
+    int start;
+    int end;
+    ApplePath(int len, int s, int e) : length(len), start(s), end(e) {}
+};
+
+bool operator<(const ApplePath& a, const ApplePath& b) {
+    if (a.length != b.length) return a.length > b.length;
+    if (a.start != b.start) return a.start > b.start;
+    return a.end > b.end;
+}
+
+class AppleTree {
+    int n;
+    vector<vector<int>> adj;
+    vector<bool> hasApple;
+
+public:
+    AppleTree(int size) : n(size), adj(size + 1), hasApple(size + 1, true) {}
+
+    void addEdge(int u, int v) {
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    vector<ApplePath> findPaths() {
+        vector<ApplePath> paths;
+        for (int node = 1; node <= n; ++node) {
+            sort(adj[node].rbegin(), adj[node].rend());
+        }
+        vector<int> path;
+        dfs(1, -1, path, paths);  // Start DFS from node 1
+        sort(paths.begin(), paths.end());
+        return paths;
+    }
+
+private:
+    void dfs(int node, int parent, vector<int>& path, vector<ApplePath>& paths) {
+        path.push_back(node);
+        for (int neighbor : adj[node]) {
+            if (neighbor != parent) {
+                dfs(neighbor, node, path, paths);
+            }
+        }
+
+        if (all_of(path.begin(), path.end(), [&](int x) { return hasApple[x]; })) {
+            int pathLength = path.size();
+            if (pathLength > 1) {
+                paths.emplace_back(pathLength, path.front(), path.back());
+                for (int x : path) hasApple[x] = false;
+            }
+        }
+        path.pop_back();
+    }
+};
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        AppleTree tree(n);
+        for (int i = 0; i < n - 1; ++i) {
+            int u, v;
+            cin >> u >> v;
+            tree.addEdge(u, v);
+        }
+
+        vector<ApplePath> paths = tree.findPaths();
+        for (const auto& path : paths) {
+            cout << path.length << " " << path.start << " " << path.end << " ";
+        }
+        cout << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

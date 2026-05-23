@@ -1,0 +1,192 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+const int LOG = 17;
+
+struct LCA {
+    int n;
+    vector<vector<int>> adj, up;
+    vector<int> depth;
+    
+    LCA(int n, vector<vector<int>>& adj) : n(n), adj(adj) {
+        up.assign(n+1, vector<int>(LOG));
+        depth.assign(n+1, 0);
+        
+        vector<int> parent(n+1, 0);
+        queue<int> q;
+        q.push(1);
+        parent[1] = 0;
+        
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            for (int v : adj[u]) {
+                if (v != parent[u]) {
+                    parent[v] = u;
+                    depth[v] = depth[u] + 1;
+                    q.push(v);
+                }
+            }
+        }
+        
+        for (int i = 1; i <= n; i++) {
+            up[i][0] = parent[i];
+        }
+        
+        for (int j = 1; j < LOG; j++) {
+            for (int i = 1; i <= n; i++) {
+                up[i][j] = up[up[i][j-1]][j-1];
+            }
+        }
+    }
+    
+    int lca(int u, int v) {
+        if (depth[u] < depth[v]) swap(u, v);
+        int diff = depth[u] - depth[v];
+        for (int i = 0; i < LOG; i++) {
+            if (diff & (1 << i)) {
+                u = up[u][i];
+            }
+        }
+        if (u == v) return u;
+        for (int i = LOG-1; i >= 0; i--) {
+            if (up[u][i] != up[v][i]) {
+                u = up[u][i];
+                v = up[v][i];
+            }
+        }
+        return up[u][0];
+    }
+    
+    int dist(int u, int v) {
+        return depth[u] + depth[v] - 2 * depth[lca(u, v)];
+    }
+    
+    vector<int> get_path(int u, int v) {
+        int w = lca(u, v);
+        vector<int> path;
+        
+        int cur = u;
+        while (cur != w) {
+            path.push_back(cur);
+            cur = up[cur][0];
+        }
+        path.push_back(w);
+        
+        vector<int> right;
+        cur = v;
+        while (cur != w) {
+            right.push_back(cur);
+            cur = up[cur][0];
+        }
+        reverse(right.begin(), right.end());
+        path.insert(path.end(), right.begin(), right.end());
+        
+        return path;
+    }
+};
+
+void solve() {
+    int n, m, x, y;
+    cin >> n >> m >> x >> y;
+    
+    vector<vector<int>> adj(n+1);
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    vector<pair<int, int>> enemies(m);
+    for (int i = 0; i < m; i++) {
+        cin >> enemies[i].first >> enemies[i].second;
+    }
+    
+    LCA lca(n, adj);
+    
+    // 为每个节点存储被占据的时间（排序）
+    vector<vector<int>> occ_times(n+1);
+    
+    for (auto& [a, b] : enemies) {
+        vector<int> path = lca.get_path(a, b);
+        int d = path.size() - 1;
+        for (int t = 2; t <= d+1; t++) {
+            int node = path[t-1];
+            occ_times[node].push_back(t);
+        }
+    }
+    
+    // 排序并去重
+    for (int u = 1; u <= n; u++) {
+        sort(occ_times[u].begin(), occ_times[u].end());
+        occ_times[u].erase(unique(occ_times[u].begin(), occ_times[u].end()), occ_times[u].end());
+    }
+    
+    // 检查时间t是否被占据（t>=2）
+    auto is_occupied = [&](int node, int t) -> bool {
+        if (t == 1) return false;
+        const auto& times = occ_times[node];
+        auto it = lower_bound(times.begin(), times.end(), t);
+        return it != times.end() && *it == t;
+    };
+    
+    // BFS with unordered_map for visited states
+    unordered_map<int, unordered_set<int>> visited;
+    queue<pair<int, int>> q;
+    q.push({x, 1});
+    visited[x].insert(1);
+    
+    // 时间上限
+    int max_dist = lca.dist(x, y);
+    int max_time = max_dist + 5000;
+    
+    // 限制状态数
+    int states = 0;
+    const int MAX_STATES = 1000000;
+    
+    while (!q.empty() && states < MAX_STATES) {
+        states++;
+        auto [u, t] = q.front(); q.pop();
+        
+        if (u == y) {
+            cout << t << '\n';
+            return;
+        }
+        
+        if (t > max_time) continue;
+        
+        // 等待
+        if (!is_occupied(u, t+1)) {
+            if (visited[u].find(t+1) == visited[u].end()) {
+                visited[u].insert(t+1);
+                q.push({u, t+1});
+            }
+        }
+        
+        // 移动到邻居
+        for (int v : adj[u]) {
+            if (!is_occupied(v, t+1)) {
+                if (visited[v].find(t+1) == visited[v].end()) {
+                    visited[v].insert(t+1);
+                    q.push({v, t+1});
+                }
+            }
+        }
+    }
+    
+    cout << "-1\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+long long calculateAngriness(const vector<long long>& lanes, long long avg, long long excess, long long k) {
+    long long angriness = 0;
+    long long full = avg * (avg + 1) / 2;
+    long long fullPlusOne = (avg + 1) * (avg + 2) / 2;
+    
+    for (long long cars : lanes) {
+        if (cars <= avg) {
+            angriness += full - ((avg - cars) * (avg - cars + 1) / 2);
+        } else {
+            long long move = min(cars - avg, excess);
+            angriness += (fullPlusOne - ((avg + 1 - (cars - move)) * (avg + 2 - (cars - move)) / 2)) + move * k;
+            excess -= move;
+        }
+    }
+    
+    return angriness;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        long long n, k;
+        cin >> n >> k;
+        
+        vector<long long> lanes(n);
+        long long total_cars = 0;
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> lanes[i];
+            total_cars += lanes[i];
+        }
+        
+        long long avg = total_cars / n;
+        long long extraCars = total_cars % n;
+        
+        long long minimum_angriness = calculateAngriness(lanes, avg, extraCars, k);
+        
+        cout << minimum_angriness << '\n';
+    }
+    
+    return 0;
+}

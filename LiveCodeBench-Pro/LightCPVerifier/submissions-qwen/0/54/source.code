@@ -1,0 +1,191 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    // Sort indices by value in descending order
+    vector<int> idx(n);
+    iota(idx.begin(), idx.end(), 0);
+    sort(idx.begin(), idx.end(), [&](int i, int j) {
+        return a[i] > a[j];
+    });
+
+    // Precompute prefix sums of the original array
+    vector<ll> prefix(n + 1);
+    for (int i = 0; i < n; i++) {
+        prefix[i + 1] = prefix[i] + a[i];
+    }
+
+    // For each k from 1 to n, compute maximum sum of last k elements // We can move one element to the end. So we can "save" one large element
+    // that would otherwise be excluded from the last k, and instead exclude a smaller one.
+
+    vector<ll> ans(n);
+    ll sum = 0;
+    multiset<ll> taken;  // The values we are including at the end
+
+    // We simulate: for k = 1 to n, we want to maximize sum of last k // Idea: we can bring one high-value element to the end.
+    // So the best strategy is to take the top k+1 largest elements,
+    // and place one of them (the smallest among these) not in the last k, but we can avoid excluding it by moving another one?
+
+    // Alternate idea: // For a fixed k, we are allowed to move one element to the end.
+    // Then the last k elements consist of:
+    //   - up to k-1 elements from the original last n-k positions (we can't add more than k-1 new ones because one spot is used for the moved one)
+    //   - plus the moved element // But actually, we can think greedily:
+
+    // Actually, optimal strategy: // We can choose to move one element x to the end. Then the last k elements will be:
+    //   - the last k-1 elements of the current array (excluding the moved one if it was there) //   - plus x
+    // But if x was already in the last k-1, then effectively we just have the last k elements unchanged.
+
+    // So the sum is:
+    //   base = sum of last k-1 elements (if we move an element from front), OR last k (if we move one from back)
+    // We want to maximize base + (moved element)
+
+    // However, if we move an element from the last k, then the last k elements become: //   [last k without that element] + [moved element] -> so same set essentially? Not exactly: we replace one element with itself? No change.
+
+    // Actually, if we move an element from position i:
+    // - if i >= n-k+1 (i.e., in the last k-1), then after moving it to end, it's still in the last k, so the last k elements are unchanged.
+    // - if i < n-k+1, then we remove a[i] from front and append it, so the last k elements are: the original last k-1 elements + a[i]
+
+    // Therefore, the sum becomes:
+    //   sum_{j = n-k+1}^{n-1} a[j] + a[i]   (if i < n-k+1)
+    // or
+    //   sum_{j = n-k}^{n-1} a[j]             (if i >= n-k+1, no improvement)
+
+    // So to maximize, we should pick i such that a[i] is maximum among indices < n-k+1.
+
+    // Therefore, for fixed k, the maximum sum is: //   max( suffix_sum(k), suffix_sum(k-1) + max_prefix_element(n-k) )
+    // where: //   suffix_sum(k) = sum of last k elements
+    //   suffix_sum(k-1) = sum of last k-1 elements //   max_prefix_element(n-k) = max(a[0], a[1], ..., a[n-k-1])
+
+    // But note: if k == n, then n-k = 0, so we take max of first 0 elements? That doesn't work.
+
+    // Actually, when k = n, we can move any element to the end — but the entire array is included anyway, so sum is total sum.
+    // Also, for k = n, n-k = 0, so we cannot pick any element from prefix? But we can still move an element from the prefix (which is empty) — contradiction.
+
+    // Correction: indices from 0 to n-k-1 are the first n-k elements. When k = n, n-k = 0, so we consider indices < 0 -> none. // So in that case, we cannot improve over the full sum? But the full sum is already the maximum possible.
+
+    // Therefore: //   ans[k-1] = max(
+    //       prefix[n] - prefix[n-k],   // original last k sum //       (k == 1 ? 0 : (prefix[n] - prefix[n-k+1])) + (n-k > 0 ? *max_element(a.begin(), a.begin() + n-k) : 0)
+    //   );
+    // But wait: when k=1, then we can get max(a[i]) for any i, because we move the max element to end -> last 1 is that max.
+    // And original last 1 might not be the max.
+
+    // Actually, for k=1: //   Option 1: don't move anything from last 1 -> sum = a[n-1]
+    //   Option 2: move a big element from front -> sum = that big element //   So ans[0] = max(a[n-1], max_of_first_n-1) -> but actually we can move even a[n-1]? Then no change.
+    //   So best is max_element of entire array.
+
+    // But wait: we can always move the global maximum to the end. So for k=1, we can achieve max(a).
+
+    // Similarly, for any k, we can achieve: //   = max(
+    //         sum of last k elements,  //         (sum of last k-1 elements) + (max element in the first n-k+1 elements)
+    //     )
+
+    // Why first n-k+1? Because we can only move an element from index < n-k+1 to gain an improvement (if we move from last k-1, no change). // And the first n-k+1 elements are indices [0, n-k].
+
+    // Example: n=7, k=2 -> n-k+1 = 6, so we can move any of the first 6 elements to the end. // Then the last 2 elements become: a[5] (original last but one) and the moved element.
+    // So sum = a[5] + max(a[0..5])
+    // But what if the max is already in a[5]? Then we get a[5] + a[5]? No: we move a[5] to end -> last two become a[4] and a[5]? Wait.
+
+    // Let me reindex: array a[0..6] // k=2: last 2 are a[5] and a[6]
+    // If we move an element from index i < 5 (i.e., 0..4), then the array becomes: //   [a[0],...,a[i-1], a[i+1],...,a[5], a[6], a[i]]
+    // So last two: a[6] and a[i] -> sum = a[6] + a[i] // But wait: after removing a[i], the element at position 5 becomes a[6]? No:
+    // Original: [0,1,2,3,4,5,6] -> remove a[i] (i<5), shift left, then append a[i] // So positions:
+    //   for j in [0, i): a[j]
+    //   for j in [i, 5]: a[j+1]  -> so a[5] becomes a[6]
+    //   then append a[i] // So last two: a[6] (now at pos 5) and a[i] (at pos 6) -> sum = a[6] + a[i]
+
+    // But if we move a[5] (i=5): then remove a[5], shift: a[6] moves to pos 5, then append a[5] at end.
+    // So last two: a[6] (at pos 5) and a[5] (at pos 6) -> same as before: a[5] and a[6] originally? 
+    // But originally last two were a[5] and a[6]. Now they are a[6] and a[5] -> same sum.
+
+    // Similarly, if we move a[6]: then last two become a[5] and a[6] again.
+
+    // Therefore, the sum when moving an element i is:
+    //   if i <= n-k: then the last k elements are: a[n-k+1], a[n-k+2], ..., a[n-1], a[i] -> sum = (suffix sum of length k-1 starting at n-k+1) + a[i]
+    //   if i > n-k: then the last k elements are unchanged: a[n-k], ..., a[n-1] -> sum = suffix sum of length k
+
+    // So maximum sum = max(  //      suffix_sum(k),
+    //      suffix_sum(k-1) + max{ a[i] for i in [0, n-k] }  // )
+
+    // But note: suffix_sum(k-1) = sum of a[n-k+1 ... n-1]
+
+    // However, what if k=1? //   suffix_sum(1) = a[n-1]
+    //   suffix_sum(0) = 0
+    //   max{ a[i] for i in [0, n-1] } = global_max
+    //   so candidate = 0 + global_max = global_max //   then ans = max(a[n-1], global_max) = global_max -> correct.
+
+    // What if k=n? //   suffix_sum(n) = total sum
+    //   suffix_sum(n-1) = sum of last n-1 = total sum - a[0]
+    //   max{ a[i] for i in [0, 0] } = a[0]
+    //   candidate = (total sum - a[0]) + a[0] = total sum //   so ans = max(total sum, total sum) = total sum -> correct.
+
+    // But wait: for k=n, we can move any element to the end, but the entire array is included anyway, so sum is always total sum.
+
+    // However, note: when k=n, n-k = 0, so the range [0, n-k] = [0,0] -> only a[0]?  // But we should be able to move any element from [0, n-1]?
+
+    // Correction: condition for improvement: we can only get improvement by moving an element from index i <= n-k. // For k=n: n-k = 0, so i<=0 -> only index 0.
+
+    // But that is not correct: we should be able to move any element from the first n-k+1 = 1 element? 
+    // Actually, our earlier derivation: we require i < n-k+1 -> for k=n: i < 1 -> i=0 only.
+
+    // But wait: when we move an element from index i (where i>=1) to the end, does the last n elements change? // The entire array is included regardless, so the sum remains the same.
+
+    // Therefore, we don't need to consider moving elements from the last k positions because it doesn't change the sum.
+
+    // So the formula holds.
+
+    // Steps: //   Precompute suffix sums: we can use prefix array.
+    //   Precompute maximums for prefixes: let max_prefix[i] = max(a[0], a[1], ..., a[i])
+
+    vector<ll> max_prefix(n);
+    if (n > 0) {
+        max_prefix[0] = a[0];
+        for (int i = 1; i < n; i++) {
+            max_prefix[i] = max(max_prefix[i-1], a[i]);
+        }
+    }
+
+    for (int k = 1; k <= n; k++) {
+        ll option1 = prefix[n] - prefix[n - k]; // last k elements
+        ll option2 = 0;
+        if (k == 1) {
+            // Then we can get max element in entire array
+            option2 = max_prefix[n-1];
+        } else {
+            // We can get: sum of last k-1 elements + max element in first n-k+1 elements
+            ll sum_last_k_minus_1 = prefix[n] - prefix[n - (k-1)];
+            ll max_in_first = (n - k >= 0) ? max_prefix[n - k] : 0;
+            // But note: if n-k < 0, then n-k+1 <=0 -> no element in first part? but k<=n so n-k>=0.
+            option2 = sum_last_k_minus_1 + max_in_first;
+        }
+        ans[k-1] = max(option1, option2);
+    }
+
+    // Output the answer
+    for (int i = 0; i < n; i++) {
+        cout << ans[i];
+        if (i < n-1) cout << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

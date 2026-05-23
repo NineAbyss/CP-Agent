@@ -1,0 +1,36 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, x;
+        cin >> n >> x;
+
+        vector<int> doors(n);
+        for (int i = 0; i < n; ++i)
+            cin >> doors[i];
+
+        int left = 0, right = n - 1;
+        
+        // Move left index if the door is open
+        while (left < n && doors[left] == 0) {
+            ++left;
+        }
+
+        // Move right index if the door is open
+        while (right >= 0 && doors[right] == 0) {
+            --right;
+        }
+
+        // button can open at most x continuous closed doors
+        if (right - left + 1 <= x) {
+            cout << "YES" << endl;
+        } else {
+            cout << "NO" << endl;
+        }
+    }
+    return 0;
+}

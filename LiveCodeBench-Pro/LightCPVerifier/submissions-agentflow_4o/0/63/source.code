@@ -1,0 +1,44 @@
+#include <iostream>
+using namespace std;
+
+int compute_max_portions(int k, int a, int b, int x, int y) {
+    int count = 0;
+
+    // If decrement x is less or equal, choose first type first, otherwise second type.
+    if (x <= y) {
+        // Prioritize the first type if possible.
+        if (k >= a) {
+            count += (k - a) / x + 1;  // +1 because we can cook at a
+            k -= count * x;
+        }
+        // Then use the second type.
+        if (k >= b) {
+            count += (k - b) / y + 1;
+        }
+    } else {
+        // Prioritize the second type.
+        if (k >= b) {
+            count += (k - b) / y + 1;
+            k -= count * y;
+        }
+        // Then use the first type.
+        if (k >= a) {
+            count += (k - a) / x + 1;
+        }
+    }
+
+    return count;
+}
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int k, a, b, x, y;
+        cin >> k >> a >> b >> x >> y;
+        cout << compute_max_portions(k, a, b, x, y) << endl;
+    }
+
+    return 0;
+}

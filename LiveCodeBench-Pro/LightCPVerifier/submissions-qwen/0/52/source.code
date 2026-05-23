@@ -1,0 +1,110 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1000006;
+const int MAXK = 26;
+
+// Precompute next occurrence for each position and each character
+int next_pos[MAXN][MAXK];
+string s;
+int n, k;
+
+void preprocess() {
+    // Initialize with n (meaning beyond the end)
+    for (int j = 0; j < k; j++) {
+        next_pos[n][j] = n;
+    }
+    
+    // Process from right to left
+    for (int i = n - 1; i >= 0; i--) {
+        for (int j = 0; j < k; j++) {
+            next_pos[i][j] = next_pos[i + 1][j];
+        }
+        // Update the current character
+        int c = s[i] - 'a';
+        next_pos[i][c] = i;
+    }
+}
+
+// Check if t is a subsequence of s starting from pos
+// Returns the position in s where we finished matching, or n if not possible
+int find_subsequence_end(const string& t, int start_pos) {
+    int pos = start_pos;
+    for (char ch : t) {
+        int c = ch - 'a';
+        if (pos >= n) return n;
+        if (next_pos[pos][c] == n) return n;
+        pos = next_pos[pos][c] + 1;
+    }
+    return pos;
+}
+
+// For a given prefix t, find the minimum number of letters to append // so that it's no longer a subsequence of s
+int solve_query(const string& t) {
+    // First check if t itself is not a subsequence
+    if (find_subsequence_end(t, 0) == n) {
+        return 0;
+    }
+    
+    // Try appending 1, 2, ... letters until we find one that cannot be extended
+    int steps = 1;
+    queue<int> positions;
+    positions.push(find_subsequence_end(t, 0));
+    
+    while (steps <= n) {  // upper bound
+        queue<int> next_positions;
+        
+        // Try appending each allowed character
+        for (int c = 0; c < k; c++) {
+            bool found_all = true;
+            
+            // For each current position, try to extend with character c
+            queue<int> temp = positions;
+            while (!temp.empty()) {
+                int pos = temp.front();
+                temp.pop();
+                
+                if (pos < n && next_pos[pos][c] < n) {
+                    // Can extend this position
+                    found_all = false;
+                    next_positions.push(next_pos[pos][c] + 1);
+                }
+            }
+            
+            if (found_all) {
+                // Cannot extend with character c from any position
+                return steps;
+            }
+        }
+        
+        // Prepare for next iteration
+        positions = move(next_positions);
+        steps++;
+        
+        // Safety break
+        if (steps > n) break;
+    }
+    
+    return n; // fallback
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    cin >> n >> k;
+    cin >> s;
+    
+    preprocess();
+    
+    int q;
+    cin >> q;
+    
+    while (q--) {
+        string t;
+        cin >> t;
+        cout << solve_query(t) << '\n';
+    }
+    
+    return 0;
+}

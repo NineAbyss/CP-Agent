@@ -1,0 +1,126 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200000;
+const int LOG = 18;
+
+int n, q;
+int p[MAXN + 5];
+
+// Sparse Table for min and max
+int st_min[LOG + 1][MAXN + 5];
+int st_max[LOG + 1][MAXN + 5];
+int log_table[MAXN + 5]; // precomputed logs
+
+void build_st() {
+    // Initialize base level
+    for (int i = 1; i <= n; i++) {
+        st_min[0][i] = p[i];
+        st_max[0][i] = p[i];
+    }
+
+    // Precompute logarithms
+    log_table[1] = 0;
+    for (int i = 2; i <= MAXN; i++) {
+        log_table[i] = log_table[i/2] + 1;
+    }
+
+    // Build sparse table
+    for (int k = 1; k <= LOG; k++) {
+        int len = 1 << k;
+        for (int i = 1; i + len - 1 <= n; i++) {
+            st_min[k][i] = min(st_min[k-1][i], st_min[k-1][i + (1<<(k-1))]);
+            st_max[k][i] = max(st_max[k-1][i], st_max[k-1][i + (1<<(k-1))]);
+        }
+    }
+}
+
+int query_min(int l, int r) {
+    int k = log_table[r - l + 1];
+    return min(st_min[k][l], st_min[k][r - (1<<k) + 1]);
+}
+
+int query_max(int l, int r) {
+    int k = log_table[r - l + 1];
+    return max(st_max[k][l], st_max[k][r - (1<<k) + 1]);
+}
+
+// Also need position? Or we can work with values only. // For checking endpoints, we need to know where min/max are.
+// So let's also build pos-min and pos-max query? 
+// But sparse table usually returns value, not pos.
+
+// We'll do: to get position of min in [l,r], we cannot easily with this ST. // Alternative: build ST that stores pair(value, index), but more complex.
+
+// Instead, since we only need to check if min/max is at l or r, we can: // - get min_val = query_min(l,r)
+// - then check if p[l] == min_val or p[r] == min_val
+// similarly for max
+
+// But caution: what if min appears at both l and elsewhere? but permutation, unique values.
+
+// So yes: if p[l] == min_val or p[r] == min_val, then min is at endpoint.
+
+// Same for max.
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n;
+    for (int i = 1; i <= n; i++) {
+        cin >> p[i];
+    }
+    cin >> q;
+
+    build_st();
+
+    vector<string> answers;
+
+    for (int idx = 0; idx < q; idx++) {
+        int l, r;
+        cin >> l >> r;
+
+        int min_val = query_min(l, r);
+        int max_val = query_max(l, r);
+
+        // Check if min or max is at endpoint
+        if (p[l] == min_val || p[l] == max_val || p[r] == min_val || p[r] == max_val) {
+            answers.push_back("YES");
+        } else {
+            bool found = false;
+            // Try every split point i from l to r-1
+            for (int i = l; i < r && !found; i++) {
+                int left_max = query_max(l, i);
+                int right_min = query_min(i+1, r);
+                if (left_max < right_min) {
+                    found = true;
+                } else {
+                    int left_min = query_min(l, i);
+                    int right_max = query_max(i+1, r);
+                    if (left_min > right_max) {
+                        found = true;
+                    }
+                }
+            }
+            answers.push_back(found ? "YES" : "NO");
+        }
+
+        // After every 10 queries, flush
+        if ((idx + 1) % 10 == 0) {
+            for (const string& ans : answers) {
+                cout << ans << '\n';
+            }
+            cout.flush();
+            answers.clear();
+        }
+    }
+
+    // Output any remaining answers
+    if (!answers.empty()) {
+        for (const string& ans : answers) {
+            cout << ans << '\n';
+        }
+        cout.flush();
+    }
+
+    return 0;
+}

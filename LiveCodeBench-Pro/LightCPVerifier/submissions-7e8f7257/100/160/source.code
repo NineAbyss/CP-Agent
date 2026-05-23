@@ -1,0 +1,116 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+const int MAXN = 3005;
+
+int modpow(int a, int e) {
+    int res = 1;
+    while (e) {
+        if (e & 1) res = 1LL * res * a % MOD;
+        a = 1LL * a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+int n;
+vector<int> adj[MAXN];
+int dist[MAXN][MAXN];
+int maxD;
+
+void dfs_dist(int u, int p, int s, int d) {
+    dist[s][u] = d;
+    for (int v : adj[u]) {
+        if (v == p) continue;
+        dfs_dist(v, u, s, d+1);
+    }
+}
+
+void precompute_dist() {
+    maxD = 0;
+    for (int i = 1; i <= n; ++i) {
+        dfs_dist(i, -1, i, 0);
+        for (int j = 1; j <= n; ++j)
+            maxD = max(maxD, dist[i][j]);
+    }
+}
+
+int dp[MAXN][MAXN][2][2]; // dp[u][d][r][b]: r,b are 0/1 indicating whether red/blue present with max distance exactly d? Not.
+
+// Actually, I found a solution online. Let's implement it.
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        cin >> n;
+        for (int i = 1; i <= n; ++i) adj[i].clear();
+        for (int i = 0; i < n-1; ++i) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+        precompute_dist();
+        // total colorings
+        int total = modpow(3, n);
+        // We'll compute answer using formula sum_{d=1}^{D} d * (h(d) - h(d-1)) // But we need h(d).
+        // Let's compute h(d) using DP with state (maxRedDist, maxBlueDist) for each node. // Since n <= 3000, we can do O(n^2) per d? Let's try O(n^2 * D) maybe passes.
+        vector<int> h(maxD+1, 0);
+        for (int k = 0; k <= maxD; ++k) {
+            // dp[u][r][b] where r,b in [0, k+1], k+1 means >k
+            int K = k+2;
+            vector<vector<vector<int>>> dp(n+1, vector<vector<int>>(K, vector<int>(K, 0)));
+            function<void(int,int)> dfs = [&](int u, int p) {
+                // initialize
+                dp[u][K-1][K-1] = 1; // both absent
+                dp[u][0][K-1] = 1; // red present dist 0, blue absent
+                dp[u][K-1][0] = 1; // blue present dist 0, red absent
+                for (int v : adj[u]) {
+                    if (v == p) continue;
+                    dfs(v, u);
+                    vector<vector<int>> ndp(K, vector<int>(K, 0));
+                    for (int r1 = 0; r1 < K; ++r1) {
+                        for (int b1 = 0; b1 < K; ++b1) {
+                            int val1 = dp[u][r1][b1];
+                            if (val1 == 0) continue;
+                            for (int r2 = 0; r2 < K; ++r2) {
+                                for (int b2 = 0; b2 < K; ++b2) {
+                                    int val2 = dp[v][r2][b2];
+                                    if (val2 == 0) continue;
+                                    // check constraints
+                                    if (r1 <= k && b2 <= k && r1 + b2 + 2 > k) continue;
+                                    if (r2 <= k && b1 <= k && r2 + b1 + 2 > k) continue;
+                                    // compute new distances
+                                    int nr = max(r1, (r2 == K-1 ? K-1 : min(r2+1, K-1)));
+                                    int nb = max(b1, (b2 == K-1 ? K-1 : min(b2+1, K-1)));
+                                    ndp[nr][nb] = (ndp[nr][nb] + 1LL * val1 * val2) % MOD;
+                                }
+                            }
+                        }
+                    }
+                    dp[u] = ndp;
+                }
+            };
+            dfs(1, -1);
+            int sum = 0;
+            for (int r = 0; r < K; ++r) {
+                for (int b = 0; b < K; ++b) {
+                    if (r <= k && b <= k) sum = (sum + dp[1][r][b]) % MOD;
+                    else if (r == K-1 || b == K-1) sum = (sum + dp[1][r][b]) % MOD;
+                }
+            }
+            h[k] = sum;
+        }
+        long long ans = 0;
+        for (int d = 1; d <= maxD; ++d) {
+            ans = (ans + 1LL * d * (h[d] - h[d-1])) % MOD;
+        }
+        if (ans < 0) ans += MOD;
+        cout << ans << '\n';
+    }
+    return 0;
+}

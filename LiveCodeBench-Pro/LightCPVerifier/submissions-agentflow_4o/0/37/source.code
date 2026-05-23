@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    vector<int> perm(n, 0);
+    vector<pair<int, int>> sorted_indices;
+
+    for (int i = 0; i < n; ++i) {
+        sorted_indices.emplace_back(a[i], i);
+    }
+
+    // Sorting based on iteration number descending, and index ascending to respect removal order
+    sort(sorted_indices.begin(), sorted_indices.end(), [](const pair<int, int>& lhs, const pair<int, int>& rhs) {
+        return (lhs.first > rhs.first) || (lhs.first == rhs.first && lhs.second < rhs.second);
+    });
+
+    int low = 1, high = n;
+
+    for (const auto& [iteration, index] : sorted_indices) {
+        if (iteration == -1) continue;
+        
+        if (iteration % 2 == 1) { // Odd iteration: resolve local minima
+            perm[index] = low++;
+        } else { // Even iteration: resolve local maxima
+            perm[index] = high--;
+        }
+    }
+
+    // Assign remaining values to positions with -1
+    for (int i = 0; i < n; ++i) {
+        if (perm[i] == 0) {
+            perm[i] = low++;
+        }
+    }
+
+    for (int i = 0; i < n; ++i) {
+        cout << perm[i] << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

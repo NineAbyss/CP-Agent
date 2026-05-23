@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int gcd(int a, int b) {
+    return b ? gcd(b, a % b) : a;
+}
+
+void solve() {
+    int p, s;
+    cin >> p >> s;
+    
+    if (p > 4 * s) {
+        cout << "-1\n";
+        return;
+    }
+    
+    int g = gcd(p, s);
+    int sp = s / g;
+    
+    for (int k = 1; k * sp <= 50000; ++k) {
+        int A = k * sp;
+        int P = A * p / s;
+        
+        if (P % 2 != 0) continue;
+        
+        int I = (4 * A - P) / 2;
+        if (I < A - 1) continue;
+        
+        vector<pair<int, int>> points;
+        map<pair<int, int>, bool> used;
+        
+        auto add = [&](int x, int y) {
+            if (!used[{x, y}]) {
+                points.push_back({x, y});
+                used[{x, y}] = true;
+            }
+        };
+        
+        add(0, 0);
+        vector<vector<int>> dirs = {{0,1}, {0,-1}, {1,0}, {-1,0}};
+        vector<int> lengths(4, 0);
+        
+        while ((int)points.size() < A) {
+            int best_dir = -1, min_len = INT_MAX;
+            for (int i = 0; i < 4; ++i) {
+                if (lengths[i] < min_len) {
+                    min_len = lengths[i];
+                    best_dir = i;
+                }
+            }
+            int dx = dirs[best_dir][0], dy = dirs[best_dir][1];
+            int nx = dx * (lengths[best_dir] + 1), ny = dy * (lengths[best_dir] + 1);
+            add(nx, ny);
+            lengths[best_dir]++;
+        }
+        
+        cout << points.size() << "\n";
+        for (auto& pt : points) {
+            cout << pt.first << " " << pt.second << "\n";
+        }
+        return;
+    }
+    
+    cout << "-1\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

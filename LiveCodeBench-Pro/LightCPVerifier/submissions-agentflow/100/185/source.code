@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        vector<int> cnt(n + 1, 0);
+        vector<int> first(n + 1, -1);
+        vector<int> last(n + 1, -1);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            cnt[a[i]]++;
+            if (first[a[i]] == -1) first[a[i]] = i;
+            last[a[i]] = i;
+        }
+        
+        const ll INF = 1e18;
+        vector<ll> minRight(n + 1, INF);
+        vector<ll> minLeft(n + 1, INF);
+        
+        for (int i = 0; i < n; i++) {
+            int val = a[i];
+            if (i < n - 1) {
+                minRight[val] = min(minRight[val], (ll)(n - 1 - i));
+            }
+            if (i > 0) {
+                minLeft[val] = min(minLeft[val], (ll)i);
+            }
+        }
+        
+        ll ans = INF;
+        for (int x = 1; x <= n; x++) {
+            if (cnt[x] == n) {
+                ans = 0;
+                break;
+            }
+            ll cost = INF;
+            // single operation: right cover from first position
+            if (first[x] == 0) { // x at position 1
+                cost = min(cost, (ll)x * minRight[x]);
+            }
+            // single operation: left cover from last position
+            if (last[x] == n - 1) { // x at position n
+                cost = min(cost, (ll)x * minLeft[x]);
+            }
+            // two operations
+            if (minRight[x] != INF && minLeft[x] != INF) {
+                cost = min(cost, (ll)x * (minRight[x] + minLeft[x]));
+            }
+            if (cost < ans) ans = cost;
+        }
+        
+        cout << ans << '\n';
+    }
+    return 0;
+}

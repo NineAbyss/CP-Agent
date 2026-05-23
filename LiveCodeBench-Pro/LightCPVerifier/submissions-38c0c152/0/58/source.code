@@ -1,0 +1,58 @@
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+        
+        vector<bool> alice(n+1, false), bob(n+1, false);
+        for (int i = 0; i < n; ++i) {
+            if (s[i] == 'A') alice[i+1] = true;
+            else bob[i+1] = true;
+        }
+        
+        bool alice_wins = false;
+        for (int a = 1; a <= n; ++a) {
+            if (!alice[a]) continue;
+            
+            bool bob_can_beat = false;
+            if (a == n) {
+                // only 1 beats n
+                if (bob[1]) bob_can_beat = true;
+            } else if (a == 1) {
+                // any b > 1 and b != n beats 1
+                for (int b = 2; b < n; ++b) {
+                    if (bob[b]) {
+                        bob_can_beat = true;
+                        break;
+                    }
+                }
+            } else {
+                // any b > a beats a
+                for (int b = a+1; b <= n; ++b) {
+                    if (bob[b]) {
+                        bob_can_beat = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (!bob_can_beat) {
+                alice_wins = true;
+                break;
+            }
+        }
+        
+        cout << (alice_wins ? "Alice" : "Bob") << endl;
+    }
+    
+    return 0;
+}

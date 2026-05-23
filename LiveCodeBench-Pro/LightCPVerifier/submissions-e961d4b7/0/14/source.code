@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool checkY(int h, int b, int y1, int y2) {
+    // 计算区间并集
+    int l1 = y1, r1 = y1 + b;
+    int l2 = y2, r2 = y2 + b;
+    if (l1 > l2) swap(l1, l2), swap(r1, r2);
+    // 合并区间
+    int L = l1, R = r1;
+    if (l2 <= R) R = max(R, r2);
+    else {
+        // 有间隙
+        int gap = l2 - R;
+        if (gap > 0 && gap < b) {
+            // 内部间隙且长度不足，检查是否靠近边界
+            if (L > 0 && R < h) return false;
+        }
+        L = l2, R = r2;
+    }
+    // 考虑屋顶范围
+    L = max(L, 0);
+    R = min(R, h);
+    // 检查左右边界间隙
+    if (L > 0 && L < b) return false; // 左边界间隙不足
+    if (h - R > 0 && h - R < b) return false; // 右边界间隙不足
+    return true;
+}
+
+bool checkX(int w, int a, int x1, int x2) {
+    int l1 = x1, r1 = x1 + a;
+    int l2 = x2, r2 = x2 + a;
+    if (l1 > l2) swap(l1, l2), swap(r1, r2);
+    int L = l1, R = r1;
+    if (l2 <= R) R = max(R, r2);
+    else {
+        int gap = l2 - R;
+        if (gap > 0 && gap < a) {
+            if (L > 0 && R < w) return false;
+        }
+        L = l2, R = r2;
+    }
+    L = max(L, 0);
+    R = min(R, w);
+    if (L > 0 && L < a) return false;
+    if (w - R > 0 && w - R < a) return false;
+    return true;
+}
+
+void solve() {
+    int w, h, a, b, x1, y1, x2, y2;
+    cin >> w >> h >> a >> b >> x1 >> y1 >> x2 >> y2;
+    int dx = abs(x1 - x2), dy = abs(y1 - y2);
+    bool ok = false;
+    if (dx % a == 0 && checkY(h, b, y1, y2)) ok = true;
+    if (dy % b == 0 && checkX(w, a, x1, x2)) ok = true;
+    cout << (ok ? "Yes" : "No") << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

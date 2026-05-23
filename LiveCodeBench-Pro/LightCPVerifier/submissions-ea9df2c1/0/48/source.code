@@ -1,0 +1,33 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n;
+        cin >> n;
+        // Command 1: digit
+        cout << "digit" << endl;
+        cout.flush();
+        string response;
+        cin >> response; // read "1" // Command 2: mul 99
+        cout << "mul 99" << endl;
+        cout.flush();
+        cin >> response;
+        // Command 3: digit
+        cout << "digit" << endl;
+        cout.flush();
+        cin >> response;
+        // Command 4: add (n-18)
+        cout << "add " << (n - 18) << endl;
+        cout.flush();
+        cin >> response;
+        // Now output "!"
+        cout << "!" << endl;
+        cout.flush();
+        cin >> response; // read the result, but we can ignore
+    }
+    return 0;
+}

@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXM = 500000;
+const int INF = 1e9;
+
+vector<int> dp(MAXM+1, INF);
+vector<int> cost(MAXM+1, INF);
+vector<vector<int>> divisors(MAXM+1);
+
+void precompute() {
+    // Precompute divisors for odd numbers >=3
+    for (int i = 1; i <= MAXM; i += 2) {
+        for (int j = i; j <= MAXM; j += i) {
+            if (i >= 3) {
+                divisors[j].push_back(i);
+            }
+        }
+    }
+    
+    dp[1] = 1;
+    cost[1] = 0;
+    for (int x = 3; x <= MAXM; x += 2) {
+        cost[x] = INF;
+        for (int a : divisors[x]) {
+            int b = x / a;
+            if (dp[a - 2] == INF) continue;
+            int cand = dp[a - 2] + cost[b];
+            if (cand < cost[x]) cost[x] = cand;
+        }
+        dp[x] = 1 + cost[x];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    precompute();
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int m;
+        cin >> m;
+        if (m % 2 == 0) {
+            cout << "-1\n";
+        } else {
+            // dp[m] is always finite for odd m, but just in case
+            if (dp[m] == INF) cout << "-1\n";
+            else cout << dp[m] << '\n';
+        }
+    }
+    return 0;
+}

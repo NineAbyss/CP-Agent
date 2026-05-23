@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9+7;
+
+map<string, int> memo;
+
+int count_reachable(string s) {
+    if (s.size() <= 2) return 1; // only itself
+    if (memo.count(s)) return memo[s];
+    set<string> visited;
+    queue<string> q;
+    visited.insert(s);
+    q.push(s);
+    while (!q.empty()) {
+        string cur = q.front(); q.pop();
+        int m = cur.size();
+        if (m <= 2) continue;
+        for (int i = 0; i <= m-3; i++) {
+            char a = cur[i], b = cur[i+1], c = cur[i+2];
+            char median;
+            int cnt0 = (a=='0') + (b=='0') + (c=='0');
+            if (cnt0 >= 2) median = '0';
+            else median = '1';
+            int j = i;
+            while (j < m && cur[j] != median) j++;
+            string next = cur.substr(0, j) + cur.substr(j+1);
+            if (visited.find(next) == visited.end()) {
+                visited.insert(next);
+                q.push(next);
+            }
+        }
+    }
+    return memo[s] = visited.size() % MOD;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        cout << count_reachable(s) << '\n';
+    }
+    return 0;
+}

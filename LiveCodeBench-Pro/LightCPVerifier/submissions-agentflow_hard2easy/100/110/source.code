@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int cnt2(int x) {
+    int c = 0;
+    while (x % 2 == 0) {
+        c++;
+        x /= 2;
+    }
+    return c;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        long long m = k - n;
+        vector<int> c(n);
+        vector<int> odd(n);
+        for (int i = 0; i < n; ++i) {
+            c[i] = cnt2(a[i]);
+            odd[i] = a[i] >> c[i];
+        }
+        long long total = 0;
+        for (int i = 0; i < n; ++i) {
+            total += (1LL << c[i]) - 1;
+        }
+        // 检查是否所有 odd 相同且存在 c[i]=0
+        bool all_same_odd = true;
+        for (int i = 1; i < n; ++i) {
+            if (odd[i] != odd[0]) {
+                all_same_odd = false;
+                break;
+            }
+        }
+        bool has_zero_c = false;
+        for (int i = 0; i < n; ++i) {
+            if (c[i] == 0) has_zero_c = true;
+        }
+        if (all_same_odd && has_zero_c) {
+            total--; // 减1
+        }
+        if (m <= total) cout << "YES\n";
+        else cout << "NO\n";
+    }
+    return 0;
+}

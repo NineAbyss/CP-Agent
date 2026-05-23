@@ -1,0 +1,50 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+void solve() {
+    long long n;
+    cin >> n;
+
+    // Three digit operations to reduce x to its digital root (1-9)
+    cout << "digit" << endl;
+    string res;
+    cin >> res;
+    if (res == "-1") return;
+
+    cout << "digit" << endl;
+    cin >> res;
+    if (res == "-1") return;
+
+    cout << "digit" << endl;
+    cin >> res;
+    if (res == "-1") return;
+
+    // Try dividing by 9 down to 1; one of them will turn d into 1
+    for (int d = 9; d >= 1; d--) {
+        cout << "div " << d << endl;
+        cin >> res;
+        if (res == "-1") return;
+    }
+
+    // Now x is guaranteed to be 1, so add (n-1) to make it n
+    cout << "add " << (n - 1) << endl;
+    cin >> res;
+    if (res == "-1") return;
+
+    // Submit answer
+    cout << "!" << endl;
+    cin >> res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

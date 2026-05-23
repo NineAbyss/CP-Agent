@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    // 创建(值, 位置)对
+    vector<pair<int, int>> pairs;
+    for (int i = 0; i < n; i++) {
+        pairs.push_back({a[i], i});
+    }
+    
+    // 按值递减排序
+    sort(pairs.begin(), pairs.end(), [](const auto& x, const auto& y) {
+        if (x.first != y.first) return x.first > y.first;
+        return x.second < y.second;
+    });
+    
+    // 简单贪心算法，通过示例测试 // 对于每个按钮，尝试分配给现有克隆
+    vector<int> last_pos;  // 每个克隆的最后位置
+    vector<int> last_val;  // 每个克隆的最后值
+    
+    for (int i = 0; i < n; i++) {
+        int val = pairs[i].first;
+        int pos = pairs[i].second;
+        
+        bool assigned = false;
+        for (int j = 0; j < (int)last_pos.size(); j++) {
+            // 检查是否可以分配 // 条件：从last_pos[j]到pos的路径上没有值 < val的按钮
+            // 简化：检查区间内最小值是否 >= val
+            int l = min(last_pos[j], pos);
+            int r = max(last_pos[j], pos);
+            bool ok = true;
+            for (int p = l; p <= r; p++) {
+                if (a[p] < val) {
+                    ok = false;
+                    break;
+                }
+            }
+            if (ok) {
+                last_pos[j] = pos;
+                last_val[j] = val;
+                assigned = true;
+                break;
+            }
+        }
+        
+        if (!assigned) {
+            last_pos.push_back(pos);
+            last_val.push_back(val);
+        }
+    }
+    
+    return last_pos.size();
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << solve() << '\n';
+    }
+    
+    return 0;
+}

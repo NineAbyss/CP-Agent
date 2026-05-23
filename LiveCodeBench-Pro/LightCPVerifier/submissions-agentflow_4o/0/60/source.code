@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+vector<pair<int, int>> operations;
+
+// Perform Bubble Sort to sort the array and record operations
+void bubble_sort(vector<int>& arr, int type) {
+    int n = arr.size();
+    bool swapped = true;
+    while(swapped) {
+        swapped = false;
+        for (int i = 0; i < n - 1; ++i) {
+            if (arr[i] > arr[i + 1]) {
+                swap(arr[i], arr[i + 1]);
+                operations.push_back({type, i + 1});
+                swapped = true;
+            }
+        }
+    }
+}
+
+// Ensure the condition a[i] < b[i], and swap using operation type 3
+void ensure_less(vector<int>& a, vector<int>& b) {
+    int n = a.size();
+    for (int i = 0; i < n; ++i) {
+        if (a[i] >= b[i]) {
+            swap(a[i], b[i]);
+            operations.push_back({3, i + 1});
+        }
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        for (int i = 0; i < n; ++i) cin >> b[i];
+
+        operations.clear();
+
+        // Step 1: Sort both arrays independently
+        bubble_sort(a, 1);
+        bubble_sort(b, 2);
+
+        // Step 2: Ensure a[i] < b[i]
+        ensure_less(a, b);
+
+        // Output the operations
+        cout << operations.size() << endl;
+        for (const auto& op : operations) {
+            cout << op.first << " " << op.second << endl;
+        }
+    }
+    return 0;
+}

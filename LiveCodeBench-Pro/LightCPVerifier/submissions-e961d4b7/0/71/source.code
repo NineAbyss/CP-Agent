@@ -1,0 +1,95 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        vector<int> b(n);
+        for (int i = 0; i < n; i++) {
+            cin >> b[i];
+        }
+        
+        long long known_x = -1;
+        bool conflict = false;
+        
+        // Check if all known b_i correspond to the same x
+        for (int i = 0; i < n; i++) {
+            if (b[i] != -1) {
+                long long current_x = (long long)a[i] + b[i];
+                if (known_x == -1) {
+                    known_x = current_x;
+                } else if (known_x != current_x) {
+                    conflict = true;
+                    break;
+                }
+            }
+        }
+        
+        if (conflict) {
+            cout << 0 << endl;
+            continue;
+        }
+        
+        if (known_x == -1) {
+            // All b_i are -1 // Need to find all x such that max(a_i) ≤ x ≤ min(a_i + k)
+            long long max_lower = 0;
+            long long min_upper = LLONG_MAX;
+            
+            for (int i = 0; i < n; i++) {
+                max_lower = max(max_lower, (long long)a[i]);
+                min_upper = min(min_upper, (long long)a[i] + k);
+            }
+            
+            if (max_lower <= min_upper) {
+                cout << min_upper - max_lower + 1 << endl;
+            } else {
+                cout << 0 << endl;
+            }
+        } else {
+            // x is known, check if all unknown positions satisfy the condition
+            bool valid = true;
+            for (int i = 0; i < n; i++) {
+                if (b[i] == -1) {
+                    long long needed_b = known_x - a[i];
+                    if (needed_b < 0 || needed_b > k) {
+                        valid = false;
+                        break;
+                    }
+                } else {
+                    // Double-check known positions
+                    if ((long long)a[i] + b[i] != known_x) {
+                        valid = false;
+                        break;
+                    }
+                }
+            }
+            
+            if (valid) {
+                cout << 1 << endl;
+            } else {
+                cout << 0 << endl;
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    solve();
+    return 0;
+}

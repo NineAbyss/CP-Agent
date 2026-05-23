@@ -1,0 +1,149 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void get_parent(int n, const vector<vector<int>>& adj, int root, vector<int>& parent) {
+    parent.assign(n+1, 0);
+    queue<pair<int,int>> q;
+    q.push({root, 0});
+    while (!q.empty()) {
+        int u = q.front().first;
+        int p = q.front().second;
+        q.pop();
+        parent[u] = p;
+        for (int v : adj[u]) {
+            if (v != p) {
+                q.push({v, u});
+            }
+        }
+    }
+}
+
+bool on_path(int u, int v, const vector<int>& parent) {
+    while (v != 0) {
+        if (v == u) return true;
+        v = parent[v];
+    }
+    return false;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> adj(n+1);
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+        // 查询所有 f(u)
+        vector<int> f(n+1);
+        for (int u = 1; u <= n; u++) {
+            cout << "? 1 1 " << u << endl;
+            cout.flush();
+            cin >> f[u];
+        }
+        // 构建候选
+        struct Candidate {
+            int root;
+            vector<int> val;
+            vector<int> parent;
+        };
+        vector<Candidate> candidates;
+        for (int r = 1; r <= n; r++) {
+            vector<int> par;
+            get_parent(n, adj, r, par);
+            vector<int> calc_val(n+1);
+            calc_val[r] = f[r];
+            bool ok = true;
+            if (calc_val[r] != 1 && calc_val[r] != -1) ok = false;
+            for (int u = 1; u <= n && ok; u++) {
+                if (u == r) continue;
+                calc_val[u] = f[u] - f[par[u]];
+                if (calc_val[u] != 1 && calc_val[u] != -1) {
+                    ok = false;
+                    break;
+                }
+            }
+            if (ok) {
+                candidates.push_back({r, calc_val, par});
+            }
+        }
+        // 如果候选数大于1，进行区分
+        while (candidates.size() > 1) {
+            // 寻找一对 (u,v) 使得候选之间的预测变化不同
+            int u_best = -1, v_best = -1;
+            for (int u = 1; u <= n && u_best == -1; u++) {
+                for (int v = 1; v <= n && u_best == -1; v++) {
+                    vector<int> preds;
+                    for (auto& cand : candidates) {
+                        bool on = on_path(u, v, cand.parent);
+                        int pred = on ? -2 * cand.val[u] : 0;
+                        preds.push_back(pred);
+                    }
+                    bool same = true;
+                    for (size_t i = 1; i < preds.size(); i++) {
+                        if (preds[i] != preds[0]) {
+                            same = false;
+                            break;
+                        }
+                    }
+                    if (!same) {
+                        u_best = u;
+                        v_best = v;
+                        break;
+                    }
+                }
+            }
+            if (u_best == -1) {
+                // 如果找不到，随便选一对
+                u_best = 1;
+                v_best = 2;
+            }
+            // 查询切换前的 f(v)
+            int old_f_v;
+            cout << "? 1 1 " << v_best << endl;
+            cout.flush();
+            cin >> old_f_v;
+            // 切换 u
+            cout << "? 2 " << u_best << endl;
+            cout.flush();
+            // 读取一个整数（可能没有，但为了同步） // 查询切换后的 f(v)
+            int new_f_v;
+            cout << "? 1 1 " << v_best << endl;
+            cout.flush();
+            cin >> new_f_v;
+            int delta = new_f_v - old_f_v;
+            // 过滤候选
+            vector<Candidate> new_candidates;
+            for (auto& cand : candidates) {
+                bool on = on_path(u_best, v_best, cand.parent);
+                int pred = on ? -2 * cand.val[u_best] : 0;
+                if (pred == delta) {
+                    // 更新候选的值，因为切换了 u
+                    cand.val[u_best] = -cand.val[u_best];
+                    new_candidates.push_back(cand);
+                }
+            }
+            candidates = new_candidates;
+        }
+        // 输出答案
+        if (candidates.empty()) {
+            // 不应该发生，但以防万一
+            cout << "!";
+            for (int i = 1; i <= n; i++) cout << " 1";
+            cout << endl;
+        } else {
+            cout << "!";
+            for (int i = 1; i <= n; i++) {
+                cout << " " << candidates[0].val[i];
+            }
+            cout << endl;
+        }
+        cout.flush();
+    }
+    return 0;
+}

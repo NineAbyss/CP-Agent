@@ -1,0 +1,146 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i=0; i<n; i++) cin >> a[i];
+        for (int i=0; i<n; i++) cin >> b[i];
+        
+        int max_val = 2*n;
+        vector<int> same(max_val+1,0);
+        vector<int> only_a(max_val+1,0);
+        vector<int> only_b(max_val+1,0);
+        vector<vector<int>> pos_a(max_val+1);
+        vector<vector<int>> pos_b(max_val+1);
+        for (int i=0; i<n; i++) {
+            if (a[i] == b[i]) {
+                same[a[i]]++;
+            } else {
+                only_a[a[i]]++;
+                only_b[b[i]]++;
+                pos_a[a[i]].push_back(i);
+                pos_b[b[i]].push_back(i);
+            }
+        }
+        
+        // Compute maximum sum
+        long long ans = 0;
+        for (int v=1; v<=max_val; v++) {
+            if (same[v] > 0 || only_a[v]+only_b[v] >= 2) {
+                ans += 2;
+            } else {
+                ans += only_a[v] + only_b[v];
+            }
+        }
+        cout << ans << '\n';
+        
+        // Construction
+        vector<bool> used(n, false);
+        vector<bool> swap_flag(n, false);
+        
+        // Process values with only_a+only_b >=2
+        for (int v=1; v<=max_val; v++) {
+            if (same[v] > 0) continue;
+            if (only_a[v] + only_b[v] >= 2) {
+                bool need_a = true;
+                bool need_b = true;
+                // Try to satisfy a
+                if (need_a && only_a[v] > 0) {
+                    for (int idx : pos_a[v]) {
+                        if (!used[idx]) {
+                            used[idx] = true;
+                            // no swap, v in a
+                            need_a = false;
+                            break;
+                        }
+                    }
+                }
+                if (need_a && only_b[v] > 0) {
+                    for (int idx : pos_b[v]) {
+                        if (!used[idx]) {
+                            used[idx] = true;
+                            swap_flag[idx] = true; // swap to make v in a
+                            need_a = false;
+                            break;
+                        }
+                    }
+                }
+                // Try to satisfy b
+                if (need_b && only_b[v] > 0) {
+                    for (int idx : pos_b[v]) {
+                        if (!used[idx]) {
+                            used[idx] = true;
+                            // no swap, v in b
+                            need_b = false;
+                            break;
+                        }
+                    }
+                }
+                if (need_b && only_a[v] > 0) {
+                    for (int idx : pos_a[v]) {
+                        if (!used[idx]) {
+                            used[idx] = true;
+                            swap_flag[idx] = true; // swap to make v in b
+                            need_b = false;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // For values with only_a+only_b ==1, assign arbitrarily
+        for (int v=1; v<=max_val; v++) {
+            if (same[v] > 0) continue;
+            if (only_a[v] + only_b[v] == 1) {
+                if (only_a[v] == 1) {
+                    for (int idx : pos_a[v]) {
+                        if (!used[idx]) {
+                            used[idx] = true;
+                            // no swap, v in a
+                            break;
+                        }
+                    }
+                } else { // only_b[v] == 1
+                    for (int idx : pos_b[v]) {
+                        if (!used[idx]) {
+                            used[idx] = true;
+                            // no swap, v in b
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Apply swaps
+        vector<int> res_a = a;
+        vector<int> res_b = b;
+        for (int i=0; i<n; i++) {
+            if (swap_flag[i]) {
+                swap(res_a[i], res_b[i]);
+            }
+        }
+        
+        // Output arrays
+        for (int i=0; i<n; i++) {
+            cout << res_a[i] << " \n"[i==n-1];
+        }
+        for (int i=0; i<n; i++) {
+            cout << res_b[i] << " \n"[i==n-1];
+        }
+    }
+    return 0;
+}

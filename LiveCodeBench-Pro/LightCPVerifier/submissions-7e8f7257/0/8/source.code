@@ -1,0 +1,79 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+long long U(int n, int r) {
+    return 1LL * r * n + 1LL * r * (1 - r) / 2;
+}
+
+long long L(int n, int r) {
+    return r + n - 1;
+}
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        int n;
+        long long m;
+        scanf("%d %lld", &n, &m);
+        if (n == 1) {
+            if (m == 1) {
+                printf("1\n");
+            } else {
+                printf("-1\n");
+            }
+            continue;
+        }
+        int found_r = -1;
+        for (int r = n; r >= 1; r--) {
+            long long low = L(n, r);
+            long long high = U(n, r);
+            if (low <= m && m <= high) {
+                found_r = r;
+                break;
+            }
+        }
+        if (found_r == -1) {
+            printf("-1\n");
+            continue;
+        }
+        int r = found_r;
+        printf("%d\n", r);
+        if (r == 1) {
+            for (int v = 2; v <= n; v++) {
+                printf("1 %d\n", v);
+            }
+            continue;
+        }
+        // r > 1
+        long long reduce = U(n, r) - m;
+        vector<int> parent(n + 1);
+        for (int v = 1; v <= n; v++) {
+            if (v != r) {
+                parent[v] = r;
+            }
+        }
+        vector<pair<int, int>> candidates;
+        for (int v = 2; v <= n; v++) {
+            if (v == r) continue;
+            int dec = min(r, v) - 1;
+            candidates.push_back({dec, v});
+        }
+        sort(candidates.begin(), candidates.end(), greater<pair<int, int>>());
+        for (auto& [dec, v] : candidates) {
+            if (reduce >= dec) {
+                parent[v] = 1;
+                reduce -= dec;
+            }
+        }
+        // output edges
+        for (int v = 1; v <= n; v++) {
+            if (v != r) {
+                printf("%d %d\n", v, parent[v]);
+            }
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,77 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+#include <unordered_map>
+#include <tuple>
+using namespace std;
+
+// 自定义哈希函数用于 tuple
+struct tuple_hash {
+    template <typename T1, typename T2, typename T3>
+    size_t operator()(const tuple<T1, T2, T3>& t) const {
+        return hash<T1>()(get<0>(t)) ^ hash<T2>()(get<1>(t)) ^ hash<T3>()(get<2>(t));
+    }
+};
+
+bool willLeaveStrip(long long startPos, const unordered_map<long long, int>& trafficLights, int k) {
+    unordered_set<tuple<long long, int, int>, tuple_hash> visitedStates;
+    long long currPos = startPos;
+    int direction = 1;
+
+    for (long long step = 0; step < 4 * k * k; ++step) {  // 使用更长的步长以涵盖所有变化
+        int time = step % k;
+        if (trafficLights.count(currPos) && time == trafficLights.at(currPos)) {
+            direction *= -1;  // 红灯时掉头
+        }
+
+        currPos += direction;
+
+        if (currPos < 1 || currPos > 1e15) {
+            return true;  // 成功离开条带
+        }
+
+        auto state = make_tuple(currPos, direction, time);
+        if (visitedStates.count(state)) {
+            return false;  // 检测到重复状态，认为处于循环中
+        }
+
+        visitedStates.insert(state);
+    }
+
+    return false;  // 到达检测循环步长
+}
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+
+        vector<long long> positions(n);
+        vector<int> delays(n);
+        unordered_map<long long, int> trafficLights;
+
+        for (int i = 0; i < n; ++i) {
+            cin >> positions[i];
+        }
+
+        for (int i = 0; i < n; ++i) {
+            cin >> delays[i];
+            trafficLights[positions[i]] = delays[i];
+        }
+
+        int q;
+        cin >> q;
+
+        while (q--) {
+            long long startPos;
+            cin >> startPos;
+
+            cout << (willLeaveStrip(startPos, trafficLights, k) ? "YES" : "NO") << endl;
+        }
+    }
+
+    return 0;
+}

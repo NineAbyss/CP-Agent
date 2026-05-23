@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, k;
+    cin >> n >> k;
+    string s;
+    cin >> s;
+    vector<vector<int>> nxt(k, vector<int>(n+2, n+1));
+    for (int i = n-1; i >= 0; --i) {
+        for (int ch = 0; ch < k; ++ch) {
+            nxt[ch][i] = nxt[ch][i+1];
+        }
+        int c = s[i] - 'a';
+        nxt[c][i] = i+1;
+    }
+    vector<int> dist(n+2, 0);
+    for (int i = n; i >= 0; --i) {
+        int mn = n+2;
+        bool has_fail = false;
+        for (int ch = 0; ch < k; ++ch) {
+            int pos = nxt[ch][i];
+            if (pos == n+1) {
+                has_fail = true;
+                break;
+            }
+            if (dist[pos] < mn) mn = dist[pos];
+        }
+        if (has_fail) {
+            dist[i] = 1;
+        } else {
+            dist[i] = 1 + mn;
+        }
+    }
+    int q;
+    cin >> q;
+    while (q--) {
+        string t;
+        cin >> t;
+        int cur = 0;
+        bool ok = true;
+        for (char chc : t) {
+            int c = chc - 'a';
+            cur = nxt[c][cur];
+            if (cur == n+1) {
+                ok = false;
+                break;
+            }
+        }
+        if (!ok) {
+            cout << "0\n";
+        } else {
+            cout << dist[cur] << "\n";
+        }
+    }
+    return 0;
+}

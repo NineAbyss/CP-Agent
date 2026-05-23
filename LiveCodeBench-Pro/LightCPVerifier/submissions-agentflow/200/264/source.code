@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    
+    vector<int> b(n);
+    for (int i = 0; i < n; i++) {
+        cin >> b[i];
+    }
+    
+    vector<tuple<int, int, int>> ops(q);
+    for (int i = 0; i < q; i++) {
+        int x, y, z;
+        cin >> x >> y >> z;
+        ops[i] = {x-1, y-1, z-1};
+    }
+    
+    // 标记哪些位置被修改过
+    vector<bool> modified(n, false);
+    for (auto [x, y, z] : ops) {
+        modified[z] = true;
+    }
+    
+    // 初始下界
+    vector<int> low(n);
+    for (int i = 0; i < n; i++) {
+        low[i] = b[i];
+    }
+    
+    // 从后向前处理操作
+    reverse(ops.begin(), ops.end());
+    
+    for (auto [x, y, z] : ops) {
+        // 检查必要条件
+        if (!modified[x] && b[x] < b[z]) {
+            cout << "-1\n";
+            return;
+        }
+        if (!modified[y] && b[y] < b[z]) {
+            cout << "-1\n";
+            return;
+        }
+        
+        // 提升下界
+        low[x] = max(low[x], b[z]);
+        low[y] = max(low[y], b[z]);
+        
+        // 检查是否至少一个等于 b[z]
+        if (low[x] > b[z] && low[y] > b[z]) {
+            // 两个都大于 b[z]，需要设置一个等于 b[z]
+            if (!modified[x] && !modified[y]) {
+                // 两个都未被修改
+                if (b[x] != b[z] && b[y] != b[z]) {
+                    cout << "-1\n";
+                    return;
+                }
+            } else if (!modified[x]) {
+                if (b[x] != b[z]) {
+                    cout << "-1\n";
+                    return;
+                }
+            } else if (!modified[y]) {
+                if (b[y] != b[z]) {
+                    cout << "-1\n";
+                    return;
+                }
+            } else {
+                // 两个都被修改过，选择较小的降低
+                if (low[x] <= low[y]) {
+                    low[x] = b[z];
+                } else {
+                    low[y] = b[z];
+                }
+            }
+        }
+    }
+    
+    // 输出结果
+    for (int i = 0; i < n; i++) {
+        cout << low[i] << " \n"[i == n-1];
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

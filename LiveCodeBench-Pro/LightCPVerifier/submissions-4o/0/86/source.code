@@ -1,0 +1,65 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <limits>
+#include <map>
+
+using namespace std;
+
+// Function to compute sum of digits
+int sumOfDigits(const string& digits) {
+    int sum = 0;
+    for (char ch : digits) {
+        sum += ch - '0';
+    }
+    return sum;
+}
+
+// Recursive function to find minimum cost and retain number of removed digits
+void findOptimalCost(const string& n, int index, string current, map<double, int>& costToRemovals) {
+    if (index == n.size()) {
+        if (!current.empty()) {
+            double number = stoi(current);
+            int digitSum = sumOfDigits(current);
+            if (digitSum > 0) {
+                double cost = number / digitSum;
+                int removals = n.size() - current.size();
+                if (costToRemovals.find(cost) == costToRemovals.end() || costToRemovals[cost] > removals) {
+                    costToRemovals[cost] = removals;
+                }
+            }
+        }
+        return;
+    }
+    
+    // Option 1: Include the current digit
+    findOptimalCost(n, index + 1, current + n[index], costToRemovals);
+    
+    // Option 2: Exclude the current digit
+    findOptimalCost(n, index + 1, current, costToRemovals);
+}
+
+int minimalRemovals(string n) {
+    map<double, int> costToRemovals;
+    findOptimalCost(n, 0, "", costToRemovals);
+
+    // Find the minimum removals for the optimal cost
+    int minimumRemovals = numeric_limits<int>::max();
+    for (const auto& [cost, removals] : costToRemovals) {
+        minimumRemovals = min(minimumRemovals, removals);
+    }
+
+    return minimumRemovals;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        string n;
+        cin >> n;
+        cout << minimalRemovals(n) << endl;
+    }
+    return 0;
+}

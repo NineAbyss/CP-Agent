@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int countWaysToWin(vector<int>& a) {
+    int n = a.size();
+    int result = 0;
+
+    // Try every combination of choosing 3 elements from the array
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            for (int k = j + 1; k < n; k++) {
+                int sum = a[i] + a[j] + a[k];
+                
+                // Check if the sum is greater than every element maximum value (a_k)
+                if (sum > a[k]) {
+                    result++;
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        cout << countWaysToWin(a) << '\n';
+    }
+
+    return 0;
+}

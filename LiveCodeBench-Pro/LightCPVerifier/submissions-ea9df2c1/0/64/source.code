@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+
+int solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    vector<int> b(m);
+    for (int i = 0; i < m; i++) cin >> b[i];
+    
+    // Check if already possible without insertion
+    int pos = -1;
+    bool possible = true;
+    for (int i = 0; i < m; i++) {
+        int idx = pos + 1;
+        while (idx < n && a[idx] < b[i]) idx++;
+        if (idx == n) {
+            possible = false;
+            break;
+        }
+        pos = idx;
+    }
+    if (possible) return 0;
+    
+    // Precompute pre_ok and last_pos
+    vector<int> last_pos(m+2, -1);
+    vector<bool> pre_ok(m+2, false);
+    pre_ok[0] = true;
+    last_pos[0] = -1;
+    int cur = -1;
+    for (int i = 1; i <= m; i++) {
+        int idx = cur + 1;
+        while (idx < n && a[idx] < b[i-1]) idx++;
+        if (idx == n) break;
+        cur = idx;
+        pre_ok[i] = true;
+        last_pos[i] = cur;
+    }
+    
+    // Precompute suf_ok and first_pos
+    vector<int> first_pos(m+2, n);
+    vector<bool> suf_ok(m+2, false);
+    suf_ok[m+1] = true;
+    first_pos[m+1] = n;
+    cur = n;
+    for (int i = m; i >= 1; i--) {
+        int idx = cur - 1;
+        while (idx >= 0 && a[idx] < b[i-1]) idx--;
+        if (idx < 0) break;
+        cur = idx;
+        suf_ok[i] = true;
+        first_pos[i] = cur;
+    }
+    
+    int ans = INF;
+    for (int j = 1; j <= m; j++) {
+        bool left_ok = (j-1 == 0) ? true : pre_ok[j-1];
+        bool right_ok = (j+1 > m) ? true : suf_ok[j+1];
+        if (!left_ok || !right_ok) continue;
+        int left_boundary = (j-1 == 0) ? -1 : last_pos[j-1];
+        int right_boundary = (j+1 > m) ? n : first_pos[j+1];
+        if (left_boundary < right_boundary) {
+            ans = min(ans, b[j-1]);
+        }
+    }
+    
+    if (ans == INF) return -1;
+    else return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << solve() << '\n';
+    }
+    return 0;
+}

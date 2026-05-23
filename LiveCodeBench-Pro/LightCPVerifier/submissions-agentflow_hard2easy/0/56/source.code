@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool is_beautiful(const string& s) {
+    for (int i = 1; i <= 10; i++) {
+        if (s[i-1] < '0' + (10 - i)) return false;
+    }
+    return true;
+}
+
+bool can_fill(vector<int> cnt, int chosen, int pos) {
+    cnt[chosen]--;
+    vector<int> reqs;
+    for (int j = pos + 1; j <= 10; j++) {
+        reqs.push_back(10 - j);
+    }
+    sort(reqs.begin(), reqs.end());
+    vector<int> rem;
+    for (int d = 0; d <= 9; d++) {
+        for (int k = 0; k < cnt[d]; k++) rem.push_back(d);
+    }
+    int p = 0;
+    for (int r : reqs) {
+        while (p < (int)rem.size() && rem[p] < r) p++;
+        if (p >= (int)rem.size()) return false;
+        p++;
+    }
+    return true;
+}
+
+string solve(string s) {
+    if (!is_beautiful(s)) {
+        return "9999999999";
+    }
+    vector<int> cnt(10, 0);
+    for (char c : s) cnt[c - '0']++;
+    string ans;
+    for (int i = 1; i <= 10; i++) {
+        int need = 10 - i;
+        for (int d = need; d <= 9; d++) {
+            if (cnt[d] > 0 && can_fill(cnt, d, i)) {
+                ans += char('0' + d);
+                cnt[d]--;
+                break;
+            }
+        }
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        cout << solve(s) << "\n";
+    }
+    return 0;
+}

@@ -1,0 +1,126 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool can_pack_squares(vector<int> sizes, int W, int L) {
+    if (sizes.empty()) return true;
+    sort(sizes.rbegin(), sizes.rend());
+    
+    vector<array<int,4>> free_list;
+    free_list.push_back({0, 0, W, L});
+    
+    function<bool(int)> dfs = [&](int idx) {
+        if (idx == (int)sizes.size()) return true;
+        int s = sizes[idx];
+        
+        for (int i = 0; i < (int)free_list.size(); i++) {
+            auto [x, y, w, h] = free_list[i];
+            if (w >= s && h >= s) {
+                free_list.erase(free_list.begin() + i);
+                
+                vector<array<int,4>> new_rects;
+                if (w > s) {
+                    new_rects.push_back({x+s, y, w-s, s});
+                }
+                if (h > s) {
+                    new_rects.push_back({x, y+s, w, h-s});
+                }
+                
+                auto old_free = free_list;
+                free_list.insert(free_list.end(), new_rects.begin(), new_rects.end());
+                
+                if (dfs(idx+1)) return true;
+                free_list = old_free;
+            }
+        }
+        return false;
+    };
+    return dfs(0);
+}
+
+bool can_pack_boxes(const vector<int>& cubes, int W, int L, int H) {
+    vector<pair<int,int>> stacks;
+    
+    function<bool(int)> dfs = [&](int idx) {
+        if (idx == (int)cubes.size()) {
+            vector<int> bases;
+            for (auto& [base, height] : stacks) {
+                if (base > W || base > L) return false;
+                bases.push_back(base);
+            }
+            return can_pack_squares(bases, W, L);
+        };
+        
+        int s = cubes[idx];
+        
+        for (int i = 0; i < (int)stacks.size(); i++) {
+            if (stacks[i].second + s <= H) {
+                stacks[i].second += s;
+                if (dfs(idx+1)) return true;
+                stacks[i].second -= s;
+            }
+        }
+        
+        if (s <= W && s <= L && s <= H) {
+            stacks.push_back({s, s});
+            if (dfs(idx+1)) return true;
+            stacks.pop_back();
+        }
+        
+        return false;
+    };
+    
+    int max_cube = *max_element(cubes.begin(), cubes.end());
+    if (max_cube > W || max_cube > L || max_cube > H) {
+        return false;
+    }
+    
+    return dfs(0);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        
+        vector<int> fib(n+1);
+        fib[1] = 1;
+        if (n >= 2) fib[2] = 2;
+        for (int i = 3; i <= n; i++) {
+            fib[i] = fib[i-1] + fib[i-2];
+        }
+        
+        vector<int> cubes;
+        for (int i = 1; i <= n; i++) {
+            cubes.push_back(fib[i]);
+        }
+        sort(cubes.rbegin(), cubes.rend());
+        
+        string ans;
+        for (int i = 0; i < m; i++) {
+            int w, l, h;
+            cin >> w >> l >> h;
+            
+            vector<int> dims = {w, l, h};
+            sort(dims.begin(), dims.end());
+            bool found = false;
+            
+            do {
+                if (can_pack_boxes(cubes, dims[0], dims[1], dims[2])) {
+                    found = true;
+                    break;
+                }
+            } while (next_permutation(dims.begin(), dims.end()));
+            
+            ans += found ? '1' : '0';
+        }
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

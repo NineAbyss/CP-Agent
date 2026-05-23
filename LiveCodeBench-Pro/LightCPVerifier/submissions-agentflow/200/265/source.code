@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+map<vector<int>, double> memo[4005];
+
+double dp(int k, vector<int> state, int n, double p) {
+    if (state.empty()) return 1.0;
+    if (k == 0) return 0.0;
+    
+    if (memo[k].count(state)) return memo[k][state];
+    
+    int r = state.size();
+    
+    // 剑发光
+    double shine_prob;
+    if (r == n) {
+        // 全体减1
+        vector<int> new_state;
+        for (int x : state) {
+            if (x - 1 > 0) new_state.push_back(x - 1);
+        }
+        sort(new_state.rbegin(), new_state.rend());
+        shine_prob = dp(k - 1, new_state, n, p);
+    } else {
+        // 有 need=0 的怪物，不能攻击
+        shine_prob = dp(k - 1, state, n, p);
+    }
+    
+    // 剑不发光：可以选择攻击或不攻击 // 选项1：不攻击
+    double no_attack_prob = dp(k - 1, state, n, p);
+    
+    // 选项2：攻击最大 need
+    vector<int> ns = state;
+    ns[0]--;
+    if (ns[0] == 0) {
+        ns.erase(ns.begin());
+    } else {
+        // 保持降序
+        for (int i = 0; i < (int)ns.size() - 1; i++) {
+            if (ns[i] < ns[i + 1]) swap(ns[i], ns[i + 1]);
+            else break;
+        }
+    }
+    double attack_prob = dp(k - 1, ns, n, p);
+    
+    double no_shine_best = max(no_attack_prob, attack_prob);
+    
+    double res = p * shine_prob + (1 - p) * no_shine_best;
+    memo[k][state] = res;
+    return res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, p100;
+        cin >> n >> m >> p100;
+        double p = p100 / 100.0;
+        vector<int> h(n);
+        for (int i = 0; i < n; i++) {
+            cin >> h[i];
+            h[i]--; // need
+        }
+        sort(h.rbegin(), h.rend());
+        while (!h.empty() && h.back() == 0) h.pop_back();
+        
+        for (int i = 0; i <= m; i++) memo[i].clear();
+        
+        double ans = dp(m, h, n, p);
+        cout << fixed << setprecision(6) << ans << '\n';
+    }
+    return 0;
+}

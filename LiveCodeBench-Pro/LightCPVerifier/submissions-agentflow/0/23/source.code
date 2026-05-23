@@ -1,0 +1,57 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int maxMatchesAfterOperations(int n, vector<int>& a, vector<int>& b) {
+    int max_matches = 0;
+
+    for (int remove_index = 0; remove_index < n; ++remove_index) {
+        vector<int> new_a, new_b;
+        // Create the new arrays by removing the element at remove_index
+        for (int i = 0; i < n; ++i) {
+            if (i != remove_index) {
+                new_a.push_back(a[i]);
+                new_b.push_back(b[i]);
+            }
+        }
+
+        for (int round = 0; round < 2 * (n - 1); ++round) {
+            for (int i = 0; i < n - 2; ++i) {
+                if (new_a[i] == new_b[i + 1]) swap(new_a[i], new_b[i + 1]);
+                if (new_b[i] == new_a[i + 1]) swap(new_b[i], new_a[i + 1]);
+            }
+        }
+
+        int current_matches = 0;
+        for (int i = 0; i < new_a.size(); ++i) {
+            if (new_a[i] == new_b[i]) current_matches++;
+        }
+        
+        max_matches = max(max_matches, current_matches);
+    }
+    
+    return max_matches;
+}
+
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        for (int i = 0; i < n; ++i) cin >> b[i];
+
+        cout << maxMatchesAfterOperations(n, a, b) << endl;
+    }
+
+    return 0;
+}

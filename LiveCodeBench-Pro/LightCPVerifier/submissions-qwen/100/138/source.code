@@ -1,0 +1,27 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int N = 2e6;
+int f[N+1];
+const int mod = 1e9+7;
+int main() {
+    f[0] = 1;
+    for (int i = 1; i <= N; i++) {
+        f[i] = f[i-1];
+        if (i>=3) f[i] = (f[i] + f[i-3]) % mod;
+    }
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        long long ans = 1;
+        for (int i = 0; i < n; ) {
+            int j = i;
+            while (j < n && s[j] == s[i]) j++;
+            ans = ans * f[j-i] % mod;
+            i = j;
+        }
+        cout << ans << '\n';
+    }
+}

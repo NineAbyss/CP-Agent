@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long solve(int n, int k, long long x, vector<int>& a) {
+    // 计算前缀和
+    vector<long long> pref(n+1, 0);
+    for (int i = 1; i <= n; i++) {
+        pref[i] = pref[i-1] + a[i-1];
+    }
+    long long S = pref[n];
+    
+    long long ans = 0;
+    long long total_suffix = 0;
+    
+    // 从最后一个周期开始处理
+    for (int block = k; block >= 1; block--) {
+        total_suffix += S;
+        long long max_pref = total_suffix - x;
+        
+        if (max_pref < 0) {
+            continue;
+        }
+        
+        // 二分查找最大的 i (0 <= i < n) 使得 pref[i] <= max_pref
+        int l = 0, r = n-1;
+        while (l < r) {
+            int mid = (l + r + 1) / 2;
+            if (pref[mid] <= max_pref) {
+                l = mid;
+            } else {
+                r = mid - 1;
+            }
+        }
+        
+        // 检查是否至少有一个位置符合条件
+        if (pref[l] <= max_pref) {
+            // 位置 0..l 都符合条件，共 l+1 个
+            ans += (l + 1);
+        }
+    }
+    
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, k;
+        long long x;
+        cin >> n >> k >> x;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        cout << solve(n, k, x, a) << '\n';
+    }
+    
+    return 0;
+}

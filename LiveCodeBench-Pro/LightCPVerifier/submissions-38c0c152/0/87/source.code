@@ -1,0 +1,103 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+using ull = unsigned long long;
+
+ull pow4[65]; // 4^k
+ull pow2[65]; // 2^k
+
+void precompute() {
+    pow4[0] = 1;
+    pow2[0] = 1;
+    for (int i = 1; i <= 60; ++i) {
+        pow4[i] = pow4[i-1] * 4;
+        pow2[i] = pow2[i-1] * 2;
+    }
+}
+
+// 坐标从1开始
+ull coord_to_num(int k, ull x, ull y) {
+    if (k == 0) return 1;
+    if (k == 1) {
+        // 2x2 base case
+        if (x == 1 && y == 1) return 1;
+        if (x == 2 && y == 2) return 2;
+        if (x == 2 && y == 1) return 3;
+        if (x == 1 && y == 2) return 4;
+        return 0; // should not happen
+    }
+    ull half = pow2[k-1];
+    ull block = pow4[k-1];
+    if (x <= half && y <= half) {
+        // top-left
+        return coord_to_num(k-1, x, y);
+    } else if (x > half && y > half) {
+        // bottom-right
+        return block + coord_to_num(k-1, x - half, y - half);
+    } else if (x > half && y <= half) {
+        // bottom-left
+        return 2 * block + coord_to_num(k-1, x - half, y);
+    } else { // x <= half && y > half // top-right
+        return 3 * block + coord_to_num(k-1, x, y - half);
+    }
+}
+
+pair<ull, ull> num_to_coord(int k, ull d) {
+    if (k == 0) return {1, 1};
+    if (k == 1) {
+        if (d == 1) return {1, 1};
+        if (d == 2) return {2, 2};
+        if (d == 3) return {2, 1};
+        if (d == 4) return {1, 2};
+        return {0, 0};
+    }
+    ull block = pow4[k-1];
+    if (d <= block) {
+        // top-left
+        auto sub = num_to_coord(k-1, d);
+        return {sub.first, sub.second};
+    } else if (d <= 2 * block) {
+        // bottom-right
+        auto sub = num_to_coord(k-1, d - block);
+        ull half = pow2[k-1];
+        return {sub.first + half, sub.second + half};
+    } else if (d <= 3 * block) {
+        // bottom-left
+        auto sub = num_to_coord(k-1, d - 2 * block);
+        ull half = pow2[k-1];
+        return {sub.first + half, sub.second};
+    } else {
+        // top-right
+        auto sub = num_to_coord(k-1, d - 3 * block);
+        ull half = pow2[k-1];
+        return {sub.first, sub.second + half};
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    precompute();
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        while (q--) {
+            string op;
+            cin >> op;
+            if (op == "->") {
+                ull x, y;
+                cin >> x >> y;
+                cout << coord_to_num(n, x, y) << '\n';
+            } else { // "<-"
+                ull d;
+                cin >> d;
+                auto [x, y] = num_to_coord(n, d);
+                cout << x << ' ' << y << '\n';
+            }
+        }
+    }
+    return 0;
+}

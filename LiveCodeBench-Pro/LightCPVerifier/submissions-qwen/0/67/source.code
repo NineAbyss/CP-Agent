@@ -1,0 +1,598 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<int> a(n), b(m);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        for (int i = 0; i < m; i++) {
+            cin >> b[i];
+        }
+
+        // Check if it's possible without adding any flower
+        auto check = [&](const vector<int>& arr) -> bool {
+            int j = 0;
+            for (int i = 0; i < (int)arr.size() && j < m; i++) {
+                if (arr[i] >= b[j]) {
+                    j++;
+                }
+            }
+            return j == m;
+        };
+
+        if (check(a)) {
+            cout << 0 << '\n';
+            continue;
+        }
+
+        // Try to find the minimum k such that we can insert one flower with beauty k // and then collect m flowers satisfying the condition.
+
+        // We need to simulate inserting a flower of value k somewhere. // Instead of trying all positions, we can think greedily:
+        // We want to know: what is the minimal k such that after inserting k at some position, // we can satisfy the requirement?
+
+        // Idea: try to simulate the greedy matching, and when we fail, see if we can insert // a flower here to cover the missing requirement.
+
+        // Let's precompute how many b's we can match from left to right in a.
+        vector<int> matched_pos(m, -1); // matched_pos[i] = index in a where b[i] was matched
+        int j = 0;
+        for (int i = 0; i < n && j < m; i++) {
+            if (a[i] >= b[j]) {
+                matched_pos[j] = i;
+                j++;
+            }
+        }
+
+        if (j == m) {
+            cout << 0 << '\n';
+            continue;
+        }
+
+        // We couldn't match all b's. We are missing starting from j-th requirement. // We need to insert a flower with beauty at least b[j] to potentially help.
+
+        // But note: inserting a flower might allow us to skip some earlier part and re-align? // Actually, we can simulate: suppose we insert a flower with value k at some position.
+        // Then we traverse the array (with the inserted element) and greedily match.
+
+        // However, note: total n <= 200000, but sum of n over test cases <= 200000, so we can do O(n) per test.
+
+        // Alternate idea:
+        // Since we can insert only one flower, we can consider: for each possible gap (0..n),
+        // and for each unmatched requirement, try to cover it by inserting k = b[needed_req]. // But we want minimal k.
+
+        // Better: binary search on k? But k up to 1e9, and checking feasibility for fixed k would be O(n). // Total complexity O(n log(max_b)) which is acceptable? But note: sum of n <= 200000, but t can be up to 10000?
+        // Wait: "It is guaranteed that the sum of n over all test cases does not exceed 2⋅10^5" // So total n across test cases <= 200000. So we can do O(n log m) or similar.
+
+        // But note: we don't need binary search necessarily.
+
+        // Insight: // We are going to try to simulate the matching process and see where we get stuck.
+        // Then, we can insert a flower to cover one of the requirements that we are missing.
+
+        // Let’s define: // We want to know: what is the smallest k such that there exists a position p in [0, n]
+        // where we insert k, and then we can match all b[0..m-1].
+
+        // How to check for a fixed k? // We can simulate: insert k at every possible position? That would be O(n^2). Too slow.
+
+        // Alternative efficient approach:
+
+        // Precompute prefix: max number of b's we can match using first i elements of a.
+        vector<int> prefix(n + 1, 0);
+        j = 0;
+        for (int i = 0; i < n; i++) {
+            prefix[i+1] = prefix[i];
+            if (j < m && a[i] >= b[j]) {
+                prefix[i+1]++;
+                j++;
+            }
+        }
+        if (prefix[n] >= m) {
+            cout << 0 << '\n';
+            continue;
+        }
+
+        // Also compute suffix: from position i to end, how many of the last x requirements can we match?
+        vector<int> suffix(n + 1, 0); // suffix[i] = max count of b's from the end we can match using a[i..n-1]
+        j = m - 1;
+        for (int i = n - 1; i >= 0; i--) {
+            suffix[i] = suffix[i+1];
+            if (j >= 0 && a[i] >= b[j]) {
+                suffix[i]++;
+                j--;
+            }
+        }
+
+        // Now, if we insert a flower with beauty k at position pos (0 <= pos <= n), // then we can use:
+        //   left_part = prefix[pos]   -> matches first L requirements
+        //   then we use the inserted flower to match requirement at index L (if k >= b[L])
+        //   then right_part = suffix[pos] -> matches last R requirements from b[m-R] to b[m-1] //
+        // But note: the suffix part should match from the end backwards, but we need continuity. // Actually, we want: after matching L requirements from the left, we use the inserted flower to match b[L],
+        // then we need to match the remaining m - L - 1 requirements from b[L+1] to b[m-1] using the right segment a[pos..n-1]? // But wait: the right segment starts at index pos in original array, but we already used some elements?
+
+        // Correction: when we insert at position pos, the new array is: //   a[0], ..., a[pos-1], k, a[pos], ..., a[n-1]
+        // The left part uses a[0..pos-1] to match some prefix of b. // Then we use k to match one requirement, say b[x], then the right part uses a[pos..n-1] to match the rest.
+
+        // But we are free to choose which requirement to match with k.
+
+        // So for a fixed insertion position pos, we can try to match: //   Let L = prefix[pos]  -> we matched b[0..L-1] using a[0..pos-1]
+        //   Then we require that k >= b[L] to match b[L] //   Then we need to match b[L+1..m-1] using a[pos..n-1]. How many can we match from b[L+1..m-1] in a[pos..n-1]?
+        //   This is exactly: can we match the sequence b[L+1..m-1] in order from a[pos..n-1]?  //   But note: we computed suffix as matching from the end. That doesn't help directly.
+
+        // Instead, let's precompute for each starting requirement index and each starting array index the maximum match? // That would be too expensive.
+
+        // Alternate: reverse the arrays.
+        // Let’s define an array f for the right part: 
+        //   Let rev_a = reverse of a, rev_b = reverse of b. //   Then compute prefix_rev: matching rev_b with rev_a from the end.
+
+        // Actually, we can precompute:  //   Let dp[i][j] = ... -> too heavy.
+
+        // Instead, we can precompute for each starting index i in a and starting requirement j, but that's O(n*m).
+
+        // Another idea: since we are only inserting one element, we can try every possible requirement that we cover with the inserted flower.
+
+        // Let's try every possible index r in [0, m] that we want to cover with the inserted flower. // Then we need:
+        //   - The first r requirements b[0..r-1] must be matched by some subsequence of a (in order)
+        //   - The last m - r - 1 requirements b[r+1..m-1] must be matched by some subsequence of a (in order) that comes after the part used for the first r.
+        //   - And we need to split the array a into two parts: left part for b[0..r-1], right part for b[r+1..m-1], and they don't overlap.
+
+        // How to compute maximum match for a prefix of b in a? We have prefix array for that.
+        // Similarly, we can compute an array for the suffix: but this time, matching b[r+1..m-1] in order in a, but we need them to appear after some position.
+
+        // Let’s define: //   Let suf[i] = the maximum number of requirements we can match from the end of b using a[i..n-1], but matching consecutively from b[m-1] backwards?
+        //   But we need to match a contiguous suffix of b? No, we need to match b[r+1], b[r+2], ..., b[m-1] in order.
+
+        // We can precompute an array `suff` such that suff[i] = the longest suffix of b that can be matched in a[i..n-1] in order.
+
+        // Actually, we can compute: //   Let g[i] = the largest integer x such that we can match b[m-x .. m-1] in a[i..n-1] in order.
+        // But we don't need the entire suffix, we need to match b[r+1..m-1] for any r.
+
+        // Instead, we can precompute an array `suffix_match` where: //   suffix_match[i] = the maximum number of consecutive requirements from the end of b that can be matched in a[i..n-1].
+        // But that's not enough: we might skip some in the middle.
+
+        // Actually, we want: for a given starting position i in a and a given starting requirement index j in b, can we match b[j..m-1] in a[i..n-1]? // We can precompute this with a DP backwards.
+
+        // Given constraints (sum of n <= 200000), but m <= n, and total n <= 200000, we cannot do O(n*m) per test.
+
+        // Let me change strategy.
+
+        // We'll try to simulate: for each possible insertion position pos in [0, n], and for each possible requirement index r that we cover with the inserted flower, // but that's O(n*m) which is too heavy.
+
+        // Insight from known problems: this is similar to "insert one element to fix a subsequence".
+
+        // Known solution idea:  //   We can compute the longest subsequence of b that appears in a as a subsequence (in order). Let L = that length.
+        //   If L >= m, answer 0.
+        //   Else if L < m-1, then even with one insertion we cannot get m, so answer -1? Not exactly: because the inserted flower can cover one missing requirement, but we still need the rest to be present.
+
+        // Actually, we need to be able to cover m-1 requirements from a, and then use the inserted flower for one.
+
+        // So necessary condition: the maximum number of requirements we can match from a must be at least m-1.
+
+        // But is it sufficient? Not exactly: we also need that the one we insert can be placed appropriately between the two parts.
+
+        // Let’s define: //   Let L = maximum number of b's that can be matched in a. If L >= m, then 0.
+        //   If L < m-1, then even with one extra we cannot reach m, so answer -1.
+
+        // But wait: maybe we can skip some early ones and use the inserted flower to fill a gap in the middle?  // Example: a = [1, 3], b = [2, 1, 3]: we can insert 2 at beginning: [2,1,3] -> then pick 2, then 3? But we need three flowers: 2,1,3 -> but 1 comes after 2?
+        // But we must pick in order from left to right. So we can pick 2 (inserted), then 1, then 3 -> [2,1,3] which satisfies b=[2,1,3]?  // But b[0]=2, b[1]=1, b[2]=3 -> yes.
+
+        // However, in this example, without the inserted flower, we can match:  //   a[0]=1 < b[0]=2 -> skip, a[1]=3 >= b[0]=2 -> match b[0], then no more -> only 1 match.
+        //   So L=1, m=3 -> L < m-1 -> would output -1, but actually we can do it.
+
+        // So my previous thought is wrong.
+
+        // We don't need to match m-1 from a. We need to match two separate parts: a prefix of b of length r and a suffix of b of length m-r-1, and they are disjoint in a.
+
+        // So we can do:
+
+        // Precompute: //   prefix_count[i] = maximum number of b[0..*] that can be matched using a[0..i-1]
+        //   suffix_count[i] = maximum number of b[*..m-1] that can be matched using a[i..n-1] (matching in order)
+
+        // How to compute suffix_count[i]: 
+        //   Let j = m-1;
+        //   for i from n-1 down to 0:
+        //      suffix_count[i] = (j>=0 && a[i]>=b[j]) ? suffix_count[i+1]+1 : suffix_count[i+1]; 
+        //      but then j-- only if matched? -> no, because we need to match in order.
+
+        // Actually, we need to match b from some starting point to the end, but in increasing index of a.
+
+        // Correct way for suffix_count: 
+        //   We want: for each i, what is the maximum number of requirements from the *end* of b that can be matched in a[i..n-1] in order? 
+        //   But note: we don't require that they are at the very end of b necessarily.
+
+        // Actually, we want: for each i, let suf[i] = the largest x such that b[m-x .. m-1] can be matched in a[i..n-1] in order.
+
+        // We can compute this backwards:
+        vector<int> suf(n + 1, 0);
+        // suf[i] = maximum x such that the last x requirements of b can be matched in a[i..n-1]
+        int idx = m - 1;
+        for (int i = n - 1; i >= 0; i--) {
+            suf[i] = suf[i+1];
+            if (idx >= 0 && a[i] >= b[idx]) {
+                // we can match b[idx] at position i, then we need to match b[0..idx-1] and b[idx+1..m-1] is already matched? // No, we are matching backwards: we start from the last requirement and go backwards.
+                // So we try to match b from back to front. // But our suf[i] is defined as the number of requirements matched from the end.
+                // So if a[i] >= b[m - 1 - suf[i+1]], then we can extend? // Actually, better:
+                //   Let's define: we want to match b[m-1], b[m-2], ... in reverse order in a from right to left. //   So we traverse a from right to left, and b from right to left.
+                //   But we did that above for 'suffix' array? 
+            }
+        }
+
+        // Let's recompute suf properly:
+        suf.assign(n + 1, 0);
+        int jj = m - 1;
+        for (int i = n - 1; i >= 0; i--) {
+            if (jj >= 0 && a[i] >= b[jj]) {
+                jj--;
+            }
+            suf[i] = m - 1 - jj; // number of requirements matched from the end
+        }
+        // suf[i] = number of requirements from the end that are matched in a[i..n-1]
+        // For example, if we matched the last 3, then suf[i]=3.
+
+        // But wait, this gives only one global value. We need for each i.
+
+        // Correction: we want suf[i] = the maximum number of requirements from the end of b that can be matched in a[i..n-1] in order. // We can do:
+        vector<int> suf2(n + 1, 0);
+        // Compute backwards: 
+        jj = m - 1;
+        for (int i = n - 1; i >= 0; i--) {
+            suf2[i] = suf2[i+1];
+            if (jj >= 0 && a[i] >= b[jj]) {
+                suf2[i]++;
+                jj--;
+            }
+        }
+        // But this is not correct because jj is shared.
+
+        // Correct way: 
+        //   Let's create an array for the suffix part independently.
+        //   We'll compute an array `suf` such that suf[i] = the maximum number of requirements from the end of b that can be matched in a[i..n-1] in order. //   We can do:
+        //      suf[n] = 0;
+        //      for i from n-1 down to 0:
+        //          suf[i] = suf[i+1];
+        //          if (suf[i] < m && a[i] >= b[m - 1 - suf[i]]) {
+        //              suf[i]++;
+        //          }
+        //   Why? Because we are trying to extend the matched suffix: if we can match one more at the front of the current matched suffix, then we do. //   The requirement we need to match is b[m-1-suf[i]] (because we already have suf[i] matched at the end, so the next is at index m-1-suf[i]).
+        //   But note: we are traversing from right to left, so we are building the suffix from the end inward.
+
+        suf2.assign(n + 1, 0);
+        for (int i = n - 1; i >= 0; i--) {
+            suf2[i] = suf2[i+1];
+            // Can we match b[m-1-suf2[i]] at a[i]?
+            if (suf2[i] < m && a[i] >= b[m - 1 - suf2[i]]) {
+                suf2[i]++;
+            }
+        }
+
+        // Now, we also have prefix_count[i] = number of b's matched in a[0..i-1] // We already have `prefix` array: prefix[i] = number of b's matched in a[0..i-1]
+
+        // Now, iterate over the position where we insert the new flower: pos in [0, n] // When we insert at pos, then:
+        //   left part: a[0..pos-1] can match up to prefix[pos] requirements (say L) //   right part: a[pos..n-1] can match up to suf2[pos] requirements from the end of b.
+        //   But note: the requirements matched in the right part are the last suf2[pos] requirements of b.
+        //   So if we let R = suf2[pos], then the right part covers b[m-R .. m-1].
+        //   The left part covers some prefix of b, say of length L. //   We require that these two intervals do not overlap and leave exactly one requirement in between.
+        //   Specifically, we want: L + R >= m - 1, and the uncovered requirement is at index L, and we require that L <= m-R-1 (so that the covered parts don't overlap). //   The uncovered requirement is at index L, and we will cover it with the inserted flower.
+        //   Conditions: //       1. L = prefix[pos]
+        //       2. R = suf2[pos] //       3. L + R >= m - 1  --> then we can cover the gap with one flower
+        //       4. The gap is at index L, and we require that the right part starts at b[m-R] and we need L <= m-R-1, so that b[L] is not covered by the right part. //          i.e., L < m - R   => L + R < m  ???
+        //   Actually, if L + R >= m, then we don't need the inserted flower? -> then we could have matched m without insertion. //   But we already checked that we cannot match m without insertion.
+
+        //   So we require L + R >= m - 1, and the gap is at index L, and we require that the right part does not cover b[L], i.e., the right part covers b[m-R..m-1], so we need L < m-R.
+        //   Then the uncovered requirement is b[L], and we can cover it with the inserted flower if k >= b[L].
+
+        //   Therefore, for a fixed pos, if prefix[pos] + suf2[pos] >= m - 1 and prefix[pos] < m - suf2[pos] (which means the gap is exactly at prefix[pos]), then we can cover by setting k = b[prefix[pos]].
+
+        //   But wait, could we cover a different requirement?  //   For example, could we cover a requirement not at the boundary?
+        //   Note: the left part is maximal: we take as many as possible from the left. Similarly, the right part takes as many as possible from the end. //   But we might be able to cover a requirement in the middle that is not at the boundary of the left coverage.
+
+        //   However, because we are allowed to choose arbitrarily which requirement to cover, we might cover any requirement that is not covered by either part.
+
+        //   But the left part covers a prefix of b, and the right part covers a suffix of b, and they might overlap?  //   We require that they don't overlap: the left part covers b[0..L-1], the right part covers b[m-R..m-1], and we require L <= m-R.
+        //   Then the uncovered part is b[L..m-R-1]. We can cover any one requirement in this range with the inserted flower.
+
+        //   So the minimal k we need for this pos is min{ b[i] for i in [L, m-R-1] }.
+
+        //   And we require that the interval [L, m-R-1] is non-empty and has size at least 1.
+
+        //   But note: if L > m-R, then the two parts overlap, which means we have matched at least L + R - (overlap) = L+R - (L - (m-R)) = m + R - something? 
+        //   Actually, if L > m-R, then the left part goes beyond the start of the right part, so we have matched at least R + (L - (m-R)) = L+R - (m-R) ??? 
+        //   This is messy.
+
+        //   Alternatively, the total number of distinct requirements matched is at most L + R, but if L > m-R, then the overlap is L - (m-R), so distinct = L + R - (L - (m-R)) = m-R + R = m.
+        //   So if L > m-R, then we have matched m requirements, which contradicts that we cannot do it without insertion.
+
+        //   Therefore, in our case, we must have L <= m-R.
+
+        //   So the uncovered segment is [L, m-R-1] (inclusive), and its length is (m-R - L). //   We need to cover exactly one requirement from this segment, so we need the length to be at least 1?
+        //   But we only insert one flower, so we can only cover one. We require that the entire b is covered: 
+        //        b[0..L-1] by left, b[i] by inserted flower (for some i in [L, m-R-1]), and b[m-R..m-1] by right.
+        //   But the right part might not start exactly at m-R if we skip the covered one in the middle? 
+
+        //   Actually, the right part matching is independent: it will match the last R requirements regardless.
+
+        //   However, the catch is: the right part matching in a[pos..n-1] might be affected by the fact that we haven't matched the left part continuously?  //   But we are not using the same element twice.
+
+        //   But in our computation, prefix[pos] is computed greedily on a[0..pos-1], and suf2[pos] is computed greedily on a[pos..n-1] for the suffix of b.
+
+        //   These are independent.
+
+        //   Therefore, for a fixed pos, the set of requirements that are covered is:
+        //        S = {0,1,...,L-1} ∪ {m-R, m-R+1, ..., m-1}
+        //   and the uncovered set is T = {L, L+1, ..., m-R-1}. //   We can cover any one requirement in T with the inserted flower.
+
+        //   So the minimal k needed for this pos is min_{i in T} b[i].
+
+        //   And we require that T is non-empty? Actually, if T is empty, then L >= m-R, but we said L<=m-R, so L=m-R, then T is empty -> then we have matched m requirements, contradiction.
+
+        //   So T is non-empty only if L < m-R.
+
+        //   But wait, we only require that we cover m-1 from a and one from inserted, so we need |S| = L+R >= m-1, and then we cover one more from T.
+
+        //   However, if L+R >= m, then we have matched at least m, which is impossible.
+
+        //   So we must have L+R = m-1, and then T has exactly one element? Not necessarily: T has size = (m-R - L) = m - R - L = m - (L+R) = 1.
+        //   So if L+R = m-1, then T has size 1.
+
+        //   But could we have L+R > m-1? 
+        //   Only if L+R >= m, which is not allowed.
+
+        //   Therefore, for a valid pos, we must have L+R = m-1 and L < m-R (which is automatic because L+R = m-1 implies L = m-1-R, and then m-R = m-R, so L = m-1-R < m-R).
+
+        //   Then T = {L} = {m-1-R}, and the only uncovered requirement is at index L = m-1-R.
+
+        //   But wait: T = [L, m-R-1] = [m-1-R, m-R-1] = [m-1-R, m-1-R] -> singleton.
+
+        //   So then k must be at least b[L] = b[m-1-R].
+
+        //   But is that the only possibility? Could we cover a different requirement in T? But T has only one element.
+
+        //   Therefore, for a given pos, if prefix[pos] + suf2[pos] == m-1, then we can cover by setting k = b[prefix[pos]].
+
+        //   But wait, could we cover a requirement not in the natural gap?  //   For example, could we cover an earlier requirement and then the left part matches more?
+        //   But the left part is computed greedily: it matches as many as possible. So if we skip a requirement in the left, we might not get prefix[pos] matches.
+
+        //   However, we are allowed to choose arbitrarily which ones to pick. The greedy might not be optimal for maximizing the chance to have a small gap.
+
+        //   But note: we want to minimize k. We might be able to cover a requirement with a smaller b[i] even if it means we get fewer matches in the left or right.
+
+        //   Therefore, we should try every possible requirement index r in [0, m-1] that we cover with the inserted flower, and see if the remaining m-1 requirements can be partitioned into a prefix part and a suffix part that are matched in a.
+
+        //   Specifically, for a fixed r, we need:
+        //        - The requirements b[0..r-1] can be matched in a[0..p-1] for some p.
+        //        - The requirements b[r+1..m-1] can be matched in a[p..n-1] for that same p. //   Then we can insert at position p.
+
+        //   How to check for a fixed r?
+        //        Let L = the maximum number of requirements in b[0..r-1] that can be matched in a[0..n-1] in order. But we need to know if we can match all of b[0..r-1] and then have the rest available for b[r+1..m-1] after some position.
+
+        //   We can precompute: //        prefix_r[r] = the minimum index in a such that we can match b[0..r-1] in a[0..index-1] (i.e., the earliest we can finish matching the first r requirements)
+        //        But we want to know: for a fixed r, can we match b[0..r-1] in a[0..p-1] and b[r+1..m-1] in a[p..n-1] for some p.
+
+        //   We can do:
+        //        Let left_bound[r] = the minimum index in a such that the subsequence b[0..r-1] is matched (or infinity if not possible)
+        //        Let right_bound[r] = the maximum index in a such that the subsequence b[r+1..m-1] is matched in a[index..n-1] (or -infinity if not possible)
+
+        //   Then we need left_bound[r] < right_bound[r] (meaning there exists a p such that left_bound[r] < p <= right_bound[r])
+
+        //   But easier: 
+        //        Let's compute an array `min_end` for the first r requirements: 
+        //           min_end[0] = 0
+        //           for r from 1 to m:
+        //               we can compute the minimum index in a to match b[0..r-1] by greedy:  //                   j = 0
+        //                   for i in range(n):
+        //                       if j < r and a[i] >= b[j]:
+        //                           j++
+        //                   if j==r, then we have a matching, and the index is i (last matched) but we want the earliest such that we can match? 
+        //                   Actually, we want the minimum possible last index for matching b[0..r-1]? 
+
+        //   Alternatively, we can compute the greedy matching for b[0..r-1] and record the last index used.
+
+        //   But note: we want to know: for a fixed r, what is the minimum possible p such that b[0..r-1] can be matched in a[0..p-1]? 
+        //   That is simply the result of the greedy algorithm for the first r requirements.
+
+        //   Similarly, for the suffix: what is the maximum possible p such that b[r+1..m-1] can be matched in a[p..n-1]?  //   We can compute by greedy from the right.
+
+        //   So let's define:
+        //        left_finish[r] = the minimum index in a (0-indexed) such that the first r requirements are matched, or n if not possible.
+        //        But we want the last index used in a for the matching of the first r requirements.
+
+        //   Actually, we can compute an array `left_index` where left_index[r] = the smallest index in a such that we can match b[0..r-1] in a[0..left_index[r]]. //   But we can compute it greedily:
+        //        left_index[0] = -1 //        j = 0
+        //        for i in range(n):
+        //            if j < r and a[i] >= b[j]:
+        //                j++
+        //            if j == r:
+        //                left_index[r] = i //                break
+
+        //   But we want for every r.
+
+        //   We can do for r from 0 to m: //        left_index[r] = (r==0 ? -1 : some value)
+
+        //   Similarly, for the suffix: 
+        //        right_start[r] = the largest index in a such that we can match b[r+1..m-1] in a[right_start[r]..n-1], or -1 if not possible.
+        //        We can compute by:  //             j = m-1
+        //             for i from n-1 down to 0:
+        //                 if j > r and a[i] >= b[j]:
+        //                     j--
+        //                 if j == r:
+        //                     right_start[r] = i //                     break
+
+        //   Then for requirement r to be coverable by inserted flower, we need: //        left_index[r] < right_start[r]   (so that there is a gap to insert)
+        //        and left_index[r] != -2 (indicating failure) and right_start[r] != -2.
+
+        //   Then the candidate k is b[r].
+
+        //   We want the minimum such k over all r in [0, m-1] that satisfy the condition.
+
+        //   Steps for one test case: //        1. If we can match all m without insertion, output 0.
+        //        2. For r in 0..m-1:
+        //             - Compute left_index[r] = last index in a used to match b[0..r-1] (greedy), or a big number if not possible.
+        //             - Compute right_start[r] = first index in a used to match b[r+1..m-1] in reverse order, or -1 if not possible. //             - If left_index[r] < right_start[r] (and both are valid), then candidate = b[r]
+        //        3. Answer = min(candidate over r), if no candidate, output -1.
+
+        //   But note: the total work over r would be O(m*n) per test case, and sum of n <= 200000, but sum of m also bounded by sum of n, however, doing a loop for each r would be O(m) * O(n) = O(n^2) per test case, and total n<=200000, but worst-case one test case with n=200000, then O(200000^2) = 40e9, too slow.
+
+        //   We need to compute left_index for all r in one pass.
+
+        //   How to compute left_index[0..m] in one pass? //        left_index[0] = -1
+        //        j = 0
+        //        for i in range(n):
+        //            if j < m && a[i] >= b[j]: //                j++
+        //                left_index[j] = i   // because now we've matched j requirements, and we just used index i
+        //        for j from j+1 to m: left_index[j] = INF
+
+        //   Similarly, for right_start[0..m-1] (actually for each r, we want to match b[r+1..m-1]): //        right_start[m] = n   // no requirement after m-1
+        //        j = m-1
+        //        for i from n-1 down to 0:
+        //            if j >= 0 && a[i] >= b[j]: //                // we can use a[i] to match b[j]
+        //                right_start[j] = i   // because to match b[j..m-1], we can start at i //                j--
+        //        for j from j+1 down to 0: right_start[j] = -1
+
+        //   But wait, right_start[r] should be the start index for matching b[r+1..m-1], not b[r..m-1].
+
+        //   So let's define: //        right_start[r] = the minimum index in a such that we can match b[r+1..m-1] in a[index..n-1] in order.
+        //        But we want the smallest index where we can start and still match the whole thing.
+
+        //   Actually, we want the leftmost index in a that can be the start of the matching for b[r+1..m-1]? 
+        //   But then we would have to do a forward scan.
+
+        //   Alternatively, we can compute an array `right_index` where right_index[r] = the smallest index in a such that the requirements b[r+1..m-1] can be matched in a[right_index[r]..n-1] in order.
+        //   We can compute this by scanning from right to left for the entire b, but for suffixes.
+
+        //   Let's do: //        right_index[m] = n  // no requirement, so we can start at n
+        //        j = m-1
+        //        for i from n-1 down to 0:
+        //            if j > r_min and a[i] >= b[j]: //                j--
+        //            // not helpful.
+
+        //   Instead, we can compute an array `suf` such that suf[i] = the smallest index >= i such that the requirements from some start can be matched? 
+
+        //   Known technique: 
+        //        Let's compute an array `min_start` for the suffix: 
+        //           min_start[i] = the smallest index in a such that the suffix of b of length i can be matched in a[min_start[i]..n-1] in order.
+        //        But we want for a specific set b[r+1..m-1].
+
+        //   We can do: 
+        //        right_index = vector<int>(m+1, -1);
+        //        // right_index[r] = the minimum index in a to start to match b[r+1..m-1] //        // We can compute by:
+        //        //   let's match b from the end backwards: 
+        //        right_index[m] = n;
+        //        int j = m-1;
+        //        for (int i = n-1; i>=0; i--) {
+        //            if (j >= 0 && a[i] >= b[j]) {
+        //                // we can match b[j] at i, then the start for matching b[j..m-1] is i, but we want for b[j+1..m-1] we have right_index[j+1], and then we can match b[j] at i if i < right_index[j+1]? 
+        //                // Actually, we want to know: to match b[j..m-1], we can use a[i] for b[j] and then match b[j+1..m-1] in a[i+1..n-1], so the start is i.
+        //                // So right_index[j] = i;
+        //                j--;
+        //            }
+        //        }
+        //        for (; j>=0; j--) {
+        //            right_index[j] = -1;
+        //        }
+
+        //   But then right_index[r] is the start index for matching b[r..m-1], not b[r+1..m-1].
+
+        //   So we want right_index[r+1] for the purpose of matching b[r+1..m-1].
+
+        //   Therefore, for requirement r, we need: //        left_index[r] < right_index[r+1]   (because the left part finishes at left_index[r], and the right part starts at right_index[r+1], and we insert in between)
+
+        //   Conditions: //        - left_index[r] must be valid: r==0 -> left_index[0]=-1, which is always valid.
+        //          for r>=1, we need left_index[r] < n. //        - right_index[r+1] must be valid: r+1<=m, and right_index[r+1] should be >=0.
+        //        - and left_index[r] < right_index[r+1]
+
+        //   Then candidate = b[r]
+
+        //   Special: if r = m-1, then right_index[r+1] = right_index[m] = n, and left_index[m-1] < n is likely.
+
+        //   Steps:
+        //        Step 1: Check if we can match m without insertion: if left_index[m] < n, then answer 0.
+        //        Step 2: Initialize ans = a big number. //        Step 3: For r in 0 to m-1:
+        //                  if (r==0 || left_index[r] < n) && (r==m-1 || right_index[r+1] >=0) && (left_index[r] < right_index[r+1]): //                      ans = min(ans, b[r])
+        //        Step 4: If ans is still big, output -1, else output ans.
+
+        //   Let's test with the first example: //        n=9, m=5, a = [3,5,2,3,3,5,8,1,2], b = [4,6,2,4,6]
+        //        Compute left_index[0..5]: //           left_index[0] = -1
+        //           i=0: a[0]=3 < b[0]=4 -> skip //           i=1: a[1]=5>=4 -> j=1, left_index[1]=1
+        //           i=2: a[2]=2 < b[1]=6 -> skip //           i=3: a[3]=3 <6 -> skip
+        //           i=4: a[4]=3<6 -> skip //           i=5: a[5]=5<6 -> skip
+        //           i=6: a[6]=8>=6 -> j=2, left_index[2]=6 //           i=7: a[7]=1 < b[2]=2 -> skip
+        //           i=8: a[8]=2>=2 -> j=3, left_index[3]=8 //           then j=3, need b[3]=4: no more a -> so left_index[4] and left_index[5] = INF (we'll use a big number, say n)
+        //           so left_index[4]=9, left_index[5]=9. //        Compute right_index[0..5]:
+        //           right_index[5] = n = 9 //           j = 4 (since we start from b[4])
+        //           i=8: a[8]=2 < b[4]=6 -> skip //           i=7: a[7]=1<6 -> skip
+        //           i=6: a[6]=8>=6 -> match b[4], so right_index[4]=6, j=3 //           i=5: a[5]=5>=4 -> match b[3], so right_index[3]=5, j=2
+        //           i=4: a[4]=3>=2 -> match b[2], so right_index[2]=4, j=1 //           i=3: a[3]=3<6 -> skip
+        //           i=2: a[2]=2<6 -> skip //           i=1: a[1]=5<6 -> skip
+        //           i=0: a[0]=3<6 -> skip //           then j=1, so right_index[1] and right_index[0] are not set -> we'll set them to -1.
+        //           So:  //               right_index[0] = -1, right_index[1] = -1, right_index[2]=4, right_index[3]=5, right_index[4]=6, right_index[5]=9.
+        //        Now, check r in [0,4]: //           r=0: left_index[0]=-1, right_index[1]=-1 -> condition fails.
+        //           r=1: left_index[1]=1, right_index[2]=4 -> 1<4 -> true, candidate = b[1]=6. //           r=2: left_index[2]=6, right_index[3]=5 -> 6<5 -> false.
+        //           r=3: left_index[3]=8, right_index[4]=6 -> 8<6 -> false. //           r=4: left_index[4]=9, right_index[5]=9 -> 9<9 -> false.
+        //        So answer = 6.
+
+        //   Matches expected.
+
+        //   Test with the second example: //        6 3
+        //        1 2 6 8 2 1 //        5 4 3
+        //        b = [5,4,3] //        left_index[0]=-1
+        //        i0:1<5 -> skip //        i1:2<5 -> skip
+        //        i2:6>=5 -> j=1, left_index[1]=2 //        i3:8>=4 -> j=2, left_index[2]=3
+        //        i4:2<3 -> skip //        i5:1<3 -> skip
+        //        left_index[3]=6 (n=6) //        right_index[3]=6
+        //        j=2: b[2]=3 //        i5:1<3 -> skip
+        //        i4:2<3 -> skip //        i3:8>=3 -> match, right_index[2]=3, j=1
+        //        i2:6>=4 -> match, right_index[1]=2, j=0 //        i1:2<5 -> skip
+        //        i0:1<5 -> skip //        right_index[0] = -1
+        //        Now check r in [0,2]: //           r=0: left_index[0]=-1, right_index[1]=2 -> -1<2 -> true, candidate = b[0]=5.
+        //           r=1: left_index[1]=2, right_index[2]=3 -> 2<3 -> true, candidate = min(5,4)=4. //           r=2: left_index[2]=3, right_index[3]=6 -> 3<6 -> true, candidate = min(4,3)=3.
+        //        So answer = 3.
+
+        //   Expected output is 3.
+
+        //   Third example: //        5 3
+        //        4 3 5 4 3 //        7 4 5
+        //        b = [7,4,5] //        left_index[0]=-1
+        //        i0:4<7 -> skip //        i1:3<7 -> skip
+        //        i2:5<7 -> skip //        i3:4<7 -> skip
+        //        i4:3<7 -> skip //        left_index[1]=5
+        //        right_index[3]=5 //        j=2: b[2]=5
+        //        i4:3<5 -> skip //        i3:4<5 -> skip
+        //        i2:5>=5 -> match, right_index[2]=2, j=1 //        i1:3<4 -> skip
+        //        i0:4>=4 -> match, right_index[1]=0, j=0 //        right_index[0] = -1
+        //        Check r in [0,2]: //           r=0: left_index[0]=-1, right_index[1]=0 -> -1<0 -> true, candidate = b[0]=7.
+        //           r=1: left_index[1]=5, right_index[2]=2 -> 5<2 -> false. //           r=2: left_index[2]=5, right_index[3]=5 -> 5<5 -> false.
+        //        Answer = 7.
+
+        //   Fourth example:  //        6 3
+        //        8 4 2 1 2 5 //        6 1 4
+        //        b=[6,1,4] //        left_index[0]=-1
+        //        i0:8>=6 -> j=1, left_index[1]=0 //        i1:4>=1 -> j=2, left_index[2]=1
+        //        i2:2<4 -> skip //        i3:1<4 -> skip
+        //        i4:2<4 -> skip //        i5:5>=4 -> j=3, left_index[3]=5 -> so we can match all 3, so answer should be 0.
+        //        But wait, the example says output 0.
+
+        //   So we must first check if left_index[m] < n: here m=3, left_index[3]=5<6 -> true, so output 0.
+
+        //   Fifth example: //        5 5
+        //        1 2 3 4 5 //        5 4 3 2 1
+        //        b = [5,4,3,2,1] //        left_index[0]=-1
+        //        i0:1<5 -> skip //        i1:2<5 -> skip
+        //        i2:3<5 -> skip //        i3:4<5 -> skip
+        //        i4:5>=5 -> j=1, left_index[1]=4 //        then need b[1]=4: no more elements -> left_index[2]=5
+        //        so cannot match all 5, so move to next. //        right_index[5]=5
+        //        j=4: b[4]=1 //        i4:5>=1 -> match, right_index[4]=4, j=3
+        //        i3:4>=2 -> match, right_index[3]=3, j=2 //        i2:3>=3 -> match, right_index[2]=2, j=1
+        //        i1:2>=4 -> no, 2<4 -> skip //        i0:1>=4 -> no
+        //        so j=1, so right_index[1] and right_index[0] = -1 //        Check r in [0,4]:
+        //           r=0: left_index[0]=-1, right_index[1]=-1 -> fail. //           r=1: left_index[1]=4, right_index[2]=2 -> 4<2 -> fail.
+        //           r=2: left_index[2]=5, right_index[3]=3 -> 5<3 -> fail. //           r=3: left_index[3]=5, right_index[4]=4 -> 5<4 -> fail.
+        //           r=4: left_index[4]=5, right_index[5]=5 -> 5<5 -> fail. //        So answer = -1.
+
+        //   Sixth example: //        6 3
+        //        1 2 3 4 5 6 //        9 8 7
+        //        b=[9,8,7] //        left_index

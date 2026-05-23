@@ -1,0 +1,81 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+bool can_fill(int pos, const vector<int>& cnt, int chosen_digit) {
+    vector<int> cnt2 = cnt;
+    cnt2[chosen_digit]--;
+    
+    // remaining positions: pos+1 .. 10
+    int m = 10 - pos;
+    if (m == 0) return true;
+    
+    // collect remaining digits
+    vector<int> digits;
+    for (int d = 0; d <= 9; d++) {
+        for (int k = 0; k < cnt2[d]; k++) {
+            digits.push_back(d);
+        }
+    }
+    // collect remaining needs
+    vector<int> needs;
+    for (int j = pos+1; j <= 10; j++) {
+        needs.push_back(10 - j);
+    }
+    // sort both
+    sort(digits.begin(), digits.end());
+    sort(needs.begin(), needs.end());
+    
+    // greedy matching
+    int di = 0;
+    for (int r : needs) {
+        while (di < digits.size() && digits[di] < r) {
+            di++;
+        }
+        if (di >= digits.size()) return false;
+        di++; // use this digit
+    }
+    return true;
+}
+
+string solve(const string& s) {
+    vector<int> cnt(10, 0);
+    for (char ch : s) {
+        cnt[ch - '0']++;
+    }
+    string ans;
+    for (int i = 1; i <= 10; i++) {
+        int need = 10 - i;
+        bool found = false;
+        for (int d = need; d <= 9; d++) {
+            if (cnt[d] == 0) continue;
+            if (can_fill(i, cnt, d)) {
+                ans.push_back('0' + d);
+                cnt[d]--;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            // should not happen for valid input
+            ans.push_back('?');
+        }
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        cout << solve(s) << '\n';
+    }
+    return 0;
+}

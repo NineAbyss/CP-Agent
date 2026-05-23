@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MOD = 998244353;
+vector<int> powers;
+
+void precompute_powers(int max_n) {
+    powers.resize(max_n);
+    powers[0] = 1;
+    for (int i = 1; i < max_n; ++i) {
+        powers[i] = (2 * powers[i - 1]) % MOD;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int t;
+    cin >> t;
+
+    int total_n = 0; // To ensure precomputation is sufficient
+    vector<vector<int>> test_cases;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        total_n = max(total_n, n);
+        vector<int> p(n), q(n);
+        for (int i = 0; i < n; ++i) cin >> p[i];
+        for (int i = 0; i < n; ++i) cin >> q[i];
+        test_cases.push_back(p);
+        test_cases.push_back(q);
+    }
+    
+    precompute_powers(total_n);
+
+    for (size_t tc = 0; tc < test_cases.size(); tc += 2) {
+        const vector<int>& p = test_cases[tc];
+        const vector<int>& q = test_cases[tc+1];
+        int n = p.size();
+        vector<int> r(n);
+
+        // Max prefix value
+        int max_value = 0;
+        for (int i = 0; i < n; ++i) {
+            int current_max = 0;
+            for (int j = 0; j <= i; ++j) {
+                current_max = max(current_max, (powers[p[j]] + powers[q[i - j]]) % MOD);
+            }
+            r[i] = current_max;
+        }
+
+        for (int i = 0; i < n; ++i) {
+            cout << r[i] << " ";
+        }
+        cout << endl;
+    }
+
+    return 0;
+}

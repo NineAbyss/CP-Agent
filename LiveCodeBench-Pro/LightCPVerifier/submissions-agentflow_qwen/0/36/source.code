@@ -1,0 +1,114 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+typedef long long ll;
+
+struct Point {
+    ll x, y;
+    bool operator<(const Point& other) const {
+        return x < other.x;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<Point> points(n);
+        for (int i = 0; i < n; i++) {
+            cin >> points[i].x >> points[i].y;
+        }
+
+        if (n == 1) {
+            cout << 1 << '\n';
+            continue;
+        }
+
+        // Calculate covering all
+        ll minx_all = LLONG_MAX, maxx_all = LLONG_MIN;
+        ll miny_all = LLONG_MAX, maxy_all = LLONG_MIN;
+        for (auto& p : points) {
+            minx_all = min(minx_all, p.x); maxx_all = max(maxx_all, p.x);
+            miny_all = min(miny_all, p.y); maxy_all = max(maxy_all, p.y);
+        }
+        ll W_all = maxx_all - minx_all + 1;
+        ll H_all = maxy_all - miny_all + 1;
+        ll area_all = W_all * H_all;
+
+        // Sort by x for prefix/suffix
+        sort(points.begin(), points.end());
+
+        // Prefix arrays: pre_minx[i] = min x from 0 to i
+        vector<ll> pre_minx(n), pre_maxx(n), pre_miny(n), pre_maxy(n);
+        pre_minx[0] = pre_maxx[0] = points[0].x;
+        pre_miny[0] = pre_maxy[0] = points[0].y;
+        for (int i = 1; i < n; i++) {
+            pre_minx[i] = min(pre_minx[i-1], points[i].x);
+            pre_maxx[i] = max(pre_maxx[i-1], points[i].x);
+            pre_miny[i] = min(pre_miny[i-1], points[i].y);
+            pre_maxy[i] = max(pre_maxy[i-1], points[i].y);
+        }
+
+        vector<ll> suf_minx(n), suf_maxx(n), suf_miny(n), suf_maxy(n);
+        suf_minx[n-1] = suf_maxx[n-1] = points[n-1].x;
+        suf_miny[n-1] = suf_maxy[n-1] = points[n-1].y;
+        for (int i = n-2; i >= 0; i--) {
+            suf_minx[i] = min(suf_minx[i+1], points[i].x);
+            suf_maxx[i] = max(suf_maxx[i+1], points[i].x);
+            suf_miny[i] = min(suf_miny[i+1], points[i].y);
+            suf_maxy[i] = max(suf_maxy[i+1], points[i].y);
+        }
+
+        ll best = area_all;
+
+        for (int i = 0; i < n; i++) {
+            ll minx, maxx, miny, maxy;
+
+            if (i == 0) {
+                minx = suf_minx[1];
+                maxx = suf_maxx[1];
+                miny = suf_miny[1];
+                maxy = suf_maxy[1];
+            } else if (i == n-1) {
+                minx = pre_minx[n-2];
+                maxx = pre_maxx[n-2];
+                miny = pre_miny[n-2];
+                maxy = pre_maxy[n-2];
+            } else {
+                minx = min(pre_minx[i-1], suf_minx[i+1]);
+                maxx = max(pre_maxx[i-1], suf_maxx[i+1]);
+                miny = min(pre_miny[i-1], suf_miny[i+1]);
+                maxy = max(pre_maxy[i-1], suf_maxy[i+1]);
+            }
+
+            ll W = maxx - minx + 1;
+            ll H = maxy - miny + 1;
+            ll A = W * H;
+            ll k = n - 1;
+
+            ll cost;
+            if (k == 0) {
+                cost = 1;
+            } else if (A > k) {
+                cost = A;
+            } else {
+                cost = A + min(W, H);
+            }
+
+            if (cost < best) {
+                best = cost;
+            }
+        }
+
+        cout << best << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<ll> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        vector<vector<int>> adj(n+1);
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+
+        vector<ll> ans(n+1);
+        stack<tuple<int, int, int, ll, ll, ll>> st;
+        st.push({1, -1, 0, 0, 0, 0});
+
+        while (!st.empty()) {
+            auto [u, parent, dep, current_P, current_low, current_high] = st.top();
+            st.pop();
+
+            ll sign = (dep % 2 == 0) ? 1 : -1;
+            ll P_u = current_P + sign * a[u-1];
+
+            if (dep % 2 == 0) {
+                ans[u] = P_u - current_low;
+            } else {
+                ans[u] = current_high - P_u;
+            }
+
+            ll new_low = min(current_low, P_u);
+            ll new_high = max(current_high, P_u);
+
+            for (int v : adj[u]) {
+                if (v == parent) continue;
+                st.push({v, u, dep+1, P_u, new_low, new_high});
+            }
+        }
+
+        for (int i = 1; i <= n; i++) {
+            cout << ans[i];
+            if (i < n) cout << ' ';
+            else cout << '\n';
+        }
+    }
+
+    return 0;
+}

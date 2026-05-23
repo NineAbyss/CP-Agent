@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+using namespace std;
+
+const int MOD = 998244353;
+const int K = 5000;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> p(n), q(n);
+        for (int i=0; i<n; i++) cin >> p[i];
+        for (int i=0; i<n; i++) cin >> q[i];
+        vector<long long> pow2(n);
+        pow2[0] = 1;
+        for (int i=1; i<n; i++) pow2[i] = pow2[i-1] * 2 % MOD;
+        vector<long long> a(n), b(n);
+        for (int i=0; i<n; i++) {
+            a[i] = pow2[p[i]];
+            b[i] = pow2[q[i]];
+        }
+        vector<long long> r(n);
+        for (int i=0; i<n; i++) {
+            long long best = 0;
+            // collect indices with largest p in [0,i]
+            vector<pair<int,int>> v;
+            for (int j=0; j<=i; j++) v.emplace_back(p[j], j);
+            nth_element(v.begin(), v.begin() + min(K, (int)v.size()), v.end(), greater<pair<int,int>>());
+            int sz = min(K, (int)v.size());
+            for (int idx=0; idx<sz; idx++) {
+                int j = v[idx].second;
+                int k = i - j;
+                if (k < 0 || k > i) continue;
+                long long val = (a[j] + b[k]) % MOD;
+                if (val > best) best = val;
+            }
+            // collect indices with largest q in [0,i]
+            v.clear();
+            for (int k=0; k<=i; k++) v.emplace_back(q[k], k);
+            nth_element(v.begin(), v.begin() + min(K, (int)v.size()), v.end(), greater<pair<int,int>>());
+            sz = min(K, (int)v.size());
+            for (int idx=0; idx<sz; idx++) {
+                int k = v[idx].second;
+                int j = i - k;
+                if (j < 0 || j > i) continue;
+                long long val = (a[j] + b[k]) % MOD;
+                if (val > best) best = val;
+            }
+            r[i] = best;
+        }
+        for (int i=0; i<n; i++) {
+            cout << r[i] << " \n"[i==n-1];
+        }
+    }
+    return 0;
+}

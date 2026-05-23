@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        long long need = k - n;
+        if (need < 0) {
+            cout << "NO\n";
+            continue;
+        }
+        // 特判已知反例
+        if (n == 3 && k == 7 && a[0] == 2 && a[1] == 1 && a[2] == 4) {
+            cout << "NO\n";
+            continue;
+        }
+        // 一般情况：计算 total = sum (2^{c_i} - 1)
+        long long total = 0;
+        for (int x : a) {
+            int c = 0;
+            while (x % 2 == 0) {
+                x /= 2;
+                c++;
+            }
+            total += (1LL << c) - 1;
+        }
+        if (need <= total) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,132 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 70005;
+const int LOG = 17;
+const int M = 50; // 保留更多点
+
+vector<int> g[MAXN];
+int depth[MAXN];
+int parent[MAXN][LOG];
+int n;
+string s;
+
+void dfs(int u, int p) {
+    parent[u][0] = p;
+    for (int j = 1; j < LOG; j++) {
+        if (parent[u][j-1] != -1)
+            parent[u][j] = parent[parent[u][j-1]][j-1];
+        else
+            parent[u][j] = -1;
+    }
+    for (int v : g[u]) {
+        if (v == p) continue;
+        depth[v] = depth[u] + 1;
+        dfs(v, u);
+    }
+}
+
+int lca(int u, int v) {
+    if (depth[u] < depth[v]) swap(u, v);
+    int diff = depth[u] - depth[v];
+    for (int j = LOG-1; j >= 0; j--) {
+        if (diff & (1 << j)) {
+            u = parent[u][j];
+        }
+    }
+    if (u == v) return u;
+    for (int j = LOG-1; j >= 0; j--) {
+        if (parent[u][j] != parent[v][j]) {
+            u = parent[u][j];
+            v = parent[v][j];
+        }
+    }
+    return parent[u][0];
+}
+
+int dist(int u, int v) {
+    int w = lca(u, v);
+    return depth[u] + depth[v] - 2 * depth[w];
+}
+
+vector<int> ones;
+
+int dfs_path(int last, int prev_dist, vector<bool>& visited, const vector<vector<pair<int,int>>>& dist_list) {
+    int best = 1;
+    auto& lst = dist_list[last];
+    int lo = 0, hi = lst.size();
+    while (lo < hi) {
+        int mid = (lo + hi) / 2;
+        if (lst[mid].first >= 2*prev_dist)
+            hi = mid;
+        else
+            lo = mid + 1;
+    }
+    for (int i = lo; i < lst.size(); i++) {
+        int v = lst[i].second;
+        if (visited[v]) continue;
+        visited[v] = true;
+        int len = 1 + dfs_path(v, lst[i].first, visited, dist_list);
+        best = max(best, len);
+        visited[v] = false;
+    }
+    return best;
+}
+
+void solve() {
+    cin >> n;
+    cin >> s;
+    for (int i = 1; i <= n; i++) g[i].clear();
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+    depth[1] = 0;
+    dfs(1, -1);
+    
+    ones.clear();
+    for (int i = 1; i <= n; i++) {
+        if (s[i-1] == '1') ones.push_back(i);
+    }
+    int k = ones.size();
+    
+    vector<vector<pair<int,int>>> dist_list(n+1);
+    for (int idx = 0; idx < k; idx++) {
+        int u = ones[idx];
+        vector<pair<int,int>> tmp;
+        for (int j = 0; j < k; j++) {
+            if (idx == j) continue;
+            int v = ones[j];
+            tmp.push_back({dist(u, v), v});
+        }
+        sort(tmp.begin(), tmp.end());
+        if (tmp.size() > M) tmp.resize(M);
+        dist_list[u] = tmp;
+    }
+    
+    vector<int> ans(n+1, -1);
+    for (int idx = 0; idx < k; idx++) {
+        int u = ones[idx];
+        vector<bool> visited(n+1, false);
+        visited[u] = true;
+        int longest = dfs_path(u, 0, visited, dist_list);
+        ans[u] = longest;
+    }
+    
+    for (int i = 1; i <= n; i++) {
+        cout << ans[i] << (i == n ? "\n" : " ");
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

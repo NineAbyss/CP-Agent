@@ -1,0 +1,18 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long a, b, c, d;
+        cin >> a >> b >> c >> d;
+        // Gellyfish wins if: // 1. He can kill Flower in first move (b == 1)
+        // 2. He can kill Flower's knight in first move (d == 1) // 3. His player HP > Flower's knight HP (a > d)
+        // 4. If a == d, then Gellyfish wins if his knight's HP > Flower's knight's HP? Wait, condition is b > c? // Actually, when a == d, the winner is determined by comparing b and c.
+        // Derived formula:
+        bool gellyfish_wins = (b == 1) || (d == 1) || (a > d) || (a == d && b > c);
+        cout << (gellyfish_wins ? "Gellyfish" : "Flower") << endl;
+    }
+    return 0;
+}

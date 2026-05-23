@@ -1,0 +1,80 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> adj(n+1);
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+
+        vector<long long> f(n+1);
+        for (int u = 1; u <= n; u++) {
+            cout << "? 1 1 " << u << endl;
+            cout.flush();
+            cin >> f[u];
+        }
+
+        vector<int> ans(n+1);
+        bool found = false;
+        for (int root = 1; root <= n; root++) {
+            vector<int> val(n+1, 0);
+            vector<int> parent(n+1, -1);
+            vector<bool> visited(n+1, false);
+            vector<int> order;
+            // BFS from root
+            vector<int> q = {root};
+            visited[root] = true;
+            parent[root] = -1;
+            for (int i = 0; i < (int)q.size(); i++) {
+                int u = q[i];
+                order.push_back(u);
+                for (int v : adj[u]) {
+                    if (!visited[v]) {
+                        visited[v] = true;
+                        parent[v] = u;
+                        q.push_back(v);
+                    }
+                }
+            }
+            // assign val from f and parent
+            bool valid = true;
+            for (int u : order) {
+                if (parent[u] == -1) {
+                    val[u] = f[u];
+                } else {
+                    val[u] = f[u] - f[parent[u]];
+                }
+                if (val[u] != 1 && val[u] != -1) {
+                    valid = false;
+                    break;
+                }
+            }
+            if (valid) {
+                ans = val;
+                found = true;
+                break;
+            }
+        }
+
+        cout << "!";
+        for (int i = 1; i <= n; i++) {
+            cout << " " << ans[i];
+        }
+        cout << endl;
+        cout.flush();
+    }
+    return 0;
+}

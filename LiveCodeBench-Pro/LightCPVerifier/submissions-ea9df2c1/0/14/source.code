@@ -1,0 +1,46 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+string L, R;
+int n;
+int ans;
+
+void dfs(int pos, int cont, bool eqL, bool eqR) {
+    if (pos == n) {
+        ans = min(ans, cont);
+        return;
+    }
+    int low = 0, high = 9;
+    if (eqL) low = L[pos] - '0';
+    if (eqR) high = R[pos] - '0';
+    for (int d = low; d <= high; d++) {
+        int add = 0;
+        if (d == L[pos]-'0') add++;
+        if (d == R[pos]-'0') add++;
+        dfs(pos+1, cont + add, eqL && (d == low), eqR && (d == high));
+    }
+}
+
+int solve(int l, int r) {
+    L = to_string(l);
+    R = to_string(r);
+    n = L.size();
+    ans = 2 * n;
+    dfs(0, 0, true, true);
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int l, r;
+        cin >> l >> r;
+        cout << solve(l, r) << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,110 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+typedef long long ll;
+const ll INF = 1e18;
+
+ll solve_case(int n, vector<vector<ll>>& h, vector<ll>& a, vector<ll>& b) {
+    // 计算 S_j 对于 j=0..n-2
+    vector<set<pair<int,int>>> S(n-1);
+    for (int j = 0; j < n-1; j++) {
+        set<pair<int,int>> allowed = {{0,0},{0,1},{1,0},{1,1}};
+        for (int i = 0; i < n; i++) {
+            vector<pair<int,int>> to_remove;
+            for (auto& p : allowed) {
+                int y1 = p.first, y2 = p.second;
+                if (h[i][j] + y1 == h[i][j+1] + y2) {
+                    to_remove.push_back(p);
+                }
+            }
+            for (auto& p : to_remove) allowed.erase(p);
+            if (allowed.empty()) break;
+        }
+        S[j] = allowed;
+        if (allowed.empty()) return -1;
+    }
+    // 计算 T_i 对于 i=0..n-2
+    vector<set<pair<int,int>>> T(n-1);
+    for (int i = 0; i < n-1; i++) {
+        set<pair<int,int>> allowed = {{0,0},{0,1},{1,0},{1,1}};
+        for (int j = 0; j < n; j++) {
+            vector<pair<int,int>> to_remove;
+            for (auto& p : allowed) {
+                int x1 = p.first, x2 = p.second;
+                if (h[i][j] + x1 == h[i+1][j] + x2) {
+                    to_remove.push_back(p);
+                }
+            }
+            for (auto& p : to_remove) allowed.erase(p);
+            if (allowed.empty()) break;
+        }
+        T[i] = allowed;
+        if (allowed.empty()) return -1;
+    }
+    // DP for y
+    vector<vector<ll>> dp_y(n, vector<ll>(2, INF));
+    dp_y[0][0] = 0;
+    dp_y[0][1] = b[0];
+    for (int j = 0; j < n-1; j++) {
+        for (int val2 = 0; val2 < 2; val2++) {
+            dp_y[j+1][val2] = INF;
+            for (int val1 = 0; val1 < 2; val1++) {
+                if (S[j].count({val1, val2})) {
+                    ll cost = dp_y[j][val1] + (val2 ? b[j+1] : 0);
+                    if (cost < dp_y[j+1][val2]) {
+                        dp_y[j+1][val2] = cost;
+                    }
+                }
+            }
+        }
+    }
+    ll cost_y = min(dp_y[n-1][0], dp_y[n-1][1]);
+    if (cost_y >= INF) return -1;
+    // DP for x
+    vector<vector<ll>> dp_x(n, vector<ll>(2, INF));
+    dp_x[0][0] = 0;
+    dp_x[0][1] = a[0];
+    for (int i = 0; i < n-1; i++) {
+        for (int val2 = 0; val2 < 2; val2++) {
+            dp_x[i+1][val2] = INF;
+            for (int val1 = 0; val1 < 2; val1++) {
+                if (T[i].count({val1, val2})) {
+                    ll cost = dp_x[i][val1] + (val2 ? a[i+1] : 0);
+                    if (cost < dp_x[i+1][val2]) {
+                        dp_x[i+1][val2] = cost;
+                    }
+                }
+            }
+        }
+    }
+    ll cost_x = min(dp_x[n-1][0], dp_x[n-1][1]);
+    if (cost_x >= INF) return -1;
+    return cost_x + cost_y;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<ll>> h(n, vector<ll>(n));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                cin >> h[i][j];
+            }
+        }
+        vector<ll> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        ll ans = solve_case(n, h, a, b);
+        cout << ans << '\n';
+    }
+    return 0;
+}

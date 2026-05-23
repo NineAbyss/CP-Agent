@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+// Preprocess function to compute prefix maxima and suffix minima
+void preprocess(const vector<int>& p, vector<int>& prefixMax, vector<int>& suffixMin) {
+    int n = p.size();
+    prefixMax.resize(n);
+    suffixMin.resize(n);
+    
+    prefixMax[0] = p[0];
+    for (int i = 1; i < n; ++i) {
+        prefixMax[i] = max(prefixMax[i - 1], p[i]);
+    }
+    
+    suffixMin[n - 1] = p[n - 1];
+    for (int i = n - 2; i >= 0; --i) {
+        suffixMin[i] = min(suffixMin[i + 1], p[i]);
+    }
+}
+
+// Function to determine if a subarray is divisible
+bool is_divisible(int l, int r, const vector<int>& prefixMax, const vector<int>& suffixMin) {
+    for (int i = l; i < r; ++i) {
+        if (prefixMax[i - 1] < suffixMin[i]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int main() {
+    int n;
+    cin >> n;
+    vector<int> p(n);
+    for (int &x : p) cin >> x;
+
+    vector<int> prefixMax, suffixMin;
+    preprocess(p, prefixMax, suffixMin);
+
+    int q;
+    cin >> q;
+    for (int i = 1; i <= q; ++i) {
+        int l, r;
+        cin >> l >> r;
+        
+        cout << (is_divisible(l, r, prefixMax, suffixMin) ? "YES" : "NO") << endl;
+        
+        if (i % 10 == 0) cout.flush(); // Ensure flush after every 10 queries
+    }
+
+    return 0;
+}

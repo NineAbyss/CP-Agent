@@ -1,0 +1,133 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+const int MAX_N = 1300000;  // Increased to handle larger n
+
+long long fact[MAX_N+1];
+
+long long power(long long base, long long exp, long long mod) {
+    long long res = 1;
+    while (exp) {
+        if (exp & 1) res = res * base % mod;
+        base = base * base % mod;
+        exp >>= 1;
+    }
+    return res;
+}
+
+void precompute() {
+    fact[0] = 1;
+    for (int i = 1; i <= MAX_N; i++) {
+        fact[i] = fact[i-1] * i % MOD;
+    }
+}
+
+int main() {
+    precompute();
+    int t;
+    cin >> t;
+    while (t--) {
+        vector<int> c(26);
+        long long total_n = 0;
+        for (int i = 0; i < 26; i++) {
+            cin >> c[i];
+            total_n += c[i];
+        }
+
+        long long n = total_n;
+        if (n > MAX_N) {
+            cout << 0 << '\n';
+            continue;
+        }
+
+        long long odd_pos = (n+1)/2;
+        long long even_pos = n/2;
+
+        bool bad = false;
+        long long forced_sum = 0;
+        vector<int> optional;
+
+        for (int i = 0; i < 26; i++) {
+            if (c[i] == 0) continue;
+            if (c[i] > odd_pos) {
+                bad = true;
+                break;
+            } else if (c[i] > even_pos) {
+                forced_sum += c[i];
+            } else {
+                optional.push_back(c[i]);
+            }
+        }
+
+        if (bad || forced_sum > odd_pos) {
+            cout << 0 << '\n';
+            continue;
+        }
+
+        long long target = odd_pos - forced_sum;
+        if (target < 0) {
+            cout << 0 << '\n';
+            continue;
+        }
+
+        long long K = 0;
+        if (optional.empty()) {
+            K = (target == 0) ? 1 : 0;
+        } else {
+            int m = optional.size();
+            int mid = m/2;
+            vector<int> left_vec, right_vec;
+            for (int i = 0; i < mid; i++) {
+                left_vec.push_back(optional[i]);
+            }
+            for (int i = mid; i < m; i++) {
+                right_vec.push_back(optional[i]);
+            }
+
+            map<long long, long long> left_sums, right_sums;
+            int left_size = left_vec.size();
+            for (int mask = 0; mask < (1<<left_size); mask++) {
+                long long sum = 0;
+                for (int i = 0; i < left_size; i++) {
+                    if (mask & (1<<i)) {
+                        sum += left_vec[i];
+                    }
+                }
+                left_sums[sum]++;
+            }
+
+            int right_size = right_vec.size();
+            for (int mask = 0; mask < (1<<right_size); mask++) {
+                long long sum = 0;
+                for (int i = 0; i < right_size; i++) {
+                    if (mask & (1<<i)) {
+                        sum += right_vec[i];
+                    }
+                }
+                right_sums[sum]++;
+            }
+
+            for (auto& p : left_sums) {
+                long long left_sum = p.first;
+                long long left_count = p.second;
+                long long need = target - left_sum;
+                if (right_sums.find(need) != right_sums.end()) {
+                    K = (K + left_count * right_sums[need]) % MOD;
+                }
+            }
+        }
+
+        long long denom = 1;
+        for (int i = 0; i < 26; i++) {
+            denom = denom * fact[c[i]] % MOD;
+        }
+
+        long long num = fact[odd_pos] * fact[even_pos] % MOD;
+        long long inv_denom = power(denom, MOD-2, MOD);
+        long long ans = K * num % MOD;
+        ans = ans * inv_denom % MOD;
+        cout << ans << '\n';
+    }
+    return 0;
+}

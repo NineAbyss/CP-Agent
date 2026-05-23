@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int CHECK_COUNT = 50;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    multiset<int> S;  // 使用 multiset 简化
+    int M = 0;
+    int ans = 0;
+    
+    for (int i = 0; i < n; i++) {
+        int x = a[i];
+        S.insert(x);
+        M = max(M, x);
+        
+        // 检查是否存在 y > M/2 且 y != M
+        auto it = S.upper_bound(M/2);
+        if (it != S.end() && *it < M) {
+            ans = M;
+        } else {
+            // 检查最大的 CHECK_COUNT 个元素
+            int best = 0;
+            auto rit = S.rbegin();
+            int cnt = 0;
+            while (rit != S.rend() && cnt < CHECK_COUNT) {
+                int y = *rit;
+                if (y != M) {
+                    best = max(best, y + (M % y));
+                    cnt++;
+                }
+                ++rit;
+            }
+            // 如果 S 中只有 M，那么 best 保持为 0
+            ans = best;
+        }
+        
+        cout << ans << (i == n-1 ? '\n' : ' ');
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

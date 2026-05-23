@@ -1,0 +1,52 @@
+#include <cstdio>
+#include <vector>
+using namespace std;
+
+const int CAP = 1 << 19; // 524288
+const int MASK = CAP - 1;
+
+inline int mod(int x) {
+    return x & MASK;
+}
+
+int main() {
+    vector<int> data(CAP, 0);
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        int q;
+        scanf("%d", &q);
+        int start = CAP/2;
+        int dir = 1;
+        int n = 0;
+        long long S = 0, R = 0;
+        for (int i = 0; i < q; ++i) {
+            int s;
+            scanf("%d", &s);
+            if (s == 3) {
+                int k;
+                scanf("%d", &k);
+                int pos = start + (dir == 1 ? n : -n);
+                pos = mod(pos);
+                data[pos] = k;
+                n++;
+                S += k;
+                R += k * n;
+            } else if (s == 1) {
+                int last_idx = start + (dir == 1 ? n-1 : -(n-1));
+                last_idx = mod(last_idx);
+                int last = data[last_idx];
+                R = R + S - n * last;
+                start = last_idx;
+            } else { // s == 2
+                int last_idx = start + (dir == 1 ? n-1 : -(n-1));
+                last_idx = mod(last_idx);
+                R = (n + 1) * S - R;
+                dir = -dir;
+                start = last_idx;
+            }
+            printf("%lld\n", R);
+        }
+    }
+    return 0;
+}

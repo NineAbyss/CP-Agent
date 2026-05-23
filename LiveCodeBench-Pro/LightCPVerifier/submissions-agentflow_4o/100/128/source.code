@@ -1,0 +1,85 @@
+#include <iostream>
+#include <utility>
+
+using namespace std;
+
+int determineNumber(int x, int y, int n) {
+    x--; y--;  // Convert to 0-index
+    int num = 0;
+    static int order[] = {1, 4, 3, 2};
+
+    for (int i = n - 1; i >= 0; --i) {
+        int half = (1 << i);
+        int area = half * half;
+        
+        if (x >= half && y >= half) {  // Top-left
+            num += area;
+            x -= half;
+            y -= half;
+        } else if (x >= half) {  // Bottom-left
+            num += 2 * area;
+            x -= half;
+        } else if (y >= half) {  // Top-right
+            num += 3 * area;
+            y -= half;
+        } else {  // Bottom-right
+            num += 0 * area;
+        }
+    }
+    return num + order[(x & 1) * 2 + (y & 1)];
+}
+
+pair<int, int> findCoordinates(int d, int n) {
+    int x = 0, y = 0;
+    int num = 0;
+    static int reverse[] = {0, 3, 2, 1};
+
+    for (int i = n - 1; i >= 0; --i) {
+        int half = (1 << i);
+        int area = half * half;
+        
+        int quadrant = (d - num - 1) / area;
+        if (quadrant == 1) {
+            num += area;
+            x += half;
+            y += half;
+        } else if (quadrant == 2) {
+            num += 2 * area;
+            x += half;
+        } else if (quadrant == 3) {
+            num += 3 * area;
+            y += half;
+        }
+    }
+    
+    int final_quadrant = (d - num - 1) % 4;
+    x += reverse[final_quadrant] / 2;
+    y += reverse[final_quadrant] % 2;
+    return {x + 1, y + 1};
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        
+        while (q--) {
+            string query_type;
+            cin >> query_type;
+            
+            if (query_type == "->") {
+                int x, y;
+                cin >> x >> y;
+                cout << determineNumber(x, y, n) << endl;
+            } else {
+                int d;
+                cin >> d;
+                pair<int, int> coordinates = findCoordinates(d, n);
+                cout << coordinates.first << " " << coordinates.second << endl;
+            }
+        }
+    }
+    return 0;
+}

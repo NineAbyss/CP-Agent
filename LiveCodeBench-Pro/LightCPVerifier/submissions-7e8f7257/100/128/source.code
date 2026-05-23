@@ -1,0 +1,175 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <queue>
+#include <set>
+#include <tuple>
+using namespace std;
+
+vector<int> bfs_dist(const vector<vector<int>>& adj, const vector<bool>& active, int start) {
+    int n = adj.size();
+    vector<int> dist(n, -1);
+    queue<int> q;
+    dist[start] = 0;
+    q.push(start);
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int v : adj[u]) {
+            if (active[v] && dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+    return dist;
+}
+
+int find_farthest(const vector<int>& dist, const vector<bool>& active) {
+    int far = -1;
+    int max_dist = -1;
+    for (size_t i=1; i<dist.size(); i++) {
+        if (active[i] && dist[i] >= max_dist) {
+            if (dist[i] > max_dist || i > far) {
+                max_dist = dist[i];
+                far = i;
+            }
+        }
+    }
+    return far;
+}
+
+int distance_between(const vector<vector<int>>& adj, const vector<bool>& active, int u, int v) {
+    int n = adj.size();
+    vector<int> dist(n, -1);
+    queue<int> q;
+    dist[u] = 0;
+    q.push(u);
+    while (!q.empty()) {
+        int cur = q.front(); q.pop();
+        if (cur == v) break;
+        for (int nb : adj[cur]) {
+            if (active[nb] && dist[nb] == -1) {
+                dist[nb] = dist[cur] + 1;
+                q.push(nb);
+            }
+        }
+    }
+    return dist[v];
+}
+
+tuple<int,int,int> compute_best_path(const vector<vector<int>>& adj, const vector<bool>& active, int start) {
+    auto dist1 = bfs_dist(adj, active, start);
+    int A = find_farthest(dist1, active);
+    auto distA = bfs_dist(adj, active, A);
+    int B = find_farthest(distA, active);
+    int L = distA[B];
+    int D = L + 1;
+    set<int> ends;
+    for (int i=1; i<(int)adj.size(); i++) {
+        if (active[i] && distA[i] == L) ends.insert(i);
+    }
+    auto distB = bfs_dist(adj, active, B);
+    for (int i=1; i<(int)adj.size(); i++) {
+        if (active[i] && distB[i] == L) ends.insert(i);
+    }
+    vector<int> ends_vec(ends.begin(), ends.end());
+    sort(ends_vec.rbegin(), ends_vec.rend());
+    int best_u = -1, best_v = -1;
+    for (int u : ends_vec) {
+        for (int v : ends_vec) {
+            if (u >= v && distance_between(adj, active, u, v) == L) {
+                if (u > best_u || (u == best_u && v > best_v)) {
+                    best_u = u;
+                    best_v = v;
+                }
+            }
+        }
+    }
+    return {D, best_u, best_v};
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> adj(n+1);
+        for (int i=0; i<n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+        vector<bool> active(n+1, true);
+        vector<int> ans;
+        while (true) {
+            vector<bool> visited(n+1, false);
+            vector<int> comp_starts;
+            for (int i=1; i<=n; i++) {
+                if (active[i] && !visited[i]) {
+                    comp_starts.push_back(i);
+                    queue<int> q;
+                    q.push(i);
+                    visited[i] = true;
+                    while (!q.empty()) {
+                        int u = q.front(); q.pop();
+                        for (int v : adj[u]) {
+                            if (active[v] && !visited[v]) {
+                                visited[v] = true;
+                                q.push(v);
+                            }
+                        }
+                    }
+                }
+            }
+            if (comp_starts.empty()) break;
+            vector<tuple<int,int,int>> candidates;
+            for (int start : comp_starts) {
+                candidates.push_back(compute_best_path(adj, active, start));
+            }
+            auto cmp = [](const tuple<int,int,int>& a, const tuple<int,int,int>& b) {
+                if (get<0>(a) != get<0>(b)) return get<0>(a) < get<0>(b);
+                if (get<1>(a) != get<1>(b)) return get<1>(a) < get<1>(b);
+                return get<2>(a) < get<2>(b);
+            };
+            auto best = *max_element(candidates.begin(), candidates.end(), cmp);
+            int d = get<0>(best);
+            int u = get<1>(best);
+            int v = get<2>(best);
+            ans.push_back(d);
+            ans.push_back(u);
+            ans.push_back(v);
+            vector<int> parent(n+1, -1);
+            queue<int> q;
+            q.push(u);
+            parent[u] = u;
+            while (!q.empty()) {
+                int cur = q.front(); q.pop();
+                if (cur == v) break;
+                for (int nb : adj[cur]) {
+                    if (active[nb] && parent[nb] == -1) {
+                        parent[nb] = cur;
+                        q.push(nb);
+                    }
+                }
+            }
+            vector<int> path;
+            int cur = v;
+            while (cur != u) {
+                path.push_back(cur);
+                cur = parent[cur];
+            }
+            path.push_back(u);
+            for (int node : path) active[node] = false;
+        }
+        for (size_t i=0; i<ans.size(); i++) {
+            if (i>0) cout << " ";
+            cout << ans[i];
+        }
+        cout << '\n';
+    }
+    return 0;
+}

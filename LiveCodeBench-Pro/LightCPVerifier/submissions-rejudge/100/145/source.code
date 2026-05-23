@@ -1,0 +1,37 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int v2(int x) {
+    int c = 0;
+    while (x % 2 == 0) {
+        x /= 2;
+        c++;
+    }
+    return c;
+}
+
+bool solve(int n, int k, vector<int>& a) {
+    int x = k - n;
+    if (x == 0) return true;
+    int p1 = v2(a[0]);
+    int pn = v2(a.back());
+    if (p1 == 0 && pn == 0) return false;
+    if (p1 == 0 || pn == 0) return x % 2 == 0;
+    return (p1 + pn) % 2 == x % 2;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        cout << (solve(n, k, a) ? "YES" : "NO") << "\n";
+    }
+    return 0;
+}

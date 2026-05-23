@@ -1,0 +1,111 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+
+// Fast exponentiation
+long long mod_pow(long long base, long long exp, long long mod) {
+    long long result = 1;
+    while (exp > 0) {
+        if (exp & 1) result = (result * base) % mod;
+        base = (base * base) % mod;
+        exp >>= 1;
+    }
+    return result;
+}
+
+// Fast Walsh-Hadamard Transform for XOR convolution
+void fwht(vector<long long> &a, bool inv) {
+    int n = a.size();
+    for (int len = 1; 2 * len <= n; len <<= 1) {
+        for (int i = 0; i < n; i += 2 * len) {
+            for (int j = 0; j < len; ++j) {
+                long long u = a[i + j];
+                long long v = a[i + j + len];
+                a[i + j] = (u + v) % MOD;
+                a[i + j + len] = (u - v + MOD) % MOD;
+            }
+        }
+    }
+    if (inv) {
+        long long inv_n = mod_pow(n, MOD - 2, MOD);
+        for (int i = 0; i < n; ++i)
+            a[i] = (a[i] * inv_n) % MOD;
+    }
+}
+
+// Count numbers in [l, r] with bit constraints using digit DP style
+vector<long long> count_function(int l, int r, int m) {
+    int size = 1 << m;
+    vector<long long> res(size, 0);
+    
+    // We can use inclusion-exclusion: F(x) = count of numbers <= x in [l,r] // But we want indicator function of [l,r]. Instead, do:
+    // For each bit mask, check if it's in [l, r] // However, iterating over all masks is acceptable since m <= 18 and total sum of 2^m <= 2^18
+    for (int x = 0; x < size; ++x) {
+        if (x >= l && x <= r)
+            res[x] = 1;
+    }
+    return res;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        int size = 1 << m;
+
+        // Start with identity for convolution: f[0] = 1
+        vector<long long> result(size, 0);
+        result[0] = 1;
+
+        for (int i = 0; i < n; ++i) {
+            int l, r;
+            cin >> l >> r;
+
+            // Get the frequency array for this interval
+            vector<long long> poly = count_function(l, r, m);
+
+            // Perform FWHT on current polynomial
+            fwht(poly, false);
+
+            // Multiply pointwise with result (which is also in transform space if not first)
+            if (i == 0) {
+                result = poly;
+            } else {
+                for (int j = 0; j < size; ++j)
+                    result[j] = (result[j] * poly[j]) % MOD;
+            }
+        }
+
+        // Inverse FWHT to get actual counts f_x
+        fwht(result, true);  // now result[x] = f_x
+
+        // Precompute powers of 2 modulo MOD
+        vector<long long> pow2(size);
+        for (int x = 0; x < size; ++x) {
+            pow2[x] = mod_pow(2, x, MOD);
+        }
+
+        // Compute g_x = f_x * 2^x mod MOD
+        vector<long long> g(size);
+        for (int x = 0; x < size; ++x) {
+            g[x] = (result[x] * pow2[x]) % MOD;
+        }
+
+        // Compute XOR of all g_x (as integers, no mod on XOR)
+        long long h = 0;
+        for (int x = 0; x < size; ++x) {
+            h ^= g[x];  // This is integer XOR, not mod
+        }
+
+        cout << h << '\n';
+    }
+
+    return 0;
+}

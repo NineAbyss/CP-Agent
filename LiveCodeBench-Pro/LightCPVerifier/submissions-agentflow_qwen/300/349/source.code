@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        int max_iter = 0;
+        int survivor = -1;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            if (a[i] == -1) {
+                survivor = i;
+            } else {
+                max_iter = max(max_iter, a[i]);
+            }
+        }
+
+        vector<vector<int>> bucket(max_iter + 1);
+        for (int i = 0; i < n; i++) {
+            if (a[i] != -1) {
+                bucket[a[i]].push_back(i);
+            }
+        }
+
+        vector<int> res(n);
+        int lo = 1, hi = n;
+
+        for (int k = 1; k <= max_iter; k++) {
+            if (k % 2 == 1) {
+                for (int i : bucket[k]) {
+                    res[i] = hi--;
+                }
+            } else {
+                for (int i : bucket[k]) {
+                    res[i] = lo++;
+                }
+            }
+        }
+
+        res[survivor] = lo;
+
+        for (int i = 0; i < n; i++) {
+            cout << res[i] << " \n"[i==n-1];
+        }
+    }
+    return 0;
+}

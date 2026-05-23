@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<vector<int>> a(n, vector<int>(m));
+        int M = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                cin >> a[i][j];
+                if (a[i][j] > M) M = a[i][j];
+            }
+        }
+        vector<int> col_count(m, 0);
+        vector<vector<int>> row_cols(n);
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (a[i][j] == M) {
+                    row_cols[i].push_back(j);
+                    col_count[j]++;
+                }
+            }
+        }
+        int total_distinct_cols = 0;
+        for (int j = 0; j < m; j++) {
+            if (col_count[j] > 0) total_distinct_cols++;
+        }
+        vector<bool> unique_col(m, false);
+        for (int j = 0; j < m; j++) {
+            if (col_count[j] == 1) unique_col[j] = true;
+        }
+        vector<int> unique_in_row(n, 0);
+        for (int i = 0; i < n; i++) {
+            for (int j : row_cols[i]) {
+                if (unique_col[j]) unique_in_row[i]++;
+            }
+        }
+        bool possible = false;
+        for (int i = 0; i < n; i++) {
+            if (total_distinct_cols - unique_in_row[i] <= 1) {
+                possible = true;
+                break;
+            }
+        }
+        if (possible) {
+            cout << M - 1 << '\n';
+        } else {
+            cout << M << '\n';
+        }
+    }
+    return 0;
+}

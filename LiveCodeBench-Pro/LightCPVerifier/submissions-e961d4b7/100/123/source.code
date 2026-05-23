@@ -1,0 +1,70 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        if (n <= 9) {
+            // 5 commands
+            cout << "digit" << endl;
+            cout.flush();
+            string res; cin >> res;
+            if (res == "-1") return 0;
+            cout << "mul 9" << endl;
+            cout.flush();
+            cin >> res;
+            if (res == "-1") return 0;
+            cout << "digit" << endl;
+            cout.flush();
+            cin >> res;
+            if (res == "-1") return 0;
+            cout << "add " << (n-9) << endl;
+            cout.flush();
+            cin >> res;
+            if (res == "-1") return 0;
+            cout << "digit" << endl;
+            cout.flush();
+            cin >> res;
+            if (res == "-1") return 0;
+            cout << "!" << endl;
+            cout.flush();
+            cin >> res;
+            if (res == "-1") return 0;
+        } else {
+            // 6 commands
+            cout << "digit" << endl;
+            cout.flush();
+            string res; cin >> res;
+            if (res == "-1") return 0;
+            cout << "mul 9" << endl;
+            cout.flush();
+            cin >> res;
+            if (res == "-1") return 0;
+            cout << "digit" << endl;
+            cout.flush();
+            cin >> res;
+            if (res == "-1") return 0;
+            cout << "mul 9" << endl;
+            cout.flush();
+            cin >> res;
+            if (res == "-1") return 0;
+            cout << "digit" << endl;
+            cout.flush();
+            cin >> res;
+            if (res == "-1") return 0;
+            cout << "add " << (n-9) << endl;
+            cout.flush();
+            cin >> res;
+            if (res == "-1") return 0;
+            cout << "!" << endl;
+            cout.flush();
+            cin >> res;
+            if (res == "-1") return 0;
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,114 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+struct BBox {
+    ll min_x, max_x, min_y, max_y;
+    BBox() : min_x(LLONG_MAX), max_x(LLONG_MIN), min_y(LLONG_MAX), max_y(LLONG_MIN) {}
+    BBox(ll x, ll y) : min_x(x), max_x(x), min_y(y), max_y(y) {}
+};
+
+BBox merge(const BBox& a, const BBox& b) {
+    BBox res;
+    res.min_x = min(a.min_x, b.min_x);
+    res.max_x = max(a.max_x, b.max_x);
+    res.min_y = min(a.min_y, b.min_y);
+    res.max_y = max(a.max_y, b.max_y);
+    return res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<pair<ll, ll>> pts(n);
+        for (int i = 0; i < n; i++) {
+            cin >> pts[i].first >> pts[i].second;
+        }
+
+        if (n == 1) {
+            cout << 1 << '\n';
+            continue;
+        }
+
+        // Full bounding box
+        BBox full;
+        for (auto [x, y] : pts) {
+            full = merge(full, BBox(x, y));
+        }
+        ll dx_full = full.max_x - full.min_x;
+        ll dy_full = full.max_y - full.min_y;
+        ll area_full = (dx_full + 1) * (dy_full + 1);
+
+        // Create index array and sort by x
+        vector<int> idx(n);
+        iota(idx.begin(), idx.end(), 0);
+        sort(idx.begin(), idx.end(), [&](int i, int j) {
+            return pts[i].first < pts[j].first;
+        });
+
+        // Position of each original index in sorted array
+        vector<int> pos(n);
+        for (int i = 0; i < n; i++) {
+            pos[idx[i]] = i;
+        }
+
+        // Prefix and suffix arrays
+        vector<BBox> prefix(n), suffix(n);
+
+        prefix[0] = BBox(pts[idx[0]].first, pts[idx[0]].second);
+        for (int i = 1; i < n; i++) {
+            prefix[i] = merge(prefix[i-1], BBox(pts[idx[i]].first, pts[idx[i]].second));
+        }
+
+        suffix[n-1] = BBox(pts[idx[n-1]].first, pts[idx[n-1]].second);
+        for (int i = n-2; i >= 0; i--) {
+            suffix[i] = merge(suffix[i+1], BBox(pts[idx[i]].first, pts[idx[i]].second));
+        }
+
+        ll best_remove = LLONG_MAX;
+
+        for (int i = 0; i < n; i++) {
+            int p = pos[i]; // position in sorted array
+            BBox box;
+            if (p == 0) {
+                box = suffix[1];
+            } else if (p == n-1) {
+                box = prefix[n-2];
+            } else {
+                box = merge(prefix[p-1], suffix[p+1]);
+            }
+
+            ll dx = box.max_x - box.min_x;
+            ll dy = box.max_y - box.min_y;
+            ll area_box = (dx + 1) * (dy + 1);
+            int count_others = n - 1;
+
+            ll cost;
+            if (area_box > count_others) {
+                cost = area_box;
+            } else {
+                // area_box == count_others (since area_box >= count_others always? no: area_box could be less? no, because at least count_others cells are covered, but area_box is the size of the box, which is at least the number of points only if no gaps, but actually area_box could be larger or smaller than count_others?  // Actually, area_box is the number of cells in the bounding box, which is at least 1, and count_others = n-1.
+                // But area_box can be less than count_others? No, because you can't have more points than cells in the box. Each point occupies one cell, so area_box >= number of points only if the box is exactly the grid spanned, but the number of points can be up to area_box.
+                // In fact, area_box is the size of the box, and there are count_others points inside it, so area_box >= 1, but we can have area_box < count_others? No, because each point is in a distinct cell, so you need at least count_others cells, so area_box >= count_others.
+                // Equality when the box is fully occupied. // So yes, area_box >= count_others.
+                // So only two cases: > or ==.
+                ll opt1 = (dx + 2) * (dy + 1);
+                ll opt2 = (dx + 1) * (dy + 2);
+                cost = min(opt1, opt2);
+            }
+            if (cost < best_remove) {
+                best_remove = cost;
+            }
+        }
+
+        ll ans = min(area_full, best_remove);
+        cout << ans << '\n';
+    }
+    return 0;
+}

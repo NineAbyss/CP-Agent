@@ -1,0 +1,26 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        // 输出操作次数
+        cout << (2 * n - 3) << '\n';
+        // 第2行整行反转
+        cout << "2 1 " << n << '\n';
+        // 第3行到第n行
+        for (int i = 3; i <= n; i++) {
+            if (i % 2 == 1) { // 奇数
+                cout << i << " 1 " << i-1 << '\n';
+                cout << i << " " << i-1 << " " << n << '\n';
+            } else { // 偶数
+                cout << i << " " << i-1 << " " << n << '\n';
+                cout << i << " 1 " << i-1 << '\n';
+            }
+        }
+    }
+    return 0;
+}

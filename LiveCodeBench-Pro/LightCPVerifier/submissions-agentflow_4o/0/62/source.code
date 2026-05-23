@@ -1,0 +1,35 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+bool canCover(long long w, long long h, long long a, long long b, long long x_start, long long y_start) {
+    if (x_start > w || y_start > h) return false; // Starting location should be valid within roof boundary
+    
+    long long tiles_required_x = ceil((double)(w - x_start) / a);
+    long long tiles_required_y = ceil((double)(h - y_start) / b);
+
+    long long max_x_coverage = x_start + tiles_required_x * a;
+    long long max_y_coverage = y_start + tiles_required_y * b;
+
+    return max_x_coverage >= w && max_y_coverage >= h;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        long long w, h, a, b;
+        cin >> w >> h >> a >> b;
+        long long x1, y1, x2, y2;
+        cin >> x1 >> y1 >> x2 >> y2;
+
+        // Try covering the whole roof from both positions
+        bool result = canCover(w, h, a, b, x1, y1) || canCover(w, h, a, b, x2, y2);
+        cout << (result ? "Yes" : "No") << '\n';
+    }
+
+    return 0;
+}

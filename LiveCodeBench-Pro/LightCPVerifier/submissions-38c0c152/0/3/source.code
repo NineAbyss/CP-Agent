@@ -1,0 +1,85 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n+1); // 1-indexed
+        for (int i=1; i<=n; i++) cin >> a[i];
+        // build candidates: the largest 4 indices
+        vector<int> cand;
+        for (int idx=n; idx>=1 && cand.size()<4; idx--) {
+            cand.push_back(idx);
+        }
+        long long ans = 0;
+        for (int i=1; i<=n; i++) {
+            for (int j=i+1; j<=n; j++) {
+                long long sum2 = a[i] + a[j];
+                // find upper bound for a[k] < sum2, k > j
+                int lo = j+1, hi = n, pos = n+1;
+                while (lo <= hi) {
+                    int mid = (lo+hi)/2;
+                    if (a[mid] >= sum2) {
+                        pos = mid;
+                        hi = mid-1;
+                    } else {
+                        lo = mid+1;
+                    }
+                }
+                int L = j+1, R = pos-1;
+                if (L > R) continue;
+                // compute M0: max among cand not i or j
+                int M0 = 0;
+                for (int c : cand) {
+                    if (c != i && c != j) {
+                        M0 = max(M0, a[c]);
+                    }
+                }
+                // condition for non-candidate k: a[k] > M0 - sum2
+                int low_lo = L, low_hi = R, low_pos = R+1;
+                long long threshold = M0 - sum2;
+                while (low_lo <= low_hi) {
+                    int mid = (low_lo + low_hi)/2;
+                    if (a[mid] > threshold) {
+                        low_pos = mid;
+                        low_hi = mid-1;
+                    } else {
+                        low_lo = mid+1;
+                    }
+                }
+                int start = max(L, low_pos);
+                int end = R;
+                if (start <= end) {
+                    // count non-candidate indices in [start, end]
+                    int cnt = end - start + 1;
+                    for (int c : cand) {
+                        if (c >= start && c <= end) cnt--;
+                    }
+                    ans += cnt;
+                }
+                // now check each candidate k in [L, R]
+                for (int c : cand) {
+                    if (c < L || c > R) continue;
+                    // compute M_c: max among cand not i,j,c
+                    int Mc = 0;
+                    for (int d : cand) {
+                        if (d != i && d != j && d != c) {
+                            Mc = max(Mc, a[d]);
+                        }
+                    }
+                    if (sum2 + a[c] > Mc) {
+                        ans++;
+                    }
+                }
+            }
+        }
+        cout << ans << endl;
+    }
+    return 0;
+}

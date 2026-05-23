@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    vector<int> a = {2,4,3,1,1};
+    int n = a.size();
+    // enumerate all b
+    long long maxBeauty = 0;
+    vector<int> b(n);
+    function<void(int)> dfs = [&](int idx) {
+        if (idx == n) {
+            map<int, int> first, last;
+            for (int i = 0; i < n; i++) {
+                int x = b[i];
+                if (!first.count(x)) first[x] = i;
+                last[x] = i;
+            }
+            long long sum = 0;
+            for (auto& [x, f] : first) {
+                sum += last[x] - f;
+            }
+            if (sum > maxBeauty) {
+                maxBeauty = sum;
+            }
+            return;
+        }
+        for (int v = 1; v <= a[idx]; v++) {
+            b[idx] = v;
+            dfs(idx+1);
+        }
+    };
+    dfs(0);
+    cout << maxBeauty << endl;
+    return 0;
+}

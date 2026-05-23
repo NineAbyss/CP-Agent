@@ -1,0 +1,112 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        // read edges (star tree, but we don't need structure)
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            // ignore
+        }
+
+        vector<long long> F(n+1); // f(i) for each node
+        // query f(i) for each node i
+        for (int i = 1; i <= n; i++) {
+            cout << "? 1 1 " << i << endl;
+            cout.flush();
+            cin >> F[i];
+        }
+
+        // compute S1
+        long long S1 = 0;
+        for (int i = 1; i <= n; i++) S1 += F[i];
+
+        // toggle node 1
+        cout << "? 2 1" << endl;
+        cout.flush();
+        // no response for toggle
+
+        // query sum of all f(i) after toggle
+        cout << "? 1 " << n;
+        for (int i = 1; i <= n; i++) cout << " " << i;
+        cout << endl;
+        cout.flush();
+        long long S2;
+        cin >> S2;
+
+        long long delta = S2 - S1;
+        long long m = abs(delta) / 2; // number of affected nodes
+
+        if (m == n) {
+            // root is 1
+            long long a1 = -F[1];
+            vector<long long> ans(n+1);
+            ans[1] = a1;
+            for (int i = 2; i <= n; i++) {
+                ans[i] = F[i] - F[1];
+            }
+            // output answer
+            cout << "!";
+            for (int i = 1; i <= n; i++) cout << " " << ans[i];
+            cout << endl;
+            cout.flush();
+        } else {
+            // root is not 1
+            long long a1A = -delta / (2 * (n-1)); // a1 in state A
+            // query f(1) in state B
+            cout << "? 1 1 1" << endl;
+            cout.flush();
+            long long fB1;
+            cin >> fB1;
+
+            long long axA = (F[1] + fB1) / 2; // a_x in state A
+
+            // find candidates: nodes i (i!=1) with F[i] == axA
+            vector<int> candidates;
+            for (int i = 2; i <= n; i++) {
+                if (F[i] == axA) {
+                    candidates.push_back(i);
+                }
+            }
+
+            int root = -1;
+            if (candidates.size() == 1) {
+                root = candidates[0];
+            } else {
+                // query f(u) in state B for first candidate
+                int u = candidates[0];
+                cout << "? 1 1 " << u << endl;
+                cout.flush();
+                long long fBu;
+                cin >> fBu;
+                if (fBu == axA) {
+                    root = u;
+                } else {
+                    // root must be the other candidate
+                    root = candidates[1];
+                }
+            }
+
+            // Now compute final values (state B)
+            vector<long long> ans(n+1);
+            ans[1] = -a1A; // a1 in state B
+            ans[root] = axA; // a_x unchanged
+            for (int i = 2; i <= n; i++) {
+                if (i == root) continue;
+                ans[i] = F[i] - axA - a1A;
+            }
+
+            // output answer
+            cout << "!";
+            for (int i = 1; i <= n; i++) cout << " " << ans[i];
+            cout << endl;
+            cout.flush();
+        }
+    }
+    return 0;
+}

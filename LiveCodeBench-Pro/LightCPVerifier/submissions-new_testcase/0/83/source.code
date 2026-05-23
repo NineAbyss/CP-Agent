@@ -1,0 +1,66 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<long long> a(n+1);
+    for(int i = 1; i <= n; i++) cin >> a[i];
+    
+    vector<vector<int>> adj(n+1);
+    for(int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    vector<int> depth(n+1);
+    vector<long long> pref(n+1);
+    vector<long long> threat(n+1);
+    
+    auto dfs = [&](auto&& self, int u, int p, long long curMin, long long curMax) -> void {
+        if(u == 1) {
+            depth[u] = 0;
+            pref[u] = a[u];
+        } else {
+            depth[u] = depth[p] + 1;
+            if(depth[u] & 1) pref[u] = pref[p] - a[u];
+            else pref[u] = pref[p] + a[u];
+        }
+        
+        if(depth[u] & 1) {
+            threat[u] = -pref[u] + max(0LL, curMax);
+        } else {
+            threat[u] = pref[u] + max(0LL, -curMin);
+        }
+        
+        long long newMin = min(curMin, pref[u]);
+        long long newMax = max(curMax, pref[u]);
+        
+        for(int v : adj[u]) {
+            if(v == p) continue;
+            self(self, v, u, newMin, newMax);
+        }
+    };
+    
+    dfs(dfs, 1, 0, 0, 0);
+    
+    for(int i = 1; i <= n; i++) {
+        cout << threat[i] << (i == n ? '\n' : ' ');
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while(t--) {
+        solve();
+    }
+    return 0;
+}

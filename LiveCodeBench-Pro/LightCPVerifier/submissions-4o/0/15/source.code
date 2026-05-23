@@ -1,0 +1,47 @@
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+bool canSplit(const string& s) {
+    int n = s.length();
+    
+    // Check potential splits // Split at all positions between 1 and n-1 (inclusive of a, c)
+    for (int i = 1; i < n; ++i) {
+        // Split the string into a, b, c // a = s[0..i-1], b = s[i..j-1], c = s[j..n-1]
+        // b is at least 1 character long, hence j goes from i+1 to n
+        string a = s.substr(0, i);
+        for (int j = i + 1; j < n; ++j) {
+            string b = s.substr(i, j - i);
+            string c = s.substr(j);
+            string ac = a + c;
+            // Check if b is a substring of a + c
+            if (ac.find(b) != string::npos) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+
+        if (canSplit(s)) {
+            cout << "Yes\n";
+        } else {
+            cout << "No\n";
+        }
+    }
+
+    return 0;
+}

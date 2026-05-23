@@ -1,0 +1,23 @@
+#include <iostream>
+#include <vector>
+#include <tuple>
+
+int main() {
+    int t;
+    std::cin >> t;
+    while (t--) {
+        int n, m, l, r;
+        std::cin >> n >> m >> l >> r;
+
+        // Calculate the steps back from day n to day m
+        int steps_back = n - m;
+        
+        // Calculate the l' and r' for day m
+        int l_prime = l + steps_back;
+        int r_prime = r - steps_back;
+
+        std::cout << l_prime << " " << r_prime << std::endl;
+    }
+
+    return 0;
+}

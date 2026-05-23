@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <deque>
+#include <algorithm>
+
+int simulate(std::vector<int> a, std::vector<int> b) {
+    std::deque<int> player, dealer;
+    for (int x : a) player.push_back(x);
+    for (int x : b) dealer.push_back(x);
+    int score = 0;
+    for (int round = 0; round < a.size(); ++round) {
+        int p_card = player.front();
+        player.pop_front();
+        int d_card = dealer.front();
+        dealer.pop_front();
+
+        if (p_card > d_card) {
+            ++score;
+            dealer.push_front(d_card); // losing card returned
+        } else {
+            player.push_front(p_card); // losing card returned
+        }
+    }
+    return score;
+}
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
+    int t;
+    std::cin >> t;
+
+    while (t--) {
+        int n;
+        std::cin >> n;
+        std::vector<int> a(n), b(n);
+        for (int i = 0; i < n; ++i) {
+            std::cin >> a[i];
+        }
+        for (int i = 0; i < n; ++i) {
+            std::cin >> b[i];
+        }
+
+        int best = 0;
+        // Try every possible single swap (including no swap when i=j)
+        for (int i = 0; i < n; ++i) {
+            for (int j = i; j < n; ++j) {
+                std::swap(a[i], a[j]);
+                int score = simulate(a, b);
+                if (score > best) best = score;
+                std::swap(a[i], a[j]); // revert swap
+            }
+            // Early termination if already perfect
+            if (best == n) break;
+        }
+        std::cout << best << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,127 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const ll INF = 1e18;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, m;
+    cin >> n >> m;
+    
+    vector<vector<ll>> dist(n, vector<ll>(n, INF));
+    for (int i = 0; i < n; i++) dist[i][i] = 0;
+    
+    for (int i = 0; i < m; i++) {
+        int x, y, z;
+        cin >> x >> y >> z;
+        x--; y--;
+        dist[y][x] = min(dist[y][x], (ll)z);
+    }
+    
+    // Floyd-Warshall
+    for (int k = 0; k < n; k++) {
+        for (int i = 0; i < n; i++) {
+            if (dist[i][k] == INF) continue;
+            for (int j = 0; j < n; j++) {
+                if (dist[k][j] == INF) continue;
+                dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]);
+            }
+        }
+    }
+    
+    // 计算强连通分量（简化版）
+    vector<vector<bool>> scc(n, vector<bool>(n, false));
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            scc[i][j] = (dist[i][j] < INF && dist[j][i] < INF);
+        }
+    }
+    
+    int q;
+    cin >> q;
+    
+    while (q--) {
+        ll k;
+        cin >> k;
+        vector<ll> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        string ans(n, '0');
+        
+        for (int i = 0; i < n; i++) {
+            // 计算所有val_j = a_j + dist[j][i]
+            vector<pair<ll, int>> vals;
+            for (int j = 0; j < n; j++) {
+                if (dist[j][i] < INF) {
+                    vals.push_back({a[j] + dist[j][i], j});
+                }
+            }
+            
+            if (vals.size() < 2) {
+                ans[i] = '0';
+                continue;
+            }
+            
+            sort(vals.begin(), vals.end());
+            ll min_val = vals[0].first;
+            
+            // 检查是否已经不稳定：多个源达到最小值且在同一SCC中
+            vector<int> min_sources;
+            for (auto [val, j] : vals) {
+                if (val == min_val) min_sources.push_back(j);
+            }
+            
+            bool already_unstable = false;
+            if (min_sources.size() >= 2) {
+                for (int u_idx = 0; u_idx < min_sources.size() && !already_unstable; u_idx++) {
+                    for (int v_idx = u_idx+1; v_idx < min_sources.size() && !already_unstable; v_idx++) {
+                        int u = min_sources[u_idx];
+                        int v = min_sources[v_idx];
+                        if (scc[u][v]) {
+                            already_unstable = true;
+                        }
+                    }
+                }
+            }
+            
+            if (already_unstable) {
+                ans[i] = '1';
+                continue;
+            }
+            
+            // 计算最小减少次数
+            ll min_cost = INF;
+            
+            // 检查每对源(u,v)在同一SCC中
+            for (int u_idx = 0; u_idx < vals.size(); u_idx++) {
+                for (int v_idx = u_idx+1; v_idx < vals.size(); v_idx++) {
+                    int u = vals[u_idx].second;
+                    int v = vals[v_idx].second;
+                    ll val_u = vals[u_idx].first;
+                    ll val_v = vals[v_idx].first;
+                    
+                    if (!scc[u][v]) continue;
+                    
+                    // 计算使得这两个值都成为最小值所需的减少次数 // 我们需要减少使得max(val_u, val_v) ≤ min_val
+                    // 但min_val可能来自另一个源 // 所以实际需要减少使得max(val_u, val_v) ≤ 所有其他值
+                    // 简化：减少使得max(val_u, val_v) ≤ min_val
+                    ll cost = max(val_u, val_v) - min_val;
+                    min_cost = min(min_cost, cost);
+                }
+            }
+            
+            if (min_cost <= k) {
+                ans[i] = '1';
+            }
+        }
+        
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

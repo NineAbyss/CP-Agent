@@ -1,0 +1,169 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MOD = 1000000007;
+const int MAXN = 5005;
+
+long long comb[MAXN][MAXN];
+long long fact[MAXN];
+long long inv_comb[MAXN][MAXN];
+
+long long mod_pow(long long a, long long b) {
+    long long res = 1;
+    while (b) {
+        if (b & 1) res = res * a % MOD;
+        a = a * a % MOD;
+        b >>= 1;
+    }
+    return res;
+}
+
+void precompute_global(int max_n) {
+    comb[0][0] = 1;
+    for (int i = 1; i <= max_n; i++) {
+        comb[i][0] = comb[i][i] = 1;
+        for (int j = 1; j < i; j++) {
+            comb[i][j] = (comb[i-1][j-1] + comb[i-1][j]) % MOD;
+        }
+    }
+    
+    fact[0] = 1;
+    for (int i = 1; i <= max_n; i++) {
+        fact[i] = fact[i-1] * i % MOD;
+    }
+    
+    for (int i = 0; i <= max_n; i++) {
+        for (int j = 0; j <= i; j++) {
+            if (comb[i][j] != 0) {
+                inv_comb[i][j] = mod_pow(comb[i][j], MOD-2);
+            }
+        }
+    }
+}
+
+long long C(int n, int k) {
+    if (k < 0 || k > n) return 0;
+    return comb[n][k];
+}
+
+long long invC(int n, int k) {
+    if (k < 0 || k > n) return 0;
+    return inv_comb[n][k];
+}
+
+long long solve_case(int n, vector<int>& a) {
+    vector<int> pos(n, -1);
+    int fixed_count = 0;
+    for (int i = 0; i < n; i++) {
+        if (a[i] != -1) {
+            pos[a[i]] = i;
+            fixed_count++;
+        }
+    }
+    int missing_count = n - fixed_count;
+    
+    // 前缀和：pref[i] = 前i个位置中-1的数量
+    vector<int> pref(n+1, 0);
+    for (int i = 0; i < n; i++) {
+        pref[i+1] = pref[i] + (a[i] == -1 ? 1 : 0);
+    }
+    
+    long long total_perm = fact[missing_count] % MOD;
+    
+    // 预处理概率 prob[need][g]
+    vector<vector<long long>> prob(missing_count+1, vector<long long>(missing_count+1, 0));
+    for (int need = 0; need <= missing_count; need++) {
+        for (int g = need; g <= missing_count; g++) {
+            prob[need][g] = C(missing_count - need, g - need) * invC(missing_count, g) % MOD;
+        }
+    }
+    
+    // 预处理cnt_all[g]
+    vector<long long> cnt_all(missing_count+1, 0);
+    for (int l = 0; l < n; l++) {
+        for (int r = l; r < n; r++) {
+            int g = pref[r+1] - pref[l];
+            cnt_all[g]++;
+        }
+    }
+    
+    long long answer = 0;
+    
+    // 对于每个mex
+    for (int mex = 1; mex <= n; mex++) {
+        int need = 0;
+        int L = n, R = -1;
+        
+        for (int i = 0; i < mex; i++) {
+            if (pos[i] != -1) {
+                L = min(L, pos[i]);
+                R = max(R, pos[i]);
+            } else {
+                need++;
+            }
+        }
+        
+        if (need > missing_count) {
+            continue;
+        }
+        
+        long long mex_sum = 0;
+        
+        if (R == -1) {
+            // 没有固定数字
+            for (int g = need; g <= missing_count; g++) {
+                if (cnt_all[g] > 0) {
+                    mex_sum = (mex_sum + cnt_all[g] % MOD * prob[need][g]) % MOD;
+                }
+            }
+        } else {
+            // 有固定数字 // 预处理y_count_from_R：r从R到n-1，pref[r+1]的计数
+            vector<int> y_count_from_R(missing_count+1, 0);
+            for (int r = R; r < n; r++) {
+                y_count_from_R[pref[r+1]]++;
+            }
+            
+            // 对于每个l从0到L
+            for (int l = 0; l <= L; l++) {
+                int x = pref[l];
+                // 对于每个y
+                for (int y = 0; y <= missing_count; y++) {
+                    int cnt = y_count_from_R[y];
+                    if (cnt == 0) continue;
+                    int g = y - x;
+                    if (g >= need) {
+                        mex_sum = (mex_sum + cnt * prob[need][g]) % MOD;
+                    }
+                }
+            }
+        }
+        
+        answer = (answer + total_perm * mex_sum) % MOD;
+    }
+    
+    return answer;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    precompute_global(5000);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        cout << solve_case(n, a) << endl;
+    }
+    
+    return 0;
+}

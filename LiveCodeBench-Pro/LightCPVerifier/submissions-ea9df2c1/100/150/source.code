@@ -1,0 +1,140 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MOD = 1000000007;
+const int N = 5005;
+
+int fact[N];
+int comb[N][N];
+
+int modpow(int a, int e) {
+    int res = 1;
+    while (e) {
+        if (e & 1) res = (long long)res * a % MOD;
+        a = (long long)a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+void precompute() {
+    fact[0] = 1;
+    for (int i = 1; i < N; i++) fact[i] = (long long)fact[i-1] * i % MOD;
+    for (int i = 0; i < N; i++) {
+        comb[i][0] = comb[i][i] = 1;
+        for (int j = 1; j < i; j++) {
+            comb[i][j] = (comb[i-1][j-1] + comb[i-1][j]) % MOD;
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    precompute();
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        vector<bool> present(n, false);
+        int m = 0;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            if (a[i] != -1) present[a[i]] = true;
+        }
+        for (int i = 0; i < n; i++) if (!present[i]) m++;
+        // 预处理前缀和数组
+        vector<vector<int>> sumC0(m+1, vector<int>(m+1, 0));
+        vector<vector<int>> sumT0(m+1, vector<int>(m+1, 0));
+        vector<vector<int>> sumC1(m+1, vector<int>(m+1, 0));
+        vector<vector<int>> sumT1(m+1, vector<int>(m+1, 0));
+        for (int x = 0; x <= m; x++) {
+            for (int t = 0; t <= x; t++) {
+                int c0 = 0, c1 = 0;
+                if (t <= x && m - t >= 0 && x - t <= m - t) {
+                    c0 = comb[m - t][x - t];
+                }
+                if (t <= x && m - t - 1 >= 0 && x - t <= m - t - 1) {
+                    c1 = comb[m - t - 1][x - t];
+                }
+                sumC0[x][t] = c0;
+                sumT0[x][t] = (long long)t * c0 % MOD;
+                sumC1[x][t] = c1;
+                sumT1[x][t] = (long long)t * c1 % MOD;
+                if (t > 0) {
+                    sumC0[x][t] = (sumC0[x][t] + sumC0[x][t-1]) % MOD;
+                    sumT0[x][t] = (sumT0[x][t] + sumT0[x][t-1]) % MOD;
+                    sumC1[x][t] = (sumC1[x][t] + sumC1[x][t-1]) % MOD;
+                    sumT1[x][t] = (sumT1[x][t] + sumT1[x][t-1]) % MOD;
+                }
+            }
+        }
+        long long total = 0;
+        for (int l = 0; l < n; l++) {
+            vector<bool> fi_set(n, false);
+            int x = 0;
+            for (int r = l; r < n; r++) {
+                if (a[r] != -1) fi_set[a[r]] = true;
+                else x++;
+                int y = m - x;
+                // 计算 fixed outside 的最小数字 g
+                vector<bool> fo_set(n, false);
+                for (int i = 0; i < n; i++) {
+                    if (i < l || i > r) {
+                        if (a[i] != -1) fo_set[a[i]] = true;
+                    }
+                }
+                int g = n;
+                for (int i = 0; i < n; i++) if (fo_set[i]) { g = i; break; }
+                if (x == 0) {
+                    int mex = 0;
+                    while (mex < n && fi_set[mex]) mex++;
+                    total = (total + (long long)mex * fact[m]) % MOD;
+                    continue;
+                }
+                // 获取 FI 中的数字并排序
+                vector<int> fi_values;
+                for (int i = 0; i < n; i++) if (fi_set[i]) fi_values.push_back(i);
+                int f = fi_values.size();
+                fi_values.insert(fi_values.begin(), -1);
+                fi_values.push_back(n);
+                for (int c = 0; c <= f; c++) {
+                    int L = fi_values[c] + 1 - c;
+                    int R = fi_values[c+1] - 1 - c;
+                    if (L > R) continue;
+                    int tL = max(L, 0);
+                    int tR = min(R, x);
+                    if (tL > tR) continue;
+                    // 第一部分: t+c < g
+                    int bound1 = min(tR, g - c - 1);
+                    if (tL <= bound1) {
+                        long long sumC = sumC1[x][bound1];
+                        long long sumT = sumT1[x][bound1];
+                        if (tL > 0) {
+                            sumC = (sumC - sumC1[x][tL-1] + MOD) % MOD;
+                            sumT = (sumT - sumT1[x][tL-1] + MOD) % MOD;
+                        }
+                        long long contrib = ((long long)c * sumC + sumT) % MOD;
+                        contrib = contrib * fact[x] % MOD * fact[y] % MOD;
+                        total = (total + contrib) % MOD;
+                    }
+                    // 第二部分: t+c == g
+                    int t_eq = g - c;
+                    if (t_eq >= tL && t_eq <= tR) {
+                        int t = t_eq;
+                        int c0 = comb[m - t][x - t];
+                        long long contrib = ((long long)c * c0 + (long long)t * c0) % MOD;
+                        contrib = contrib * fact[x] % MOD * fact[y] % MOD;
+                        total = (total + contrib) % MOD;
+                    }
+                }
+            }
+        }
+        cout << total << '\n';
+    }
+    return 0;
+}

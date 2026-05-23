@@ -1,0 +1,120 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 300005;
+const int M = 8000000;
+int n, q;
+int a[N];
+
+struct Node {
+    int len;
+    int sum;
+    int max_pre;
+    int max_suf;
+    int max_sub;
+    int lc, rc;
+    Node() : len(0), sum(0), max_pre(0), max_suf(0), max_sub(0), lc(0), rc(0) {}
+    Node(int l) : len(l), sum(-l), max_pre(-1), max_suf(-1), max_sub(-1), lc(0), rc(0) {}
+};
+
+Node pool[M];
+int pool_cnt;
+
+int new_node(int len) {
+    int id = ++pool_cnt;
+    pool[id] = Node(len);
+    return id;
+}
+
+void pull(int id, int lc, int rc, int len_l, int len_r) {
+    Node &node = pool[id];
+    // 如果子节点为空，则用全 -1 区间信息
+    int sum_l = lc ? pool[lc].sum : -len_l;
+    int sum_r = rc ? pool[rc].sum : -len_r;
+    int max_pre_l = lc ? pool[lc].max_pre : -1;
+    int max_suf_l = lc ? pool[lc].max_suf : -1;
+    int max_sub_l = lc ? pool[lc].max_sub : -1;
+    int max_pre_r = rc ? pool[rc].max_pre : -1;
+    int max_suf_r = rc ? pool[rc].max_suf : -1;
+    int max_sub_r = rc ? pool[rc].max_sub : -1;
+    
+    node.sum = sum_l + sum_r;
+    node.max_pre = max(max_pre_l, sum_l + max_pre_r);
+    node.max_suf = max(max_suf_r, sum_r + max_suf_l);
+    node.max_sub = max({max_sub_l, max_sub_r, max_suf_l + max_pre_r});
+}
+
+void update(int &root, int l, int r, int pos, int val, int node_len) {
+    if (!root) {
+        root = new_node(node_len);
+    }
+    if (l == r) {
+        pool[root].sum = val;
+        pool[root].max_pre = pool[root].max_suf = pool[root].max_sub = val;
+        return;
+    }
+    int mid = (l + r) / 2;
+    int left_len = mid - l + 1;
+    int right_len = r - mid;
+    if (pos <= mid) {
+        update(pool[root].lc, l, mid, pos, val, left_len);
+    } else {
+        update(pool[root].rc, mid+1, r, pos, val, right_len);
+    }
+    pull(root, pool[root].lc, pool[root].rc, left_len, right_len);
+}
+
+int get_max_sub(int root) {
+    return root ? pool[root].max_sub : -1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        cin >> n >> q;
+        for (int i = 1; i <= n; ++i) cin >> a[i];
+        vector<int> root(n+1, 0);
+        multiset<int> ms;
+        for (int v = 1; v <= n; ++v) {
+            ms.insert(-1);
+        }
+        for (int i = 1; i <= n; ++i) {
+            int v = a[i];
+            int old = get_max_sub(root[v]);
+            ms.erase(ms.find(old));
+            update(root[v], 1, n, i, 1, n);
+            int new_max = get_max_sub(root[v]);
+            ms.insert(new_max);
+        }
+        for (int qi = 0; qi < q; ++qi) {
+            int i, x;
+            cin >> i >> x;
+            int v_old = a[i];
+            int v_new = x;
+            if (v_old != v_new) {
+                // 更新旧值
+                int old = get_max_sub(root[v_old]);
+                ms.erase(ms.find(old));
+                update(root[v_old], 1, n, i, -1, n);
+                int new_max = get_max_sub(root[v_old]);
+                ms.insert(new_max);
+                // 更新新值
+                old = get_max_sub(root[v_new]);
+                ms.erase(ms.find(old));
+                update(root[v_new], 1, n, i, 1, n);
+                new_max = get_max_sub(root[v_new]);
+                ms.insert(new_max);
+                a[i] = x;
+            }
+            int best = *ms.rbegin();
+            int ans = max(0, best / 2);
+            cout << ans << (qi == q-1 ? '\n' : ' ');
+        }
+        // 重置
+        pool_cnt = 0;
+    }
+    return 0;
+}

@@ -1,0 +1,195 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const long long NEG = -1'000'000'000'000'000'000LL;
+const long long INF = 1'000'000'000'000'000'000LL;
+
+pair<bool, vector<long long>> solve_one(int n, long long k, string s, vector<long long> a) {
+    // 计算 M (未知位置填0)
+    long long M = LLONG_MIN;
+    long long cur = 0;
+    for (int i = 0; i < n; i++) {
+        long long val = (s[i]=='1' ? a[i] : 0);
+        cur = max(val, cur + val);
+        M = max(M, cur);
+    }
+    
+    if (M == k) {
+        for (int i = 0; i < n; i++) if (s[i]=='0') a[i] = 0;
+        return {true, a};
+    }
+    
+    if (M < k) {
+        vector<int> unknown;
+        for (int i = 0; i < n; i++) if (s[i]=='0') unknown.push_back(i);
+        if (unknown.empty()) return {false, {}};
+        
+        // 尝试每个未知位置
+        for (int p : unknown) {
+            // 计算包含 p 的最大子段和（未知位置填0）
+            long long left_max = 0;
+            long long cur = 0;
+            for (int i = p-1; i >= 0; i--) {
+                long long val = (s[i]=='1' ? a[i] : 0);
+                cur += val;
+                if (cur > left_max) left_max = cur;
+            }
+            long long right_max = 0;
+            cur = 0;
+            for (int i = p+1; i < n; i++) {
+                long long val = (s[i]=='1' ? a[i] : 0);
+                cur += val;
+                if (cur > right_max) right_max = cur;
+            }
+            long long sum_p = left_max + right_max; // p 位置未知，val=0
+            if (sum_p <= k) {
+                long long add = k - sum_p;
+                vector<long long> b = a;
+                for (int i = 0; i < n; i++) {
+                    if (s[i]=='0') {
+                        if (i == p) b[i] = add;
+                        else b[i] = 0;
+                    }
+                }
+                // 验证
+                long long newM = LLONG_MIN;
+                cur = 0;
+                for (int i = 0; i < n; i++) {
+                    cur = max(b[i], cur + b[i]);
+                    newM = max(newM, cur);
+                }
+                if (newM == k) return {true, b};
+            }
+        }
+        
+        // 如果上面不行，尝试用很大的负数隔离
+        for (int p : unknown) {
+            vector<long long> b = a;
+            for (int i = 0; i < n; i++) if (s[i]=='0') b[i] = 0;
+            for (int i = 0; i < n; i++) if (s[i]=='0' && i != p) b[i] = NEG;
+            // 计算紧邻已知正数段
+            long long left_max = 0;
+            cur = 0;
+            for (int i = p-1; i >= 0 && s[i]=='1'; i--) {
+                cur += a[i];
+                if (cur > left_max) left_max = cur;
+            }
+            long long right_max = 0;
+            cur = 0;
+            for (int i = p+1; i < n && s[i]=='1'; i++) {
+                cur += a[i];
+                if (cur > right_max) right_max = cur;
+            }
+            long long need = k - left_max - right_max;
+            if (need >= -INF && need <= INF) {
+                b[p] = need;
+                // 验证
+                long long newM = LLONG_MIN;
+                cur = 0;
+                for (int i = 0; i < n; i++) {
+                    cur = max(b[i], cur + b[i]);
+                    newM = max(newM, cur);
+                }
+                if (newM == k) return {true, b};
+            }
+        }
+        return {false, {}};
+    }
+    
+    // M > k // 检查每个已知正数段的和是否都 <= k
+    long long seg_sum = 0;
+    for (int i = 0; i < n; i++) {
+        if (s[i]=='1' && a[i] > 0) {
+            seg_sum += a[i];
+        } else {
+            if (seg_sum > k) return {false, {}};
+            seg_sum = 0;
+        }
+    }
+    if (seg_sum > k) return {false, {}};
+    
+    // 现在已知正数段都 <= k // 尝试构造最大子段和 = k
+    // 方法1: 如果某个已知正数段的和 == k，则把所有未知位置填成很大的负数
+    seg_sum = 0;
+    for (int i = 0; i < n; i++) {
+        if (s[i]=='1' && a[i] > 0) {
+            seg_sum += a[i];
+        } else {
+            if (seg_sum == k) {
+                vector<long long> b = a;
+                for (int j = 0; j < n; j++) if (s[j]=='0') b[j] = NEG;
+                return {true, b};
+            }
+            seg_sum = 0;
+        }
+    }
+    if (seg_sum == k) {
+        vector<long long> b = a;
+        for (int j = 0; j < n; j++) if (s[j]=='0') b[j] = NEG;
+        return {true, b};
+    }
+    
+    // 方法2: 找一个未知位置，填 k，并用很大的负数隔离
+    for (int p = 0; p < n; p++) {
+        if (s[p]=='0') {
+            vector<long long> b = a;
+            for (int i = 0; i < n; i++) if (s[i]=='0') b[i] = 0;
+            for (int i = 0; i < n; i++) if (s[i]=='0' && i != p) b[i] = NEG;
+            // 计算紧邻已知正数段
+            long long left_max = 0;
+            cur = 0;
+            for (int i = p-1; i >= 0 && s[i]=='1'; i--) {
+                cur += a[i];
+                if (cur > left_max) left_max = cur;
+            }
+            long long right_max = 0;
+            cur = 0;
+            for (int i = p+1; i < n && s[i]=='1'; i++) {
+                cur += a[i];
+                if (cur > right_max) right_max = cur;
+            }
+            if (left_max + right_max <= 0) {
+                b[p] = k;
+                // 验证
+                long long newM = LLONG_MIN;
+                cur = 0;
+                for (int i = 0; i < n; i++) {
+                    cur = max(b[i], cur + b[i]);
+                    newM = max(newM, cur);
+                }
+                if (newM == k) return {true, b};
+            }
+        }
+    }
+    
+    return {false, {}};
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        string s;
+        cin >> s;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        auto res = solve_one(n, k, s, a);
+        if (res.first) {
+            cout << "Yes\n";
+            for (int i = 0; i < n; i++) {
+                cout << res.second[i] << " \n"[i==n-1];
+            }
+        } else {
+            cout << "No\n";
+        }
+    }
+    return 0;
+}

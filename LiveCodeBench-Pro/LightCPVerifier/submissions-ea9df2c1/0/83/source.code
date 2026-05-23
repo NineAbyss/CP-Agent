@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int q;
+        cin >> q;
+        deque<ll> dq;
+        ll rizz = 0, total = 0, n = 0;
+        bool rev = false;
+        while (q--) {
+            int s;
+            cin >> s;
+            if (s == 1) {
+                // cyclic shift right
+                ll moved;
+                if (!rev) {
+                    moved = dq.back();
+                    dq.pop_back();
+                    dq.push_front(moved);
+                } else {
+                    moved = dq.front();
+                    dq.pop_front();
+                    dq.push_back(moved);
+                }
+                rizz = rizz + total - moved * n;
+            } else if (s == 2) {
+                // reverse
+                rev = !rev;
+                rizz = (n + 1) * total - rizz;
+            } else {
+                // append
+                ll k;
+                cin >> k;
+                if (!rev) {
+                    dq.push_back(k);
+                } else {
+                    dq.push_front(k);
+                }
+                rizz = rizz + k * (n + 1);
+                total += k;
+                n += 1;
+            }
+            cout << rizz << '\n';
+        }
+    }
+    return 0;
+}

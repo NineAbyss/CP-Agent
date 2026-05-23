@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<long long> l(n), r(n);
+    for (int i = 0; i < n; i++) cin >> l[i];
+    for (int i = 0; i < n; i++) cin >> r[i];
+    
+    long long totalM = 0;
+    vector<long long> mins(n);
+    for (int i = 0; i < n; i++) {
+        totalM += max(l[i], r[i]);
+        mins[i] = min(l[i], r[i]);
+    }
+    sort(mins.begin(), mins.end(), greater<long long>());
+    long long sum_top = 0;
+    int take = k - 1;
+    if (take > 0) {
+        for (int i = 0; i < take && i < n; i++) {
+            sum_top += mins[i];
+        }
+    }
+    long long ans = totalM + sum_top + 1;
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

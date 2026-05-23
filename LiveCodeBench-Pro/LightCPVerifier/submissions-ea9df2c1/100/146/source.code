@@ -1,0 +1,107 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX_BIT = 30; // 10^9 < 2^30
+
+struct TrieNode {
+    int cnt;
+    TrieNode* child[2];
+    TrieNode() : cnt(0) {
+        child[0] = child[1] = nullptr;
+    }
+};
+
+void insert(TrieNode* root, int x) {
+    TrieNode* cur = root;
+    for (int b = MAX_BIT; b >= 0; --b) {
+        int bit = (x >> b) & 1;
+        if (!cur->child[bit]) {
+            cur->child[bit] = new TrieNode();
+        }
+        cur = cur->child[bit];
+        cur->cnt++;
+    }
+}
+
+void remove(TrieNode* root, int x) {
+    TrieNode* cur = root;
+    for (int b = MAX_BIT; b >= 0; --b) {
+        int bit = (x >> b) & 1;
+        cur = cur->child[bit];
+        cur->cnt--;
+    }
+}
+
+// 判断当前 Trie 中是否存在一个元素 y，使得 x xor y >= k
+bool query_exists(TrieNode* root, int x, int k) {
+    TrieNode* cur = root;
+    // 空 Trie
+    if (cur->child[0] == nullptr && cur->child[1] == nullptr) return false;
+    // 递归搜索
+    function<bool(TrieNode*, int, int)> dfs = [&](TrieNode* node, int bit_pos, int cur_xor) -> bool {
+        if (bit_pos < 0) {
+            return cur_xor >= k;
+        }
+        int kb = (k >> bit_pos) & 1;
+        int xb = (x >> bit_pos) & 1;
+        int opp = xb ^ 1;
+        // 尝试走相反位，使得该位异或结果为 1
+        if (node->child[opp] && node->child[opp]->cnt > 0) {
+            int new_xor = cur_xor | (1 << bit_pos);
+            if (new_xor > k) return true; // 已经大于 k，肯定存在
+            if (dfs(node->child[opp], bit_pos - 1, new_xor)) return true;
+        }
+        // 尝试走相同位，该位异或结果为 0
+        if (node->child[xb] && node->child[xb]->cnt > 0) {
+            if (kb == 0) { // 如果 k 的这一位是 0，那么异或结果 0 仍然可能满足
+                if (dfs(node->child[xb], bit_pos - 1, cur_xor)) return true;
+            }
+            // 如果 kb == 1，那么异或结果 0 已经小于 k，不可能再达到 >= k，所以不用走
+        }
+        return false;
+    };
+    return dfs(cur, MAX_BIT, 0);
+}
+
+void delete_trie(TrieNode* node) {
+    if (!node) return;
+    delete_trie(node->child[0]);
+    delete_trie(node->child[1]);
+    delete node;
+}
+
+int solve_one(int n, int k, vector<int>& a) {
+    if (k == 0) return 1; // 任何子数组都满足
+    TrieNode* root = new TrieNode();
+    int l = 0; // 窗口 [l, r] 满足任意两元素异或 < k
+    int ans = n + 1;
+    for (int r = 0; r < n; ++r) {
+        insert(root, a[r]);
+        // 如果存在元素与 a[r] 异或 >= k，则需要右移 l
+        while (l <= r && query_exists(root, a[r], k)) {
+            remove(root, a[l]);
+            l++;
+        }
+        // 此时窗口 [l, r] 内任意两元素异或 < k // 那么窗口 [l-1, r] 就是满足条件的最短子数组（如果 l>0）
+        if (l > 0) {
+            ans = min(ans, r - (l - 1) + 1);
+        }
+    }
+    delete_trie(root);
+    return ans <= n ? ans : -1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        cout << solve_one(n, k, a) << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,33 @@
+#include <iostream>
+using namespace std;
+
+// 检查一个维度是否能由两块瓷砖完整覆盖
+bool isFullyCovered(int64_t dimSize, int64_t tileSize, int64_t pos1, int64_t pos2) {
+    if (pos1 > pos2) swap(pos1, pos2); // 确保pos1是最左端 // 从最左端到终点的无缝覆盖
+    return pos1 <= 0 && pos2 + tileSize >= dimSize;
+}
+
+bool canCoverRoof(int64_t w, int64_t h, int64_t a, int64_t b, int64_t x1, int64_t y1, int64_t x2, int64_t y2) {
+    // 验证在两个维度上的完整覆盖
+    return isFullyCovered(w, a, x1, x2) && isFullyCovered(h, b, y1, y2);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int64_t w, h, a, b, x1, y1, x2, y2;
+        cin >> w >> h >> a >> b >> x1 >> y1 >> x2 >> y2;
+
+        if (canCoverRoof(w, h, a, b, x1, y1, x2, y2)) {
+            cout << "Yes\n";
+        } else {
+            cout << "No\n";
+        }
+    }
+
+    return 0;
+}

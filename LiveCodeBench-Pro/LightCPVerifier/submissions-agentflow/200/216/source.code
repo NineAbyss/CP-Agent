@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX_N = 400000;
+const int SIEVE_LIMIT = 5500000;
+
+vector<int> primes;
+
+void precompute_primes() {
+    vector<char> is_prime(SIEVE_LIMIT + 1, 1);
+    is_prime[0] = is_prime[1] = 0;
+    for (int i = 2; i * i <= SIEVE_LIMIT; i++) {
+        if (is_prime[i]) {
+            for (int j = i * i; j <= SIEVE_LIMIT; j += i) {
+                is_prime[j] = 0;
+            }
+        }
+    }
+    primes.reserve(MAX_N);
+    for (int i = 2; i <= SIEVE_LIMIT; i++) {
+        if (is_prime[i]) {
+            primes.push_back(i);
+            if ((int)primes.size() >= MAX_N) break;
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    precompute_primes();
+    // 确保我们有足够的质数
+    if ((int)primes.size() < MAX_N) {
+        // 如果不够，填充大数，但这种情况不应发生
+        while ((int)primes.size() < MAX_N) {
+            primes.push_back(1000000007);
+        }
+    }
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        sort(a.begin(), a.end(), greater<int>());
+        
+        long long prefix = 0;
+        int k = 0;
+        long long prime_sum = 0;
+        for (int i = 0; i < n; i++) {
+            prefix += a[i];
+            prime_sum += primes[i];
+            if (prefix >= prime_sum) {
+                k = i+1;
+            }
+        }
+        cout << n - k << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+#include <string>
+
+int main() {
+    int t;
+    std::cin >> t;
+    while (t--) {
+        int n, m;
+        std::cin >> n >> m;
+        std::vector<std::string> a(n);
+        for (int i = 0; i < n; ++i) {
+            std::cin >> a[i];
+        }
+
+        std::vector<std::vector<std::string>> b(m, std::vector<std::string>(n));
+        for (int i = 0; i < m; ++i) {
+            for (int j = 0; j < n; ++j) {
+                std::cin >> b[i][j];
+            }
+        }
+
+        // Check if it's possible to construct a
+        bool possible = true;
+        std::vector<int> ops_needed(n, 0);  // Operations needed for each position
+        for (int j = 0; j < n; ++j) {
+            std::unordered_set<std::string> candidates;
+            for (int i = 0; i < m; ++i) {
+                if (b[i][j] == a[j]) {  // Only count neural networks that can provide a[j] at j
+                    candidates.insert(b[i][j]);
+                }
+            }
+            if (candidates.find(a[j]) == candidates.end()) {
+                possible = false;
+                break;
+            } else {
+                ops_needed[j] = 1;  // Only need one operation per position j if possible
+            }
+        }
+
+        if (!possible) {
+            std::cout << -1 << '\n';
+        } else {
+            // Each position needs exactly one operation to be set to a[j] from b[i][j] for some i
+            int total_ops = 0;
+            for (int j = 0; j < n; ++j) {
+                total_ops += ops_needed[j];
+            }
+            std::cout << total_ops << '\n';
+        }
+    }
+    return 0;
+}

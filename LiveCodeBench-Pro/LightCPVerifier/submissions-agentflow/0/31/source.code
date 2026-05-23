@@ -1,0 +1,44 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int MOD = 998244353;
+
+void solve(int n, vector<int>& p, vector<int>& q) {
+    vector<int> r(n, 0);
+    for (int i = 0; i < n; ++i) {
+        int max_value = 0;
+        for (int j = 0; j <= i; ++j) {
+            int current_value = (1LL << p[j]) + (1LL << q[i - j]);
+            max_value = max(max_value, current_value);
+        }
+        r[i] = max_value % MOD;
+    }
+    for (int i = 0; i < n; ++i) {
+        cout << r[i] << (i == n-1 ? "\n" : " ");
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> p(n), q(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> p[i];
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> q[i];
+        }
+        solve(n, p, q);
+    }
+
+    return 0;
+}

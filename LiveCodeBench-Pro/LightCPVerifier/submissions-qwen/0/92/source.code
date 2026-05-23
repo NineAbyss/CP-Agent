@@ -1,0 +1,261 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+// We are to compute sum of f(substring) over all substrings. // f(p) = max(count('0'), count('1')) in p.
+
+// Instead of iterating over all substrings (O(n^2)), we use contribution technique.
+
+// Idea: Instead of computing f for each substring, think about how much each position contributes. // However, note that f(s[l..r]) = max(ones, zeros) = max(c1, c0) = (c1 + c0 + |c1 - c0|) / 2 = len + |c1 - c0| / 2.
+// But this is not linear.
+
+// Alternate idea: For a substring, f = max(zeros, ones). So we can try to count the number of substrings  // where max(zeros, ones) >= k, and then use:
+// Sum_{substrings} f(sub) = Sum_{k>=1} (# of substrings with f(sub) >= k)
+
+// But that might be complex.
+
+// Another known approach: Contribution of maximum.
+// Consider: for each substring, f(sub) = max(count0, count1).
+// We can break it as:
+//   f(sub) = (# of 0s) if #0s >= #1s, else (# of 1s)
+
+// So total sum = sum_{sub} [max(#0s, #1s)] 
+//             = sum_{sub: #0s >= #1s} (#0s) + sum_{sub: #1s > #0s} (#1s)
+
+// Now, by symmetry, we can compute:
+//   A = sum_{sub: #0s >= #1s} (#0s)
+//   B = sum_{sub: #1s > #0s} (#1s) // Answer = A + B
+
+// How to compute A? We can use transformation: let’s assign value +1 for '0', -1 for '1'.
+// Then condition #0s >= #1s means prefix_sum difference >= 0.
+
+// But we need to sum the number of 0s in such substrings.
+
+// Alternatively, we can use known technique from "Sum of Subarray Maximums" but here it's different.
+
+// Insight: Instead, we can use D&C or stack methods? But note constraints: total n <= 200000 across test cases.
+
+// Actually, there's a known solution for this problem using contribution method with balance arrays.
+
+// Let's define:
+//   Let’s consider transforming the string: for each character, set a[i] = 1 if s[i]=='1', -1 if s[i]=='0'
+// But wait, we want to count contributions of each occurrence of '0' and '1'.
+
+// Alternate known solution (from similar problems):  // We can compute the answer by processing each bit's contribution when it is the majority.
+
+// However, a simpler idea: use the fact that:
+//   f(sub) = (length + abs(diff)) / 2, where diff = (#1s - #0s) in the substring.
+// So: 
+//   Sum_{l<=r} f(s[l..r]) = Sum_{l<=r} ( (r-l+1) + |prefix[r]-prefix[l-1]| ) / 2
+//                          = (total_length_sum + Sum_{l<=r} |prefix[r]-prefix[l-1]| ) / 2
+
+// total_length_sum = sum_{i=1}^{n} i*(n-i+1) ???  // Actually: total number of substrings is n*(n+1)/2, and sum of lengths of all substrings?
+//   = sum_{l=1}^{n} sum_{r=l}^{n} (r-l+1)
+//   = sum_{len=1}^{n} len * (n-len+1)
+// But we don't need that form.
+
+// Actually, note:
+//   sum_{l=1}^{n} sum_{r=l}^{n} (r-l+1) = sum_{i=1}^{n} i*(n-i+1) is not correct.
+
+// Correct: 
+//   = sum_{l=1}^{n} [ (1) + (2) + ... + (n-l+1) ]
+//   = sum_{l=1}^{n} (n-l+1)(n-l+2)/2  // But easier:
+//   = sum_{i=1}^{n} i*(n-i+1) -> no, that counts something else.
+
+// Actually, the sum of lengths of all contiguous substrings is:
+//   = sum_{l=1}^{n} sum_{r=l}^{n} (r-l+1)
+//   = sum_{l=1}^{n} [ (n-l+1)(n-l+2)/2 ] -> no, inner sum is T_{n-l+1} = (n-l+1)(n-l+2)/2? 
+// But actually: sum_{k=1}^{m} k = m(m+1)/2, so inner sum is (n-l+1)(n-l+2)/2? 
+// Wait: r from l to n: length = 1 to (n-l+1), so sum = (n-l+1)(n-l+2)/2? -> no: sum_{k=1}^{m} k = m(m+1)/2, so yes.
+
+// But that would be O(n) per test case, and total n <= 200000, but worst-case one test case n=200000, then sum_{l} (n-l+1)(n-l+2)/2 ~ O(n^3)? -> no, we can compute in O(1).
+
+// Actually, we can derive:
+//   total_length_sum = sum_{i=1}^{n} i*(n-i+1) -> this formula is for sum of lengths? 
+// Let me check for n=2: substrings: [0]:1, [1]:1, [0,1]:2 -> total = 1+1+2 = 4.
+// Using formula: i=1: 1*(2-1+1)=1*2=2; i=2: 2*(2-2+1)=2*1=2; total=4 -> matches.
+
+// So: total_length_sum = sum_{i=1}^{n} i*(n-i+1) = (n+1)*sum_{i=1}^{n} i - sum_{i=1}^{n} i^2
+// = (n+1)*n*(n+1)/2 - n(n+1)(2n+1)/6 -> but we don't need closed form, we can compute in O(n) but we want O(1).
+
+// But note: we have to do this for each test case, and total n <= 200000, so even O(n) per test case is acceptable?  // But the sum of n across test cases <= 200000, so we can do O(n) per test case.
+
+// However, the main challenge is the second term: sum_{l<=r} |prefix[r] - prefix[l-1]|
+
+// Let P[0] = 0, P[i] = P[i-1] + (s[i]=='1' ? 1 : -1)  OR should we do +1 for '1' and -1 for '0'?  // But then #1s - #0s = P[r] - P[l-1]. And |P[r]-P[l-1]| is what we need.
+
+// But note: we defined:
+//   f(sub) = max(#0s, #1s) = ( (#0s+#1s) + ||#1s - #0s|| ) / 2 = (len + |diff|)/2
+// So:
+//   Answer = ( total_length_sum + sum_{0<=i<j<=n} |P[j]-P[i]| ) / 2
+
+// Why i<j? because l-1 from 0 to n-1, r from 1 to n, so pairs (i,j) with i=l-1, j=r, and i<j.
+
+// So we need to compute:
+//   S = sum_{0<=i<j<=n} |P[j] - P[i]|
+
+// This is a classic problem: sum of absolute differences of all pairs in an array.  // We can sort the prefix array and compute in O(n log n).
+
+// Steps: //   Step 1: Precompute prefix sums P[0..n]:
+//        P[0] = 0 //        P[i] = P[i-1] + (s[i-1]=='1' ? 1 : -1)   [since s is 0-indexed]
+//
+//   Step 2: total_length_sum = sum_{l=1}^{n} (n-l+1)*(l) ??? 
+//           Actually: for starting index l (0-indexed), number of substrings starting at l is (n-l), and their lengths: 1,2,...,n-l -> sum = (n-l)(n-l+1)/2? 
+//           But we already know: total_length_sum = sum_{i=1}^{n} i*(n-i+1) 
+//           But we can compute: 
+//               total_length_sum = 0;
+//               for (int i = 1; i <= n; i++) {
+//                   total_length_sum += (long long)i * (n - i + 1);
+//               }
+//           But note: i is length? Actually, the formula: 
+//               total_length_sum = sum_{l=0}^{n-1} sum_{r=l}^{n-1} (r-l+1)
+//                              = sum_{l=0}^{n-1} [ (n-l)*(n-l+1)/2 ] -> no, that's the sum of first (n-l) naturals? 
+//           Actually: for fixed l, sum_{r=l}^{n-1} (r-l+1) = sum_{k=1}^{n-l} k = (n-l)(n-l+1)/2.
+//           So total_length_sum = sum_{l=0}^{n-1} (n-l)*(n-l+1)/2 = sum_{k=1}^{n} k*(k+1)/2 = (1/2) * [ sum k^2 + sum k ] 
+//           = (1/2) * [ n(n+1)(2n+1)/6 + n(n+1)/2 ] -> but we can compute by loop.
+
+//           Alternatively, we can use: 
+//               total_length_sum = 0;
+//               for (int i = 1; i <= n; i++) {
+//                   total_length_sum += (long long)i * (n - i + 1);
+//               }
+//           But wait, this formula: i is the starting index? Actually, no: 
+//           The standard formula: the sum of lengths of all contiguous substrings is:
+//               = sum_{i=0}^{n-1} sum_{j=i}^{n-1} (j-i+1)
+//               = sum_{len=1}^{n} len * (n - len + 1)
+//           So yes: total_length_sum = sum_{len=1}^{n} len*(n-len+1)
+
+//   Step 3: Compute S = sum_{0<=i<j<=n} |P[j]-P[i]| 
+//           We can do: sort the prefix array, then for each j, add: 
+//               S += P[j] * j - prefix_sum_so_far   (if sorted in increasing order)
+//           Specifically: 
+//               sort(P, P+n+1);
+//               long long S = 0;
+//               long long prefix_sum = 0;
+//               for (int j = 0; j <= n; j++) {
+//                   S += (long long)P[j] * j - prefix_sum;
+//                   prefix_sum += P[j];
+//               }
+
+//   Step 4: Answer = (total_length_sum + S) / 2
+
+// But wait: in our transformation, we used:
+//   diff = (#1s - #0s) = P[r] - P[l-1]
+//   and f(sub) = (len + |#1s - #0s|) / 2 = (len + |P[r]-P[l-1]|)/2
+//   So the entire sum = ( total_length_sum + sum_{l<=r} |P[r]-P[l-1]| ) / 2
+//   and sum_{l<=r} |P[r]-P[l-1]| = sum_{0<=i<j<=n} |P[j]-P[i]| = S
+
+// Therefore: Answer = (total_length_sum + S) / 2
+
+// Let's test on n=1, s="0": //   P[0]=0
+//   P[1]= P[0] + (s[0]=='1'?1:-1) = 0 + (-1) = -1
+//   total_length_sum = for len=1: 1*(1-1+1)=1*1=1
+//   S = |P[1]-P[0]| = |-1-0|=1 //   Answer = (1+1)/2 = 1 -> matches.
+
+// Test n=2, s="01": //   P[0]=0
+//   P[1]=0 + (s[0]=='1'?1:-1) = 0-1 = -1 //   P[2]=-1 + (s[1]=='1'?1:-1) = -1+1=0
+//   total_length_sum = len=1: 1*(2-1+1)=1*2=2; len=2: 2*(2-2+1)=2*1=2; total=4 //   S = |P[1]-P[0]| + |P[2]-P[0]| + |P[2]-P[1]| = | -1 | + |0| + |1| = 1+0+1 = 2
+//   Answer = (4+2)/2 = 3 -> matches.
+
+// Test n=4, s="0110": expected 14. //   s: 0,1,1,0
+//   P[0]=0 //   P[1]=0-1=-1
+//   P[2]=-1+1=0 //   P[3]=0+1=1
+//   P[4]=1-1=0 //   total_length_sum =
+//        len=1: 1*4 = 4 //        len=2: 2*3 = 6
+//        len=3: 3*2 = 6 //        len=4: 4*1 = 4
+//        total = 4+6+6+4 = 20
+//   S = sum_{i<j} |P[j]-P[i]| for P=[0,-1,0,1,0] -> indices 0..4
+//       Sort P: [-1,0,0,0,1] //       Then:
+//         j=0: P[0]=-1 -> S += (-1)*0 - 0 = 0; prefix_sum = -1
+//         j=1: P[1]=0 -> S += 0*1 - (-1) = 1; prefix_sum = -1
+//         j=2: P[2]=0 -> S += 0*2 - (-1) = 1; prefix_sum = -1
+//         j=3: P[3]=0 -> S += 0*3 - (-1) = 1; prefix_sum = -1
+//         j=4: P[4]=1 -> S += 1*4 - (-1) = 4+1 = 5;  //         Total S = 0+1+1+1+5 = 8
+//   Answer = (20+8)/2 = 14 -> matches.
+
+// So the algorithm:
+
+//   for each test case: //      read n, then string s
+//      total_length_sum = 0
+//      for len from 1 to n: total_length_sum += (long long)len * (n - len + 1)
+//
+//      vector<long long> P(n+1);
+//      P[0] = 0;
+//      for i from 1 to n:
+//          P[i] = P[i-1] + (s[i-1]=='1' ? 1 : -1); //
+//      sort(P.begin(), P.end());
+//      long long S = 0;
+//      long long prefix_sum = 0;
+//      for (int j = 0; j <= n; j++) {
+//          S += (long long)P[j] * j - prefix_sum;
+//          prefix_sum += P[j];
+//      } //
+//      long long ans = (total_length_sum + S) / 2;
+//      cout << ans << '\n';
+
+// Note: Use long long everywhere to avoid overflow.
+
+// However, note: the total_length_sum can be computed without a loop? 
+//   total_length_sum = sum_{len=1}^{n} len*(n-len+1)
+//                  = (n+1)*sum_{len=1}^{n} len - sum_{len=1}^{n} len^2 //                  = (n+1)*n*(n+1)/2 - n(n+1)(2n+1)/6
+// But we can compute in O(1). But since n<=200000 and total n across test cases <=200000, we can do O(n) per test case?  // But worst-case t up to 10000, but total n<=200000, so maximum 10000 test cases but each n very small on average.
+
+// Actually, the constraint says: "the sum of n across all test cases does not exceed 2·10^5", so we can do O(n) per test case.
+
+// But note: the loop for total_length_sum is O(n), and the prefix computation is O(n), and sorting is O(n log n).  // Since total n <= 200000, the total time will be dominated by sorting:
+//   The sum of n_i log n_i over test cases.  //   Worst-case: one test case with n=200000 -> O(200000 log 200000) which is acceptable.
+
+// Let's code accordingly.
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+
+        // Compute total_length_sum = sum_{len=1}^{n} len*(n-len+1)
+        long long total_length_sum = 0;
+        for (int len = 1; len <= n; len++) {
+            total_length_sum += (long long)len * (n - len + 1);
+        }
+
+        // Build prefix array P[0..n]
+        vector<long long> P(n+1);
+        P[0] = 0;
+        for (int i = 1; i <= n; i++) {
+            if (s[i-1] == '1') {
+                P[i] = P[i-1] + 1;
+            } else {
+                P[i] = P[i-1] - 1;
+            }
+        }
+
+        // Sort the prefix array
+        sort(P.begin(), P.end());
+
+        // Compute S = sum_{i<j} |P[j]-P[i]| 
+        long long S = 0;
+        long long prefix_sum = 0;
+        for (int j = 0; j <= n; j++) {
+            S += (long long)P[j] * j - prefix_sum;
+            prefix_sum += P[j];
+        }
+
+        long long ans = (total_length_sum + S) / 2;
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

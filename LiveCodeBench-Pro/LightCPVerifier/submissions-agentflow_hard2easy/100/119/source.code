@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i=0; i<n; i++) {
+            cin >> a[i];
+        }
+        
+        // 预处理 L[x] 和 R[x]
+        vector<int> L(n+1, n+1), R(n+1, -1);
+        for (int i=0; i<n; i++) {
+            for (int x=1; x<=a[i]; x++) {
+                L[x] = min(L[x], i+1);
+                R[x] = max(R[x], i+1);
+            }
+        }
+        
+        // 从大到小处理值
+        vector<bool> used(n+1, false);
+        ll ans = 0;
+        for (int x = n; x >= 1; x--) {
+            if (L[x] > n) continue;
+            // 收集 P_x 中可用的位置
+            vector<int> pos;
+            for (int i=1; i<=n; i++) {
+                if (!used[i] && a[i-1] >= x) {
+                    pos.push_back(i);
+                }
+            }
+            if (pos.size() >= 2) {
+                int l = pos[0];
+                int r = pos.back();
+                ans += r - l;
+                used[l] = used[r] = true;
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

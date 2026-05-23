@@ -1,0 +1,104 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+const int LOG = 18;
+
+int n;
+int p[MAXN];
+int pos[MAXN];
+int st_min[LOG][MAXN], st_max[LOG][MAXN];
+int log2_[MAXN];
+
+void build_sparse() {
+    for (int i = 1; i <= n; ++i) {
+        st_min[0][i] = p[i];
+        st_max[0][i] = p[i];
+    }
+    for (int j = 1; j < LOG; ++j) {
+        for (int i = 1; i + (1 << j) - 1 <= n; ++i) {
+            st_min[j][i] = min(st_min[j-1][i], st_min[j-1][i + (1 << (j-1))]);
+            st_max[j][i] = max(st_max[j-1][i], st_max[j-1][i + (1 << (j-1))]);
+        }
+    }
+    log2_[1] = 0;
+    for (int i = 2; i <= n; ++i) {
+        log2_[i] = log2_[i/2] + 1;
+    }
+}
+
+inline int query_min(int l, int r) {
+    int k = log2_[r - l + 1];
+    return min(st_min[k][l], st_min[k][r - (1 << k) + 1]);
+}
+
+inline int query_max(int l, int r) {
+    int k = log2_[r - l + 1];
+    return max(st_max[k][l], st_max[k][r - (1 << k) + 1]);
+}
+
+inline bool check_condition(int l, int r, int i) {
+    if (i < l || i >= r) return false;
+    int max_left = query_max(l, i);
+    int min_right = query_min(i+1, r);
+    if (max_left < min_right) return true;
+    int min_left = query_min(l, i);
+    int max_right = query_max(i+1, r);
+    if (min_left > max_right) return true;
+    return false;
+}
+
+bool is_divisible(int l, int r) {
+    int min_val = query_min(l, r);
+    int max_val = query_max(l, r);
+    int pos_min = pos[min_val];
+    int pos_max = pos[max_val];
+    // candidate positions
+    int cand[20];
+    int cnt = 0;
+    for (int d = -2; d <= 2; ++d) {
+        int c = pos_min + d;
+        if (l <= c && c <= r) cand[cnt++] = c;
+        c = pos_max + d;
+        if (l <= c && c <= r) cand[cnt++] = c;
+    }
+    cand[cnt++] = l;
+    cand[cnt++] = r-1;
+    // sort and unique
+    sort(cand, cand + cnt);
+    int new_cnt = 0;
+    for (int i = 0; i < cnt; ++i) {
+        if (i == 0 || cand[i] != cand[i-1]) {
+            cand[new_cnt++] = cand[i];
+        }
+    }
+    cnt = new_cnt;
+    for (int idx = 0; idx < cnt; ++idx) {
+        int i = cand[idx];
+        if (check_condition(l, r, i)) return true;
+    }
+    return false;
+}
+
+int main() {
+    scanf("%d", &n);
+    for (int i = 1; i <= n; ++i) {
+        scanf("%d", &p[i]);
+        pos[p[i]] = i;
+    }
+    build_sparse();
+    int q;
+    scanf("%d", &q);
+    int queries_answered = 0;
+    while (q--) {
+        int l, r;
+        scanf("%d %d", &l, &r);
+        bool ans = is_divisible(l, r);
+        puts(ans ? "YES" : "NO");
+        queries_answered++;
+        if (queries_answered % 10 == 0) {
+            fflush(stdout);
+        }
+    }
+    return 0;
+}

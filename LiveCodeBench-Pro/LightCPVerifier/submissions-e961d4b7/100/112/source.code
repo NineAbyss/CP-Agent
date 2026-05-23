@@ -1,0 +1,87 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+const int LOG = 18;
+
+int p[MAXN];
+int pos[MAXN]; // position of value i
+int st_min[LOG][MAXN];
+int st_max[LOG][MAXN];
+int log2_[MAXN];
+
+int query_min(int l, int r) {
+    int k = log2_[r - l + 1];
+    return min(st_min[k][l], st_min[k][r - (1 << k) + 1]);
+}
+
+int query_max(int l, int r) {
+    int k = log2_[r - l + 1];
+    return max(st_max[k][l], st_max[k][r - (1 << k) + 1]);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n;
+    cin >> n;
+    for (int i = 1; i <= n; ++i) {
+        cin >> p[i];
+        pos[p[i]] = i;
+    }
+    // build sparse tables for range min and max of values
+    for (int i = 1; i <= n; ++i) {
+        st_min[0][i] = p[i];
+        st_max[0][i] = p[i];
+    }
+    log2_[1] = 0;
+    for (int i = 2; i <= n; ++i) log2_[i] = log2_[i / 2] + 1;
+    for (int j = 1; j < LOG; ++j) {
+        for (int i = 1; i + (1 << j) - 1 <= n; ++i) {
+            st_min[j][i] = min(st_min[j-1][i], st_min[j-1][i + (1 << (j-1))]);
+            st_max[j][i] = max(st_max[j-1][i], st_max[j-1][i + (1 << (j-1))]);
+        }
+    }
+    int q;
+    cin >> q;
+    int cnt = 0;
+    while (q--) {
+        int l, r;
+        cin >> l >> r;
+        // find min and max positions within [l,r]
+        int min_val = query_min(l, r);
+        int max_val = query_max(l, r);
+        int min_pos = pos[min_val];
+        int max_pos = pos[max_val];
+        bool ok = false;
+        if (min_pos < max_pos) {
+            // check split at min_pos
+            int left_max = query_max(l, min_pos);
+            int right_min = query_min(min_pos + 1, r);
+            if (left_max < right_min) ok = true;
+            // check split at max_pos - 1
+            if (!ok && max_pos - 1 >= l) {
+                left_max = query_max(l, max_pos - 1);
+                right_min = query_min(max_pos, r);
+                if (left_max < right_min) ok = true;
+            }
+        } else {
+            // min_pos > max_pos // check split at max_pos
+            int left_min = query_min(l, max_pos);
+            int right_max = query_max(max_pos + 1, r);
+            if (left_min > right_max) ok = true;
+            // check split at min_pos - 1
+            if (!ok && min_pos - 1 >= l) {
+                left_min = query_min(l, min_pos - 1);
+                right_max = query_max(min_pos, r);
+                if (left_min > right_max) ok = true;
+            }
+        }
+        cout << (ok ? "YES" : "NO") << '\n';
+        ++cnt;
+        if (cnt % 10 == 0) {
+            cout.flush();
+        }
+    }
+    return 0;
+}

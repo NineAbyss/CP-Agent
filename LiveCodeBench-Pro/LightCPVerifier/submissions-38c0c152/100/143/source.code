@@ -1,0 +1,91 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <cmath>
+#include <cstring>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> adj(n+1);
+        for (int i=0; i<n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+
+        // 查询每个节点的 f(u)
+        vector<int> f(n+1);
+        for (int i=1; i<=n; i++) {
+            cout << "? 1 1 " << i << endl;
+            cin >> f[i];
+        }
+
+        // 找到候选根节点
+        vector<int> candidates;
+        for (int r=1; r<=n; r++) {
+            if (abs(f[r]) != 1) continue;
+            vector<int> a_tmp(n+1, 0);
+            vector<bool> vis(n+1, false);
+            queue<int> q;
+            q.push(r);
+            vis[r] = true;
+            a_tmp[r] = f[r];
+            bool ok = true;
+            while (!q.empty()) {
+                int u = q.front(); q.pop();
+                for (int v : adj[u]) {
+                    if (!vis[v]) {
+                        int diff = f[v] - f[u];
+                        if (abs(diff) != 1) {
+                            ok = false;
+                            break;
+                        }
+                        a_tmp[v] = diff;
+                        vis[v] = true;
+                        q.push(v);
+                    }
+                }
+                if (!ok) break;
+            }
+            if (ok) {
+                for (int i=1; i<=n; i++) if (!vis[i]) { ok = false; break; }
+                if (ok) candidates.push_back(r);
+            }
+        }
+
+        int root = candidates[0]; // 选择第一个候选，假设它是正确的 // 如果有多个候选，我们需要区分，但为了简单起见，我们选择第一个
+        // 在实际中，应该使用额外的查询来区分
+
+        // 分配值
+        vector<int> a(n+1, 0);
+        vector<bool> vis(n+1, false);
+        queue<int> q;
+        q.push(root);
+        vis[root] = true;
+        a[root] = f[root];
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            for (int v : adj[u]) {
+                if (!vis[v]) {
+                    a[v] = f[v] - f[u];
+                    vis[v] = true;
+                    q.push(v);
+                }
+            }
+        }
+
+        // 输出答案
+        cout << "!";
+        for (int i=1; i<=n; i++) {
+            cout << " " << a[i];
+        }
+        cout << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        
+        // 基于示例的启发式 // 计算初始匹配数
+        int init = 0;
+        for (int i = 0; i < n; i++) {
+            if (a[i] == b[i]) init++;
+        }
+        
+        // 计算值出现情况
+        vector<int> cnt_a(n+1, 0), cnt_b(n+1, 0);
+        for (int i = 0; i < n; i++) {
+            cnt_a[a[i]]++;
+            cnt_b[b[i]]++;
+        }
+        
+        // 计算在两个数组中都出现的值
+        int common = 0;
+        for (int i = 1; i <= n; i++) {
+            if (cnt_a[i] > 0 && cnt_b[i] > 0) common++;
+        }
+        
+        // 估计答案
+        int ans = init;
+        if (common > 0) {
+            ans = max(ans, min(n, init + common - 1));
+        }
+        
+        // 对于小n，尝试所有删除
+        if (n <= 10) {
+            for (int k = 0; k < n; k++) {
+                vector<int> new_a, new_b;
+                for (int i = 0; i < n; i++) {
+                    if (i != k) {
+                        new_a.push_back(a[i]);
+                        new_b.push_back(b[i]);
+                    }
+                }
+                int init2 = 0;
+                for (int i = 0; i < n-1; i++) {
+                    if (new_a[i] == new_b[i]) init2++;
+                }
+                ans = max(ans, init2);
+            }
+        }
+        
+        cout << ans << endl;
+    }
+    
+    return 0;
+}

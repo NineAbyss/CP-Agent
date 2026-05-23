@@ -1,0 +1,75 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+// 所有 SL(2,2) 矩阵，共6个
+const vector<vector<int>> matrices = {
+    {1,0,0,1}, // 单位矩阵
+    {1,1,0,1}, // 操作1：左半部分变为 L XOR R
+    {1,0,1,1}, // 操作2：右半部分变为 L XOR R
+    {0,1,1,0}, // 交换
+    {0,1,1,1}, // 其他
+    {1,1,1,0}  // 其他
+};
+
+// 返回区间 [l, r) 的规范形式
+string canonical(const string& s, int l, int r) {
+    int len = r - l;
+    // 如果长度为奇数，无法操作，返回原样
+    if (len % 2 == 1) {
+        return s.substr(l, len);
+    }
+    int mid = (l + r) / 2;
+    string left_canon = canonical(s, l, mid);
+    string right_canon = canonical(s, mid, r);
+    int block_len = left_canon.size(); // 左右长度相同
+    string best = "";
+    // 遍历所有6个矩阵
+    for (const auto& mat : matrices) {
+        int a = mat[0], b = mat[1], c = mat[2], d = mat[3];
+        // 构建新字符串
+        string cand(2 * block_len, '0');
+        for (int i = 0; i < block_len; ++i) {
+            int lbit = left_canon[i] - '0';
+            int rbit = right_canon[i] - '0';
+            cand[i] = ((a * lbit) ^ (b * rbit)) + '0';
+            cand[i + block_len] = ((c * lbit) ^ (d * rbit)) + '0';
+        }
+        if (best.empty() || cand < best) {
+            best = cand;
+        }
+    }
+    return best;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s, t_str;
+        cin >> s >> t_str;
+        if (n % 2 == 1) {
+            // 奇数长度，无法操作
+            cout << (s == t_str ? "Yes" : "No") << '\n';
+            continue;
+        }
+        string canon_s = canonical(s, 0, n);
+        string canon_t = canonical(t_str, 0, n);
+        if (canon_s == canon_t) {
+            cout << "Yes\n";
+        } else {
+            cout << "No\n";
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

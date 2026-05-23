@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+bool simulate(ll start, const vector<ll>& p, const vector<ll>& d, ll k) {
+    ll pos = start;
+    int dir = 1;
+    ll t_mod = 0;
+    // use unordered_map with hash of tuple
+    auto hash_tuple = [](const tuple<ll, int, ll>& t) -> size_t {
+        return hash<ll>{}(get<0>(t)) ^ hash<int>{}(get<1>(t)) ^ hash<ll>{}(get<2>(t));
+    };
+    unordered_map<tuple<ll, int, ll>, bool, decltype(hash_tuple)> visited(0, hash_tuple);
+    ll steps = 0;
+    const ll MAX_STEPS = 200000;
+    while (steps < MAX_STEPS) {
+        auto state = make_tuple(pos, dir, t_mod);
+        if (visited.count(state)) return false;
+        visited[state] = true;
+        // check red
+        auto it = lower_bound(p.begin(), p.end(), pos);
+        if (it != p.end() && *it == pos) {
+            int idx = it - p.begin();
+            if (t_mod == d[idx]) dir = -dir;
+        }
+        // move
+        pos += dir;
+        t_mod = (t_mod + 1) % k;
+        steps++;
+        if (pos < 1 || pos > 1000000000000000LL) return true;
+        // jump if not on light
+        it = lower_bound(p.begin(), p.end(), pos);
+        if (it == p.end() || *it != pos) {
+            ll next;
+            if (dir == 1) {
+                auto it2 = upper_bound(p.begin(), p.end(), pos);
+                if (it2 != p.end()) next = *it2;
+                else return true;
+            } else {
+                auto it2 = lower_bound(p.begin(), p.end(), pos);
+                if (it2 != p.begin()) next = *prev(it2);
+                else return true;
+            }
+            ll dist = abs(next - pos);
+            t_mod = (t_mod + dist) % k;
+            pos = next;
+        }
+    }
+    return true; // assume exit if many steps
+}
+
+void solve() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        ll n, k;
+        cin >> n >> k;
+        vector<ll> p(n), d(n);
+        for (int i = 0; i < n; ++i) cin >> p[i];
+        for (int i = 0; i < n; ++i) cin >> d[i];
+        int q;
+        cin >> q;
+        while (q--) {
+            ll a;
+            cin >> a;
+            cout << (simulate(a, p, d, k) ? "YES" : "NO") << '\n';
+        }
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

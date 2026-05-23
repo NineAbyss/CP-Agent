@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        int median_index = (n - 1) / 2;
+        bool can_be_median = false;
+
+        // Test for both original and negated first element
+        int a1 = a[0];
+        for (int potential : {a1, -a1}) {
+            vector<int> temp = a;
+            temp[0] = potential; // Try potential
+
+            // Adjust and sort
+            sort(temp.begin(), temp.end());
+
+            // Verify if potential is in the median position
+            if (temp[median_index] == potential) {
+                can_be_median = true;
+                break;
+            }
+        }
+
+        cout << (can_be_median ? "YES" : "NO") << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

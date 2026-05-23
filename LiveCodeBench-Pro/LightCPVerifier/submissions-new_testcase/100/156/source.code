@@ -1,0 +1,141 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <map>
+#include <iomanip>
+#include <cstring>
+using namespace std;
+
+const int MAXM = 4005;
+double dp[MAXM][20000]; // dp[t][id]
+map<vector<int>, int> idMap;
+vector<vector<int>> states;
+int n;
+
+int getID(const vector<int>& a) {
+    if (idMap.find(a) != idMap.end()) return idMap[a];
+    int newID = states.size();
+    states.push_back(a);
+    idMap[a] = newID;
+    return newID;
+}
+
+double solve(int n, int m, double p, vector<int> h) {
+    for (int &x : h) x--;
+    sort(h.rbegin(), h.rend());
+    
+    idMap.clear();
+    states.clear();
+    
+    // 收集所有可能状态（BFS）
+    vector<int> start = h;
+    map<vector<int>, bool> visited;
+    vector<vector<int>> stateList;
+    stateList.push_back(start);
+    visited[start] = true;
+    for (int i = 0; i < stateList.size(); i++) {
+        vector<int> s = stateList[i];
+        // 发光攻击可能的状态
+        bool allPos = true;
+        for (int x : s) if (x <= 0) { allPos = false; break; }
+        if (allPos) {
+            vector<int> ns = s;
+            for (int j = 0; j < n; j++) ns[j]--;
+            sort(ns.rbegin(), ns.rend());
+            if (!visited[ns]) {
+                visited[ns] = true;
+                stateList.push_back(ns);
+            }
+        }
+        // 不发光攻击可能的状态
+        int idx = -1;
+        for (int j = 0; j < n; j++) if (s[j] > 0) { idx = j; break; }
+        if (idx != -1) {
+            vector<int> ns = s;
+            ns[idx]--;
+            sort(ns.rbegin(), ns.rend());
+            if (!visited[ns]) {
+                visited[ns] = true;
+                stateList.push_back(ns);
+            }
+        }
+    }
+    
+    // 给每个状态分配ID
+    for (auto &s : stateList) getID(s);
+    
+    int totalStates = states.size();
+    // 初始化 t = m
+    for (int sid = 0; sid < totalStates; sid++) {
+        vector<int> s = states[sid];
+        bool allZero = true;
+        for (int x : s) if (x > 0) { allZero = false; break; }
+        dp[m][sid] = allZero ? 1.0 : 0.0;
+    }
+    
+    // 倒推
+    for (int t = m-1; t >= 0; t--) {
+        for (int sid = 0; sid < totalStates; sid++) {
+            vector<int> s = states[sid];
+            
+            // 发光时的最佳选择
+            double bestLight = 0.0;
+            bool allPos = true;
+            for (int x : s) if (x <= 0) { allPos = false; break; }
+            if (allPos) {
+                // 攻击
+                vector<int> ns = s;
+                for (int j = 0; j < n; j++) ns[j]--;
+                sort(ns.rbegin(), ns.rend());
+                int nid = getID(ns);
+                bestLight = max(bestLight, dp[t+1][nid]);
+                // 不攻击
+                bestLight = max(bestLight, dp[t+1][sid]);
+            } else {
+                // 只能不攻击
+                bestLight = dp[t+1][sid];
+            }
+            
+            // 不发光时的最佳选择
+            double bestDark = 0.0;
+            int idx = -1;
+            for (int j = 0; j < n; j++) if (s[j] > 0) { idx = j; break; }
+            if (idx != -1) {
+                // 攻击
+                vector<int> ns = s;
+                ns[idx]--;
+                sort(ns.rbegin(), ns.rend());
+                int nid = getID(ns);
+                bestDark = max(bestDark, dp[t+1][nid]);
+                // 不攻击
+                bestDark = max(bestDark, dp[t+1][sid]);
+            } else {
+                // 只能不攻击
+                bestDark = dp[t+1][sid];
+            }
+            
+            dp[t][sid] = p * bestLight + (1 - p) * bestDark;
+        }
+    }
+    
+    int startID = getID(start);
+    return dp[0][startID];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout << fixed << setprecision(6);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, p_prime;
+        cin >> n >> m >> p_prime;
+        double p = p_prime / 100.0;
+        vector<int> h(n);
+        for (int i = 0; i < n; i++) cin >> h[i];
+        cout << solve(n, m, p, h) << '\n';
+    }
+    return 0;
+}

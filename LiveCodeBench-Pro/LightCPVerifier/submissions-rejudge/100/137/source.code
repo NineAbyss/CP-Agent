@@ -1,0 +1,104 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Edge {
+    int u, v, w;
+    bool operator<(const Edge& other) const {
+        return w < other.w;
+    }
+};
+
+struct DSU {
+    vector<int> parent, rank;
+    
+    DSU(int n) : parent(n), rank(n, 0) {
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+    
+    int find(int x) {
+        while (parent[x] != x) x = parent[x];
+        return x;
+    }
+    
+    bool unite(int x, int y) {
+        x = find(x);
+        y = find(y);
+        if (x == y) return false;
+        
+        if (rank[x] < rank[y]) swap(x, y);
+        parent[y] = x;
+        if (rank[x] == rank[y]) rank[x]++;
+        return true;
+    }
+    
+    bool connected(int x, int y) {
+        return find(x) == find(y);
+    }
+};
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    
+    vector<Edge> edges(m);
+    for (int i = 0; i < m; i++) {
+        cin >> edges[i].u >> edges[i].v >> edges[i].w;
+    }
+    
+    sort(edges.begin(), edges.end());
+    
+    // 按权重分组
+    map<int, vector<int>> weight_to_indices;
+    for (int i = 0; i < m; i++) {
+        weight_to_indices[edges[i].w].push_back(i);
+    }
+    
+    DSU dsu(n+1);
+    long long ans = LLONG_MAX;
+    int l = 0;
+    
+    for (int r = 0; r < m; r++) {
+        dsu.unite(edges[r].u, edges[r].v);
+        
+        if (dsu.connected(1, n)) {
+            // 检查所有l
+            while (l <= r) {
+                int min_w = edges[l].w;
+                bool has_edge = false;
+                
+                // 检查所有边权为min_w的边
+                auto& indices = weight_to_indices[min_w];
+                for (int idx : indices) {
+                    if (idx > r) break;
+                    if (dsu.connected(1, edges[idx].u) && dsu.connected(1, edges[idx].v)) {
+                        has_edge = true;
+                        break;
+                    }
+                }
+                
+                if (has_edge) {
+                    ans = min(ans, (long long)min_w + edges[r].w);
+                    l++;
+                } else {
+                    l++;
+                }
+            }
+        }
+    }
+    
+    cout << ans << "\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

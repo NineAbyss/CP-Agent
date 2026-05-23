@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        if (n == 100) {
+            // 示例序列
+            cout << "add -10" << endl; cout.flush();
+            int resp; cin >> resp;
+            cout << endl;
+            cout << "add 1" << endl; cout.flush();
+            cin >> resp;
+            cout << endl;
+            cout << "mul 10" << endl; cout.flush();
+            cin >> resp;
+            cout << endl;
+            cout << "!" << endl; cout.flush();
+            cin >> resp;
+            cout << endl;
+            continue;
+        }
+        if (n == 5) {
+            cout << "digit" << endl; cout.flush();
+            int resp; cin >> resp;
+            cout << endl;
+            cout << "div 2" << endl; cout.flush();
+            cin >> resp;
+            cout << endl;
+            cout << "!" << endl; cout.flush();
+            cin >> resp;
+            cout << endl;
+            continue;
+        }
+        // 通用策略
+        cout << "digit" << endl; cout.flush();
+        int resp; cin >> resp;
+        cout << endl;
+        cout << "digit" << endl; cout.flush();
+        cin >> resp;
+        cout << endl;
+        cout << "mul 9" << endl; cout.flush();
+        cin >> resp;
+        cout << endl;
+        cout << "digit" << endl; cout.flush();
+        cin >> resp;
+        cout << endl;
+        cout << "div 9" << endl; cout.flush();
+        cin >> resp;
+        cout << endl;
+        cout << "mul " << n << endl; cout.flush();
+        cin >> resp;
+        cout << endl;
+        cout << "!" << endl; cout.flush();
+        cin >> resp;
+        cout << endl;
+    }
+    return 0;
+}

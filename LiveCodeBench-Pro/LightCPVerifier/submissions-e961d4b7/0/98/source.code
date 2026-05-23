@@ -1,0 +1,125 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+const int MAXN = 305;
+const int MAXK = 12;
+
+int n, k;
+vector<vector<bool>> adj[MAXK];
+vector<vector<int>> classes[MAXK];
+vector<int> class_id[MAXK];
+vector<int> class_size[MAXK];
+vector<int> class_type[MAXK]; // 0: must split, 1: clique only, 2: independent only, 3: both
+
+bool same_neigh(int g, int u, int v) {
+    for (int w = 0; w < n; w++) {
+        if (w == u || w == v) continue;
+        if (adj[g][u][w] != adj[g][v][w]) return false;
+    }
+    return true;
+}
+
+void build_classes(int g) {
+    vector<bool> used(n, false);
+    classes[g].clear();
+    class_id[g].resize(n);
+    for (int i = 0; i < n; i++) {
+        if (used[i]) continue;
+        vector<int> c;
+        c.push_back(i);
+        for (int j = i+1; j < n; j++) {
+            if (!used[j] && same_neigh(g, i, j)) {
+                c.push_back(j);
+                used[j] = true;
+            }
+        }
+        for (int v : c) class_id[g][v] = classes[g].size();
+        classes[g].push_back(c);
+    }
+}
+
+void determine_class_type(int g) {
+    int nc = classes[g].size();
+    class_size[g].resize(nc);
+    class_type[g].resize(nc);
+    for (int idx = 0; idx < nc; idx++) {
+        auto& c = classes[g][idx];
+        class_size[g][idx] = c.size();
+        bool clique_ok = true, indep_ok = true;
+        for (int i = 0; i < (int)c.size(); i++) {
+            for (int j = i+1; j < (int)c.size(); j++) {
+                int u = c[i], v = c[j];
+                if (!adj[g][u][v]) clique_ok = false;
+                if (adj[g][u][v]) indep_ok = false;
+            }
+        }
+        if (clique_ok && indep_ok) {
+            class_type[g][idx] = 3; // both possible
+        } else if (clique_ok) {
+            class_type[g][idx] = 1; // clique only
+        } else if (indep_ok) {
+            class_type[g][idx] = 2; // independent only
+        } else {
+            class_type[g][idx] = 0; // must split into singletons
+        }
+    }
+}
+
+int required_type(int g, int v) {
+    int cid = class_id[g][v];
+    int sz = class_size[g][cid];
+    int tp = class_type[g][cid];
+    if (sz == 1) return 0; // singleton, any type
+    if (tp == 1) return 1; // must be clique
+    if (tp == 2) return 2; // must be independent
+    if (tp == 3) return 0; // can be either, so flexible
+    // tp == 0 means must split, so effectively singleton
+    return 0;
+}
+
+bool solve() {
+    for (int g = 0; g < k; g++) {
+        build_classes(g);
+        determine_class_type(g);
+    }
+    
+    for (int v = 0; v < n; v++) {
+        int must_clique = 0, must_indep = 0;
+        for (int g = 0; g < k; g++) {
+            int rt = required_type(g, v);
+            if (rt == 1) must_clique++;
+            else if (rt == 2) must_indep++;
+        }
+        if (must_clique > 0 && must_indep > 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        cin >> n >> k;
+        for (int g = 0; g < k; g++) {
+            adj[g].assign(n, vector<bool>(n, false));
+            int m;
+            cin >> m;
+            for (int e = 0; e < m; e++) {
+                int u, v;
+                cin >> u >> v;
+                u--; v--;
+                adj[g][u][v] = adj[g][v][u] = true;
+            }
+        }
+        bool ans = solve();
+        cout << (ans ? "Yes" : "No") << '\n';
+    }
+    return 0;
+}

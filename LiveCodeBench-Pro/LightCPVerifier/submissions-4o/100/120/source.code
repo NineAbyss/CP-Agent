@@ -1,0 +1,96 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+#include <cmath>
+
+using namespace std;
+
+const int MAX_H = 400;
+const int MAX_N = 20;
+const int MAX_M = 4000;
+
+double dp[MAX_M + 1][MAX_H + 1][1 << MAX_N];
+
+int encodeState(const vector<int>& h) {
+    int state = 0;
+    for (int i = 0; i < h.size(); ++i) {
+        state = state * (MAX_H + 1) + h[i];
+    }
+    return state;
+}
+
+void decodeState(int state, vector<int>& h, int n) {
+    for (int i = n - 1; i >= 0; --i) {
+        h[i] = state % (MAX_H + 1);
+        state /= (MAX_H + 1);
+    }
+}
+
+bool goalAchieved(const vector<int>& h) {
+    for (int hp : h) {
+        if (hp > 1) return false;
+    }
+    return true;
+}
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, m, p_prime;
+        cin >> n >> m >> p_prime;
+
+        double p = p_prime / 100.0;
+
+        vector<int> initialHP(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> initialHP[i];
+        }
+
+        memset(dp, 0, sizeof(dp));
+
+        dp[0][0][encodeState(initialHP)] = 1.0; // Probability initialized
+
+        for (int round = 0; round < m; ++round) {
+            for (int all_monster_min_health = 0; all_monster_min_health <= MAX_H; ++all_monster_min_health) {
+                for (int state = 0; state < (1 << n); ++state) {
+                    vector<int> h(n);
+                    decodeState(state, h, n);
+
+                    double current_prob = dp[round][all_monster_min_health][state];
+
+                    if (current_prob < 1e-9) continue;
+
+                    // Case when the sword shines
+                    vector<int> newH = h;
+                    for (int i = 0; i < n; ++i) {
+                        if (newH[i] > 1) newH[i]--;
+                    }
+                    dp[round + 1][all_monster_min_health + 1][encodeState(newH)] += current_prob * p;
+
+                    // Case when the sword doesn't shine
+                    for (int i = 0; i < n; ++i) {
+                        if (h[i] > 1) {
+                            vector<int> singleAttackH = h;
+                            singleAttackH[i]--;
+                            dp[round + 1][all_monster_min_health][encodeState(singleAttackH)] += current_prob * (1 - p);
+                        }
+                    }
+                }
+            }
+        }
+
+        double result_prob = 0.0;
+        for (int all_monster_min_health = 0; all_monster_min_health <= MAX_H; ++all_monster_min_health) {
+            if (goalAchieved(initialHP)) {
+                result_prob += dp[m][all_monster_min_health][encodeState(initialHP)];
+            }
+        }
+
+        cout.precision(6);
+        cout << fixed << result_prob << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,140 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200010;
+const int LOG = 18;
+
+struct SparseTableMin {
+    pair<int, int> st[LOG][MAXN];
+    int n;
+    
+    void build(vector<int>& arr) {
+        n = arr.size();
+        for (int i = 0; i < n; i++) {
+            st[0][i] = {arr[i], i};
+        }
+        for (int j = 1; j < LOG; j++) {
+            int step = 1 << (j-1);
+            for (int i = 0; i + (1 << j) <= n; i++) {
+                auto left = st[j-1][i];
+                auto right = st[j-1][i + step];
+                if (left.first <= right.first) {
+                    st[j][i] = left;
+                } else {
+                    st[j][i] = right;
+                }
+            }
+        }
+    }
+    
+    pair<int, int> query(int l, int r) {
+        if (l > r) return {INT_MAX, -1};
+        int len = r - l + 1;
+        int j = len > 1 ? 31 - __builtin_clz(len) : 0;
+        auto left = st[j][l];
+        int r_idx = r - (1 << j) + 1;
+        if (r_idx < 0 || r_idx >= n) r_idx = l;
+        auto right = st[j][r_idx];
+        if (left.first <= right.first) {
+            return left;
+        } else {
+            return right;
+        }
+    }
+};
+
+struct SparseTableMax {
+    pair<int, int> st[LOG][MAXN];
+    int n;
+    
+    void build(vector<int>& arr) {
+        n = arr.size();
+        for (int i = 0; i < n; i++) {
+            st[0][i] = {arr[i], i};
+        }
+        for (int j = 1; j < LOG; j++) {
+            int step = 1 << (j-1);
+            for (int i = 0; i + (1 << j) <= n; i++) {
+                auto left = st[j-1][i];
+                auto right = st[j-1][i + step];
+                if (left.first >= right.first) {
+                    st[j][i] = left;
+                } else {
+                    st[j][i] = right;
+                }
+            }
+        }
+    }
+    
+    pair<int, int> query(int l, int r) {
+        if (l > r) return {INT_MIN, -1};
+        int len = r - l + 1;
+        int j = len > 1 ? 31 - __builtin_clz(len) : 0;
+        auto left = st[j][l];
+        int r_idx = r - (1 << j) + 1;
+        if (r_idx < 0 || r_idx >= n) r_idx = l;
+        auto right = st[j][r_idx];
+        if (left.first >= right.first) {
+            return left;
+        } else {
+            return right;
+        }
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    vector<int> p(n);
+    for (int i = 0; i < n; i++) {
+        cin >> p[i];
+    }
+
+    SparseTableMin st_min;
+    SparseTableMax st_max;
+    st_min.build(p);
+    st_max.build(p);
+
+    int q;
+    cin >> q;
+
+    for (int idx = 0; idx < q; idx++) {
+        int l, r;
+        cin >> l >> r;
+        l--; r--;
+
+        auto min_res = st_min.query(l, r);
+        auto max_res = st_max.query(l, r);
+        int pos_min = min_res.second;
+        int pos_max = max_res.second;
+
+        int i1 = min(pos_min, pos_max);
+        int i2 = r - 1;
+
+        bool found = false;
+        for (int i : {i1, i2}) {
+            if (i < l || i >= r) continue;
+
+            int left_min = st_min.query(l, i).first;
+            int left_max = st_max.query(l, i).first;
+            int right_min = st_min.query(i+1, r).first;
+            int right_max = st_max.query(i+1, r).first;
+
+            if (left_max < right_min || right_max < left_min) {
+                found = true;
+                break;
+            }
+        }
+
+        cout << (found ? "YES" : "NO") << '\n';
+
+        if ((idx + 1) % 10 == 0) {
+            cout.flush();
+        }
+    }
+
+    return 0;
+}

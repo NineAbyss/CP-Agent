@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<long long> a(n), b(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        for (int i = 0; i < n; i++) {
+            cin >> b[i];
+        }
+        
+        string c;
+        cin >> c;
+        
+        function<long long(long long, int)> dfs = [&](long long x, int i) -> long long {
+            if (i == n) return x;
+            
+            // If both choices are the same, no branching
+            if (a[i] == b[i]) {
+                return dfs(x ^ a[i], i+1);
+            }
+            
+            if (c[i] == '0') {
+                // Gellyfish - minimize
+                return min(dfs(x ^ a[i], i+1), dfs(x ^ b[i], i+1));
+            } else {
+                // Flower - maximize
+                return max(dfs(x ^ a[i], i+1), dfs(x ^ b[i], i+1));
+            }
+        };
+        
+        cout << dfs(0, 0) << '\n';
+    }
+    
+    return 0;
+}

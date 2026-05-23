@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        
+        vector<int> good(n + 2, 0);
+        for (int i = n - 1; i >= 0; i--) {
+            if (a[i] == b[i]) {
+                good[i] = 1 + good[i + 1];
+            } else if (i + 1 < n && a[i] == b[i + 1] && b[i] == a[i + 1]) {
+                good[i] = 2 + good[i + 2];
+            } else {
+                good[i] = 0;
+            }
+        }
+        
+        vector<int> pref(n + 1, 0), suff(n + 2, 0);
+        for (int i = 0; i < n; i++) {
+            pref[i + 1] = max(pref[i], good[i]);
+        }
+        for (int i = n - 1; i >= 0; i--) {
+            suff[i + 1] = max(suff[i + 2], good[i]);
+        }
+        
+        int ans = pref[n];
+        for (int i = 0; i < n; i++) {
+            ans = max(ans, pref[i] + suff[i + 2]);
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

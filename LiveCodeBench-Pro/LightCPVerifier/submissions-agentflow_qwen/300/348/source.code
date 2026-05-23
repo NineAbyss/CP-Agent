@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <climits>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long k;  // k can be up to 1e9
+        cin >> n >> k;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // Case: k == 0 -> any single element works
+        if (k == 0) {
+            cout << 1 << '\n';
+            continue;
+        }
+
+        int min_len = INT_MAX;
+        bool found = false;
+
+        // Try all distances d from 1 to n-1
+        for (int d = 1; d < n && !found; d++) {
+            for (int i = 0; i < n - d; i++) {
+                if ((a[i] ^ a[i+d]) >= k) {
+                    min_len = d + 1;
+                    found = true;
+                    break;
+                }
+            }
+        }
+
+        if (found) {
+            cout << min_len << '\n';
+        } else {
+            cout << -1 << '\n';
+        }
+    }
+    return 0;
+}

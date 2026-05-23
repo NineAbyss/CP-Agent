@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+string S(int x) {
+    string a = to_string(x);
+    string b = to_string(x + 1);
+    string c = a + b;
+    sort(c.begin(), c.end());
+    return c;
+}
+
+int distinct(int n) {
+    set<string> st;
+    for (int x = 1; x <= n; x++) {
+        st.insert(S(x));
+    }
+    return (int)st.size();
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        cout << distinct(n) << '\n';
+    }
+    return 0;
+}

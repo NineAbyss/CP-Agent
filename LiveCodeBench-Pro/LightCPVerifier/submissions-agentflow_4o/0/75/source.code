@@ -1,0 +1,36 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;  // Number of test cases
+    while(t--) {
+        int n;
+        cin >> n;  // Number of elements in the current test case
+        vector<int> a(n);
+        for(int i = 0; i < n; ++i) {
+            cin >> a[i];  // Reading the array elements
+        }
+
+        long long min_cost = LLONG_MAX;
+
+        // Check every position i to make all elements equal to a[i]
+        for(int i = 0; i < n; ++i) {
+            long long left_cost = 1LL * i * a[i]; // Cost of making elements to the left equal to a[i]
+            long long right_cost = 1LL * (n - i - 1) * a[i]; // Cost of making elements to the right equal to a[i]
+            long long total_cost = left_cost + right_cost;
+            min_cost = min(min_cost, total_cost);
+        }
+
+        cout << min_cost << "\n";  // Output the minimum cost for the current test case
+    }
+
+    return 0;
+}

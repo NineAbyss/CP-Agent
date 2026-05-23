@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Validate resulting sequence according to constraints
+bool isValidSequence(const vector<int>& sequence, const vector<pair<int, int>>& sounds) {
+    int n = sequence.size();
+    for (int i = 0; i < n - 2; ++i) {
+        int a = sequence[i], b = sequence[i+1], c = sequence[i+2];
+        if ((sounds[a].first == sounds[b].first && sounds[b].first == sounds[c].first) ||
+            (sounds[a].second == sounds[b].second && sounds[b].second == sounds[c].second)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Generate valid sound sequences meeting given criteria
+bool generateSequence(const vector<pair<int, int>>& sounds, vector<int>& result) {
+    int n = sounds.size();
+
+    // This helper attempts creating valid sequences by iterating through logical orders
+    auto attemptOrder = [&](auto& order, auto comparator) {
+        vector<int> temp_order = order;
+        sort(temp_order.begin(), temp_order.end(), comparator);
+        vector<int> temp_result;
+        vector<bool> used(n, false); 
+        for (int idx : temp_order) {
+            if (!used[idx]) {
+                temp_result.push_back(idx);
+                used[idx] = true;
+            }
+        }
+        if (isValidSequence(temp_result, sounds)) {
+            result = temp_result;
+            return true;
+        }
+        return false;
+    };
+
+    vector<int> id(n);
+    iota(id.begin(), id.end(), 0);
+
+    // Sort and try ordering based on custom rules established in static constraints
+    if (attemptOrder(id, [&](int a, int b) { 
+        return make_pair(sounds[a].first, sounds[a].second) < make_pair(sounds[b].first, sounds[b].second); })) {
+        return true;
+    }
+    if (attemptOrder(id, [&](int a, int b) { 
+        return make_pair(sounds[a].second, sounds[a].first) < make_pair(sounds[b].second, sounds[b].first); })) {
+        return true;
+    }
+    return false;  // Sequence invalid
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<pair<int, int>> sounds(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> sounds[i].first >> sounds[i].second;
+        }
+
+        vector<int> result;
+        if (generateSequence(sounds, result)) {
+            cout << "YES\n";
+            for (int r : result) cout << r + 1 << ' ';  // Convert 0-based to 1-based
+            cout << '\n';
+        } else {
+            cout << "NO\n";
+        }
+    }
+
+    return 0;
+}

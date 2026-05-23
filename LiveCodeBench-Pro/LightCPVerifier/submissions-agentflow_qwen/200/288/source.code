@@ -1,0 +1,67 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+
+        // Base cost
+        int base_cost = n; // presses
+        if (s[0] == '1') base_cost++; // initial move
+        int transitions = 0;
+        for (int i = 1; i < n; i++) {
+            if (s[i] != s[i-1]) transitions++;
+        }
+        base_cost += transitions;
+
+        int best_cost = base_cost;
+
+        // Try every substring reversal [l, r]
+        for (int l = 0; l < n; l++) {
+            for (int r = l; r < n; r++) {
+                // We'll compute the new cost without building the string
+                int new_cost = base_cost;
+
+                // Adjustment for initial character if l == 0
+                if (l == 0) {
+                    // The new first character will be s[r]
+                    int old_init_move = (s[0] == '1') ? 1 : 0;
+                    int new_init_move = (s[r] == '1') ? 1 : 0;
+                    new_cost += new_init_move - old_init_move;
+                }
+
+                // Left boundary: between l-1 and l (in original) vs l-1 and r (after)
+                if (l > 0) {
+                    int old_left_trans = (s[l-1] != s[l]) ? 1 : 0;
+                    int new_left_trans = (s[l-1] != s[r]) ? 1 : 0;
+                    new_cost += new_left_trans - old_left_trans;
+                }
+
+                // Right boundary: between r and r+1 (original) vs l and r+1 (after)
+                if (r < n-1) {
+                    int old_right_trans = (s[r] != s[r+1]) ? 1 : 0;
+                    int new_right_trans = (s[l] != s[r+1]) ? 1 : 0;
+                    new_cost += new_right_trans - old_right_trans;
+                }
+
+                // The internal transitions in [l,r] are preserved, so no change
+
+                if (new_cost < best_cost) {
+                    best_cost = new_cost;
+                }
+            }
+        }
+
+        cout << best_cost << '\n';
+    }
+    return 0;
+}

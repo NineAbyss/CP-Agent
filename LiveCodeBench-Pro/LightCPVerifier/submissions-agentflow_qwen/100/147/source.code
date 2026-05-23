@@ -1,0 +1,150 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+struct Dinic {
+    struct Edge {
+        int to, rev;
+        ll cap, orig_cap;
+    };
+
+    vector<vector<Edge>> g;
+    vector<int> level, iter;
+    int n;
+
+    Dinic(int nodes) {
+        n = nodes;
+        g.assign(n, vector<Edge>());
+        level.resize(n);
+        iter.resize(n);
+    }
+
+    void add_edge(int from, int to, ll cap) {
+        g[from].push_back({to, (int)g[to].size(), cap, cap});
+        g[to].push_back({from, (int)g[from].size()-1, 0, 0});
+    }
+
+    void bfs(int s) {
+        fill(level.begin(), level.end(), -1);
+        queue<int> q;
+        level[s] = 0;
+        q.push(s);
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            for (auto &e : g[u]) {
+                if (e.cap > 0 && level[e.to] == -1) {
+                    level[e.to] = level[u] + 1;
+                    q.push(e.to);
+                }
+            }
+        }
+    }
+
+    ll dfs(int u, int t, ll f) {
+        if (u == t) return f;
+        for (int &i = iter[u]; i < (int)g[u].size(); ++i) {
+            Edge &e = g[u][i];
+            if (e.cap > 0 && level[u] < level[e.to]) {
+                ll d = dfs(e.to, t, min(f, e.cap));
+                if (d > 0) {
+                    e.cap -= d;
+                    g[e.to][e.rev].cap += d;
+                    return d;
+                }
+            }
+        }
+        return 0;
+    }
+
+    ll max_flow(int s, int t) {
+        ll flow = 0;
+        while (true) {
+            bfs(s);
+            if (level[t] == -1) break;
+            fill(iter.begin(), iter.end(), 0);
+            ll f;
+            while ((f = dfs(s, t, 1LL << 60)) > 0) {
+                flow += f;
+            }
+        }
+        return flow;
+    }
+};
+
+int prev(int j, int n) {
+    return (j - 2 + n) % n + 1;
+}
+
+int next(int j, int n) {
+    return (j % n) + 1;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<ll> A(n+1);
+        for (int j = 1; j <= n; j++) {
+            cin >> A[j];
+        }
+
+        for (int i = 1; i <= m; i++) {
+            vector<ll> a(n+1), b(n+1), c(n+1);
+            for (int j = 1; j <= n; j++) cin >> a[j];
+            for (int j = 1; j <= n; j++) cin >> b[j];
+            for (int j = 1; j <= n; j++) cin >> c[j];
+
+            Dinic dinic(2*n+2);
+            int source = 0, sink = 2*n+1;
+
+            // Source to left nodes
+            for (int j = 1; j <= n; j++) {
+                dinic.add_edge(source, j, A[j]);
+            }
+
+            // Left to right edges
+            for (int j = 1; j <= n; j++) {
+                int pj = prev(j, n);
+                int nj = next(j, n);
+                dinic.add_edge(j, n + pj, a[j]);   // to prev
+                dinic.add_edge(j, n + nj, c[j]);   // to next
+                dinic.add_edge(j, n + j,  b[j]);   // stay safe
+            }
+
+            // Right nodes to sink
+            for (int l = 1; l <= n; l++) {
+                dinic.add_edge(n + l, sink, 1LL << 60);
+            }
+
+            ll total_flow = dinic.max_flow(source, sink);
+            cout << total_flow << "\n";
+
+            // Extract B[l]: amount received at airport l (node n+l)
+            vector<ll> B(n+1, 0);
+            for (int j = 1; j <= n; j++) {
+                for (auto &e : dinic.g[j]) {
+                    if (e.to >= n+1 && e.to <= 2*n) {
+                        int l = e.to - n;
+                        ll flow = e.orig_cap - e.cap; // because we updated .cap
+                        B[l] += flow;
+                    }
+                }
+            }
+
+            // Update A for next day
+            for (int l = 1; l <= n; l++) {
+                A[l] = B[l];
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

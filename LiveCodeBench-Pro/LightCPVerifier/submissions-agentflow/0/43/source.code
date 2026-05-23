@@ -1,0 +1,32 @@
+#include <iostream>
+using namespace std;
+
+// Function to verify if the grid can be completely covered with given tile orientation
+bool canTileCompletely(long long w, long long h, long long a, long long b, long long x1, long long y1, long long x2, long long y2) {
+    // Check if both width and height can be fully covered by the tiles
+    if ((w % a == 0) && (h % b == 0)) {
+        long long modX1 = (x1 % a + a) % a;
+        long long modY1 = (y1 % b + b) % b;
+        long long modX2 = (x2 % a + a) % a;
+        long long modY2 = (y2 % b + b) % b;
+
+        // Verify that both pre-placed tiles align with the potential grid
+        return (modX1 == modX2 && modY1 == modY2);
+    }
+    return false;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long w, h, a, b, x1, y1, x2, y2;
+        cin >> w >> h >> a >> b >> x1 >> y1 >> x2 >> y2;
+
+        // Determine if tiling is possible for the current configuration bool possible = canTileCompletely(w, h, a, b, x1, y1, x2, y2) ||
+                        canTileCompletely(w, h, b, a, x1, y1, x2, y2);
+
+        cout << (possible ? "Yes" : "No") << endl;
+    }
+    return 0;
+}

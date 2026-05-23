@@ -1,0 +1,38 @@
+#include <cstdio>
+#include <vector>
+using namespace std;
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        int n;
+        scanf("%d", &n);
+        vector<int> p(2 * n + 1, 0);
+        vector<char> seen(2 * n + 1, 0);
+        
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= n; j++) {
+                int val;
+                scanf("%d", &val);
+                int k = i + j;
+                if (p[k] == 0) {
+                    p[k] = val;
+                }
+                seen[val] = 1;
+            }
+        }
+        
+        for (int x = 1; x <= 2 * n; x++) {
+            if (seen[x] == 0) {
+                p[1] = x;
+                break;
+            }
+        }
+        
+        for (int i = 1; i <= 2 * n; i++) {
+            printf("%d%c", p[i], i == 2 * n ? '\n' : ' ');
+        }
+    }
+    return 0;
+}

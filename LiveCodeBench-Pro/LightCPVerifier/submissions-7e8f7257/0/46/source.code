@@ -1,0 +1,106 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+bool can_be_valid(const vector<int>& a) {
+    int n = a.size();
+    if (n == 1) return true;
+    
+    vector<int> result(n-1, -1);
+    
+    // 应用来自a[i]=0的硬约束
+    for (int i = 0; i < n; i++) {
+        if (a[i] == 0) {
+            if (i > 0) {
+                int idx = i-1;
+                if (result[idx] == -1) {
+                    result[idx] = 0;
+                } else if (result[idx] != 0) {
+                    return false;
+                }
+            }
+            if (i < n-1) {
+                int idx = i;
+                if (result[idx] == -1) {
+                    result[idx] = 1;
+                } else if (result[idx] != 1) {
+                    return false;
+                }
+            }
+        }
+    }
+    
+    // 计算当前胜场
+    vector<int> win_count(n, 0);
+    for (int i = 0; i < n-1; i++) {
+        if (result[i] == 0) {
+            win_count[i]++;
+        } else if (result[i] == 1) {
+            win_count[i+1]++;
+        }
+    }
+    
+    // 标记未满足的玩家
+    vector<bool> unsatisfied(n, false);
+    for (int i = 0; i < n; i++) {
+        if (a[i] == 1 && win_count[i] == 0) {
+            unsatisfied[i] = true;
+        }
+    }
+    
+    // 贪心匹配
+    vector<bool> match_used(n-1, false);
+    
+    for (int i = 0; i < n; i++) {
+        if (!unsatisfied[i]) continue;
+        
+        bool satisfied = false;
+        
+        // 尝试左边的比赛
+        if (i > 0) {
+            int match_idx = i-1;
+            if (result[match_idx] == -1 && !match_used[match_idx]) {
+                result[match_idx] = 1;
+                match_used[match_idx] = true;
+                satisfied = true;
+            }
+        }
+        
+        // 尝试右边的比赛
+        if (!satisfied && i < n-1) {
+            int match_idx = i;
+            if (result[match_idx] == -1 && !match_used[match_idx]) {
+                result[match_idx] = 0;
+                match_used[match_idx] = true;
+                satisfied = true;
+            }
+        }
+        
+        if (!satisfied) return false;
+    }
+    
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        bool valid = can_be_valid(a);
+        cout << (valid ? "NO" : "YES") << '\n';
+    }
+    
+    return 0;
+}

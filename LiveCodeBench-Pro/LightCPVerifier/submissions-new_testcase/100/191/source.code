@@ -1,0 +1,60 @@
+#include <iostream>
+#include <vector>
+#include <cstring>
+using namespace std;
+
+typedef long long ll;
+
+ll dp[70][200][3];
+vector<int> digits;
+int K, REM;
+
+ll dfs(int pos, int sum, int mod3, bool tight) {
+    if (sum < 0) return 0;
+    if (pos == -1) return (sum == 0 && mod3 == REM) ? 1 : 0;
+    if (!tight && dp[pos][sum][mod3] != -1) return dp[pos][sum][mod3];
+    int up = tight ? digits[pos] : 3;
+    ll res = 0;
+    for (int d = 0; d <= up; d++) {
+        res += dfs(pos-1, sum - d, (mod3*4 + d) % 3, tight && (d == up));
+    }
+    if (!tight) dp[pos][sum][mod3] = res;
+    return res;
+}
+
+ll count_y(ll bound, int k, int rem) {
+    if (bound < 0) return 0;
+    digits.clear();
+    ll tmp = bound;
+    while (tmp) {
+        digits.push_back(tmp % 4);
+        tmp /= 4;
+    }
+    if (digits.empty()) digits.push_back(0);
+    memset(dp, -1, sizeof dp);
+    K = k;
+    REM = rem;
+    return dfs(digits.size()-1, k, 0, true);
+}
+
+ll solve_case(ll l, ll r, ll k) {
+    if (k > 3*65) return 0;
+    __int128 L = l, R = r, K = k;
+    __int128 y_l = (3*L + K + 3) / 4;
+    __int128 y_r = (3*R + K) / 4;
+    if (y_l > y_r) return 0;
+    ll yl = y_l, yr = y_r;
+    int rem = k % 3;
+    return count_y(yr, k, rem) - count_y(yl-1, k, rem);
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        ll l, r, k;
+        cin >> l >> r >> k;
+        cout << solve_case(l, r, k) << endl;
+    }
+    return 0;
+}

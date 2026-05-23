@@ -1,0 +1,27 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int a, x, y;
+        cin >> a >> x >> y;
+
+        int dist_a_x = abs(a - x);
+        int dist_a_y = abs(a - y);
+
+        bool found = false;
+        for (int b = 1; b <= 100; b++) {
+            if (b == a) continue; // Bob cannot start at Alice's point
+            if (abs(b - x) < dist_a_x && abs(b - y) < dist_a_y) {
+                found = true;
+                break;
+            }
+        }
+
+        cout << (found ? "YES" : "NO") << endl;
+    }
+    return 0;
+}

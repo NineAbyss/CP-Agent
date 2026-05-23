@@ -1,0 +1,19 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, l, r;
+        cin >> n >> m >> l >> r;
+        // Note: n is not needed for computation
+        int a = m + 1;
+        if (1 - l < a) a = 1 - l;
+        int l_prime = 1 - a;
+        int r_prime = m + 1 - a;
+        cout << l_prime << " " << r_prime << endl;
+    }
+    return 0;
+}

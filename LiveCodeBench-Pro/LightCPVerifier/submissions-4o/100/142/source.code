@@ -1,0 +1,39 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false); // Fast IO
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;  // Read number of test cases
+    while (t--) {
+        int n;
+        cin >> n;  // Read number of bears in the test case
+        
+        string s;
+        cin >> s;  // Read the sequence of teddy bears colors
+        
+        int countPINKbeforeBLACK = 0;  // Count of pink bears before black bears
+        int pinkCount = 0;  // Count of pink bears encountered
+        
+        // Traverse the string and count misinformation
+        for (char bear : s) {
+            if (bear == 'B') {
+                // Whenever we find black bears, add previously seen pink bears to the count
+                countPINKbeforeBLACK += pinkCount;
+            } else if (bear == 'P') {
+                // Count pink bears
+                pinkCount++;
+            }
+        }
+        
+        // Each operation sorts one "misinformation", hence this is the minimum number of operations needed
+        cout << countPINKbeforeBLACK << endl;
+    }
+    
+    return 0;
+}

@@ -1,0 +1,38 @@
+#include <iostream>
+#include <set>
+using namespace std;
+typedef long long ll;
+
+ll norm(ll x, ll m) {
+    return (x % m + m) % m;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        ll w, h, a, b;
+        cin >> w >> h >> a >> b;
+        ll x1, y1, x2, y2;
+        cin >> x1 >> y1 >> x2 >> y2;
+
+        set<ll> cx = {norm(x1, a), norm(x2, a)};
+        set<ll> cy = {norm(y1, b), norm(y2, b)};
+        bool found = false;
+
+        for (ll x0 : cx) {
+            for (ll y0 : cy) {
+                if (norm(x1, a) == x0 && norm(y1, b) == y0 &&
+                    norm(x2, a) == x0 && norm(y2, b) == y0) {
+                    found = true;
+                }
+            }
+        }
+
+        cout << (found ? "Yes" : "No") << '\n';
+    }
+    return 0;
+}

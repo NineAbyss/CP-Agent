@@ -1,0 +1,99 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> d(n);
+    for (int i = 0; i < n; i++) cin >> d[i];
+    vector<int> l(n), r(n);
+    for (int i = 0; i < n; i++) {
+        cin >> l[i] >> r[i];
+    }
+    
+    // 正向计算 H_low[i], H_high[i] for i=0..n
+    vector<int> H_low(n+1), H_high(n+1);
+    H_low[0] = H_high[0] = 0;
+    for (int i = 0; i < n; i++) {
+        int cand_low, cand_high;
+        if (d[i] == 0) {
+            cand_low = H_low[i];
+            cand_high = H_high[i];
+        } else if (d[i] == 1) {
+            cand_low = H_low[i] + 1;
+            cand_high = H_high[i] + 1;
+        } else {
+            cand_low = H_low[i];
+            cand_high = H_high[i] + 1;
+        }
+        int new_low = max(cand_low, l[i]);
+        int new_high = min(cand_high, r[i]);
+        if (new_low > new_high) {
+            cout << "-1\n";
+            return;
+        }
+        H_low[i+1] = new_low;
+        H_high[i+1] = new_high;
+    }
+    
+    // 反向 DP 计算每个位置 i 的可行高度范围，考虑从 i 到 n 的约束
+    vector<int> dp_low(n+1), dp_high(n+1);
+    dp_low[n] = H_low[n];
+    dp_high[n] = H_high[n];
+    for (int i = n-1; i >= 0; i--) {
+        // 根据 d[i] 确定候选范围
+        int cand_low, cand_high;
+        if (d[i] == 0) {
+            cand_low = dp_low[i+1];
+            cand_high = dp_high[i+1];
+        } else if (d[i] == 1) {
+            cand_low = dp_low[i+1] - 1;
+            cand_high = dp_high[i+1] - 1;
+        } else {
+            cand_low = dp_low[i+1] - 1;
+            cand_high = dp_high[i+1];
+        }
+        // 与 H_low[i], H_high[i] 取交集
+        dp_low[i] = max(H_low[i], cand_low);
+        dp_high[i] = min(H_high[i], cand_high);
+        if (dp_low[i] > dp_high[i]) {
+            cout << "-1\n";
+            return;
+        }
+    }
+    
+    // 从前往后构造，优先选择 0 以保证字典序最小
+    vector<int> ans(n);
+    int cur_h = 0; // h0
+    for (int i = 1; i <= n; i++) {
+        bool found = false;
+        for (int delta : {0, 1}) {
+            if (d[i-1] != -1 && d[i-1] != delta) continue;
+            int next_h = cur_h + delta;
+            if (next_h >= dp_low[i] && next_h <= dp_high[i]) {
+                ans[i-1] = delta;
+                cur_h = next_h;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            cout << "-1\n";
+            return;
+        }
+    }
+    
+    // 输出答案
+    for (int i = 0; i < n; i++) {
+        cout << ans[i] << " \n"[i==n-1];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

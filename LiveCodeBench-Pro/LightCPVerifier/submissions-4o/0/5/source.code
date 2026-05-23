@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+
+using namespace std;
+
+int min_operations_to_beautiful(vector<int>& a) {
+    int n = a.size();
+
+    // Check if the array is already beautiful
+    for (int i = 0; i < n - 1; ++i) {
+        if (abs(a[i] - a[i + 1]) <= 1) {
+            return 0;
+        }
+    }
+
+    // Check if possible to make it beautiful in one operation // by inspecting adjacent pairs and the pair through one intervening element.
+    for (int i = 1; i < n - 1; ++i) {
+        if (abs(a[i - 1] - a[i + 1]) <= 1) {
+            return 1;
+        }
+    }
+
+    // If no such pairs found, it's impossible
+    return -1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        int result = min_operations_to_beautiful(a);
+        cout << result << '\n';
+    }
+
+    return 0;
+}

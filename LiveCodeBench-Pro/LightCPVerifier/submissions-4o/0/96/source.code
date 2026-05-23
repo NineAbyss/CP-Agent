@@ -1,0 +1,79 @@
+#include <iostream>
+#include <vector>
+#define MOD 998244353
+
+using namespace std;
+
+// Compute factorial % MOD
+vector<long long> factorial;
+
+// Precompute all factorials up to 500000 modulo 998244353
+void precompute_factorials(int N) {
+    factorial.resize(N + 1);
+    factorial[0] = 1;
+    for (int i = 1; i <= N; ++i) {
+        factorial[i] = factorial[i - 1] * i % MOD;
+    }
+}
+
+// Quick modulo exponentiation
+long long mod_exp(long long base, long long exp, long long mod) {
+    long long result = 1;
+    while (exp > 0) {
+        if (exp % 2) result = result * base % mod;
+        base = base * base % mod;
+        exp /= 2;
+    }
+    return result;
+}
+
+// Modular inverse based on Fermat's Little Theorem
+long long mod_inverse(long long a, long long mod) {
+    return mod_exp(a, mod - 2, mod);
+}
+
+// Compute nCr % MOD using precomputed factorials
+long long nCr_mod(long long n, long long r, long long mod) {
+    if (r < 0 || r > n) return 0;
+    return factorial[n] * mod_inverse(factorial[r], mod) % mod * mod_inverse(factorial[n - r], mod) % mod;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    precompute_factorials(500000);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        vector<int> c(26);
+        int total_letters = 0;
+        
+        for (int i = 0; i < 26; ++i) {
+            cin >> c[i];
+            total_letters += c[i];
+        }
+        
+        if (total_letters == 0) {
+            cout << 0 << '\n';
+            continue;
+        }
+        
+        if (total_letters % 2 == 1) {
+            cout << 0 << '\n';
+            continue;
+        }
+        
+        long long half = total_letters / 2;
+        long long result = factorial[half];
+        
+        for (int i = 0; i < 26; ++i) {
+            result = result * mod_inverse(factorial[c[i] / 2], MOD) % MOD;
+        }
+        
+        cout << result << '\n';
+    }
+    
+    return 0;
+}

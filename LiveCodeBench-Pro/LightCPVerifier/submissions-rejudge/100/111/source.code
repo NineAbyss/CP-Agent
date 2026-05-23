@@ -1,0 +1,94 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool solve_case(const vector<int>& a) {
+    int n = a.size();
+    vector<int> match(n-1, -1); // -1: undecided, 0: left wins, 1: right wins
+    
+    // Process all players with a[i] = 0
+    for (int i = 0; i < n; i++) {
+        if (a[i] == 0) {
+            // Match (i-1, i)
+            if (i > 0) {
+                int m_idx = i-1;
+                if (match[m_idx] == 1) return false; // Conflict: i must lose but previously set to win
+                match[m_idx] = 0; // i-1 wins
+            }
+            // Match (i, i+1)
+            if (i < n-1) {
+                int m_idx = i;
+                if (match[m_idx] == 0) return false; // Conflict: i must lose but previously set to win
+                match[m_idx] = 1; // i+1 wins
+            }
+        }
+    }
+    
+    // Calculate current win counts
+    vector<int> win_count(n, 0);
+    for (int i = 0; i < n-1; i++) {
+        if (match[i] == 0) win_count[i]++;
+        else if (match[i] == 1) win_count[i+1]++;
+    }
+    
+    // Process players with a[i] = 1 who haven't won yet
+    for (int i = 0; i < n; i++) {
+        if (a[i] == 1 && win_count[i] == 0) {
+            // Need to make i win at least one match
+            bool found = false;
+            
+            // Try match (i-1, i)
+            if (i > 0) {
+                int m_idx = i-1;
+                if (match[m_idx] == -1) {
+                    match[m_idx] = 1; // i wins
+                    win_count[i]++;
+                    found = true;
+                }
+            }
+            
+            // Try match (i, i+1)
+            if (!found && i < n-1) {
+                int m_idx = i;
+                if (match[m_idx] == -1) {
+                    match[m_idx] = 0; // i wins
+                    win_count[i]++;
+                    found = true;
+                }
+            }
+            
+            if (!found) return false;
+        }
+    }
+    
+    // Final verification
+    for (int i = 0; i < n; i++) {
+        bool has_won = (win_count[i] > 0);
+        if (a[i] == 0 && has_won) return false;
+        if (a[i] == 1 && !has_won) return false;
+    }
+    
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        bool possible = solve_case(a);
+        cout << (possible ? "NO" : "YES") << "\n";
+    }
+    
+    return 0;
+}

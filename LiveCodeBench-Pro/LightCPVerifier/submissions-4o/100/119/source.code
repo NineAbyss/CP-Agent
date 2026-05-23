@@ -1,0 +1,80 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <map>
+
+using namespace std;
+
+// Structure to store volume, pitch, and index
+struct Sound {
+    int volume;
+    int pitch;
+    int index;
+};
+
+// Comparator for sorting by volume first, then pitch
+bool compareVolume(const Sound &a, const Sound &b) {
+    if (a.volume == b.volume)
+        return a.pitch < b.pitch;
+    return a.volume < b.volume;
+}
+
+// Comparator for sorting by pitch first, then volume
+bool comparePitch(const Sound &a, const Sound &b) {
+    if (a.pitch == b.pitch)
+        return a.volume < b.volume;
+    return a.pitch < b.pitch;
+}
+
+int main() {
+    // Fast IO
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<Sound> sounds(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> sounds[i].volume >> sounds[i].pitch;
+            sounds[i].index = i + 1;
+        }
+
+        // Sort sounds by volume, then pitch
+        vector<Sound> byVolume(sounds);
+        sort(byVolume.begin(), byVolume.end(), compareVolume);
+
+        // Sort sounds by pitch, then volume
+        vector<Sound> byPitch(sounds);
+        sort(byPitch.begin(), byPitch.end(), comparePitch);
+
+        vector<int> result;
+        int i = 0, j = 0;
+
+        while(i < n || j < n) {
+            if (i < n && (result.empty() || (result.back() != byVolume[i].index &&
+                (result.size() == 1 || sounds[result[result.size()-2] - 1].volume != byVolume[i].volume)))) {
+                result.push_back(byVolume[i++].index);
+            }
+            else if (j < n && (result.empty() || (result.back() != byPitch[j].index &&
+                (result.size() == 1 || sounds[result[result.size()-2] - 1].pitch != byPitch[j].pitch)))) {
+                result.push_back(byPitch[j++].index);
+            }
+            else break; // if neither option is valid, we fail
+        }
+
+        if(result.size() == n) {
+            cout << "YES\n";
+            for(int idx : result) {
+                cout << idx << " ";
+            }
+            cout << '\n';
+        } else {
+            cout << "NO\n";
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,19 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long x;
+        cin >> x;
+        int k = 0;
+        if (x > 0) {
+            k = 31 - __builtin_clz(x); // floor(log2(x))
+        }
+        // number of bits = k + 1
+        int ans = 2 * (k + 1) + 1;
+        cout << ans << '\n';
+    }
+    return 0;
+}

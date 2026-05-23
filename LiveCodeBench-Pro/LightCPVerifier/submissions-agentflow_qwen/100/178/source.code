@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        long long prefix_sum = 0;
+        long long min_val = 1e18;
+        int min_pos = -1;
+        long long first = a[0];
+
+        for (int i = 0; i < n; i++) {
+            prefix_sum += a[i];
+            if (a[i] < min_val) {
+                min_val = a[i];
+                min_pos = i + 1;
+            }
+            long long sum_tail = prefix_sum - first;
+            long long candidate = sum_tail + (min_pos - 1) + min_val;
+
+            cout << candidate;
+            if (i < n-1) cout << ' ';
+        }
+        cout << '\n';
+    }
+    return 0;
+}

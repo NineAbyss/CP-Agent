@@ -1,0 +1,133 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const ll INF = 1e18;
+
+void solve() {
+    int n;
+    cin >> n;
+    
+    vector<vector<ll>> h(n, vector<ll>(n));
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            cin >> h[i][j];
+        }
+    }
+    
+    vector<ll> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int j = 0; j < n; j++) cin >> b[j];
+    
+    // 计算垂直和水平差值
+    vector<vector<ll>> d_vert(n-1, vector<ll>(n));
+    vector<vector<ll>> d_horiz(n, vector<ll>(n-1));
+    
+    for (int i = 0; i < n-1; i++) {
+        for (int j = 0; j < n; j++) {
+            d_vert[i][j] = h[i][j] - h[i+1][j];
+        }
+    }
+    
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n-1; j++) {
+            d_horiz[i][j] = h[i][j] - h[i][j+1];
+        }
+    }
+    
+    // 行的DP
+    vector<vector<ll>> dp_row(n, vector<ll>(2, INF));
+    dp_row[0][0] = 0 * a[0];
+    dp_row[0][1] = 1 * a[0];
+    
+    for (int i = 0; i < n-1; i++) {
+        for (int r_i = 0; r_i <= 1; r_i++) {
+            if (dp_row[i][r_i] == INF) continue;
+            
+            // 尝试r_{i+1} = 0
+            bool try0 = true;
+            for (int j = 0; j < n; j++) {
+                ll delta = r_i - 0;
+                if (d_vert[i][j] + delta == 0) {
+                    try0 = false;
+                    break;
+                }
+            }
+            if (try0) {
+                dp_row[i+1][0] = min(dp_row[i+1][0], dp_row[i][r_i] + 0 * a[i+1]);
+            }
+            
+            // 尝试r_{i+1} = 1
+            bool try1 = true;
+            for (int j = 0; j < n; j++) {
+                ll delta = r_i - 1;
+                if (d_vert[i][j] + delta == 0) {
+                    try1 = false;
+                    break;
+                }
+            }
+            if (try1) {
+                dp_row[i+1][1] = min(dp_row[i+1][1], dp_row[i][r_i] + 1 * a[i+1]);
+            }
+        }
+    }
+    
+    // 列的DP
+    vector<vector<ll>> dp_col(n, vector<ll>(2, INF));
+    dp_col[0][0] = 0 * b[0];
+    dp_col[0][1] = 1 * b[0];
+    
+    for (int j = 0; j < n-1; j++) {
+        for (int c_j = 0; c_j <= 1; c_j++) {
+            if (dp_col[j][c_j] == INF) continue;
+            
+            // 尝试c_{j+1} = 0
+            bool try0 = true;
+            for (int i = 0; i < n; i++) {
+                ll delta = c_j - 0;
+                if (d_horiz[i][j] + delta == 0) {
+                    try0 = false;
+                    break;
+                }
+            }
+            if (try0) {
+                dp_col[j+1][0] = min(dp_col[j+1][0], dp_col[j][c_j] + 0 * b[j+1]);
+            }
+            
+            // 尝试c_{j+1} = 1
+            bool try1 = true;
+            for (int i = 0; i < n; i++) {
+                ll delta = c_j - 1;
+                if (d_horiz[i][j] + delta == 0) {
+                    try1 = false;
+                    break;
+                }
+            }
+            if (try1) {
+                dp_col[j+1][1] = min(dp_col[j+1][1], dp_col[j][c_j] + 1 * b[j+1]);
+            }
+        }
+    }
+    
+    ll min_row = min(dp_row[n-1][0], dp_row[n-1][1]);
+    ll min_col = min(dp_col[n-1][0], dp_col[n-1][1]);
+    
+    if (min_row == INF || min_col == INF) {
+        cout << -1 << "\n";
+    } else {
+        cout << min_row + min_col << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Struct to hold the volume and pitch.
+struct Sound {
+    int volume;
+    int pitch;
+    int index;  // Original index
+};
+
+// Function to check if a sequence is valid.
+bool is_valid_sequence(const vector<Sound>& sounds) {
+    for (size_t i = 1; i < sounds.size(); ++i) {
+        if (sounds[i].volume != sounds[i-1].volume && sounds[i].pitch != sounds[i-1].pitch)
+            return false;
+    }
+    for (size_t i = 2; i < sounds.size(); ++i) {
+        if ((sounds[i].volume == sounds[i-1].volume && sounds[i-1].volume == sounds[i-2].volume) ||
+            (sounds[i].pitch == sounds[i-1].pitch && sounds[i-1].pitch == sounds[i-2].pitch))
+            return false;
+    }
+    return true;
+}
+
+void find_beautiful_music(int n, vector<Sound>& sounds) {
+    // Sort by volume, then pitch
+    sort(sounds.begin(), sounds.end(), [](const Sound& a, const Sound& b) {
+        if (a.volume != b.volume) return a.volume < b.volume;
+        return a.pitch < b.pitch;
+    });
+
+    // Check if it meets the conditions directly
+    if (is_valid_sequence(sounds)) {
+        cout << "YES\n";
+        for (const auto& sound : sounds) {
+            cout << sound.index << " ";
+        }
+        cout << "\n";
+        return;
+    }
+
+    // Attempt different ordering strategies if needed //...
+
+    cout << "NO\n";  // If no valid sequence found
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<Sound> sounds(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> sounds[i].volume >> sounds[i].pitch;
+            sounds[i].index = i + 1;  // Store 1-based index
+        }
+
+        find_beautiful_music(n, sounds);
+    }
+
+    return 0;
+}

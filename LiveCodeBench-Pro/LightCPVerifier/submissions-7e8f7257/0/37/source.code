@@ -1,0 +1,107 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MOD = 998244353;
+
+// 预计算 2^k mod MOD
+vector<long long> precompute_pow2(int n) {
+    vector<long long> pow2(n+1);
+    pow2[0] = 1;
+    for (int i = 1; i <= n; i++) {
+        pow2[i] = (pow2[i-1] * 2) % MOD;
+    }
+    return pow2;
+}
+
+// 比较两个配对对应的和的大小
+bool better(int x1, int y1, int x2, int y2) {
+    int ma1 = max(x1, y1);
+    int ma2 = max(x2, y2);
+    if (ma1 != ma2) return ma1 > ma2;
+    int mi1 = min(x1, y1);
+    int mi2 = min(x2, y2);
+    if (mi1 != mi2) return mi1 > mi2;
+    return x1 > x2; // 任意
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> p(n), q(n);
+    for (int i = 0; i < n; i++) cin >> p[i];
+    for (int i = 0; i < n; i++) cin >> q[i];
+    
+    // 逆映射：值 -> 索引
+    vector<int> inv_p(n), inv_q(n);
+    for (int i = 0; i < n; i++) {
+        inv_p[p[i]] = i;
+        inv_q[q[i]] = i;
+    }
+    
+    // 前缀最大值
+    vector<int> max_p(n), max_q(n);
+    max_p[0] = p[0];
+    for (int i = 1; i < n; i++) max_p[i] = max(max_p[i-1], p[i]);
+    max_q[0] = q[0];
+    for (int i = 1; i < n; i++) max_q[i] = max(max_q[i-1], q[i]);
+    
+    // 预计算 2^k mod MOD
+    auto pow2 = precompute_pow2(n); // 索引到 n
+    
+    vector<long long> r(n);
+    for (int i = 0; i < n; i++) {
+        int m = max(max_p[i], max_q[i]);
+        bool have1 = false, have2 = false;
+        int x1 = -1, y1 = -1, x2 = -1, y2 = -1;
+        long long val1 = 0, val2 = 0;
+        
+        if (inv_p[m] <= i) {
+            int idx_q = i - inv_p[m];
+            have1 = true;
+            x1 = m;
+            y1 = q[idx_q];
+            val1 = (pow2[m] + pow2[y1]) % MOD;
+        }
+        if (inv_q[m] <= i) {
+            int idx_p = i - inv_q[m];
+            have2 = true;
+            x2 = p[idx_p];
+            y2 = m;
+            val2 = (pow2[x2] + pow2[m]) % MOD;
+        }
+        
+        if (!have1 && !have2) {
+            r[i] = 0; // 不会发生，因为至少有一个可用
+        } else if (!have1) {
+            r[i] = val2;
+        } else if (!have2) {
+            r[i] = val1;
+        } else {
+            // 通过指数比较选择较大的和
+            if (better(x1, y1, x2, y2)) {
+                r[i] = val1;
+            } else {
+                r[i] = val2;
+            }
+        }
+    }
+    
+    for (int i = 0; i < n; i++) {
+        cout << r[i] << (i == n-1 ? '\n' : ' ');
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    // 预计算 pow2 直到最大 n，但 n 可能不同，我们可以在每个测试用例中计算，因为总 n 有限 // 改为在每个测试用例中计算，因为 n 可能不同
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,51 @@
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+void solve(int n) {
+    int x = 1; // The unknown initial number (unknown to us, but interactor knows)
+    
+    while (true) {
+        if (x == n) {
+            break;
+        } else if (x < n) {
+            // If x is less than n, try multiplying or adding to reach closer to n
+            if (n % x == 0) {
+                cout << "mul " << n / x << endl;
+                int response;
+                cin >> response;
+                if (response == 1) x = n;
+            } else {
+                cout << "add " << 1 << endl;
+                int response;
+                cin >> response;
+                if (response == 1) x += 1;
+            }
+        } else {
+            // If x is greater than n, consider using digit to reduce
+            cout << "digit" << endl;
+            int response;
+            cin >> response;
+            int sum_x = 0;
+            while (x > 0) {
+                sum_x += x % 10;
+                x /= 10;
+            }
+            x = sum_x;
+        }
+    }
+    
+    cout << "!" << endl;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        solve(n);
+    }
+    return 0;
+}

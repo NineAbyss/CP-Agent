@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+ll dp[35][4][91][2];
+vector<int> digits;
+
+ll solve(ll n, int k) {
+    if (k > 90) return 0;
+    digits.clear();
+    ll tmp = n;
+    while (tmp) {
+        digits.push_back(tmp % 4);
+        tmp /= 4;
+    }
+    if (digits.empty()) digits.push_back(0);
+    reverse(digits.begin(), digits.end());
+    int len = digits.size();
+    
+    memset(dp, 0, sizeof dp);
+    dp[0][0][0][1] = 1;
+    
+    for (int pos = 0; pos < len; pos++) {
+        for (int carry = 0; carry < 4; carry++) {
+            for (int sum = 0; sum <= k; sum++) {
+                for (int tight = 0; tight < 2; tight++) {
+                    ll val = dp[pos][carry][sum][tight];
+                    if (val == 0) continue;
+                    int max_dig = tight ? digits[pos] : 3;
+                    for (int dig = 0; dig <= max_dig; dig++) {
+                        int need = dig + carry;
+                        // x = need + 4*t, t >= 0
+                        for (int t = 0; t < 23; t++) {
+                            int x = need + 4 * t;
+                            int new_carry = t;
+                            int new_sum = sum + x;
+                            if (new_sum > k) continue;
+                            int new_tight = tight && (dig == max_dig);
+                            dp[pos + 1][new_carry][new_sum][new_tight] += val;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    ll ans = 0;
+    for (int tight = 0; tight < 2; tight++) {
+        ans += dp[len][0][k][tight];
+    }
+    return ans;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        ll l, r, k;
+        cin >> l >> r >> k;
+        if (k > 90) {
+            cout << 0 << '\n';
+            continue;
+        }
+        ll ans = solve(r, k) - solve(l - 1, k);
+        cout << ans << '\n';
+    }
+    return 0;
+}

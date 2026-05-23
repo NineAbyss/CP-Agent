@@ -1,0 +1,149 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <stack>
+using namespace std;
+
+const int MOD = 1e9+7;
+
+int n;
+vector<vector<int>> adj;
+vector<int> parent, sz;
+vector<vector<pair<int,int>>> dp;
+
+void dfs_sz(int u, int p) {
+    parent[u] = p;
+    sz[u] = 1;
+    for (int v : adj[u]) {
+        if (v == p) continue;
+        dfs_sz(v, u);
+        sz[u] += sz[v];
+    }
+}
+
+void solve_dp() {
+    dp.assign(n+1, {});
+    vector<int> order;
+    stack<int> st;
+    st.push(1);
+    vector<bool> vis(n+1, false);
+    while (!st.empty()) {
+        int u = st.top();
+        if (!vis[u]) {
+            vis[u] = true;
+            for (int v : adj[u]) {
+                if (v == parent[u]) continue;
+                st.push(v);
+            }
+        } else {
+            st.pop();
+            order.push_back(u);
+        }
+    }
+    for (int u : order) {
+        vector<int> children;
+        for (int v : adj[u]) {
+            if (v == parent[u]) continue;
+            children.push_back(v);
+        }
+        int k = children.size();
+        if (k == 0) {
+            dp[u] = {{1,1}, {2,1}};
+            continue;
+        }
+        // check child empty
+        bool ok = true;
+        for (int v : children) {
+            if (dp[v].empty()) {
+                ok = false;
+                break;
+            }
+        }
+        if (!ok) {
+            dp[u].clear();
+            continue;
+        }
+        // limit children count
+        if (k > 5) {
+            dp[u].clear();
+            continue;
+        }
+        // gather values
+        vector<vector<pair<int,int>>> vals(k);
+        for (int i=0;i<k;++i) {
+            vals[i] = dp[children[i]];
+        }
+        map<int,int> mp;
+        vector<int> chosen(k, -1);
+        function<void(int, long long, long long)> rec = [&](int i, long long sum, long long ways) {
+            if (i == k) {
+                // check that sum+1 and sum+2 are not equal to any chosen value // but chosen values are all <= sum, so sum+1 > sum >= each chosen value, so safe
+                mp[sum+1] = (mp[sum+1] + ways) % MOD;
+                mp[sum+2] = (mp[sum+2] + ways) % MOD;
+                return;
+            }
+            for (int j=0; j < vals[i].size(); ++j) {
+                int val = vals[i][j].first;
+                long long w = vals[i][j].second;
+                bool ok = true;
+                for (int t=0; t<i; ++t) {
+                    if (vals[t][chosen[t]].first == val) {
+                        ok = false;
+                        break;
+                    }
+                }
+                if (!ok) continue;
+                chosen[i] = j;
+                rec(i+1, sum + val, ways * w % MOD);
+            }
+        };
+        rec(0, 0, 1);
+        // compress
+        for (auto& p : mp) {
+            dp[u].push_back(p);
+        }
+    }
+}
+
+int solve_one() {
+    cin >> n;
+    adj.assign(n+1, {});
+    for (int i=0;i<n-1;++i) {
+        int u,v; cin>>u>>v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    // basic check: if any node has >2 leaf children, return 0
+    parent.assign(n+1,0);
+    sz.assign(n+1,0);
+    dfs_sz(1,0);
+    vector<int> deg(n+1,0);
+    for (int u=1;u<=n;++u) deg[u] = adj[u].size();
+    for (int u=1;u<=n;++u) {
+        int leaf_children = 0;
+        for (int v : adj[u]) {
+            if (v == parent[u]) continue;
+            if (deg[v]==1) leaf_children++;
+        }
+        if (leaf_children > 2) {
+            return 0;
+        }
+    }
+    solve_dp();
+    long long total = 0;
+    for (auto& p : dp[1]) {
+        total = (total + p.second) % MOD;
+    }
+    return total % MOD;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t; cin >> t;
+    while (t--) {
+        cout << solve_one() << '\n';
+    }
+    return 0;
+}

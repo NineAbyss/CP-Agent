@@ -1,0 +1,60 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+
+int main() {
+    int t;
+    std::cin >> t;
+    
+    while (t--) {
+        int n, m;
+        std::cin >> n >> m;
+        
+        std::vector<std::vector<int>> matrix(n, std::vector<int>(m));
+        std::vector<int> row_max(n), col_max(m);
+        
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                std::cin >> matrix[i][j];
+            }
+        }
+        
+        // Calculate row max and column max
+        for (int i = 0; i < n; ++i) {
+            row_max[i] = *std::max_element(matrix[i].begin(), matrix[i].end());
+        }
+        
+        for (int j = 0; j < m; ++j) {
+            int max_val = INT_MIN;
+            for (int i = 0; i < n; ++i) {
+                max_val = std::max(max_val, matrix[i][j]);
+            }
+            col_max[j] = max_val;
+        }
+        
+        // Try all (r, c) pairs and calculate the minimum possible maximum
+        int min_possible_max = INT_MAX;
+        for (int r = 0; r < n; ++r) {
+            for (int c = 0; c < m; ++c) {
+                // Calculate the new maximum value after performing the operation at (r, c)
+                int current_max = INT_MIN;
+                for (int i = 0; i < n; ++i) {
+                    if (i == r) continue;
+                    current_max = std::max(current_max, row_max[i]);
+                }
+                for (int j = 0; j < m; ++j) {
+                    if (j == c) continue;
+                    current_max = std::max(current_max, col_max[j]);
+                }
+                current_max = std::max(current_max, matrix[r][c] - 1);
+                
+                min_possible_max = std::min(min_possible_max, current_max);
+            }
+        }
+        
+        std::cout << min_possible_max << std::endl;
+    }
+    
+    return 0;
+}

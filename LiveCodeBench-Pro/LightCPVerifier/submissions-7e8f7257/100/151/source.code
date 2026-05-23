@@ -1,0 +1,78 @@
+#include <iostream>
+#include <vector>
+#include <cstdint>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+// Function to compute zebra value using greedy
+int zebra_value(uint64_t e) {
+    uint64_t val = 1;
+    while (val <= e) val = (val << 2) | 1;
+    int cnt = 0;
+    while (e) {
+        while (val > e) val >>= 2;
+        cnt += e / val;
+        e %= val;
+    }
+    return cnt;
+}
+
+// Digit DP to count numbers with zebra value = k
+uint64_t dp[70][2][100][2]; // pos, in_run, cnt, tight
+vector<int> digits;
+int K;
+
+uint64_t dfs(int pos, int in_run, int cnt, int tight) {
+    if (cnt > K) return 0;
+    if (pos == digits.size()) {
+        return cnt == K ? 1 : 0;
+    }
+    if (dp[pos][in_run][cnt][tight] != -1) return dp[pos][in_run][cnt][tight];
+    uint64_t res = 0;
+    int max_digit = tight ? digits[pos] : 3;
+    for (int d = 0; d <= max_digit; ++d) {
+        int next_in_run = (d == 1) ? 1 : 0;
+        int next_cnt = cnt;
+        if (d == 1) {
+            if (!in_run) {
+                // start a new run, which will correspond to one zebra-like number
+                next_cnt++;
+            }
+        }
+        res += dfs(pos+1, next_in_run, next_cnt, tight && (d == max_digit));
+    }
+    return dp[pos][in_run][cnt][tight] = res;
+}
+
+uint64_t count_up_to(uint64_t bound, int k) {
+    if (bound == 0) return 0;
+    digits.clear();
+    uint64_t tmp = bound;
+    while (tmp) {
+        digits.push_back(tmp % 4);
+        tmp /= 4;
+    }
+    reverse(digits.begin(), digits.end());
+    K = k;
+    memset(dp, -1, sizeof dp);
+    return dfs(0, 0, 0, 1);
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        uint64_t l, r, k;
+        cin >> l >> r >> k;
+        if (k > 90) { // zebra value cannot exceed 90
+            cout << 0 << '\n';
+            continue;
+        }
+        uint64_t ans = count_up_to(r, k) - count_up_to(l-1, k);
+        cout << ans << '\n';
+    }
+    return 0;
+}

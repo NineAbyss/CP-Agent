@@ -1,0 +1,50 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    // Precompute f[1..11]
+    long long f[12];
+    f[1] = 1;
+    f[2] = 2;
+    for (int i = 3; i <= 11; i++) {
+        f[i] = f[i-1] + f[i-2];
+    }
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+
+        long long min_side = f[n];
+        long long min_area = f[n] * f[n+1] - 1;
+
+        string result = "";
+        for (int i = 0; i < m; i++) {
+            long long w, l, h;
+            cin >> w >> l >> h;
+
+            // Check if any dimension is less than min_side
+            if (w < min_side || l < min_side || h < min_side) {
+                result += '0';
+                continue;
+            }
+
+            // Calculate the three face areas
+            long long area1 = w * l;
+            long long area2 = w * h;
+            long long area3 = l * h;
+            long long max_area = area1;
+            if (area2 > max_area) max_area = area2;
+            if (area3 > max_area) max_area = area3;
+
+            if (max_area >= min_area) {
+                result += '1';
+            } else {
+                result += '0';
+            }
+        }
+        cout << result << "\n";
+    }
+    return 0;
+}

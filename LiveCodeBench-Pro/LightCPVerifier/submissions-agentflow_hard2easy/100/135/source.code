@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int k;
+int nor(int x, int y) {
+    int mask = (1 << k) - 1;
+    return mask ^ (x | y);
+}
+
+void solve() {
+    int n;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    
+    // L[i]: all possible nor values of a[l..i] for l <= i
+    vector<vector<int>> L(n);
+    for (int i = 0; i < n; i++) {
+        if (i == 0) {
+            L[i].push_back(a[i]);
+        } else {
+            // start new at i
+            L[i].push_back(a[i]);
+            // continue from previous
+            for (int v : L[i-1]) {
+                L[i].push_back(nor(v, a[i]));
+            }
+            // sort and unique
+            sort(L[i].begin(), L[i].end());
+            L[i].erase(unique(L[i].begin(), L[i].end()), L[i].end());
+        }
+    }
+    
+    vector<int> ans(n, 0);
+    const int MAX_STEP = 2 * k + 5; // enough steps
+    for (int i = 0; i < n; i++) {
+        vector<int> cur = L[i];
+        // update answer with current values
+        for (int v : cur) ans[i] = max(ans[i], v);
+        // extend to the right, at most MAX_STEP steps
+        for (int j = i+1; j < n && j - i <= MAX_STEP; j++) {
+            vector<int> nxt;
+            for (int v : cur) nxt.push_back(nor(v, a[j]));
+            sort(nxt.begin(), nxt.end());
+            nxt.erase(unique(nxt.begin(), nxt.end()), nxt.end());
+            cur = nxt;
+            for (int v : cur) ans[i] = max(ans[i], v);
+        }
+        // if we haven't reached the end, but cur size is 1, we can fast forward
+        if (cur.size() == 1) {
+            int val = cur[0];
+            for (int j = i + MAX_STEP + 1; j < n; j++) {
+                val = nor(val, a[j]);
+                ans[i] = max(ans[i], val);
+            }
+        } else {
+            // otherwise, just extend to end (cur size small)
+            for (int j = i + MAX_STEP + 1; j < n; j++) {
+                vector<int> nxt;
+                for (int v : cur) nxt.push_back(nor(v, a[j]));
+                sort(nxt.begin(), nxt.end());
+                nxt.erase(unique(nxt.begin(), nxt.end()), nxt.end());
+                cur = nxt;
+                for (int v : cur) ans[i] = max(ans[i], v);
+            }
+        }
+    }
+    
+    for (int i = 0; i < n; i++) cout << ans[i] << " \n"[i==n-1];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

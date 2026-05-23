@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+void solve() {
+    ll n, k, x;
+    cin >> n >> k >> x;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    ll S = accumulate(a.begin(), a.end(), 0LL);
+    vector<ll> suf(n + 1, 0); // suf[i] = sum from i to n-1
+    for (int i = n - 1; i >= 0; i--) {
+        suf[i] = suf[i + 1] + a[i];
+    }
+
+    ll count = 0;
+    for (int i = 0; i < n; i++) {
+        ll R = x - suf[i];
+        if (R <= 0) {
+            count += k;
+        } else {
+            // m = ceil(R / S)
+            ll m = (R + S - 1) / S; // ceiling division
+            if (m < k) {
+                count += (k - m);
+            }
+            // else 0
+        }
+    }
+    cout << count << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

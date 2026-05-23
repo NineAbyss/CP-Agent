@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<int> deg(n+1, 0);
+        for (int i = 0; i < m; i++) {
+            int u, v;
+            cin >> u >> v;
+            deg[u]++;
+            deg[v]++;
+        }
+        int odd = 0;
+        for (int i = 1; i <= n; i++) {
+            if (deg[i] % 2 == 1) odd++;
+        }
+        // G is guaranteed to have an Euler trail, so odd is 0 or 2
+        if (odd == 0) {
+            cout << "YES\n";
+        } else if (odd == 2) {
+            // check if both odd-degree vertices are leaves (degree 1)
+            vector<int> odd_vertices;
+            for (int i = 1; i <= n; i++) {
+                if (deg[i] % 2 == 1) odd_vertices.push_back(i);
+            }
+            int u = odd_vertices[0], v = odd_vertices[1];
+            if (deg[u] == 1 && deg[v] == 1) {
+                cout << "YES\n";
+            } else {
+                cout << "NO\n";
+            }
+        } else {
+            // should not happen
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

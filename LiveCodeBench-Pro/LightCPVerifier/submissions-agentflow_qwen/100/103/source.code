@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        ll k;
+        cin >> n >> k;
+        vector<ll> a(n);
+        ll S = 0;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            S += a[i];
+        }
+
+        // We will use Alien's Trick (Lagrange multipliers) to solve the convex optimization
+        ll low = -2'000'000, high = 2'000'000;
+        ll best_cost = LLONG_MAX;
+
+        // Function to compute total x_i and adjusted cost for given lambda
+        auto evaluate = [&](ll lam) -> pair<ll, ll> {
+            ll total_x = 0, base_cost = 0;
+
+            for (ll ai : a) {
+                // Find x >= 0 that minimizes: f(x) = x(x+1)/2 + k * max(0, ai - x) - lam * x
+                ll best_x = 0;
+                // Start with x=0
+                ll best_val = ai * k; // because move cost = k * ai, waiting=0
+
+                // Try x = ai, ai+1, ai+2 (no one to move)
+                for (ll x : {ai, ai+1, ai+2}) {
+                    ll f_val = x * (x+1) / 2 - lam * x;
+                    if (f_val < best_val) {
+                        best_val = f_val;
+                        best_x = x;
+                    }
+                }
+
+                // Try x around the theoretical optimum for the quadratic part
+                // The minimum for x <= ai is near x = lam + k - 0.5
+                ll center = lam + k;
+                for (ll x = center - 5; x <= center + 5; x++) {
+                    if (x < 0) continue;
+                    ll move = (x < ai) ? ai - x : 0;
+                    ll f_val = x*(x+1)/2 + k*move - lam*x;
+                    if (f_val < best_val) {
+                        best_val = f_val;
+                        best_x = x;
+                    }
+                }
+
+                total_x += best_x;
+                // Add back the lambda*x term to get real cost
+                base_cost += best_val + lam * best_x;
+            }
+            return {total_x, base_cost};
+        };
+
+        // Binary search on lambda
+        while (low <= high) {
+            ll mid = (low + high) / 2;
+            auto [total_x, total_cost] = evaluate(mid);
+            if (total_x >= S) {
+                best_cost = total_cost;
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+
+        cout << best_cost << '\n';
+    }
+    return 0;
+}

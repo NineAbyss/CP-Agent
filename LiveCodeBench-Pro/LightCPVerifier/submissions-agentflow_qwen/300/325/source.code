@@ -1,0 +1,164 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<tuple<long long, long long, int>> sounds;
+        for (int i = 0; i < n; i++) {
+            long long v, p;
+            cin >> v >> p;
+            sounds.emplace_back(v, p, i+1);
+        }
+
+        if (n == 0) {
+            cout << "YES\n";
+            continue;
+        }
+
+        set<long long> all_v, all_p;
+        for (auto [v, p, idx] : sounds) {
+            all_v.insert(v);
+            all_p.insert(p);
+        }
+
+        map<long long, int> vol_id;
+        map<long long, int> pit_id;
+        vector<long long> id_to_vol_vec, id_to_pit_vec;
+
+        int vid = 0, pid = 0;
+        for (long long x : all_v) {
+            vol_id[x] = vid++;
+            id_to_vol_vec.push_back(x);
+        }
+        for (long long x : all_p) {
+            pit_id[x] = pid++;
+            id_to_pit_vec.push_back(x);
+        }
+
+        int V = vid, P = pid;
+        int total_nodes = V + P;
+
+        vector<set<int>> adj(total_nodes);
+        map<pair<long long, long long>, int> edge_to_idx;
+
+        for (auto [v, p, idx] : sounds) {
+            int u = vol_id[v];
+            int w = V + pit_id[p];
+            adj[u].insert(w);
+            adj[w].insert(u);
+            edge_to_idx[{v, p}] = idx;
+        }
+
+        // Check connectivity: BFS over nodes with edges
+        vector<bool> visited(total_nodes, false);
+        int components = 0;
+        for (int i = 0; i < total_nodes; i++) {
+            if (!visited[i] && !adj[i].empty()) {
+                components++;
+                if (components > 1) break;
+                queue<int> q;
+                q.push(i);
+                visited[i] = true;
+                while (!q.empty()) {
+                    int u = q.front(); q.pop();
+                    for (int v : adj[u]) {
+                        if (!visited[v]) {
+                            visited[v] = true;
+                            q.push(v);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (components != 1) {
+            cout << "NO\n";
+            continue;
+        }
+
+        // Count odd degrees
+        int odd_count = 0;
+        int start_node = -1;
+        for (int i = 0; i < total_nodes; i++) {
+            if (adj[i].empty()) continue;
+            if (adj[i].size() % 2 == 1) {
+                odd_count++;
+                if (start_node == -1) start_node = i;
+            }
+        }
+
+        if (odd_count != 0 && odd_count != 2) {
+            cout << "NO\n";
+            continue;
+        }
+
+        if (start_node == -1) {
+            for (int i = 0; i < total_nodes; i++) {
+                if (!adj[i].empty()) {
+                    start_node = i;
+                    break;
+                }
+            }
+        }
+
+        // Hierholzer
+        stack<int> st;
+        vector<int> circuit_nodes;
+        st.push(start_node);
+
+        while (!st.empty()) {
+            int u = st.top();
+            if (!adj[u].empty()) {
+                int v = *adj[u].begin();
+                adj[u].erase(v);
+                adj[v].erase(u);
+                st.push(v);
+            } else {
+                circuit_nodes.push_back(u);
+                st.pop();
+            }
+        }
+
+        reverse(circuit_nodes.begin(), circuit_nodes.end());
+
+        if (circuit_nodes.size() != n+1) {
+            cout << "NO\n";
+            continue;
+        }
+
+        vector<int> sound_sequence;
+        for (int i = 0; i < n; i++) {
+            int u = circuit_nodes[i];
+            int v = circuit_nodes[i+1];
+            long long vol_val, pit_val;
+            if (u < V && v >= V) {
+                vol_val = id_to_vol_vec[u];
+                pit_val = id_to_pit_vec[v - V];
+            } else if (v < V && u >= V) {
+                vol_val = id_to_vol_vec[v];
+                pit_val = id_to_pit_vec[u - V];
+            } else {
+                // Should not happen
+                cout << "NO\n";
+                goto next;
+            }
+            sound_sequence.push_back(edge_to_idx[{vol_val, pit_val}]);
+        }
+
+        cout << "YES\n";
+        for (int i = 0; i < n; i++) {
+            cout << sound_sequence[i];
+            if (i < n-1) cout << ' ';
+            else cout << '\n';
+        }
+        next:;
+    }
+    return 0;
+}

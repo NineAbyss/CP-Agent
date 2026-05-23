@@ -1,0 +1,69 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> xs(n), ys(n);
+        for (int i = 0; i < n; i++) {
+            cin >> xs[i] >> ys[i];
+        }
+        
+        if (n == 1) {
+            cout << "1\n";
+            continue;
+        }
+        
+        // 前缀
+        vector<long long> pref_min_x(n+1, LLONG_MAX), pref_max_x(n+1, LLONG_MIN);
+        vector<long long> pref_min_y(n+1, LLONG_MAX), pref_max_y(n+1, LLONG_MIN);
+        for (int i = 0; i < n; i++) {
+            pref_min_x[i+1] = min(pref_min_x[i], xs[i]);
+            pref_max_x[i+1] = max(pref_max_x[i], xs[i]);
+            pref_min_y[i+1] = min(pref_min_y[i], ys[i]);
+            pref_max_y[i+1] = max(pref_max_y[i], ys[i]);
+        }
+        
+        // 后缀
+        vector<long long> suff_min_x(n+1, LLONG_MAX), suff_max_x(n+1, LLONG_MIN);
+        vector<long long> suff_min_y(n+1, LLONG_MAX), suff_max_y(n+1, LLONG_MIN);
+        for (int i = n-1; i >= 0; i--) {
+            suff_min_x[i] = min(suff_min_x[i+1], xs[i]);
+            suff_max_x[i] = max(suff_max_x[i+1], xs[i]);
+            suff_min_y[i] = min(suff_min_y[i+1], ys[i]);
+            suff_max_y[i] = max(suff_max_y[i+1], ys[i]);
+        }
+        
+        long long ans = (pref_max_x[n] - pref_min_x[n] + 1) * (pref_max_y[n] - pref_min_y[n] + 1);
+        
+        for (int i = 0; i < n; i++) {
+            long long xL = min(pref_min_x[i], suff_min_x[i+1]);
+            long long xR = max(pref_max_x[i], suff_max_x[i+1]);
+            long long yL = min(pref_min_y[i], suff_min_y[i+1]);
+            long long yR = max(pref_max_y[i], suff_max_y[i+1]);
+            
+            long long w = xR - xL + 1;
+            long long h = yR - yL + 1;
+            long long cells = w * h;
+            if (cells > n - 1) {
+                ans = min(ans, cells);
+            } else {
+                long long a1 = (w + 1) * h;
+                long long a2 = w * (h + 1);
+                ans = min(ans, min(a1, a2));
+            }
+        }
+        
+        cout << ans << '\n';
+    }
+    return 0;
+}

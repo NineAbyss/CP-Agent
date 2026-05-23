@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, k;
+    cin >> n >> k;
+    string s;
+    cin >> s;
+    
+    // 预处理 next 和 cnt
+    vector<vector<int>> next(n+1, vector<int>(k, n));
+    vector<vector<int>> cnt(n+1, vector<int>(k, 0));
+    for (int i = n-1; i >= 0; --i) {
+        for (int c = 0; c < k; ++c) {
+            next[i][c] = next[i+1][c];
+            cnt[i][c] = cnt[i+1][c];
+        }
+        int c = s[i] - 'a';
+        next[i][c] = i;
+        cnt[i][c]++;
+    }
+    
+    int q;
+    cin >> q;
+    while (q--) {
+        string t;
+        cin >> t;
+        int pos = -1;
+        bool pleasant = true;
+        for (char ch : t) {
+            int c = ch - 'a';
+            // 注意：pos+1 可能等于 n，此时 next[pos+1][c] 可能为 n
+            if (pos+1 > n) {
+                pleasant = false;
+                break;
+            }
+            int nxt = next[pos+1][c];
+            if (nxt >= n) {
+                pleasant = false;
+                break;
+            }
+            pos = nxt;
+        }
+        if (!pleasant) {
+            cout << "0\n";
+        } else {
+            int ans = n+1;
+            for (int c = 0; c < k; ++c) {
+                ans = min(ans, cnt[pos+1][c] + 1);
+            }
+            cout << ans << '\n';
+        }
+    }
+    
+    return 0;
+}

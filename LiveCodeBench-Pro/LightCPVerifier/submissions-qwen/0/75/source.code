@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+
+        vector<vector<int>> grid(n, vector<int>(n));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                cin >> grid[i][j];
+            }
+        }
+
+        // We know that G[i][j] = p[i + j] // So, index in permutation: k = i + j ranges from 0 to 2*n-2 -> so we need p[0] to p[2*n-1]
+        // But note: the problem says p_1, p_2, ..., p_{2n} -> so indices are 1-based. // However, in our array, we'll use 0-indexed: p[0] corresponds to p_1.
+
+        vector<int> p(2 * n); // p[0] = p_1, ..., p[2n-1] = p_{2n}
+
+        // For each diagonal (i+j = k), all entries on this diagonal should be equal to p[k] // We can recover p[k] by taking any element where i+j == k
+        for (int k = 0; k <= 2 * n - 2; k++) {
+            // Find any (i,j) such that i+j == k and 0<=i<n, 0<=j<n
+            int i = max(0, k - n + 1);
+            int j = k - i;
+            p[k] = grid[i][j];
+        }
+
+        // Now, we haven't set p[2*n-1] yet? Actually, maximum k is (n-1)+(n-1) = 2n-2, so p[2n-1] is missing.
+        // But wait: the permutation has 2n elements: p_1 to p_{2n}, which correspond to p[0] to p[2n-1].
+        // We have filled p[0] to p[2n-2], but not p[2n-1].
+
+        // Let's check: what values are already used?
+        set<int> used;
+        for (int k = 0; k <= 2*n-2; k++) {
+            used.insert(p[k]);
+        }
+
+        // The permutation must contain numbers 1 to 2n exactly once. // So find the missing number between 1 and 2n.
+        for (int x = 1; x <= 2*n; x++) {
+            if (used.find(x) == used.end()) {
+                p[2*n-1] = x;
+                break;
+            }
+        }
+
+        // Output the permutation p_1 to p_{2n}
+        for (int i = 0; i < 2*n; i++) {
+            cout << p[i];
+            if (i < 2*n - 1) cout << " ";
+        }
+        cout << "\n";
+    }
+
+    return 0;
+}

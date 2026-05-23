@@ -1,0 +1,24 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, l, r;
+        cin >> n >> m >> l >> r;
+        // 注意：l ≤ 0 ≤ r 且 r - l = n
+        int L = -l; // 向左扩展的次数
+        int R = r;  // 向右扩展的次数 // 计算前 m 天中向左扩展的次数 L_m
+        int L_m = max(m - R, 0);
+        // 确保 L_m ≤ L（应该总是成立）
+        if (L_m > L) L_m = L;
+        int R_m = m - L_m;
+        // 输出 l' 和 r'
+        int l_prime = -L_m;
+        int r_prime = R_m;
+        cout << l_prime << " " << r_prime << endl;
+    }
+    return 0;
+}

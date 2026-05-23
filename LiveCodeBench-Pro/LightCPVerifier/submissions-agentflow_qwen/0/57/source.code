@@ -1,0 +1,33 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        if (n == 1) {
+            cout << "0\n";
+        } else if (n == 2) {
+            cout << "0 1\n";
+            cout << "2 3\n";
+        } else if (n == 3) {
+            cout << "8 4 5\n";
+            cout << "6 0 1\n";
+            cout << "7 2 3\n";
+        } else {
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    cout << i * n + j;
+                    if (j < n - 1) cout << " ";
+                }
+                cout << "\n";
+            }
+        }
+    }
+    return 0;
+}

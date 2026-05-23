@@ -1,0 +1,58 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        long long a, b, c;
+        cin >> a >> b >> c;
+
+        // We are going to take x cards from the third deck and distribute them // to the first two decks so that all three decks have the same number of cards.
+        // Let the final number of cards in each deck be 'target'. // Then:
+        //   a + x1 = target //   b + x2 = target
+        //   c - (x1 + x2) = target // where x1 >= 0, x2 >= 0, and x1 + x2 > 0 (at least one card taken).
+        // // Adding the first two equations: a + b + (x1 + x2) = 2 * target
+        // From the third: x1 + x2 = c - target // Substitute: a + b + (c - target) = 2 * target
+        // => a + b + c = 3 * target // So target = (a + b + c) / 3
+
+        long long total = a + b + c;
+        
+        // Check if total is divisible by 3
+        if (total % 3 != 0) {
+            cout << "NO\n";
+            continue;
+        }
+
+        long long target = total / 3;
+
+        // The third deck must have at least target cards after giving away some, // so we can only take up to c - target cards.
+        // Also, since we're taking from the third deck, we need c >= target.
+        if (c < target) {
+            cout << "NO\n";
+            continue;
+        }
+
+        // We need to add (target - a) cards to the first deck and (target - b) cards to the second deck. // These must be non-negative because we can't remove cards.
+        if (target < a || target < b) {
+            cout << "NO\n";
+            continue;
+        }
+
+        // The total number of cards we need to add is (target - a) + (target - b) // This must equal the number of cards taken from the third deck: c - target
+        long long needed_from_c = (target - a) + (target - b);
+        long long taken_from_c = c - target;
+
+        if (needed_from_c == taken_from_c && taken_from_c > 0) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+ll gcd(ll a, ll b) {
+    while (b) {
+        a %= b;
+        swap(a, b);
+    }
+    return a;
+}
+
+bool solve() {
+    int n;
+    cin >> n;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    ll g = *min_element(a.begin(), a.end());
+    int cnt_g = count(a.begin(), a.end(), g);
+    if (cnt_g >= 2) {
+        return true;
+    }
+    ll gcd_val = 0;
+    for (ll x : a) {
+        if (x % g == 0 && x > g) {
+            ll val = x / g;
+            if (gcd_val == 0) gcd_val = val;
+            else gcd_val = gcd(gcd_val, val);
+        }
+    }
+    return gcd_val == 1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << (solve() ? "Yes" : "No") << '\n';
+    }
+    return 0;
+}

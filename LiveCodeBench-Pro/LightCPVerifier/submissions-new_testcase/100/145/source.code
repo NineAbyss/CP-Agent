@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<int> deg(n, 0);
+        vector<pair<int,int>> edges(m);
+        for (int i = 0; i < m; i++) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            edges[i] = {u, v};
+            deg[u]++;
+            deg[v]++;
+        }
+        
+        vector<int> odd;
+        for (int i = 0; i < n; i++) {
+            if (deg[i] % 2 == 1) odd.push_back(i);
+        }
+        
+        if (odd.size() == 0) {
+            cout << "YES\n";
+            continue;
+        }
+        
+        // odd.size() == 2
+        int a = odd[0], b = odd[1];
+        bool adj = false;
+        for (auto& e : edges) {
+            if ((e.first == a && e.second == b) || (e.first == b && e.second == a)) {
+                adj = true;
+                break;
+            }
+        }
+        
+        int o1 = deg[a] + deg[b] - 2 * (adj ? 1 : 0);
+        if (o1 == 0 || o1 == 2) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

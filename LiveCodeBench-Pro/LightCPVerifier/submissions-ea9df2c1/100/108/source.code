@@ -1,0 +1,90 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <random>
+using namespace std;
+
+int cheb(int x1, int y1, int x2, int y2) {
+    return max(abs(x1 - x2), abs(y1 - y2));
+}
+
+int manh(int x1, int y1, int x2, int y2) {
+    return abs(x1 - x2) + abs(y1 - y2);
+}
+
+bool check_order(const vector<pair<int, int>>& order, int n, int m) {
+    vector<vector<int>> color(n+1, vector<int>(m+1, 0));
+    vector<vector<int>> penalty(n+1, vector<int>(m+1, 0));
+    for (auto& p : order) {
+        int x = p.first, y = p.second;
+        color[x][y] = 1;
+        int maxCheb = -1;
+        int maxManh = -1;
+        vector<pair<int, int>> farthest;
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= m; j++) {
+                if (color[i][j]) {
+                    int c = cheb(x, y, i, j);
+                    int mh = manh(x, y, i, j);
+                    if (c > maxCheb || (c == maxCheb && mh > maxManh)) {
+                        maxCheb = c;
+                        maxManh = mh;
+                        farthest.clear();
+                        farthest.push_back({i, j});
+                    } else if (c == maxCheb && mh == maxManh) {
+                        farthest.push_back({i, j});
+                    }
+                }
+            }
+        }
+        for (auto& cell : farthest) {
+            penalty[cell.first][cell.second]++;
+            if (penalty[cell.first][cell.second] > 3) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    // 使用随机种子
+    srand(time(0));
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<pair<int, int>> cells;
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= m; j++) {
+                cells.push_back({i, j});
+            }
+        }
+        vector<pair<int, int>> order;
+        bool found = false;
+        // 尝试多次随机排列
+        for (int attempt = 0; attempt < 1000; attempt++) {
+            // 随机打乱
+            random_shuffle(cells.begin(), cells.end());
+            if (check_order(cells, n, m)) {
+                order = cells;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            // 如果没找到，使用默认顺序（按行优先），但可能无效
+            order = cells;
+        }
+        for (auto& p : order) {
+            cout << p.first << " " << p.second << '\n';
+        }
+    }
+    return 0;
+}

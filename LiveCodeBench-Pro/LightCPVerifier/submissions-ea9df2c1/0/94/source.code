@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct DSU {
+    vector<int> parent;
+    DSU(int n) : parent(n) {
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+    int find(int x) {
+        if (parent[x] != x) parent[x] = find(parent[x]);
+        return parent[x];
+    }
+    void unite(int x, int y) {
+        x = find(x); y = find(y);
+        if (x != y) parent[x] = y;
+    }
+};
+
+void solve() {
+    int n, m, k;
+    cin >> n >> m >> k;
+    int X = min(n / (m + 1), n - m * k);
+    vector<int> a(n, X);
+    DSU dsu(n + 2); // extra sentinel at n and n+1
+    auto mark = [&](int p) {
+        dsu.unite(p, p + 1);
+    };
+    for (int d = 0; d < X; d++) {
+        int s = 0;
+        while (true) {
+            bool ok = true;
+            for (int i = 0; i <= m; i++) {
+                int pos = s + i * k;
+                if (pos >= n || dsu.find(pos) != pos) {
+                    ok = false;
+                    s = dsu.find(pos);
+                    break;
+                }
+            }
+            if (ok) break;
+        }
+        for (int i = 0; i <= m; i++) {
+            int pos = s + i * k;
+            a[pos] = d;
+            mark(pos);
+        }
+    }
+    for (int i = 0; i < n; i++) {
+        cout << a[i] << " \n"[i == n - 1];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

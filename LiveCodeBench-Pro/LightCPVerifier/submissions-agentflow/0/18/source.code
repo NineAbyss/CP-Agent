@@ -1,0 +1,22 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        // Total operations 
+        int operations = 2 * n - 2;
+        cout << operations << endl;
+
+        for (int i = 2; i <= n; ++i) {
+            cout << i << " 1 " << i << endl; // 对每个 i 执行反转1到i
+            cout << i << " 2 " << i << endl; // 执行第二次反转2到i以校正
+        }
+    }
+    return 0;
+}

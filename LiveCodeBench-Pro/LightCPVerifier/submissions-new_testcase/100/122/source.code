@@ -1,0 +1,30 @@
+#include <iostream>
+#include <cmath>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, l, r;
+        cin >> n >> m >> l >> r;
+        int L_high = min(0, r - m);
+        int t_low = 2 * l + m;
+        int t_high = 2 * L_high + m;
+        int best_t = t_low;
+        int best_dist = abs(t_low);
+        for (int tt = t_low; tt <= t_high; ++tt) {
+            if ((tt - m) % 2 != 0) continue;
+            int dist = abs(tt);
+            if (dist < best_dist || (dist == best_dist && tt > best_t)) {
+                best_dist = dist;
+                best_t = tt;
+            }
+        }
+        int lprime = (best_t - m) / 2;
+        int rprime = lprime + m;
+        cout << lprime << " " << rprime << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool possible(int n, int k, int cnt0, int cnt1) {
+    int m = n / 2;
+    // 必要条件：非好对每对需要一个0和一个1
+    if (cnt0 < m - k || cnt1 < m - k) return false;
+    // 计算 x 的范围
+    int L = (k + m - cnt1 + 1) / 2; // ceil((k+m-cnt1)/2)
+    int R = (cnt0 - (m - k)) / 2;   // floor((cnt0 - (m-k))/2)
+    if (L < 0) L = 0;
+    if (R > k) R = k;
+    return L <= R;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        string s;
+        cin >> n >> k >> s;
+        int cnt0 = count(s.begin(), s.end(), '0');
+        int cnt1 = n - cnt0;
+        cout << (possible(n, k, cnt0, cnt1) ? "YES" : "NO") << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

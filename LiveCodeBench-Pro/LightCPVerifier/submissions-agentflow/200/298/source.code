@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        vector<int> Bpos, Ppos;
+        for (int i = 0; i < n; i++) {
+            if (s[i] == 'B') Bpos.push_back(i+1);
+            else Ppos.push_back(i+1);
+        }
+        int cntB = Bpos.size();
+        long long sumB = 0, sumP = 0;
+        for (int k = 0; k < cntB; k++) {
+            int cur = Bpos[k];
+            int target = k+1;
+            if (cur > target) {
+                int dist = cur - target;
+                sumB += (dist + 1) / 2;
+            }
+        }
+        for (int k = 0; k < (int)Ppos.size(); k++) {
+            int cur = Ppos[k];
+            int target = cntB + k + 1;
+            if (cur < target) {
+                int dist = target - cur;
+                sumP += (dist + 1) / 2;
+            }
+        }
+        cout << min(sumB, sumP) << "\n";
+    }
+    return 0;
+}

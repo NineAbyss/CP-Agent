@@ -1,0 +1,19 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        // 使用 digit 三次将 x 转换为数字根
+        cout << "digit" << endl;
+        cout << "digit" << endl;
+        cout << "digit" << endl;
+        // 然后添加 (n - 1) 希望数字根是 1
+        cout << "add " << n-1 << endl;
+        cout << "!" << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,66 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+bool evaluateSuperbGraph(int n, int k, const vector<vector<set<int>>> &graphs) {
+    vector<bool> canBeIndependent(n + 1, false);
+    vector<bool> canBeClique(n + 1, false);
+
+    // Check each graph for independent sets and cliques
+    for (int g = 0; g < k; ++g) {
+        vector<bool> tempIndependent(n + 1, true);
+        vector<bool> tempClique(n + 1, true);
+
+        for (int v = 1; v <= n; ++v) {
+            // Determine if vertex `v` can be part of a non-trivial independent set or clique
+            for (int u = 1; u <= n; ++u) {
+                if (u != v) {
+                    if (graphs[g][v].count(u) > 0) {
+                        tempIndependent[v] = false;  // has a neighbour
+                    } else {
+                        tempClique[v] = false;  // missing a connection
+                    }
+                }
+            }
+
+            if (tempIndependent[v] && graphs[g][v].size() < n - 1)
+                canBeIndependent[v] = true;
+            if (tempClique[v] && graphs[g][v].size() > 0)
+                canBeClique[v] = true;
+        }
+    }
+
+    // Ensure no vertex is simultaneously in both a non-trivial independent set and a clique
+    for (int v = 1; v <= n; ++v) {
+        if (canBeIndependent[v] && canBeClique[v]) {
+            return false;  // Conflict found
+        }
+    }
+    return true;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<vector<set<int>>> graphs(k, vector<set<int>>(n + 1));
+
+        for (int i = 0; i < k; ++i) {
+            int m;
+            cin >> m;
+            for (int j = 0; j < m; ++j) {
+                int u, v;
+                cin >> u >> v;
+                graphs[i][u].insert(v);
+                graphs[i][v].insert(u);
+            }
+        }
+
+        cout << (evaluateSuperbGraph(n, k, graphs) ? "Yes\n" : "No\n");
+    }
+    return 0;
+}

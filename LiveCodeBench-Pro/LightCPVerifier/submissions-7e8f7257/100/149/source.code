@@ -1,0 +1,106 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+const int N = 5005;
+
+int n;
+int a[N];
+int fact[N], invfact[N];
+
+int modpow(int a, int e) {
+    int res = 1;
+    while (e) {
+        if (e & 1) res = 1LL * res * a % MOD;
+        a = 1LL * a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+void precompute() {
+    fact[0] = 1;
+    for (int i = 1; i < N; ++i) fact[i] = 1LL * fact[i-1] * i % MOD;
+    invfact[N-1] = modpow(fact[N-1], MOD-2);
+    for (int i = N-2; i >= 0; --i) invfact[i] = 1LL * invfact[i+1] * (i+1) % MOD;
+}
+
+int C(int n, int k) {
+    if (k < 0 || k > n) return 0;
+    return 1LL * fact[n] * invfact[k] % MOD * invfact[n-k] % MOD;
+}
+
+int solve_case() {
+    cin >> n;
+    for (int i = 0; i < n; ++i) cin >> a[i];
+    // count known numbers
+    int total_known = 0;
+    bool known_val[N] = {false};
+    for (int i = 0; i < n; ++i) {
+        if (a[i] != -1) {
+            known_val[a[i]] = true;
+            total_known++;
+        }
+    }
+    int total_unknown = n - total_known;
+    
+    int ans = 0;
+    for (int l = 0; l < n; ++l) {
+        for (int r = l; r < n; ++r) {
+            int k = r - l + 1;
+            bool inside_fixed[N] = {false};
+            bool outside_fixed[N] = {false};
+            int fixed_inside = 0;
+            for (int i = l; i <= r; ++i) {
+                if (a[i] != -1) {
+                    inside_fixed[a[i]] = true;
+                    fixed_inside++;
+                }
+            }
+            for (int i = 0; i < n; ++i) {
+                if (i < l || i > r) {
+                    if (a[i] != -1) {
+                        outside_fixed[a[i]] = true;
+                    }
+                }
+            }
+            int c = k - fixed_inside; // -1 inside
+            int d = total_unknown - c; // -1 outside
+            int M = total_unknown;
+            for (int m = 0; m <= k; ++m) {
+                if (m < n && inside_fixed[m]) continue;
+                // check if any 0..m-1 is outside known
+                bool ok = true;
+                for (int x = 0; x < m; ++x) {
+                    if (outside_fixed[x]) { ok = false; break; }
+                }
+                if (!ok) continue;
+                int need = 0;
+                for (int x = 0; x < m; ++x) {
+                    if (!inside_fixed[x]) need++;
+                }
+                if (need > c) continue;
+                int available = M - need;
+                // if m is unknown, exclude it
+                if (m < n && !known_val[m]) available--;
+                if (available < c - need) continue;
+                long long comb = C(available, c - need);
+                long long ways = comb * fact[c] % MOD * fact[d] % MOD;
+                ans = (ans + m * ways) % MOD;
+            }
+        }
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    precompute();
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << solve_case() << '\n';
+    }
+    return 0;
+}

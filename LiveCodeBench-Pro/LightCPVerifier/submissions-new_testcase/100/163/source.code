@@ -1,0 +1,225 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+const long long INF = 1e18;
+
+int n, r, k;
+vector<vector<int>> a;
+vector<vector<int>> color;
+
+// Dinic
+struct Edge {
+    int to, rev;
+    long long cap;
+};
+vector<vector<Edge>> g;
+vector<int> level, iter;
+
+void add_edge(int from, int to, long long cap) {
+    g[from].push_back({to, (int)g[to].size(), cap});
+    g[to].push_back({from, (int)g[from].size() - 1, 0});
+}
+
+void bfs(int s) {
+    level.assign(g.size(), -1);
+    queue<int> q;
+    level[s] = 0;
+    q.push(s);
+    while (!q.empty()) {
+        int v = q.front(); q.pop();
+        for (auto &e : g[v]) {
+            if (e.cap > 0 && level[e.to] < 0) {
+                level[e.to] = level[v] + 1;
+                q.push(e.to);
+            }
+        }
+    }
+}
+
+long long dfs(int v, int t, long long f) {
+    if (v == t) return f;
+    for (int &i = iter[v]; i < (int)g[v].size(); i++) {
+        Edge &e = g[v][i];
+        if (e.cap > 0 && level[v] < level[e.to]) {
+            long long d = dfs(e.to, t, min(f, e.cap));
+            if (d > 0) {
+                e.cap -= d;
+                g[e.to][e.rev].cap += d;
+                return d;
+            }
+        }
+    }
+    return 0;
+}
+
+long long max_flow(int s, int t) {
+    long long flow = 0;
+    while (true) {
+        bfs(s);
+        if (level[t] < 0) return flow;
+        iter.assign(g.size(), 0);
+        long long f;
+        while ((f = dfs(s, t, INF)) > 0) {
+            flow += f;
+        }
+    }
+}
+
+bool canReachMouf(int limit, int banX = -1, int banY = -1) {
+    if (a[1][1] > limit) return false;
+    vector<vector<bool>> vis(n+1, vector<bool>(n+1, false));
+    queue<pair<int,int>> q;
+    if (!(1 == banX && 1 == banY)) {
+        q.push({1,1});
+        vis[1][1] = true;
+    }
+    int dr[] = {1, -1, 0, 0};
+    int dc[] = {0, 0, 1, -1};
+    while (!q.empty()) {
+        auto [x, y] = q.front(); q.pop();
+        if (x == r && y == n) return true;
+        for (int d = 0; d < 4; d++) {
+            int nx = x + dr[d];
+            int ny = y + dc[d];
+            if (nx >= 1 && nx <= n && ny >= 1 && ny <= n && !vis[nx][ny] && a[nx][ny] <= limit) {
+                if (nx == banX && ny == banY) continue;
+                vis[nx][ny] = true;
+                q.push({nx, ny});
+            }
+        }
+    }
+    return false;
+}
+
+int getDisM() {
+    int lo = 1, hi = 1e6, ans = hi;
+    while (lo <= hi) {
+        int mid = (lo + hi) / 2;
+        if (canReachMouf(mid)) {
+            ans = mid;
+            hi = mid - 1;
+        } else {
+            lo = mid + 1;
+        }
+    }
+    return ans;
+}
+
+vector<vector<bool>> getMustBlackCells(int disM) {
+    vector<vector<bool>> mustBlack(n+1, vector<bool>(n+1, false));
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (color[i][j] == 1 && a[i][j] <= disM) {
+                if (!canReachMouf(disM, i, j)) {
+                    mustBlack[i][j] = true;
+                }
+            }
+        }
+    }
+    return mustBlack;
+}
+
+bool checkF(int X, const vector<vector<bool>>& mustBlack) {
+    vector<vector<bool>> operable(n+1, vector<bool>(n+1, false));
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (color[i][j] == 1 && !mustBlack[i][j]) {
+                operable[i][j] = true;
+            }
+        }
+    }
+    
+    if (a[n][1] >= X) return true;
+    
+    int N = n*n;
+    g.assign(2*N + 2, vector<Edge>());
+    int S = 2*N, T = 2*N + 1;
+    
+    int start_in = (n-1)*n + 0;
+    int start_out = start_in + N;
+    int end_in = (r-1)*n + (n-1);
+    int end_out = end_in + N;
+    
+    add_edge(S, start_out, INF);
+    add_edge(end_in, T, INF);
+    
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            int in = (i-1)*n + (j-1);
+            int out = in + N;
+            if (a[i][j] < X) {
+                long long cap;
+                if (operable[i][j]) {
+                    cap = max(0, X - a[i][j]);
+                } else {
+                    cap = INF;
+                }
+                add_edge(in, out, cap);
+                int dr[] = {1, -1, 0, 0};
+                int dc[] = {0, 0, 1, -1};
+                for (int d = 0; d < 4; d++) {
+                    int ni = i + dr[d];
+                    int nj = j + dc[d];
+                    if (ni >= 1 && ni <= n && nj >= 1 && nj <= n && a[ni][nj] < X) {
+                        int nin = (ni-1)*n + (nj-1);
+                        add_edge(out, nin, INF);
+                    }
+                }
+            } else {
+                add_edge(in, out, INF);
+            }
+        }
+    }
+    
+    long long min_cut = max_flow(S, T);
+    return min_cut <= (long long)k;
+}
+
+void solve() {
+    cin >> n >> r >> k;
+    a.assign(n+1, vector<int>(n+1));
+    color.assign(n+1, vector<int>(n+1));
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            cin >> a[i][j];
+        }
+    }
+    for (int i = 1; i <= n; i++) {
+        string s;
+        cin >> s;
+        for (int j = 1; j <= n; j++) {
+            color[i][j] = s[j-1] - '0';
+        }
+    }
+    
+    int disM = getDisM();
+    auto mustBlack = getMustBlackCells(disM);
+    
+    int loF = 1, hiF = 2e6; // 最大可能值: 1e6 + k (但 k 可达 1e6)
+    int ansF = 1;
+    while (loF <= hiF) {
+        int mid = (loF + hiF) / 2;
+        if (checkF(mid, mustBlack)) {
+            ansF = mid;
+            loF = mid + 1;
+        } else {
+            hiF = mid - 1;
+        }
+    }
+    cout << disM << ' ' << ansF << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

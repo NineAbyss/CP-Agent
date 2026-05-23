@@ -1,0 +1,73 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <limits.h>
+
+using namespace std;
+
+int n, m;
+vector<tuple<int, int, int>> operations;
+
+bool isUnstable(int k, vector<int>& a, int index) {
+    vector<int> fixed_a = a;
+    vector<int> reduced_a = a;
+
+    for (auto& op : operations) {
+        int x, y, z;
+        tie(x, y, z) = op;
+        reduced_a[x - 1] = min(reduced_a[x - 1], reduced_a[y - 1] + z);
+    }
+
+    int needed = 0;
+    for (auto& op : operations) {
+        int x, y, z;
+        tie(x, y, z) = op;
+        fixed_a[x - 1] = min(fixed_a[x - 1], fixed_a[y - 1] + z);
+    }
+
+    int diff = fixed_a[index] - reduced_a[index];
+    reduced_a[index] -= diff;
+
+    for (auto& op : operations) {
+        int x, y, z;
+        tie(x, y, z) = op;
+        reduced_a[x - 1] = min(reduced_a[x - 1], reduced_a[y - 1] + z);
+    }
+
+    needed = fixed_a[index] - reduced_a[index];
+    return needed <= k;
+}
+
+int main() {
+    cin >> n >> m;
+    operations.resize(m);
+
+    for(int i = 0; i < m; ++i) {
+        int x, y, z;
+        cin >> x >> y >> z;
+        operations[i] = make_tuple(x, y, z);
+    }
+
+    int q;
+    cin >> q;
+    while(q--) {
+        int k;
+        cin >> k;
+        vector<int> a(n);
+        for(int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        string result(n, '0');
+
+        for(int i = 0; i < n; ++i) {
+            if (isUnstable(k, a, i)) {
+                result[i]='1';
+            }
+        }
+
+        cout << result << endl;
+    }
+
+    return 0;
+}

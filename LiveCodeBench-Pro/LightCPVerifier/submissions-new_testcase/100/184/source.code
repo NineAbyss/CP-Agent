@@ -1,0 +1,92 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <map>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        int cnt0 = count(s.begin(), s.end(), '0');
+        if (cnt0 == 0) {
+            cout << "1\n";
+            continue;
+        }
+        if (cnt0 == n) {
+            cout << (1LL*n*(n-1)/2) << "\n";
+            continue;
+        }
+        // 如果 cnt0 == n-1，使用公式
+        if (cnt0 == n-1) {
+            long long base = 1LL*n*(n-1) - 1LL*(n-1)*(n-2)/2;
+            if (s[0] == '1' || s[n-1] == '1') base -= 2;
+            // 调整
+            if (n >= 5) {
+                // 检查1是否在正中间
+                int pos = -1;
+                for (int i = 0; i < n; i++) if (s[i] == '1') pos = i;
+                if (pos == n/2 && n % 2 == 1) base += 1;
+            }
+            cout << base << "\n";
+            continue;
+        }
+        // 否则枚举 zeros
+        vector<pair<int,int>> zeros;
+        for (int j = 0; j < n; j++) {
+            if (s[j] == '0') {
+                for (int i = 0; i < n; i++) {
+                    if (i != j) zeros.emplace_back(i, j);
+                }
+            } else {
+                zeros.emplace_back(j, j);
+            }
+        }
+        // 映射坐标到索引
+        map<pair<int,int>, int> idx;
+        int m = zeros.size();
+        for (int i = 0; i < m; i++) {
+            idx[zeros[i]] = i;
+        }
+        // BFS
+        vector<bool> vis(m, false);
+        int maxcomp = 0;
+        int dx[4] = {1, -1, 0, 0};
+        int dy[4] = {0, 0, 1, -1};
+        for (int i = 0; i < m; i++) {
+            if (vis[i]) continue;
+            queue<int> q;
+            q.push(i);
+            vis[i] = true;
+            int sz = 0;
+            while (!q.empty()) {
+                int u = q.front(); q.pop();
+                sz++;
+                int x = zeros[u].first, y = zeros[u].second;
+                for (int d = 0; d < 4; d++) {
+                    int nx = x + dx[d], ny = y + dy[d];
+                    if (nx < 0 || nx >= n || ny < 0 || ny >= n) continue;
+                    bool isZero = (nx == ny ? s[ny] == '1' : s[ny] == '0');
+                    if (!isZero) continue;
+                    auto it = idx.find({nx, ny});
+                    if (it == idx.end()) continue;
+                    int v = it->second;
+                    if (!vis[v]) {
+                        vis[v] = true;
+                        q.push(v);
+                    }
+                }
+            }
+            maxcomp = max(maxcomp, sz);
+        }
+        cout << maxcomp << "\n";
+    }
+    return 0;
+}

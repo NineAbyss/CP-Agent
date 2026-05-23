@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        // 读边，但不需要存储
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+        }
+        
+        // 查询 f(1)
+        cout << "? 1 1 1" << endl;
+        int S;
+        cin >> S;
+        
+        // 翻转节点1，查询 f(1)
+        cout << "? 2 1" << endl;
+        cout << "? 1 1 1" << endl;
+        int S2;
+        cin >> S2;
+        int a1 = -(S2 - S) / 2;
+        // 翻转节点1恢复
+        cout << "? 2 1" << endl;
+        
+        // 查询每个 f(u) for u=2..n
+        vector<int> X(n+1);
+        X[1] = S;
+        for (int u = 2; u <= n; u++) {
+            cout << "? 1 1 " << u << endl;
+            cin >> X[u];
+        }
+        
+        // 尝试每个可能的根 r
+        int root = -1;
+        vector<int> ans(n+1);
+        for (int r = 1; r <= n; r++) {
+            vector<int> a(n+1);
+            a[1] = a1;
+            bool ok = true;
+            if (r == 1) {
+                // 根是1
+                for (int u = 2; u <= n; u++) {
+                    a[u] = X[u] - a1;
+                    if (abs(a[u]) != 1) { ok = false; break; }
+                }
+            } else {
+                // 根是 r
+                a[r] = X[r];
+                for (int u = 2; u <= n; u++) {
+                    if (u == r) continue;
+                    a[u] = X[u] - S;
+                    if (abs(a[u]) != 1) { ok = false; break; }
+                }
+            }
+            if (ok) {
+                root = r;
+                ans = a;
+                break;
+            }
+        }
+        
+        // 输出答案
+        cout << "!";
+        for (int i = 1; i <= n; i++) cout << " " << ans[i];
+        cout << endl;
+    }
+    return 0;
+}

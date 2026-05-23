@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+// Function to arrange cards in a grid to maximize the sum of MEX values
+void arrangeCardsInGrid(int n) {
+    vector<vector<int>> grid(n, vector<int>(n));
+    
+    // We will fill the grid in a diagonal manner to distribute numbers efficiently
+    int current = 0;
+    for (int sum = 0; sum < 2 * n - 1; ++sum) {
+        int startRow = max(0, sum - n + 1);
+        int endRow = min(n - 1, sum);
+        for (int i = startRow; i <= endRow; ++i) {
+            int j = sum - i;
+            grid[i][j] = current++;
+        }
+    }
+    
+    // Printing the grid
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            cout << grid[i][j] << " ";
+        }
+        cout << endl;
+    }
+}
+
+int main() {
+    int t;
+    cin >> t; // Number of test cases
+    
+    while (t--) {
+        int n;
+        cin >> n; // Size of the grid
+        arrangeCardsInGrid(n);
+    }
+    
+    return 0;
+}

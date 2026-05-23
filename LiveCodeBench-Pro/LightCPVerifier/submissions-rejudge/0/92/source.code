@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        // 计算每个元素最后出现的位置
+        vector<int> last(n + 1, -1);
+        for (int i = 0; i < n; i++) {
+            last[a[i]] = i;
+        }
+        
+        int segments = 0;
+        unordered_set<int> required;
+        unordered_set<int> current;
+        int required_count = 0;
+        int min_last = n + 1;
+        
+        for (int i = 0; i < n; i++) {
+            int x = a[i];
+            
+            // 如果 x 不在 current 中，添加它
+            if (current.find(x) == current.end()) {
+                current.insert(x);
+                // 如果 x 在 required 中，减少 required_count
+                if (required.find(x) != required.end()) {
+                    required_count--;
+                }
+                // 更新 min_last
+                if (last[x] < min_last) {
+                    min_last = last[x];
+                }
+            }
+            
+            // 检查是否可以在 i 处分割
+            if (required_count == 0 && min_last > i && i < n - 1) {
+                segments++;
+                // 下一个段必须包含 current 中的所有元素 // 使用移动语义，避免复制
+                required = std::move(current);
+                required_count = (int)required.size();
+                current.clear();
+                min_last = n + 1;
+            }
+        }
+        
+        segments++; // 最后一段
+        cout << segments << '\n';
+    }
+    
+    return 0;
+}

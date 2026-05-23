@@ -1,0 +1,44 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> G(n+1, vector<int>(n+1));
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= n; j++) {
+                cin >> G[i][j];
+            }
+        }
+        vector<int> p(2*n+1, 0);
+        vector<bool> used(2*n+1, false);
+        for (int k = 2; k <= 2*n; k++) {
+            // 取 i=1, j=k-1 如果 j<=n，否则取 i=k-n, j=n
+            int i, j;
+            if (k-1 <= n) {
+                i = 1;
+                j = k-1;
+            } else {
+                i = k - n;
+                j = n;
+            }
+            p[k] = G[i][j];
+            used[p[k]] = true;
+        }
+        // 找缺失的 p[1]
+        for (int x = 1; x <= 2*n; x++) {
+            if (!used[x]) {
+                p[1] = x;
+                break;
+            }
+        }
+        for (int i = 1; i <= 2*n; i++) {
+            cout << p[i] << (i == 2*n ? "\n" : " ");
+        }
+    }
+    return 0;
+}

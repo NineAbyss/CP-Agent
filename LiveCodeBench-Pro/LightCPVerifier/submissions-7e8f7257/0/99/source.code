@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        
+        priority_queue<pair<int, int>> maxHeap; // (length, index)
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> minHeap;
+        
+        for (int i = 0; i < n; i++) {
+            maxHeap.push({a[i], i});
+            minHeap.push({a[i], i});
+        }
+        
+        vector<int> cur = a;
+        long long moves = 0;
+        
+        while (true) {
+            auto maxTop = maxHeap.top(); maxHeap.pop();
+            auto minTop = minHeap.top(); minHeap.pop();
+            
+            int maxLen = maxTop.first, maxIdx = maxTop.second;
+            int minLen = minTop.first, minIdx = minTop.second;
+            
+            if (maxLen <= minLen + k + 1) {
+                // put back and finish
+                maxHeap.push({maxLen, maxIdx});
+                minHeap.push({minLen, minIdx});
+                break;
+            }
+            
+            // move one car
+            cur[maxIdx]--;
+            cur[minIdx]++;
+            moves++;
+            
+            maxHeap.push({cur[maxIdx], maxIdx});
+            minHeap.push({cur[minIdx], minIdx});
+        }
+        
+        long long total = 0;
+        for (int x : cur) {
+            total += (long long)x * (x + 1) / 2;
+        }
+        total += moves * k;
+        
+        cout << total << '\n';
+    }
+    return 0;
+}

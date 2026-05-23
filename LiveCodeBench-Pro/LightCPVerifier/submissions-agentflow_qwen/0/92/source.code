@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool check(int x, const vector<int>& a, int k) {
+    if (x == 0) return true;
+    vector<bool> has(x, false);
+    int found = 0;
+    int segments = 0;
+    for (int val : a) {
+        if (val < x) {
+            if (!has[val]) {
+                has[val] = true;
+                found++;
+            }
+        }
+        if (found == x) {
+            segments++;
+            fill(has.begin(), has.end(), false);
+            found = 0;
+        }
+    }
+    return segments >= k;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // Binary search on x: maximum MEX min value
+        int left = 0, right = n + 2; // MEX can be at most n+1
+        int ans = 0;
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            if (check(mid, a, k)) {
+                ans = mid;
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

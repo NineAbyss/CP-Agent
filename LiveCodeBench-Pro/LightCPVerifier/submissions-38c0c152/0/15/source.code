@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<string> grid(n);
+        for (int i = 0; i < n; i++) {
+            cin >> grid[i];
+        }
+        vector<vector<bool>> good(n, vector<bool>(m, false));
+        // 收集所有初始空单元格
+        vector<pair<int,int>> empties;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (grid[i][j] == '.') {
+                    empties.emplace_back(i, j);
+                }
+            }
+        }
+        // 对于每个空单元格，标记距离 = k 的金矿
+        for (auto [x, y] : empties) {
+            // 枚举边界格子 // 1) dx = ±k, dy 从 -k 到 k
+            for (int dy = -k; dy <= k; dy++) {
+                int nx1 = x - k, nx2 = x + k;
+                int ny1 = y + dy, ny2 = y + dy;
+                if (nx1 >= 0 && nx1 < n && ny1 >= 0 && ny1 < m && grid[nx1][ny1] == 'g') {
+                    good[nx1][ny1] = true;
+                }
+                if (nx2 >= 0 && nx2 < n && ny2 >= 0 && ny2 < m && grid[nx2][ny2] == 'g') {
+                    good[nx2][ny2] = true;
+                }
+            }
+            // 2) dy = ±k, dx 从 -k+1 到 k-1 (避免重复)
+            for (int dx = -k+1; dx <= k-1; dx++) {
+                int nx1 = x + dx, nx2 = x + dx;
+                int ny1 = y - k, ny2 = y + k;
+                if (nx1 >= 0 && nx1 < n && ny1 >= 0 && ny1 < m && grid[nx1][ny1] == 'g') {
+                    good[nx1][ny1] = true;
+                }
+                if (nx2 >= 0 && nx2 < n && ny2 >= 0 && ny2 < m && grid[nx2][ny2] == 'g') {
+                    good[nx2][ny2] = true;
+                }
+            }
+        }
+        int ans = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (grid[i][j] == 'g' && good[i][j]) {
+                    ans++;
+                }
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

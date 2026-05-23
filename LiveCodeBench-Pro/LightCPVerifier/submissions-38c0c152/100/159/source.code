@@ -1,0 +1,151 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+#include <random>
+using namespace std;
+
+struct Node {
+    int size, prio;
+    bool rev;
+    set<int> st;
+    Node *left, *right;
+    Node() : size(1), prio(rand()), rev(false), left(nullptr), right(nullptr) {}
+};
+
+int getSize(Node* node) {
+    return node ? node->size : 0;
+}
+
+void updateSize(Node* node) {
+    if (node) node->size = 1 + getSize(node->left) + getSize(node->right);
+}
+
+void pushRev(Node* node) {
+    if (node && node->rev) {
+        node->rev = false;
+        swap(node->left, node->right);
+        if (node->left) node->left->rev ^= 1;
+        if (node->right) node->right->rev ^= 1;
+    }
+}
+
+pair<Node*, Node*> split(Node* node, int k) { // split first k nodes (by size)
+    if (!node) return {nullptr, nullptr};
+    pushRev(node);
+    int leftSize = getSize(node->left);
+    if (k <= leftSize) {
+        auto [left, right] = split(node->left, k);
+        node->left = right;
+        updateSize(node);
+        return {left, node};
+    } else {
+        auto [left, right] = split(node->right, k - leftSize - 1);
+        node->right = left;
+        updateSize(node);
+        return {node, right};
+    }
+}
+
+Node* merge(Node* a, Node* b) {
+    if (!a) return b;
+    if (!b) return a;
+    pushRev(a);
+    pushRev(b);
+    if (a->prio < b->prio) {
+        a->right = merge(a->right, b);
+        updateSize(a);
+        return a;
+    } else {
+        b->left = merge(a, b->left);
+        updateSize(b);
+        return b;
+    }
+}
+
+// 将元素 i 插入到以 node 为根的子树中的所有叶子节点
+void insertAll(Node* node, int i) {
+    if (!node) return;
+    pushRev(node);
+    if (node->left == nullptr && node->right == nullptr) {
+        node->st.insert(i);
+    } else {
+        insertAll(node->left, i);
+        insertAll(node->right, i);
+    }
+}
+
+// 插入操作：将 i 插入到前 r 个叶子节点
+void insertOp(Node*& root, int r, int i) {
+    if (r == 0) return;
+    auto [left, right] = split(root, r);
+    insertAll(left, i);
+    root = merge(left, right);
+}
+
+// 反转操作
+void reverseOp(Node*& root, int r) {
+    if (r == 0) return;
+    auto [left, right] = split(root, r);
+    if (left) left->rev ^= 1;
+    root = merge(left, right);
+}
+
+// 查询第 p 个叶子节点
+int queryOp(Node* root, int p, set<int>& deleted) {
+    Node* node = root;
+    int l = 1;
+    while (node) {
+        pushRev(node);
+        int leftSize = getSize(node->left);
+        int curPos = l + leftSize;
+        if (p < curPos) {
+            node = node->left;
+        } else if (p > curPos) {
+            l = curPos + 1;
+            node = node->right;
+        } else {
+            // 找到节点
+            for (int val : node->st) {
+                if (!deleted.count(val)) {
+                    return val;
+                }
+            }
+            return 0;
+        }
+    }
+    return 0;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int n, q;
+    cin >> n >> q;
+    srand(123456);
+    Node* root = nullptr;
+    for (int i=0; i<n; i++) {
+        Node* node = new Node();
+        root = merge(root, node);
+    }
+    set<int> deleted;
+    int ans = 0;
+    for (int i=1; i<=q; i++) {
+        int a, b, c;
+        cin >> a >> b >> c;
+        if (a == 1) {
+            int r = (b + ans - 1) % n + 1;
+            insertOp(root, r, i);
+        } else if (a == 2) {
+            int r = (b + ans - 1) % n + 1;
+            reverseOp(root, r);
+        } else if (a == 3) {
+            int x = (b + ans - 1) % q + 1;
+            deleted.insert(x);
+        }
+        int p = (c + ans - 1) % n + 1;
+        ans = queryOp(root, p, deleted);
+        cout << ans << '\n';
+    }
+    return 0;
+}

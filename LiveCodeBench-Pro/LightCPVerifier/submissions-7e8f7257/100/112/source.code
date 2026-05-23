@@ -1,0 +1,117 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <iomanip>
+using namespace std;
+
+vector<int> normalize(vector<int> b) {
+    sort(b.rbegin(), b.rend());
+    return b;
+}
+
+void solve() {
+    int n, m, p_percent;
+    cin >> n >> m >> p_percent;
+    double p = p_percent / 100.0;
+    vector<int> h(n);
+    for (int i = 0; i < n; ++i) cin >> h[i];
+    vector<int> start(n);
+    for (int i = 0; i < n; ++i) start[i] = h[i] - 1;
+    start = normalize(start);
+    
+    // collect all reachable states
+    map<vector<int>, int> id;
+    vector<vector<int>> states;
+    id[start] = 0;
+    states.push_back(start);
+    
+    for (int idx = 0; idx < (int)states.size(); ++idx) {
+        vector<int> s = states[idx];
+        // sword shines attack
+        bool canAll = true;
+        for (int x : s) if (x == 0) { canAll = false; break; }
+        if (canAll) {
+            vector<int> ns = s;
+            for (int &x : ns) if (x > 0) x--;
+            ns = normalize(ns);
+            if (!id.count(ns)) {
+                id[ns] = states.size();
+                states.push_back(ns);
+            }
+        }
+        // sword not shines attack one
+        for (int i = 0; i < n; ++i) {
+            if (s[i] > 0) {
+                vector<int> ns = s;
+                ns[i]--;
+                ns = normalize(ns);
+                if (!id.count(ns)) {
+                    id[ns] = states.size();
+                    states.push_back(ns);
+                }
+            }
+        }
+    }
+    
+    int S = states.size();
+    vector<vector<double>> f(m + 1, vector<double>(S, 0.0));
+    
+    // f[0][s] = 1 if all zero
+    for (int i = 0; i < S; ++i) {
+        bool allZero = true;
+        for (int x : states[i]) if (x > 0) { allZero = false; break; }
+        if (allZero) f[0][i] = 1.0;
+    }
+    
+    for (int r = 1; r <= m; ++r) {
+        for (int i = 0; i < S; ++i) {
+            vector<int> s = states[i];
+            bool allZero = true;
+            for (int x : s) if (x > 0) { allZero = false; break; }
+            if (allZero) {
+                f[r][i] = 1.0;
+                continue;
+            }
+            
+            // sword shines
+            double bestShine = f[r-1][i]; // not attack
+            bool canAll = true;
+            for (int x : s) if (x == 0) { canAll = false; break; }
+            if (canAll) {
+                vector<int> ns = s;
+                for (int &x : ns) if (x > 0) x--;
+                ns = normalize(ns);
+                int nid = id[ns];
+                bestShine = max(bestShine, f[r-1][nid]);
+            }
+            
+            // sword not shines
+            double bestNoShine = f[r-1][i]; // not attack
+            for (int j = 0; j < n; ++j) {
+                if (s[j] > 0) {
+                    vector<int> ns = s;
+                    ns[j]--;
+                    ns = normalize(ns);
+                    int nid = id[ns];
+                    bestNoShine = max(bestNoShine, f[r-1][nid]);
+                }
+            }
+            
+            f[r][i] = p * bestShine + (1-p) * bestNoShine;
+        }
+    }
+    
+    cout << fixed << setprecision(6) << f[m][id[start]] << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

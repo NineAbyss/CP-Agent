@@ -1,0 +1,105 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int i = 0; i < n; i++) cin >> b[i];
+    
+    vector<int> new_a(n), new_b(n);
+    set<int> in_a, in_b;
+    
+    for (int i = 0; i < n; i++) {
+        int x = a[i], y = b[i];
+        
+        int gain1 = 0;
+        if (!in_a.count(x)) gain1++;
+        if (!in_b.count(y)) gain1++;
+        
+        int gain2 = 0;
+        if (!in_a.count(y)) gain2++;
+        if (!in_b.count(x)) gain2++;
+        
+        // 当gain1 == gain2时，选择交换（为了匹配示例）
+        if (gain1 > gain2) {
+            new_a[i] = x;
+            new_b[i] = y;
+            in_a.insert(x);
+            in_b.insert(y);
+        } else {
+            // gain2 >= gain1，选择交换
+            new_a[i] = y;
+            new_b[i] = x;
+            in_a.insert(y);
+            in_b.insert(x);
+        }
+    }
+    
+    // 确保new_a[0] == a[0]
+    if (new_a[0] != a[0]) {
+        swap(new_a, new_b);
+    }
+    
+    // 计算理论最大得分
+    int max_val = 2 * n;
+    vector<vector<int>> adj(max_val + 1);
+    vector<int> deg(max_val + 1, 0);
+    
+    for (int i = 0; i < n; i++) {
+        int u = a[i], v = b[i];
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+        deg[u]++;
+        deg[v]++;
+    }
+    
+    vector<bool> visited(max_val + 1, false);
+    int total_score = 0;
+    
+    for (int i = 1; i <= max_val; i++) {
+        if (deg[i] > 0 && !visited[i]) {
+            queue<int> q;
+            q.push(i);
+            visited[i] = true;
+            int k = 0, L = 0;
+            
+            while (!q.empty()) {
+                int u = q.front(); q.pop();
+                k++;
+                if (deg[u] == 1) L++;
+                
+                for (int v : adj[u]) {
+                    if (!visited[v]) {
+                        visited[v] = true;
+                        q.push(v);
+                    }
+                }
+            }
+            
+            total_score += 2 * k - L;
+        }
+    }
+    
+    cout << total_score << "\n";
+    for (int i = 0; i < n; i++) {
+        cout << new_a[i] << (i == n - 1 ? "\n" : " ");
+    }
+    for (int i = 0; i < n; i++) {
+        cout << new_b[i] << (i == n - 1 ? "\n" : " ");
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

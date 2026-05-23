@@ -1,0 +1,138 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+using ll = long long;
+
+const ll INF = 1'000'000'000'000'000'000LL; // 1e18
+
+ll max_subarray_sum(const vector<ll>& arr) {
+    ll meh = arr[0], msf = arr[0];
+    for (size_t i = 1; i < arr.size(); ++i) {
+        meh = max(arr[i], meh + arr[i]);
+        msf = max(msf, meh);
+    }
+    return msf;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        ll k;
+        cin >> n >> k;
+        string s;
+        cin >> s;
+        vector<ll> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        
+        // Step 1: compute M_fixed = max subarray sum of fully known segments
+        ll M_fixed = -INF;
+        ll cur_max = 0, cur_sum = 0;
+        bool in_segment = false;
+        for (int i = 0; i < n; ++i) {
+            if (s[i] == '1') {
+                if (!in_segment) {
+                    // start new segment
+                    cur_max = a[i];
+                    cur_sum = a[i];
+                    in_segment = true;
+                } else {
+                    // continue segment
+                    cur_sum = max(a[i], cur_sum + a[i]);
+                    cur_max = max(cur_max, cur_sum);
+                }
+            } else {
+                if (in_segment) {
+                    // segment ends
+                    M_fixed = max(M_fixed, cur_max);
+                    in_segment = false;
+                }
+            }
+        }
+        if (in_segment) {
+            M_fixed = max(M_fixed, cur_max);
+        }
+        if (M_fixed > k) {
+            cout << "No\n";
+            continue;
+        }
+        if (M_fixed == k) {
+            cout << "Yes\n";
+            for (int i = 0; i < n; ++i) {
+                if (s[i] == '0') cout << -INF << ' ';
+                else cout << a[i] << ' ';
+            }
+            cout << '\n';
+            continue;
+        }
+        // M_fixed < k // find first unknown position
+        int p = -1;
+        for (int i = 0; i < n; ++i) {
+            if (s[i] == '0') {
+                p = i;
+                break;
+            }
+        }
+        if (p == -1) {
+            // no unknown positions
+            cout << "No\n";
+            continue;
+        }
+        // compute L = max suffix sum of known segment left of p
+        ll L = 0;
+        int left = p - 1;
+        while (left >= 0 && s[left] == '0') --left;
+        if (left >= 0) {
+            ll suffix = 0, best = -INF;
+            for (int i = left; i >= 0 && s[i] == '1'; --i) {
+                suffix += a[i];
+                best = max(best, suffix);
+            }
+            L = best;
+        }
+        // compute R = max prefix sum of known segment right of p
+        ll R = 0;
+        int right = p + 1;
+        while (right < n && s[right] == '0') ++right;
+        if (right < n) {
+            ll prefix = 0, best = -INF;
+            for (int i = right; i < n && s[i] == '1'; ++i) {
+                prefix += a[i];
+                best = max(best, prefix);
+            }
+            R = best;
+        }
+        ll delta = max(0LL, max(L, max(R, L + R)));
+        ll a_p = k - delta;
+        // construct answer
+        vector<ll> ans = a;
+        for (int i = 0; i < n; ++i) {
+            if (s[i] == '0') ans[i] = -INF;
+        }
+        ans[p] = a_p;
+        // verification (optional, can be removed)
+        // ll check = max_subarray_sum(ans);
+        // if (check != k) { //     // should not happen
+        //     cout << "No\n";
+        //     continue;
+        // }
+        cout << "Yes\n";
+        for (int i = 0; i < n; ++i) {
+            cout << ans[i] << ' ';
+        }
+        cout << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

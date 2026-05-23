@@ -1,0 +1,233 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <climits>
+#include <string>
+using namespace std;
+
+typedef long long ll;
+
+struct MaxFlow {
+    struct Edge {
+        int to, rev;
+        ll cap;
+    };
+    int n;
+    vector<vector<Edge>> g;
+    vector<int> level, iter;
+    MaxFlow(int n_) : n(n_), g(n_), level(n_), iter(n_) {}
+    void add_edge(int from, int to, ll cap) {
+        g[from].push_back({to, (int)g[to].size(), cap});
+        g[to].push_back({from, (int)g[from].size()-1, 0});
+    }
+    void bfs(int s) {
+        fill(level.begin(), level.end(), -1);
+        queue<int> q;
+        level[s] = 0;
+        q.push(s);
+        while (!q.empty()) {
+            int v = q.front(); q.pop();
+            for (auto &e : g[v]) {
+                if (e.cap > 0 && level[e.to] < 0) {
+                    level[e.to] = level[v] + 1;
+                    q.push(e.to);
+                }
+            }
+        }
+    }
+    ll dfs(int v, int t, ll f) {
+        if (v == t) return f;
+        for (int &i = iter[v]; i < (int)g[v].size(); i++) {
+            Edge &e = g[v][i];
+            if (e.cap > 0 && level[v] < level[e.to]) {
+                ll d = dfs(e.to, t, min(f, e.cap));
+                if (d > 0) {
+                    e.cap -= d;
+                    g[e.to][e.rev].cap += d;
+                    return d;
+                }
+            }
+        }
+        return 0;
+    }
+    ll max_flow(int s, int t) {
+        ll flow = 0;
+        while (true) {
+            bfs(s);
+            if (level[t] < 0) return flow;
+            fill(iter.begin(), iter.end(), 0);
+            ll f;
+            while ((f = dfs(s, t, LLONG_MAX)) > 0) {
+                flow += f;
+            }
+        }
+    }
+};
+
+int n, r;
+vector<vector<int>> a;
+vector<vector<int>> color; // 1 for black
+int disM;
+
+// BFS check with blocked cells and max value constraint
+bool bfs_check(const vector<vector<bool>>& blocked, int sr, int sc, int tr, int tc, int maxVal) {
+    if (a[sr][sc] > maxVal) return false;
+    vector<vector<bool>> vis(n, vector<bool>(n, false));
+    queue<pair<int,int>> q;
+    q.push({sr, sc});
+    vis[sr][sc] = true;
+    int dr[] = {1, -1, 0, 0};
+    int dc[] = {0, 0, 1, -1};
+    while (!q.empty()) {
+        auto [i, j] = q.front(); q.pop();
+        if (i == tr && j == tc) return true;
+        for (int d = 0; d < 4; d++) {
+            int ni = i + dr[d];
+            int nj = j + dc[d];
+            if (ni >= 0 && ni < n && nj >= 0 && nj < n && !vis[ni][nj] && !blocked[ni][nj] && a[ni][nj] <= maxVal) {
+                vis[ni][nj] = true;
+                q.push({ni, nj});
+            }
+        }
+    }
+    return false;
+}
+
+// compute cells that are mandatory for Mouf: removing them disconnects (1,1) and (r,n) in graph of cells with value <= disM
+vector<vector<bool>> compute_mandatory() {
+    vector<vector<bool>> mandatory(n, vector<bool>(n, false));
+    vector<vector<bool>> good(n, vector<bool>(n, false));
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            if (a[i][j] <= disM) good[i][j] = true;
+    // for each cell with value <= disM, check if removal breaks connectivity
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (!good[i][j]) continue;
+            vector<vector<bool>> blocked(n, vector<bool>(n, false));
+            blocked[i][j] = true;
+            if (!bfs_check(blocked, 0, 0, r-1, n-1, disM)) {
+                mandatory[i][j] = true;
+            }
+        }
+    }
+    return mandatory;
+}
+
+// check if we can achieve dis_F >= D with at most k operations
+bool feasible(int D, int k, const vector<vector<bool>>& mandatory) {
+    int nodes = 2 * n * n + 2;
+    int src = 2 * n * n;
+    int sink = src + 1;
+    MaxFlow mf(nodes);
+    auto in_id = [&](int i, int j) { return i * n + j; };
+    auto out_id = [&](int i, int j) { return in_id(i,j) + n * n; };
+    const ll INF = 1e9;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            int u_in = in_id(i,j);
+            int u_out = out_id(i,j);
+            ll cost = INF;
+            if (color[i][j] == 1) {
+                cost = max(0, D - a[i][j]);
+            }
+            // if D > disM and cell is mandatory for Mouf, we cannot select it
+            if (D > disM && mandatory[i][j]) {
+                cost = INF;
+            }
+            mf.add_edge(u_in, u_out, cost);
+            // edges to neighbors (undirected)
+            int dr[] = {1, -1, 0, 0};
+            int dc[] = {0, 0, 1, -1};
+            for (int d = 0; d < 4; d++) {
+                int ni = i + dr[d];
+                int nj = j + dc[d];
+                if (ni >= 0 && ni < n && nj >= 0 && nj < n) {
+                    mf.add_edge(u_out, in_id(ni,nj), INF);
+                }
+            }
+        }
+    }
+    int fouad_start_in = in_id(n-1, 0);
+    int fouad_end_out = out_id(r-1, n-1);
+    mf.add_edge(src, fouad_start_in, INF);
+    mf.add_edge(fouad_end_out, sink, INF);
+    
+    ll min_cut_cost = mf.max_flow(src, sink);
+    return min_cut_cost <= k;
+}
+
+void solve() {
+    int k;
+    cin >> n >> r >> k;
+    a.assign(n, vector<int>(n));
+    color.assign(n, vector<int>(n));
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            cin >> a[i][j];
+        }
+    }
+    for (int i = 0; i < n; i++) {
+        string s;
+        cin >> s;
+        for (int j = 0; j < n; j++) {
+            color[i][j] = s[j] - '0';
+        }
+    }
+    
+    // compute disM: minimal bottleneck from (1,1) to (r,n)
+    int lo = 1, hi = 1000000;
+    while (lo <= hi) {
+        int mid = (lo + hi) / 2;
+        if (bfs_check(vector<vector<bool>>(n, vector<bool>(n, false)), 0, 0, r-1, n-1, mid)) {
+            disM = mid;
+            hi = mid - 1;
+        } else {
+            lo = mid + 1;
+        }
+    }
+    
+    // compute mandatory cells for Mouf
+    vector<vector<bool>> mandatory = compute_mandatory();
+    
+    // compute original disF as lower bound
+    int disF_orig = 0;
+    lo = 1, hi = 1000000;
+    while (lo <= hi) {
+        int mid = (lo + hi) / 2;
+        if (bfs_check(vector<vector<bool>>(n, vector<bool>(n, false)), n-1, 0, r-1, n-1, mid)) {
+            disF_orig = mid;
+            hi = mid - 1;
+        } else {
+            lo = mid + 1;
+        }
+    }
+    
+    // binary search for maximum achievable disF
+    int lowD = disF_orig;
+    int highD = 1000000 + k; // safe upper bound
+    int ansD = lowD;
+    while (lowD <= highD) {
+        int midD = (lowD + highD) / 2;
+        if (feasible(midD, k, mandatory)) {
+            ansD = midD;
+            lowD = midD + 1;
+        } else {
+            highD = midD - 1;
+        }
+    }
+    
+    cout << disM << " " << ansD << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

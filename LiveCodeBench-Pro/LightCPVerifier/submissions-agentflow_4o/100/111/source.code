@@ -1,0 +1,49 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+int calculate_cost(const string& s) {
+    int cost = 0;
+    char current_key = '0'; // Start with a finger on '0'
+    for (char c : s) {
+        if (c != current_key) {
+            cost += 1; // Toggle required
+            current_key = c;
+        }
+        cost += 1; // Typing the current character
+    }
+    return cost;
+}
+
+int min_cost_by_reverse(const string& s, int n) {
+    // Find the original cost without reversals
+    int original_cost = calculate_cost(s);
+    
+    // Determine the best cost among reversing any possible substrings once
+    int min_cost = original_cost;
+    
+    for (int l = 0; l < n; ++l) {
+        for (int r = l; r < n; ++r) {
+            // Create a reversed version
+            string current_str = s;
+            reverse(current_str.begin() + l, current_str.begin() + r + 1);
+            int reversed_cost = calculate_cost(current_str);
+            min_cost = min(min_cost, reversed_cost);
+        }
+    }
+    
+    return min_cost;
+}
+
+
+int main() {
+    int t; cin >> t;
+    while (t--) {
+        int n; cin >> n;
+        string s; cin >> s;
+        cout << min_cost_by_reverse(s, n) << endl;
+    }
+    return 0;
+}

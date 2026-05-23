@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int floor_div2(int x) {
+    if (x >= 0) return x / 2;
+    else return (x - 1) / 2;
+}
+
+int kadane(const vector<int>& a, int v) {
+    int max_sum = a[0] == v ? 1 : -1;
+    int current = max_sum;
+    for (int i = 1; i < a.size(); i++) {
+        int val = (a[i] == v) ? 1 : -1;
+        current = max(val, current + val);
+        max_sum = max(max_sum, current);
+    }
+    return max_sum;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        map<int, int> best_k;
+        multiset<int> all_ks;
+
+        set<int> distinct;
+        for (int x : a) {
+            distinct.insert(x);
+        }
+        for (int v : distinct) {
+            int max_sum = kadane(a, v);
+            int k_val = floor_div2(max_sum);
+            best_k[v] = k_val;
+            all_ks.insert(k_val);
+        }
+
+        for (int iq = 0; iq < q; iq++) {
+            int idx, x;
+            cin >> idx >> x;
+            idx--;
+            int old_val = a[idx];
+            a[idx] = x;
+
+            vector<int> to_update = {old_val, x};
+            for (int v : to_update) {
+                if (best_k.find(v) != best_k.end()) {
+                    auto it = all_ks.find(best_k[v]);
+                    all_ks.erase(it);
+                }
+                int new_max_sum = kadane(a, v);
+                int new_k = floor_div2(new_max_sum);
+                best_k[v] = new_k;
+                all_ks.insert(new_k);
+            }
+
+            int ans = *all_ks.rbegin();
+            cout << ans;
+            if (iq < q-1) cout << " ";
+        }
+        cout << '\n';
+    }
+
+    return 0;
+}

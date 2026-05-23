@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+using namespace std;
+
+// Computes the first 10 Fibonacci numbers, representing cube sizes.
+vector<int> computeFibonacciCubes() {
+    vector<int> fibonacci(10);
+    fibonacci[0] = 1;
+    fibonacci[1] = 2;
+    for (int i = 2; i < 10; ++i) {
+        fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
+    }
+    return fibonacci;
+}
+
+// Checks if cubes fit in a given permutation of the box
+bool canFitInBox(const vector<int>& cubes, vector<int> box) {
+    int totalHeight = accumulate(cubes.begin(), cubes.end(), 0);
+    int maxCubeSide = *max_element(cubes.begin(), cubes.end());
+
+    // Ensure dimensions check, using permutations of box dimensions
+    sort(box.begin(), box.end());
+    do {
+        if (totalHeight <= box[2] && maxCubeSide <= box[0] && maxCubeSide <= box[1]) {
+            return true;
+        }
+    } while (next_permutation(box.begin(), box.end()));
+
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int t;
+    cin >> t;
+    vector<int> fibonacciCubes = computeFibonacciCubes();
+
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+
+        vector<int> cubes(fibonacciCubes.begin(), fibonacciCubes.begin() + n);
+        string result(m, '0');
+
+        for (int i = 0; i < m; ++i) {
+            vector<int> box(3);
+            cin >> box[0] >> box[1] >> box[2];
+
+            if (canFitInBox(cubes, box)) {
+                result[i] = '1';
+            }
+        }
+
+        cout << result << "\n";
+    }
+
+    return 0;
+}

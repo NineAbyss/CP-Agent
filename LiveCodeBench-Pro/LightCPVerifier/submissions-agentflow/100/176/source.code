@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, x;
+        cin >> n >> x;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        int min_close = n + 1, max_close = 0;
+        for (int i = 0; i < n; i++) {
+            if (a[i] == 1) {
+                min_close = min(min_close, i + 1);
+                max_close = max(max_close, i + 1);
+            }
+        }
+        if (max_close - min_close < x) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

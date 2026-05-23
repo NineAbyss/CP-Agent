@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+
+        vector<vector<int>> ops;
+
+        // We start with matrix where A[i][j] = j for all rows i. // Our goal is to make each column a permutation of [1, n].
+        // Idea: For row i (from 2 to n), we can fix the values so that column j eventually contains all numbers 1..n.
+
+        // Strategy: // We leave row 1 unchanged (it's [1,2,...,n]).
+        // For row i (starting from 2), we want to permute it so that over all rows, each column becomes a permutation. // One known constructive solution:
+        // For row i (i >= 2), reverse subarray [1, i], then reverse [2, i], ..., up to [i-1, i]
+        // But simpler idea: use cyclic shift via reversals.
+
+        // Alternate known solution from example pattern: // For row i from 2 to n:
+        //   - Reverse [1, i] //   - Then reverse [2, i]
+        // This effectively rotates the first i elements left by one? Let's simulate: // Row initially: [1,2,3,4]
+        // Step 1: reverse [1,4] -> [4,3,2,1] // Step 2: reverse [2,4] -> [4,1,2,3] — this is left rotation by 1.
+
+        // Actually, reversing [1,i] then [2,i] gives a left rotation of first i elements. // So after these two operations on row i, the row becomes: [2,3,...,i,1,i+1,...,n]
+
+        // However, we only need at most 2n operations. So we can do up to 2 per row starting from row 2.
+
+        for (int i = 2; i <= n; i++) {
+            // First operation: reverse [1, i] in row i
+            ops.push_back({i, 1, i});
+            // Second operation: reverse [2, i] in row i
+            ops.push_back({i, 2, i});
+        }
+
+        cout << ops.size() << '\n';
+        for (auto &op : ops) {
+            cout << op[0] << " " << op[1] << " " << op[2] << '\n';
+        }
+    }
+
+    return 0;
+}

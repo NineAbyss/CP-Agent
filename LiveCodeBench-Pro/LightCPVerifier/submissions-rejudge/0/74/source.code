@@ -1,0 +1,25 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, s;
+        cin >> n >> s;
+        int potted = 0;
+        for (int i = 0; i < n; i++) {
+            int dx, dy, x, y;
+            cin >> dx >> dy >> x >> y;
+            long long R = 1LL * dy * x - 1LL * dx * y;
+            if (R % s == 0) {
+                potted++;
+            }
+        }
+        cout << potted << '\n';
+    }
+    return 0;
+}

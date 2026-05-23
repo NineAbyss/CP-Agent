@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(n), b(n);
+    for (int& x : a) cin >> x;
+    for (int& x : b) cin >> x;
+
+    vector<int> candidates;
+    for (int i = 0; i < n; i++) {
+        if (a[i] == b[0]) {
+            candidates.push_back(i);
+        }
+    }
+
+    for (int start : candidates) {
+        vector<int> cur = a;
+        rotate(cur.begin(), cur.begin() + start, cur.end());
+
+        bool valid = true;
+        for (int k = 1; k < m && valid; k++) {
+            vector<int> seq1, seq2;
+            for (int x : cur) {
+                if (x == k || x == k+1) {
+                    seq1.push_back(x);
+                }
+            }
+            for (int x : b) {
+                if (x == k || x == k+1) {
+                    seq2.push_back(x);
+                }
+            }
+            if (seq1 != seq2) {
+                valid = false;
+            }
+        }
+        if (valid) {
+            cout << "YES\n";
+            return;
+        }
+    }
+    cout << "NO\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

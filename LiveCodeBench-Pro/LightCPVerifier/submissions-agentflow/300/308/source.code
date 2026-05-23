@@ -1,0 +1,140 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const int N = 205;
+const int M = 40000; // 200*200
+const ll INF = 1e18;
+
+int n, m, q;
+int c[N], w[N];
+vector<int> rev[N]; // 反向边
+ll best[N][M+5];
+int best_c[N][M+5], best_w[N][M+5];
+ll max_power[N][M+5];
+ll global_max_power[N];
+int global_best_c[N], global_best_w[N];
+int global_idx[N];
+
+bool better(int w1, int c1, int w2, int c2) {
+    return (ll)w1 * c2 >= (ll)w2 * c1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    cin >> n >> m;
+    for (int i = 1; i <= n; i++) {
+        cin >> c[i] >> w[i];
+    }
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        rev[v].push_back(u); // 建反向边
+    }
+    
+    // 初始化 DP
+    for (int i = 1; i <= n; i++) {
+        fill(best[i], best[i] + M + 1, -INF);
+    }
+    // 起点 1 没有前驱
+    fill(best[1], best[1] + M + 1, 0);
+    best_c[1][0] = c[1];
+    best_w[1][0] = w[1];
+    // 完全背包加入顶点1的卡片
+    for (int j = c[1]; j <= M; j++) {
+        if (best[1][j - c[1]] >= 0) {
+            ll val = best[1][j - c[1]] + w[1];
+            if (val > best[1][j]) {
+                best[1][j] = val;
+                int cb = best_c[1][j - c[1]];
+                int wb = best_w[1][j - c[1]];
+                if (better(w[1], c[1], wb, cb)) {
+                    best_c[1][j] = c[1];
+                    best_w[1][j] = w[1];
+                } else {
+                    best_c[1][j] = cb;
+                    best_w[1][j] = wb;
+                }
+            }
+        }
+    }
+    
+    // 按拓扑序（编号顺序）处理每个顶点
+    for (int v = 2; v <= n; v++) {
+        // 收集前驱的最大值
+        for (int u : rev[v]) {
+            for (int j = 0; j <= M; j++) {
+                if (best[u][j] > best[v][j]) {
+                    best[v][j] = best[u][j];
+                    best_c[v][j] = best_c[u][j];
+                    best_w[v][j] = best_w[u][j];
+                }
+            }
+        }
+        // 在 v 做完全背包
+        for (int j = c[v]; j <= M; j++) {
+            if (best[v][j - c[v]] >= 0) {
+                ll val = best[v][j - c[v]] + w[v];
+                if (val > best[v][j]) {
+                    best[v][j] = val;
+                    int cb = best_c[v][j - c[v]];
+                    int wb = best_w[v][j - c[v]];
+                    if (better(w[v], c[v], wb, cb)) {
+                        best_c[v][j] = c[v];
+                        best_w[v][j] = w[v];
+                    } else {
+                        best_c[v][j] = cb;
+                        best_w[v][j] = wb;
+                    }
+                }
+            }
+        }
+    }
+    
+    // 预处理前缀最大值和全局最大值
+    for (int p = 1; p <= n; p++) {
+        ll gmax = -INF;
+        int idx = -1;
+        for (int j = 0; j <= M; j++) {
+            if (j == 0) {
+                max_power[p][j] = max(0LL, best[p][j]);
+            } else {
+                max_power[p][j] = max(max_power[p][j - 1], best[p][j]);
+            }
+            if (best[p][j] > gmax) {
+                gmax = best[p][j];
+                idx = j;
+            }
+        }
+        global_max_power[p] = gmax;
+        global_idx[p] = idx;
+        if (idx >= 0) {
+            global_best_c[p] = best_c[p][idx];
+            global_best_w[p] = best_w[p][idx];
+        } else {
+            global_best_c[p] = 1;
+            global_best_w[p] = 0;
+        }
+    }
+    
+    // 处理查询
+    cin >> q;
+    while (q--) {
+        int p, r;
+        cin >> p >> r;
+        if (r <= M) {
+            cout << max_power[p][r] << '\n';
+        } else {
+            ll ans = global_max_power[p];
+            int cb = global_best_c[p];
+            int wb = global_best_w[p];
+            int idx = global_idx[p];
+            ll extra = (r - idx) / cb * (ll)wb;
+            cout << ans + extra << '\n';
+        }
+    }
+    
+    return 0;
+}

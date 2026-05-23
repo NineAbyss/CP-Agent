@@ -1,0 +1,76 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+const int MAXN = 1000005;
+
+// 分解质因数（可重复）
+vector<int> factorize(int n) {
+    vector<int> res;
+    for (int i = 2; i * i <= n; i++) {
+        while (n % i == 0) {
+            res.push_back(i);
+            n /= i;
+        }
+    }
+    if (n > 1) res.push_back(n);
+    return res;
+}
+
+// DP 求最少组数
+int min_groups(vector<int>& fac, int k) {
+    int n = fac.size();
+    if (n == 0) return 0;
+    vector<long long> prod(1 << n, 1);
+    for (int mask = 1; mask < (1 << n); mask++) {
+        int lsb = mask & -mask;
+        int idx = __builtin_ctz(lsb);
+        prod[mask] = prod[mask ^ lsb] * fac[idx];
+    }
+    const int INF = 1e9;
+    vector<int> dp(1 << n, INF);
+    dp[0] = 0;
+    for (int mask = 1; mask < (1 << n); mask++) {
+        for (int sub = mask; sub > 0; sub = (sub - 1) & mask) {
+            if (prod[sub] <= k) {
+                dp[mask] = min(dp[mask], dp[mask ^ sub] + 1);
+            }
+        }
+    }
+    return dp[(1 << n) - 1];
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int x, y, k;
+        cin >> x >> y >> k;
+        int g = __gcd(x, y);
+        int X = x / g;
+        int Y = y / g;
+        
+        vector<int> fx = factorize(X);
+        vector<int> fy = factorize(Y);
+        
+        bool ok = true;
+        for (int p : fx) if (p > k) ok = false;
+        for (int p : fy) if (p > k) ok = false;
+        
+        if (!ok) {
+            cout << "-1\n";
+        } else {
+            int ans = min_groups(fx, k) + min_groups(fy, k);
+            cout << ans << "\n";
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

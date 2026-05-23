@@ -1,0 +1,41 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        vector<int> count(10, 0);
+        
+        // Count occurrences of each digit
+        for (char c : s) {
+            count[c - '0']++;
+        }
+        
+        string result(10, '0');
+        
+        // Fill the result while respecting the constraints
+        for (int i = 0; i < 10; ++i) {
+            int min_digit_required = 10 - (i + 1);
+            for (int j = min_digit_required; j < 10; ++j) {
+                if (count[j] > 0) {
+                    result[i] = '0' + j;
+                    count[j]--;
+                    break;
+                }
+            }
+        }
+        
+        cout << result << endl;
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

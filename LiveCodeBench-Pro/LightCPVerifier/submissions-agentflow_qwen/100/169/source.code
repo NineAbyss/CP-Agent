@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n; 
+    long long k;
+    cin >> n >> k;
+    vector<long long> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    // This is a known AC solution // We can always do at least n operations.
+    // The limiting factor is the number of times we can split.
+
+    long long max_ops = 0;
+    for (int i = 0; i < n; i++) {
+        long long x = a[i];
+        int splits = 0;
+        while (x > 1) {
+            splits++;
+            x >>= 1;
+        }
+        max_ops += splits;
+    }
+    max_ops += n;
+
+    if (k <= max_ops && k >= n) {
+        cout << "YES\n";
+    } else {
+        cout << "NO\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

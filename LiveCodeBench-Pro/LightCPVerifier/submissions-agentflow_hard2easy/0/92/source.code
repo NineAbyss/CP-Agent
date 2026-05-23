@@ -1,0 +1,111 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<vector<vector<bool>>> adj(k, vector<vector<bool>>(n, vector<bool>(n, false)));
+        
+        for (int gi = 0; gi < k; gi++) {
+            int m;
+            cin >> m;
+            for (int e = 0; e < m; e++) {
+                int u, v;
+                cin >> u >> v;
+                u--; v--;
+                adj[gi][u][v] = adj[gi][v][u] = true;
+            }
+        }
+        
+        // 对每个图，计算每个顶点所在的块（双胞胎合并）
+        vector<vector<pair<int, int>>> blockInfo(k, vector<pair<int, int>>(n, {0, 0}));
+        // first: 块ID, second: 块大小
+        
+        for (int gi = 0; gi < k; gi++) {
+            vector<int> comp(n, -1);
+            int compId = 0;
+            for (int u = 0; u < n; u++) {
+                if (comp[u] != -1) continue;
+                comp[u] = compId;
+                for (int v = u+1; v < n; v++) {
+                    if (comp[v] != -1) continue;
+                    bool same = true;
+                    for (int w = 0; w < n; w++) {
+                        if (w == u || w == v) continue;
+                        if (adj[gi][u][w] != adj[gi][v][w]) {
+                            same = false;
+                            break;
+                        }
+                    }
+                    if (same) comp[v] = compId;
+                }
+                compId++;
+            }
+            // 块大小
+            vector<int> sz(compId, 0);
+            for (int u = 0; u < n; u++) sz[comp[u]]++;
+            for (int u = 0; u < n; u++) {
+                blockInfo[gi][u] = {comp[u], sz[comp[u]]};
+            }
+        }
+        
+        // 检查冲突
+        bool possible = true;
+        vector<int> type(n, 0); // 0=无要求, 1=独立集, 2=团
+        
+        for (int gi = 0; gi < k; gi++) {
+            // 检查每个块内部是否全连或全不连
+            vector<bool> visitedBlock(n, false);
+            for (int u = 0; u < n; u++) {
+                int bid = blockInfo[gi][u].first;
+                if (visitedBlock[bid]) continue;
+                visitedBlock[bid] = true;
+                int sz = blockInfo[gi][u].second;
+                if (sz == 1) continue;
+                // 收集块内顶点
+                vector<int> vertices;
+                for (int v = 0; v < n; v++) {
+                    if (blockInfo[gi][v].first == bid) vertices.push_back(v);
+                }
+                bool allEdges = true, noEdges = true;
+                for (int a = 0; a < vertices.size(); a++) {
+                    for (int b = a+1; b < vertices.size(); b++) {
+                        int x = vertices[a], y = vertices[b];
+                        if (adj[gi][x][y]) noEdges = false;
+                        else allEdges = false;
+                    }
+                }
+                int needType = 0;
+                if (allEdges) needType = 2;
+                else if (noEdges) needType = 1;
+                else {
+                    // 内部混合，不能作为一块，但双胞胎条件可能不保证内部一致 // 这里我们保守地认为无解
+                    possible = false;
+                    break;
+                }
+                // 更新类型要求
+                for (int v : vertices) {
+                    if (type[v] == 0) type[v] = needType;
+                    else if (type[v] != needType) type[v] = 3;
+                }
+            }
+            if (!possible) break;
+        }
+        
+        for (int v = 0; v < n; v++) {
+            if (type[v] == 3) {
+                possible = false;
+                break;
+            }
+        }
+        
+        cout << (possible ? "Yes" : "No") << '\n';
+    }
+    return 0;
+}

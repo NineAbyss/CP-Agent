@@ -1,0 +1,118 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+ll solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<ll> b(n);
+    for (int i = 0; i < n; i++) {
+        cin >> b[i];
+    }
+    
+    vector<vector<pair<int, ll>>> adj(n);
+    for (int i = 0; i < m; i++) {
+        int s, t;
+        ll w;
+        cin >> s >> t >> w;
+        s--; t--;
+        adj[s].emplace_back(t, w);
+    }
+    
+    const ll INF = 1e18;
+    
+    // 计算need[v]: 从v出发到达终点所需的最小电池数（在v处取电池后）
+    vector<ll> need(n, INF);
+    need[n-1] = 0;
+    
+    // 获取拓扑顺序
+    vector<int> order;
+    {
+        vector<int> indeg(n, 0);
+        for (int u = 0; u < n; u++) {
+            for (auto& [v, w] : adj[u]) {
+                indeg[v]++;
+            }
+        }
+        queue<int> q;
+        for (int i = 0; i < n; i++) if (indeg[i] == 0) q.push(i);
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            order.push_back(u);
+            for (auto& [v, w] : adj[u]) {
+                indeg[v]--;
+                if (indeg[v] == 0) q.push(v);
+            }
+        }
+    }
+    
+    // 逆序处理计算need
+    reverse(order.begin(), order.end());
+    for (int u : order) {
+        if (u == n-1) continue;
+        for (auto& [v, w] : adj[u]) {
+            if (need[v] == INF) continue;
+            ll required = max(w, need[v]);
+            need[u] = min(need[u], required);
+        }
+    }
+    
+    // 如果从起点无法到达终点
+    if (need[0] == INF) return -1;
+    
+    // 正向DP
+    vector<ll> dp(n, INF);
+    dp[0] = 0;
+    
+    // 拓扑顺序（已经计算了order，但需要正向）
+    vector<int> topo;
+    {
+        vector<int> indeg(n, 0);
+        for (int u = 0; u < n; u++) {
+            for (auto& [v, w] : adj[u]) {
+                indeg[v]++;
+            }
+        }
+        queue<int> q;
+        for (int i = 0; i < n; i++) if (indeg[i] == 0) q.push(i);
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            topo.push_back(u);
+            for (auto& [v, w] : adj[u]) {
+                indeg[v]--;
+                if (indeg[v] == 0) q.push(v);
+            }
+        }
+    }
+    
+    for (int u : topo) {
+        if (dp[u] == INF) continue;
+        for (auto& [v, w] : adj[u]) {
+            // 检查是否可以在u处取足够电池
+            if (w <= dp[u] + b[u]) {
+                ll new_val = max(dp[u], w);
+                // 检查从v是否可以到达终点 // 我们在v处有new_val个电池（取电池前）
+                // 我们可以取最多b[v]个电池，所以取电池后可以达到new_val + b[v] // 这需要 ≥ need[v]
+                if (new_val + b[v] >= need[v]) {
+                    dp[v] = min(dp[v], new_val);
+                }
+            }
+        }
+    }
+    
+    if (dp[n-1] == INF) return -1;
+    return dp[n-1];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << solve() << '\n';
+    }
+    
+    return 0;
+}

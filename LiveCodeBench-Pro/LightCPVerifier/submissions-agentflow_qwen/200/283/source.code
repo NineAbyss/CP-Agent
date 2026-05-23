@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+vector<pair<char, int>> group(const string& s) {
+    vector<pair<char, int>> res;
+    if (s.empty()) return res;
+    char curr = s[0];
+    int count = 1;
+    for (int i = 1; i < s.size(); i++) {
+        if (s[i] == curr) {
+            count++;
+        } else {
+            res.push_back({curr, count});
+            curr = s[i];
+            count = 1;
+        }
+    }
+    res.push_back({curr, count});
+    return res;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        string p, s;
+        cin >> p >> s;
+
+        // First and last character must match
+        if (p[0] != s[0] || p.back() != s.back()) {
+            cout << "NO\n";
+            continue;
+        }
+
+        auto p_runs = group(p);
+        auto s_runs = group(s);
+
+        if (p_runs.size() != s_runs.size()) {
+            cout << "NO\n";
+            continue;
+        }
+
+        bool valid = true;
+        for (int i = 0; i < p_runs.size(); i++) {
+            auto& pr = p_runs[i];
+            auto& sr = s_runs[i];
+            if (pr.first != sr.first) {
+                valid = false;
+                break;
+            }
+            if (sr.second < pr.second || sr.second > 2 * pr.second) {
+                valid = false;
+                break;
+            }
+        }
+
+        cout << (valid ? "YES" : "NO") << "\n";
+    }
+    return 0;
+}

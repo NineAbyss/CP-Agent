@@ -1,0 +1,99 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 3;
+const int MAXN = 200000;
+
+int n, q;
+vector<int> g;
+vector<bool> visited;
+vector<int> comp_id, comp_size, cycle_len;
+vector<vector<int>> comp_nodes;
+
+void dfs(int u, vector<int>& path, vector<int>& in_stack) {
+    if (in_stack[u] != -1) {
+        // Found a cycle
+        int start = in_stack[u];
+        int cycle_length = (int)path.size() - start;
+        cycle_len.push_back(cycle_length);
+        for (int i = start; i < (int)path.size(); ++i) {
+            comp_id[path[i]] = (int)cycle_len.size() - 1;
+        }
+        return;
+    }
+    if (visited[u]) return;
+    
+    visited[u] = true;
+    in_stack[u] = (int)path.size();
+    path.push_back(u);
+    
+    dfs(g[u], path, in_stack);
+    
+    in_stack[u] = -1;
+}
+
+// Precompute the components and cycles
+void build_components() {
+    visited.assign(n + 1, false);
+    comp_id.assign(n + 1, -1);
+    cycle_len.clear();
+    
+    vector<int> in_stack(n + 1, -1);
+    
+    for (int i = 1; i <= n; ++i) {
+        if (!visited[i]) {
+            vector<int> path;
+            dfs(i, path, in_stack);
+        }
+    }
+}
+
+// Compute k^c mod 3, where c is the number of cycles
+long long power_mod_3(long long base, long long exp) {
+    if (base % 3 == 0) return 0;
+    if (exp == 0) return 1;
+    long long result = 1;
+    base %= 3;
+    while (exp > 0) {
+        if (exp & 1) result = (result * base) % 3;
+        base = (base * base) % 3;
+        exp >>= 1;
+    }
+    return result;
+}
+
+int solve_query(int x, int y, int k) {
+    // Update the graph
+    g[x] = y;
+    
+    // Rebuild components
+    build_components();
+    
+    // Count number of cycles
+    int num_cycles = cycle_len.size();
+    
+    // The number of colorings is k^(number of cycles) mod 3
+    return power_mod_3(k, num_cycles);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    cin >> n >> q;
+    g.resize(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> g[i];
+    }
+    
+    // Process queries
+    for (int i = 0; i < q; ++i) {
+        int x, y, k;
+        cin >> x >> y >> k;
+        
+        int ans = solve_query(x, y, k);
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

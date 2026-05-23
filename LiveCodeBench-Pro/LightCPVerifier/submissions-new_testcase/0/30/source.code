@@ -1,0 +1,60 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MOD = 998244353;
+
+int main() {
+    // 预计算 2 的幂次模 MOD，最大到 100000
+    const int MAXN = 100000;
+    vector<int> pow2(MAXN + 1);
+    pow2[0] = 1;
+    for (int i = 1; i <= MAXN; i++) {
+        pow2[i] = (pow2[i-1] * 2) % MOD;
+    }
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> p(n), q(n);
+        for (int i = 0; i < n; i++) cin >> p[i];
+        for (int i = 0; i < n; i++) cin >> q[i];
+        
+        // 位置数组
+        vector<int> pos_p(n), pos_q(n);
+        for (int i = 0; i < n; i++) {
+            pos_p[p[i]] = i;
+            pos_q[q[i]] = i;
+        }
+        
+        int max_p = -1, max_q = -1;
+        vector<int> ans(n);
+        for (int s = 0; s < n; s++) {
+            if (p[s] > max_p) max_p = p[s];
+            if (q[s] > max_q) max_q = q[s];
+            
+            int v1 = max_p;
+            int v2 = max_q;
+            
+            int w1 = q[s - pos_p[v1]];
+            int w2 = p[s - pos_q[v2]];
+            
+            long long cand1 = pow2[v1] + pow2[w1];
+            long long cand2 = pow2[v2] + pow2[w2];
+            if (cand1 >= MOD) cand1 -= MOD;
+            if (cand2 >= MOD) cand2 -= MOD;
+            
+            ans[s] = (cand1 > cand2) ? cand1 : cand2;
+        }
+        
+        for (int i = 0; i < n; i++) {
+            cout << ans[i];
+            if (i < n-1) cout << " ";
+        }
+        cout << endl;
+    }
+    return 0;
+}

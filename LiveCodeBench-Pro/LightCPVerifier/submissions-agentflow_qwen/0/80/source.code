@@ -1,0 +1,71 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> grid(n, vector<int>(n));
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
+                cin >> grid[i][j];
+            }
+        }
+
+        // p[k] 表示第k个元素，k从1到2*n
+        vector<int> p(2 * n + 1); // 1-indexed up to 2n
+
+        // used[i] 表示数字i是否出现在 p[2..2n]
+        vector<bool> used(2 * n + 1, false);
+
+        // 枚举 s = i+j，范围是 2 到 2n
+        for (int s = 2; s <= 2 * n; ++s) {
+            int value = -1;
+            bool found = false;
+            // 枚举所有可能的 i,j 满足 i+j = s, 且 1<=i<=n, 1<=j<=n // 即 i 从 max(1, s-n) 到 min(n, s-1)
+            for (int i = max(1, s - n); i <= min(n, s - 1); ++i) {
+                int j = s - i;
+                // 转换为 0-indexed
+                int gi = i - 1;
+                int gj = j - 1;
+                if (value == -1) {
+                    value = grid[gi][gj];
+                    found = true;
+                } else {
+                    // 可以检查一致性，但题目保证
+                }
+            }
+            if (found) {
+                p[s] = value;
+                used[value] = true;
+            }
+        }
+
+        // 找出哪个数没在 used 中出现，就是 p[1]
+        int missing = 1;
+        for (int i = 1; i <= 2 * n; ++i) {
+            if (!used[i]) {
+                missing = i;
+                break;
+            }
+        }
+        p[1] = missing;
+
+        // 输出 p[1] 到 p[2n]
+        for (int i = 1; i <= 2 * n; ++i) {
+            cout << p[i];
+            if (i < 2 * n) cout << ' ';
+        }
+        cout << '\n';
+    }
+
+    return 0;
+}

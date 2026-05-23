@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef pair<int, int> PII;
+
+// Function to check if interval [a,b] is covered by merged intervals
+bool is_covered(int a, int b, const vector<PII>& merged) {
+    for (const auto& inter : merged) {
+        if (inter.first <= a && a <= inter.second) {
+            a = inter.second + 1;
+        }
+        if (a > b) break;
+    }
+    return a > b;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<tuple<int, int, int>> stmts;
+        for (int i = 0; i < m; i++) {
+            int x, a, b;
+            cin >> x >> a >> b;
+            stmts.emplace_back(x, a, b);
+        }
+
+        int q;
+        cin >> q;
+        while (q--) {
+            int l, r;
+            cin >> l >> r;
+            l--; r--; // 0-indexed
+
+            // Collect all type 0 intervals in [l, r]
+            vector<PII> zeros;
+            for (int i = l; i <= r; i++) {
+                auto [x, a, b] = stmts[i];
+                if (x == 0) {
+                    zeros.emplace_back(a, b);
+                }
+            }
+
+            // Merge zero intervals
+            vector<PII> merged;
+            if (!zeros.empty()) {
+                sort(zeros.begin(), zeros.end());
+                int start = zeros[0].first, end = zeros[0].second;
+                for (int i = 1; i < zeros.size(); i++) {
+                    if (zeros[i].first <= end + 1) {
+                        end = max(end, zeros[i].second);
+                    } else {
+                        merged.emplace_back(start, end);
+                        start = zeros[i].first;
+                        end = zeros[i].second;
+                    }
+                }
+                merged.emplace_back(start, end);
+            }
+
+            // Check all type 1 statements in [l, r]
+            bool valid = true;
+            for (int i = l; i <= r; i++) {
+                auto [x, a, b] = stmts[i];
+                if (x == 1) {
+                    if (is_covered(a, b, merged)) {
+                        valid = false;
+                        break;
+                    }
+                }
+            }
+
+            cout << (valid ? "YES" : "NO") << '\n';
+        }
+    }
+
+    return 0;
+}

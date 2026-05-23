@@ -1,0 +1,70 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    
+    // compute next smaller to left and right
+    vector<int> L(n, -1), R(n, n);
+    vector<int> stack;
+    for (int i = 0; i < n; ++i) {
+        while (!stack.empty() && a[stack.back()] >= a[i]) {
+            stack.pop_back();
+        }
+        L[i] = stack.empty() ? -1 : stack.back();
+        stack.push_back(i);
+    }
+    stack.clear();
+    for (int i = n-1; i >= 0; --i) {
+        while (!stack.empty() && a[stack.back()] >= a[i]) {
+            stack.pop_back();
+        }
+        R[i] = stack.empty() ? n : stack.back();
+        stack.push_back(i);
+    }
+    
+    // indices sorted by weight descending, for equal weights by position ascending
+    vector<int> idx(n);
+    for (int i = 0; i < n; ++i) idx[i] = i;
+    sort(idx.begin(), idx.end(), [&](int i, int j) {
+        if (a[i] != a[j]) return a[i] > a[j];
+        return i < j;
+    });
+    
+    set<int> last_pos;
+    for (int i : idx) {
+        int left = L[i] + 1;
+        int right = R[i] - 1;
+        auto it = last_pos.lower_bound(left);
+        if (it != last_pos.end() && *it <= right) {
+            // reuse this clone
+            last_pos.erase(it);
+            last_pos.insert(i);
+        } else {
+            // new clone
+            last_pos.insert(i);
+        }
+    }
+    
+    cout << last_pos.size() << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

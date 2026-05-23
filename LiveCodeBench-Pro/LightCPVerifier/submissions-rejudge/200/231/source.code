@@ -1,0 +1,105 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int orbit_inv_parity(const vector<int>& arr) {
+    // 计算排列的逆序数奇偶性 // 使用归并排序的思想，但只计算奇偶性
+    int n = arr.size();
+    if (n <= 1) return 0;
+    
+    // 复制数组用于归并
+    vector<int> tmp(n);
+    vector<int> a = arr;
+    
+    int parity = 0;
+    
+    // 归并排序计算逆序数
+    function<void(int, int)> merge_sort = [&](int l, int r) {
+        if (l + 1 >= r) return;
+        int mid = (l + r) / 2;
+        merge_sort(l, mid);
+        merge_sort(mid, r);
+        
+        int i = l, j = mid, k = l;
+        while (i < mid && j < r) {
+            if (a[i] <= a[j]) {
+                tmp[k++] = a[i++];
+            } else {
+                tmp[k++] = a[j++];
+                // a[i] > a[j]，且i < j，这是一个逆序 // 由于左半部分和右半部分都是有序的，a[i]到a[mid-1]都大于a[j]
+                parity ^= (mid - i) & 1; // 奇偶性翻转(mid-i)次
+            }
+        }
+        while (i < mid) tmp[k++] = a[i++];
+        while (j < r) tmp[k++] = a[j++];
+        for (int p = l; p < r; p++) a[p] = tmp[p];
+    };
+    
+    merge_sort(0, n);
+    return parity & 1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        // 收集轨道元素
+        vector<int> orbit1, orbit2;
+        orbit1.reserve((n+3)/2);
+        orbit2.reserve((n+3)/2);
+        
+        for (int i = 0; i < n; i++) {
+            if (i % 4 == 0 || i % 4 == 2) {
+                orbit1.push_back(a[i]);
+            } else {
+                orbit2.push_back(a[i]);
+            }
+        }
+        
+        // 计算初始奇偶性之和S
+        int S = (orbit_inv_parity(orbit1) + orbit_inv_parity(orbit2)) % 2;
+        
+        // 排序轨道元素
+        sort(orbit1.begin(), orbit1.end());
+        sort(orbit2.begin(), orbit2.end());
+        
+        // 如果需要调整（S=1），优先调整轨道2（对字典序影响较小）
+        if (S == 1) {
+            if (orbit2.size() >= 2) {
+                swap(orbit2[orbit2.size()-2], orbit2[orbit2.size()-1]);
+            } else if (orbit1.size() >= 2) {
+                swap(orbit1[orbit1.size()-2], orbit1[orbit1.size()-1]);
+            }
+        }
+        
+        // 构建结果
+        vector<int> result(n);
+        int i1 = 0, i2 = 0;
+        for (int i = 0; i < n; i++) {
+            if (i % 4 == 0 || i % 4 == 2) {
+                result[i] = orbit1[i1++];
+            } else {
+                result[i] = orbit2[i2++];
+            }
+        }
+        
+        // 输出
+        for (int i = 0; i < n; i++) {
+            cout << result[i];
+            if (i < n-1) cout << ' ';
+        }
+        cout << '\n';
+    }
+    
+    return 0;
+}

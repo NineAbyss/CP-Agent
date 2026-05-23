@@ -1,0 +1,80 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <cmath>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<vector<int>> graph(n + 1);
+    for (int i = 0; i < n - 1; i++) {
+        int u, v;
+        cin >> u >> v;
+        graph[u].push_back(v);
+        graph[v].push_back(u);
+    }
+
+    vector<long long> f(n + 1);
+    for (int u = 1; u <= n; u++) {
+        cout << "? 1 1 " << u << endl;
+        cout.flush();
+        cin >> f[u];
+    }
+
+    vector<int> result(n + 1);
+    bool found = false;
+
+    for (int root = 1; root <= n; root++) {
+        vector<int> val(n + 1, 0);
+        vector<int> parent(n + 1, -1);
+        queue<int> q;
+        
+        q.push(root);
+        parent[root] = -1;
+        val[root] = f[root];
+
+        if (abs(val[root]) != 1) continue;
+
+        bool valid = true;
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            for (int v : graph[u]) {
+                if (v == parent[u]) continue;
+                parent[v] = u;
+                val[v] = f[v] - f[u];
+                if (abs(val[v]) != 1) {
+                    valid = false;
+                    break;
+                }
+                q.push(v);
+            }
+            if (!valid) break;
+        }
+
+        if (valid) {
+            result = val;
+            found = true;
+            break;
+        }
+    }
+
+    cout << "!";
+    for (int i = 1; i <= n; i++) {
+        cout << " " << result[i];
+    }
+    cout << endl;
+    cout.flush();
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

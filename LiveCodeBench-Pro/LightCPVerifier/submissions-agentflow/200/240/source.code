@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool can(int x, const vector<int>& a, int k) {
+    if (x == 0) return true;
+    int n = a.size();
+    vector<int> cnt(x, 0);
+    int have = 0;
+    int segments = 0;
+    for (int i = 0; i < n; i++) {
+        if (a[i] < x) {
+            if (cnt[a[i]] == 0) have++;
+            cnt[a[i]]++;
+        }
+        if (have == x) {
+            segments++;
+            if (segments >= k) return true;
+            fill(cnt.begin(), cnt.end(), 0);
+            have = 0;
+        }
+    }
+    return segments >= k;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        
+        int lo = 0, hi = n + 2;
+        while (lo < hi) {
+            int mid = (lo + hi + 1) / 2;
+            if (can(mid, a, k)) {
+                lo = mid;
+            } else {
+                hi = mid - 1;
+            }
+        }
+        cout << lo << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

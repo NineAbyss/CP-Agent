@@ -1,0 +1,18 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    // Discard any remaining newline characters
+    cin.ignore();
+    
+    while (t--) {
+        string str1, str2, str3;
+        cin >> str1 >> str2 >> str3;
+        // Output the modern name by concatenating the first letter of each word
+        cout << str1[0] << str2[0] << str3[0] << endl;
+    }
+    return 0;
+}

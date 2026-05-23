@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+const int MAXN = 500000;
+
+long long fact[MAXN+1];
+long long inv_fact[MAXN+1];
+
+long long mod_pow(long long a, long long e) {
+    long long res = 1;
+    while (e) {
+        if (e & 1) res = res * a % MOD;
+        a = a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+void precompute() {
+    fact[0] = 1;
+    for (int i = 1; i <= MAXN; i++) fact[i] = fact[i-1] * i % MOD;
+    inv_fact[MAXN] = mod_pow(fact[MAXN], MOD-2);
+    for (int i = MAXN-1; i >= 0; i--) inv_fact[i] = inv_fact[i+1] * (i+1) % MOD;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    precompute();
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int c[26];
+        int n = 0;
+        for (int i = 0; i < 26; i++) {
+            cin >> c[i];
+            n += c[i];
+        }
+        int odd = (n + 1) / 2; // ceil(n/2)
+        int even = n - odd;
+        
+        // constant factor
+        long long const_factor = fact[odd] * fact[even] % MOD;
+        for (int i = 0; i < 26; i++) {
+            const_factor = const_factor * inv_fact[c[i]] % MOD;
+        }
+        
+        // dp for subset sum count
+        vector<long long> dp(n+1, 0);
+        dp[0] = 1;
+        for (int i = 0; i < 26; i++) {
+            if (c[i] == 0) continue;
+            int val = c[i];
+            for (int j = n; j >= val; j--) {
+                dp[j] = (dp[j] + dp[j-val]) % MOD;
+            }
+        }
+        
+        long long ans = const_factor * dp[odd] % MOD;
+        cout << ans << '\n';
+    }
+    return 0;
+}

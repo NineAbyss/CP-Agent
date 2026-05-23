@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Edge {
+    int u, v, w;
+    bool operator<(const Edge& other) const {
+        return w < other.w;
+    }
+};
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<Edge> edges(m);
+    for (int i = 0; i < m; i++) {
+        cin >> edges[i].u >> edges[i].v >> edges[i].w;
+    }
+    sort(edges.begin(), edges.end());
+
+    int ans = INT_MAX;
+    for (int i = 0; i < m; i++) {
+        // DSU for this i
+        vector<int> parent(n+1, -1); // size by negative
+        function<int(int)> root = [&](int x) {
+            return parent[x] < 0 ? x : parent[x] = root(parent[x]);
+        };
+        auto merge = [&](int x, int y) {
+            x = root(x), y = root(y);
+            if (x != y) {
+                if (parent[x] > parent[y]) swap(x, y);
+                parent[x] += parent[y];
+                parent[y] = x;
+            }
+        };
+
+        for (int j = i; j < m; j++) {
+            merge(edges[j].u, edges[j].v);
+            if (root(1) == root(n)) {
+                ans = min(ans, edges[i].w + edges[j].w);
+                break;
+            }
+        }
+    }
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

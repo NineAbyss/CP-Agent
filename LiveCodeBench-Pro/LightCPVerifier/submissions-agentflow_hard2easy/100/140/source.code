@@ -1,0 +1,95 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int LOG = 30;
+
+struct TrieNode {
+    int max_idx;
+    TrieNode* child[2];
+    TrieNode() : max_idx(-1) {
+        child[0] = child[1] = nullptr;
+    }
+};
+
+void insert(TrieNode* root, int x, int idx) {
+    TrieNode* cur = root;
+    cur->max_idx = max(cur->max_idx, idx);
+    for (int i = LOG-1; i >= 0; --i) {
+        int b = (x >> i) & 1;
+        if (!cur->child[b]) cur->child[b] = new TrieNode();
+        cur = cur->child[b];
+        cur->max_idx = max(cur->max_idx, idx);
+    }
+}
+
+int query(TrieNode* root, int x, int k) {
+    if (root->max_idx == -1) return -1;
+    function<int(TrieNode*, int)> dfs = [&](TrieNode* node, int bit) -> int {
+        if (bit < 0) {
+            return node->max_idx;
+        }
+        int k_bit = (k >> bit) & 1;
+        int x_bit = (x >> bit) & 1;
+        if (k_bit == 0) {
+            int res = -1;
+            int want = 1 - x_bit;
+            if (node->child[want] && node->child[want]->max_idx != -1) {
+                res = max(res, node->child[want]->max_idx);
+            }
+            if (node->child[x_bit] && node->child[x_bit]->max_idx != -1) {
+                res = max(res, dfs(node->child[x_bit], bit-1));
+            }
+            return res;
+        } else {
+            int want = 1 - x_bit;
+            if (!node->child[want] || node->child[want]->max_idx == -1) return -1;
+            return dfs(node->child[want], bit-1);
+        }
+    };
+    return dfs(root, LOG-1);
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        if (k == 0) {
+            cout << 1 << '\n';
+            continue;
+        }
+        // check adjacent pairs
+        bool found = false;
+        for (int i = 0; i+1 < n; ++i) {
+            if ((a[i] ^ a[i+1]) >= k) {
+                found = true;
+                break;
+            }
+        }
+        if (found) {
+            cout << 2 << '\n';
+            continue;
+        }
+        TrieNode* root = new TrieNode();
+        int ans = n+1;
+        for (int j = 0; j < n; ++j) {
+            int i = query(root, a[j], k);
+            if (i != -1) {
+                ans = min(ans, j - i + 1);
+            }
+            insert(root, a[j], j);
+        }
+        if (ans == n+1) ans = -1;
+        cout << ans << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

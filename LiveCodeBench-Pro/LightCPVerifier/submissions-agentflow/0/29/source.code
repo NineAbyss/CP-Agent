@@ -1,0 +1,36 @@
+#include <iostream>
+#include <vector>
+#include <numeric>
+using namespace std;
+
+int minimum_operations(vector<int>& a) {
+    int n = a.size();
+    int g = a[0];
+    for (int i = 1; i < n; ++i) {
+        g = gcd(g, a[i]);
+    }
+
+    int count_not_g = 0;
+    for (int i = 0; i < n; ++i) {
+        if (a[i] != g)
+            count_not_g++;
+    }
+
+    // 特殊情况处理
+    return count_not_g;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        cout << minimum_operations(a) << endl;
+    }
+    return 0;
+}

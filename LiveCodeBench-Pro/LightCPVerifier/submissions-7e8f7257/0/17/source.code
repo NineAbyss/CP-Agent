@@ -1,0 +1,85 @@
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<string> grid(n);
+        for (int i = 0; i < n; i++) {
+            cin >> grid[i];
+        }
+        // 行前缀和
+        vector<vector<int>> row_sum(n, vector<int>(m+1, 0));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                row_sum[i][j+1] = row_sum[i][j] + (grid[i][j] == '.' ? 1 : 0);
+            }
+        }
+        // 列前缀和
+        vector<vector<int>> col_sum(m, vector<int>(n+1, 0));
+        for (int j = 0; j < m; j++) {
+            for (int i = 0; i < n; i++) {
+                col_sum[j][i+1] = col_sum[j][i] + (grid[i][j] == '.' ? 1 : 0);
+            }
+        }
+        int ans = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (grid[i][j] != 'g') continue;
+                bool ok = false;
+                // 上边: x = i - k, y 从 j-k 到 j+k
+                int x = i - k;
+                if (x >= 0) {
+                    int y_l = max(0, j - k);
+                    int y_r = min(m-1, j + k);
+                    if (row_sum[x][y_r+1] - row_sum[x][y_l] > 0) {
+                        ok = true;
+                    }
+                }
+                if (!ok) {
+                    // 下边: x = i + k
+                    x = i + k;
+                    if (x < n) {
+                        int y_l = max(0, j - k);
+                        int y_r = min(m-1, j + k);
+                        if (row_sum[x][y_r+1] - row_sum[x][y_l] > 0) {
+                            ok = true;
+                        }
+                    }
+                }
+                if (!ok) {
+                    // 左边: y = j - k, x 从 i-k 到 i+k
+                    int y = j - k;
+                    if (y >= 0) {
+                        int x_l = max(0, i - k);
+                        int x_r = min(n-1, i + k);
+                        if (col_sum[y][x_r+1] - col_sum[y][x_l] > 0) {
+                            ok = true;
+                        }
+                    }
+                }
+                if (!ok) {
+                    // 右边: y = j + k
+                    int y = j + k;
+                    if (y < m) {
+                        int x_l = max(0, i - k);
+                        int x_r = min(n-1, i + k);
+                        if (col_sum[y][x_r+1] - col_sum[y][x_l] > 0) {
+                            ok = true;
+                        }
+                    }
+                }
+                if (ok) ans++;
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

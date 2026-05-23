@@ -1,0 +1,84 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        vector<int> b(n);
+        for (int i = 0; i < n; i++) {
+            cin >> b[i];
+        }
+        
+        // 步骤1：检查已知 b_i 对应的 x 是否一致
+        bool has_known = false;
+        long long fixed_x = -1;
+        bool consistent = true;
+        
+        for (int i = 0; i < n; i++) {
+            if (b[i] != -1) {
+                long long x_val = (long long)a[i] + b[i];
+                if (!has_known) {
+                    fixed_x = x_val;
+                    has_known = true;
+                } else if (fixed_x != x_val) {
+                    consistent = false;
+                    break;
+                }
+            }
+        }
+        
+        if (!consistent) {
+            cout << "0\n";
+            continue;
+        }
+        
+        // 步骤2：如果 x 已确定
+        if (has_known) {
+            // 检查所有未知位置是否合法
+            bool possible = true;
+            for (int i = 0; i < n; i++) {
+                long long need_b = fixed_x - a[i];
+                if (need_b < 0 || need_b > k) {
+                    possible = false;
+                    break;
+                }
+            }
+            cout << (possible ? "1\n" : "0\n");
+            continue;
+        }
+        
+        // 步骤3：所有 b_i = -1，求区间交集
+        long long L = a[0];
+        long long R = (long long)a[0] + k;
+        for (int i = 1; i < n; i++) {
+            long long low = a[i];
+            long long high = (long long)a[i] + k;
+            L = max(L, low);
+            R = min(R, high);
+        }
+        
+        if (L > R) {
+            cout << "0\n";
+        } else {
+            cout << (R - L + 1) << "\n";
+        }
+    }
+    
+    return 0;
+}

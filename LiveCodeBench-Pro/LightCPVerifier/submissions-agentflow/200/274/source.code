@@ -1,0 +1,246 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// 检查是否所有点在同一行或同一列
+bool all_same_row_or_col(const vector<pair<int, int>>& sounds) {
+    int n = sounds.size();
+    if (n < 3) return false;
+    bool all_same_v = true, all_same_p = true;
+    for (int i = 1; i < n; i++) {
+        if (sounds[i].first != sounds[0].first) all_same_v = false;
+        if (sounds[i].second != sounds[0].second) all_same_p = false;
+    }
+    return all_same_v || all_same_p;
+}
+
+// 检查图是否连通
+bool is_connected(const vector<pair<int, int>>& sounds) {
+    int n = sounds.size();
+    if (n <= 1) return true;
+    
+    map<int, vector<int>> v_to_points, p_to_points;
+    for (int i = 0; i < n; i++) {
+        v_to_points[sounds[i].first].push_back(i);
+        p_to_points[sounds[i].second].push_back(i);
+    }
+    
+    vector<bool> visited(n, false);
+    queue<int> q;
+    q.push(0);
+    visited[0] = true;
+    int cnt = 0;
+    
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        cnt++;
+        
+        auto [v, p] = sounds[u];
+        for (int neighbor : v_to_points[v]) {
+            if (!visited[neighbor]) {
+                visited[neighbor] = true;
+                q.push(neighbor);
+            }
+        }
+        for (int neighbor : p_to_points[p]) {
+            if (!visited[neighbor]) {
+                visited[neighbor] = true;
+                q.push(neighbor);
+            }
+        }
+    }
+    
+    return cnt == n;
+}
+
+// 随机化贪心算法寻找路径
+vector<int> find_path_randomized(const vector<pair<int, int>>& sounds, int max_trials = 50) {
+    int n = sounds.size();
+    if (n == 1) return {0};
+    
+    // 构建数据结构
+    map<int, vector<int>> v_to_points, p_to_points;
+    for (int i = 0; i < n; i++) {
+        v_to_points[sounds[i].first].push_back(i);
+        p_to_points[sounds[i].second].push_back(i);
+    }
+    
+    // 尝试多次随机试验
+    for (int trial = 0; trial < max_trials; trial++) {
+        // 随机数生成
+        mt19937 rng(chrono::steady_clock::now().time_since_epoch().count() + trial);
+        
+        // 随机起点顺序
+        vector<int> start_order(n);
+        iota(start_order.begin(), start_order.end(), 0);
+        shuffle(start_order.begin(), start_order.end(), rng);
+        
+        for (int start : start_order) {
+            vector<bool> used(n, false);
+            vector<int> path;
+            path.push_back(start);
+            used[start] = true;
+            
+            int last_dim = -1; // 0=v, 1=p, -1=起始
+            
+            while (path.size() < n) {
+                int current = path.back();
+                auto [v, p] = sounds[current];
+                bool found = false;
+                
+                // 随机尝试维度顺序
+                vector<int> dims = {0, 1};
+                shuffle(dims.begin(), dims.end(), rng);
+                
+                for (int try_dim : dims) {
+                    if (try_dim == last_dim) continue;
+                    
+                    auto& neighbors = (try_dim == 0) ? v_to_points[v] : p_to_points[p];
+                    // 随机邻居顺序
+                    vector<int> neighbor_list = neighbors;
+                    shuffle(neighbor_list.begin(), neighbor_list.end(), rng);
+                    
+                    for (int neighbor : neighbor_list) {
+                        if (!used[neighbor]) {
+                            // 检查不无聊条件
+                            if (path.size() >= 2) {
+                                int a = path[path.size()-2], b = current, c = neighbor;
+                                auto [va, pa] = sounds[a];
+                                auto [vb, pb] = sounds[b];
+                                auto [vc, pc] = sounds[c];
+                                
+                                if (try_dim == 0) {
+                                    if (va == vb && vb == vc) continue;
+                                } else {
+                                    if (pa == pb && pb == pc) continue;
+                                }
+                            }
+                            
+                            path.push_back(neighbor);
+                            used[neighbor] = true;
+                            last_dim = try_dim;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (found) break;
+                }
+                
+                // 如果没找到，尝试相同维度
+                if (!found) {
+                    shuffle(dims.begin(), dims.end(), rng);
+                    for (int try_dim : dims) {
+                        auto& neighbors = (try_dim == 0) ? v_to_points[v] : p_to_points[p];
+                        vector<int> neighbor_list = neighbors;
+                        shuffle(neighbor_list.begin(), neighbor_list.end(), rng);
+                        
+                        for (int neighbor : neighbor_list) {
+                            if (!used[neighbor]) {
+                                // 检查不无聊条件
+                                if (path.size() >= 2) {
+                                    int a = path[path.size()-2], b = current, c = neighbor;
+                                    auto [va, pa] = sounds[a];
+                                    auto [vb, pb] = sounds[b];
+                                    auto [vc, pc] = sounds[c];
+                                    
+                                    if (try_dim == 0) {
+                                        if (va == vb && vb == vc) continue;
+                                    } else {
+                                        if (pa == pb && pb == pc) continue;
+                                    }
+                                }
+                                
+                                path.push_back(neighbor);
+                                used[neighbor] = true;
+                                last_dim = try_dim;
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (found) break;
+                    }
+                }
+                
+                if (!found) {
+                    break;
+                }
+            }
+            
+            if (path.size() == n) {
+                // 验证路径
+                bool valid = true;
+                for (int i = 0; i < n-1; i++) {
+                    auto [v1, p1] = sounds[path[i]];
+                    auto [v2, p2] = sounds[path[i+1]];
+                    if (!((v1 == v2 && p1 != p2) || (p1 == p2 && v1 != v2))) {
+                        valid = false;
+                        break;
+                    }
+                }
+                if (valid) {
+                    for (int i = 0; i < n-2; i++) {
+                        auto [v1, p1] = sounds[path[i]];
+                        auto [v2, p2] = sounds[path[i+1]];
+                        auto [v3, p3] = sounds[path[i+2]];
+                        if ((v1 == v2 && v2 == v3) || (p1 == p2 && p2 == p3)) {
+                            valid = false;
+                            break;
+                        }
+                    }
+                }
+                
+                if (valid) {
+                    return path;
+                }
+            }
+        }
+    }
+    
+    return {};
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    
+    vector<pair<int, int>> sounds(n);
+    for (int i = 0; i < n; i++) {
+        cin >> sounds[i].first >> sounds[i].second;
+    }
+    
+    // 检查必要条件
+    if (all_same_row_or_col(sounds)) {
+        cout << "NO\n";
+        return;
+    }
+    
+    if (!is_connected(sounds)) {
+        cout << "NO\n";
+        return;
+    }
+    
+    auto path = find_path_randomized(sounds, 100);
+    
+    if (path.size() != n) {
+        cout << "NO\n";
+        return;
+    }
+    
+    cout << "YES\n";
+    for (int i = 0; i < n; i++) {
+        cout << path[i] + 1 << " \n"[i == n-1];
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

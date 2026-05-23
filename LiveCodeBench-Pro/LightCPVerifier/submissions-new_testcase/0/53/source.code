@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+bool canFormSquare(int l1, int b1, int l2, int b2, int l3, int b3) {
+    int area = l1*b1 + l2*b2 + l3*b3;
+    int S = sqrt(area);
+    if (S*S != area) return false;
+    
+    vector<pair<int,int>> rect = {{l1,b1}, {l2,b2}, {l3,b3}};
+    vector<int> idx = {0,1,2};
+    
+    do {
+        int i = idx[0], j = idx[1], k = idx[2];
+        
+        // Condition A: all side by side horizontally
+        if (rect[i].second == S && rect[j].second == S && rect[k].second == S && 
+            rect[i].first + rect[j].first + rect[k].first == S) return true;
+            
+        // Condition B: all stacked vertically
+        if (rect[i].first == S && rect[j].first == S && rect[k].first == S && 
+            rect[i].second + rect[j].second + rect[k].second == S) return true;
+            
+        // Case 1: one rectangle height S
+        if (rect[i].second == S) {
+            int W = S - rect[i].first;
+            // subcase 1a: other two height S
+            if (rect[j].second == S && rect[k].second == S && rect[j].first + rect[k].first == W) return true;
+            // subcase 1b: other two width W
+            if (rect[j].first == W && rect[k].first == W && rect[j].second + rect[k].second == S) return true;
+        }
+        
+        // Case 2: one rectangle width S
+        if (rect[i].first == S) {
+            int H = S - rect[i].second;
+            // subcase 2a: other two height H
+            if (rect[j].second == H && rect[k].second == H && rect[j].first + rect[k].first == S) return true;
+            // subcase 2b: other two width S
+            if (rect[j].first == S && rect[k].first == S && rect[j].second + rect[k].second == H) return true;
+        }
+    } while (next_permutation(idx.begin(), idx.end()));
+    
+    return false;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int l1, b1, l2, b2, l3, b3;
+        cin >> l1 >> b1 >> l2 >> b2 >> l3 >> b3;
+        if (canFormSquare(l1, b1, l2, b2, l3, b3)) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

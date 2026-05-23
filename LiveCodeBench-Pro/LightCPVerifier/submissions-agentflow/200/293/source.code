@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        int cnt0 = 0;
+        for (char c : s) if (c == '0') cnt0++;
+        int cnt1 = n - cnt0;
+        if (cnt0 == 0) {
+            cout << (n >= 1 ? 1 : 0) << '\n';
+            continue;
+        }
+        if (cnt1 == 0) {
+            cout << 1LL * n * (n-1) / 2 << '\n';
+            continue;
+        }
+        long long total0 = 1LL * cnt0 * (n-1) + cnt1;
+        // 孤立对角线0
+        int isolated_diag = 0;
+        for (int i = 0; i < n; i++) {
+            if (s[i] == '1') {
+                bool left1 = (i == 0 || s[i-1] == '1');
+                bool right1 = (i == n-1 || s[i+1] == '1');
+                if (left1 && right1) isolated_diag++;
+            }
+        }
+        // 孤立非对角线0
+        int isolated_off = 0;
+        for (int j = 0; j < n; j++) {
+            if (s[j] == '0') {
+                // 检查 i = j+1 和 i = j-1
+                for (int d : {1, -1}) {
+                    int i = j + d;
+                    if (i < 0 || i >= n) continue;
+                    // 检查四个邻居是否都是1
+                    bool up1 = (i == 0) || (i-1 == j ? 1 : (s[j]-'0')) == 1;
+                    bool down1 = (i == n-1) || (i+1 == j ? 1 : (s[j]-'0')) == 1;
+                    bool left1 = (j == 0) || (i == j-1 ? 1 : (s[j-1]-'0')) == 1;
+                    bool right1 = (j == n-1) || (i == j+1 ? 1 : (s[j+1]-'0')) == 1;
+                    if (up1 && down1 && left1 && right1) isolated_off++;
+                }
+            }
+        }
+        long long ans = total0 - isolated_diag - isolated_off;
+        // 确保至少为1
+        if (ans < 1 && total0 > 0) ans = 1;
+        cout << ans << '\n';
+    }
+    return 0;
+}

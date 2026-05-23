@@ -1,0 +1,27 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        int L = s.length();
+        int max_keep = 0;
+        int zero_count = 0;
+        for (int i = 0; i < L; ++i) {
+            if (s[i] == '0') {
+                zero_count++;
+            } else {
+                // 非零数字
+                int keep = zero_count + 1;
+                max_keep = max(max_keep, keep);
+            }
+        }
+        cout << L - max_keep << endl;
+    }
+    return 0;
+}

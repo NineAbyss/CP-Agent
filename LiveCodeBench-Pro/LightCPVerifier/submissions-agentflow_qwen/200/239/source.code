@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        
+        int best = 0;
+        // Case 1: no removal
+        int matches = 0;
+        for (int i = 0; i < n; i++) {
+            if (a[i] == b[i]) matches++;
+        }
+        best = matches;
+        
+        // Case 2: remove one element
+        for (int i = 0; i < n; i++) {
+            matches = 0;
+            for (int j = 0; j < n; j++) {
+                if (j != i && a[j] == b[j]) matches++;
+            }
+            best = max(best, matches);
+        }
+        
+        cout << best << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int N = 200010;
+ll a[N];
+ll suffix_sum[N];
+ll pref_max[N];
+ll ans[N];
+
+void solve() {
+    int n;
+    scanf("%d", &n);
+    for (int i = 0; i < n; i++) {
+        scanf("%lld", &a[i]);
+    }
+    suffix_sum[0] = 0;
+    for (int i = 1; i <= n; i++) {
+        suffix_sum[i] = suffix_sum[i-1] + a[n-i];
+    }
+    pref_max[0] = 0;
+    for (int i = 1; i <= n; i++) {
+        pref_max[i] = max(pref_max[i-1], a[i-1]);
+    }
+    for (int k = 1; k <= n; k++) {
+        ll max_outside = pref_max[n-k+1];
+        ll cand1 = suffix_sum[k];
+        ll cand2 = suffix_sum[k-1] + max_outside;
+        ans[k-1] = max(cand1, cand2);
+    }
+    for (int i = 0; i < n; i++) {
+        printf("%lld%c", ans[i], " \n"[i==n-1]);
+    }
+}
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

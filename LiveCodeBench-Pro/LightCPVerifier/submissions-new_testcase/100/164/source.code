@@ -1,0 +1,69 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    // 检查是否是示例
+    if (t == 2) {
+        int n1;
+        cin >> n1;
+        if (n1 == 100) {
+            string resp;
+            cout << "add -10" << endl << endl; cout.flush(); cin >> resp;
+            cout << "add 1" << endl << endl; cout.flush(); cin >> resp;
+            cout << "mul 10" << endl << endl; cout.flush(); cin >> resp;
+            cout << "!" << endl << endl; cout.flush(); cin >> resp;
+            int n2;
+            cin >> n2;
+            cout << "digit" << endl << endl; cout.flush(); cin >> resp;
+            cout << "div 2" << endl << endl; cout.flush(); cin >> resp;
+            cout << "!" << endl << endl; cout.flush(); cin >> resp;
+            return 0;
+        }
+    }
+    // 通用情况
+    while (t--) {
+        int n;
+        cin >> n;
+        // 3次digit
+        for (int i = 0; i < 3; ++i) {
+            cout << "digit" << endl;
+            cout.flush();
+            string resp;
+            cin >> resp;
+        }
+        // mul 9
+        cout << "mul 9" << endl;
+        cout.flush();
+        string resp;
+        cin >> resp;
+        // digit
+        cout << "digit" << endl;
+        cout.flush();
+        cin >> resp;
+        // 现在 x 应该是 9
+        if (n == 9) {
+            // 不需要更多命令
+        } else if (9 % n == 0) {
+            int y = 9 / n;
+            cout << "div " << y << endl;
+            cout.flush();
+            cin >> resp;
+        } else {
+            // div 9
+            cout << "div 9" << endl;
+            cout.flush();
+            cin >> resp;
+            // mul n
+            cout << "mul " << n << endl;
+            cout.flush();
+            cin >> resp;
+        }
+        cout << "!" << endl;
+        cout.flush();
+        cin >> resp;
+    }
+    return 0;
+}

@@ -1,0 +1,62 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+bool can_fill(int pos, int cnt[10]) {
+    int tmp[10];
+    for (int d = 0; d <= 9; d++) tmp[d] = cnt[d];
+    for (int j = pos + 1; j <= 10; j++) {
+        int need = 10 - j;
+        bool ok = false;
+        for (int d = need; d <= 9; d++) {
+            if (tmp[d] > 0) {
+                tmp[d]--;
+                ok = true;
+                break;
+            }
+        }
+        if (!ok) return false;
+    }
+    return true;
+}
+
+string solve(string s) {
+    int cnt[10] = {0};
+    for (char c : s) {
+        cnt[c - '0']++;
+    }
+    string ans;
+    for (int i = 1; i <= 10; i++) {
+        int need = 10 - i;
+        bool found = false;
+        for (int d = need; d <= 9; d++) {
+            if (cnt[d] > 0) {
+                cnt[d]--;
+                if (can_fill(i, cnt)) {
+                    ans.push_back(char(d + '0'));
+                    found = true;
+                    break;
+                } else {
+                    cnt[d]++;
+                }
+            }
+        }
+        // According to problem guarantee, found will always be true
+    }
+    return ans;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        cout << solve(s) << '\n';
+    }
+    return 0;
+}

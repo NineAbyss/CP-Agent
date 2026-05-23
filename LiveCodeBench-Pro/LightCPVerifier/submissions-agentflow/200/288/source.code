@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+string canonical(const string &a) {
+    int n = a.size();
+    if (n % 2 == 1) return a;
+    int k = n / 2;
+    string L = a.substr(0, k);
+    string R = a.substr(k, k);
+    string Lc = canonical(L);
+    string Rc = canonical(R);
+    while (true) {
+        bool changed = false;
+        string Lx = "";
+        for (int i = 0; i < k; ++i) {
+            Lx += ((Lc[i] - '0') ^ (Rc[i] - '0')) + '0';
+        }
+        if (Lx < Lc) {
+            Lc = canonical(Lx);
+            changed = true;
+        }
+        string Rx = "";
+        for (int i = 0; i < k; ++i) {
+            Rx += ((Lc[i] - '0') ^ (Rc[i] - '0')) + '0';
+        }
+        if (Rx < Rc) {
+            Rc = canonical(Rx);
+            changed = true;
+        }
+        if (Rc < Lc) {
+            swap(Lc, Rc);
+            changed = true;
+        }
+        if (!changed) break;
+    }
+    return Lc + Rc;
+}
+
+void solve() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s, t_str;
+        cin >> s >> t_str;
+        string cs = canonical(s);
+        string ct = canonical(t_str);
+        if (cs == ct) {
+            cout << "Yes\n";
+        } else {
+            cout << "No\n";
+        }
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

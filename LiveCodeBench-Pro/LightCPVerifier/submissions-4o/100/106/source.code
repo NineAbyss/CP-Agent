@@ -1,0 +1,105 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <map>
+
+using namespace std;
+
+// Perform BFS from a given start vertex and return distances to all other vertices
+vector<int> bfs(int start, int n, vector<vector<int>>& adj) {
+    vector<int> distance(n + 1, -1);
+    queue<int> q;
+    q.push(start);
+    distance[start] = 0;
+    
+    while (!q.empty()) {
+        int v = q.front();
+        q.pop();
+        
+        for (int u : adj[v]) {
+            if (distance[u] == -1) {  // Not visited
+                distance[u] = distance[v] + 1;
+                q.push(u);
+            }
+        }
+    }
+    
+    return distance;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m, x, y;
+        cin >> n >> m >> x >> y;
+        
+        vector<vector<int>> adj(n + 1);
+        
+        for (int i = 0; i < n - 1; ++i) {
+            int v, u;
+            cin >> v >> u;
+            adj[v].push_back(u);
+            adj[u].push_back(v);
+        }
+        
+        vector<pair<int, int>> enemies(m);
+        for (int i = 0; i < m; ++i) {
+            cin >> enemies[i].first >> enemies[i].second;
+        }
+        
+        vector<int> maratDistFromX = bfs(x, n, adj);
+        vector<int> maratDistFromY = bfs(y, n, adj);
+        
+        vector<int> MaratPath;
+        int current = x;
+        while (current != y) {
+            MaratPath.push_back(current);
+            for (int u : adj[current]) {
+                if (maratDistFromX[u] == maratDistFromX[current] - 1) {
+                    current = u;
+                    break;
+                }
+            }
+        }
+        MaratPath.push_back(y);
+        
+        map<int, int> enemyOccupancy;
+        for (auto [a, b] : enemies) {
+            vector<int> enemyDistFromA = bfs(a, n, adj);
+            vector<int> enemyDistFromB = bfs(b, n, adj);
+            
+            int current = a;
+            while (current != b) {
+                int currentTime = enemyDistFromA[current];
+                if (currentTime > 1) {
+                    enemyOccupancy[current] = currentTime;
+                }
+                for (int u : adj[current]) {
+                    if (enemyDistFromA[u] == enemyDistFromA[current] - 1) {
+                        current = u;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        bool meetingPossible = true;
+        for (int time = 1; time < MaratPath.size(); ++time) {
+            int vertex = MaratPath[time];
+            if (enemyOccupancy[vertex] == time) {
+                meetingPossible = false;
+                break;
+            }
+        }
+        
+        if (meetingPossible) {
+            cout << MaratPath.size() << endl;
+        } else {
+            cout << -1 << endl;
+        }
+    }
+    
+    return 0;
+}

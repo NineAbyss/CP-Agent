@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long m;
+        cin >> n >> m;
+        long long max_sum = n * (n + 1LL) / 2;
+        if (m < n || m > max_sum) {
+            cout << "-1" << endl;
+            continue;
+        }
+        if (m <= 2LL * n - 1) {
+            int root = m - n + 1;
+            cout << root << endl;
+            // 构造链：root - 1 - 2 - ... (跳过 root)
+            cout << root << " " << 1 << endl;
+            int prev = 1;
+            for (int i = 2; i <= n; ++i) {
+                if (i == root) continue;
+                cout << prev << " " << i << endl;
+                prev = i;
+            }
+        } else {
+            cout << n << endl;
+            long long T = m - (2LL * n - 1);
+            // 先输出边 n 1
+            cout << n << " " << 1 << endl;
+            // 对于 i 从 n-1 降到 2
+            for (int i = n-1; i >= 2; --i) {
+                if (T >= i-1) {
+                    cout << n << " " << i << endl;
+                    T -= i-1;
+                } else {
+                    cout << 1 << " " << i << endl;
+                }
+            }
+        }
+    }
+    return 0;
+}

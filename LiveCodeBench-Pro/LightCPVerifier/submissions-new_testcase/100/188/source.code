@@ -1,0 +1,90 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MAX_A = 100000;
+
+vector<int> prime_factors[MAX_A + 1];
+vector<int> positions[MAX_A + 1];
+
+void init() {
+    for (int i = 2; i <= MAX_A; i++) {
+        if (prime_factors[i].empty()) {
+            for (int j = i; j <= MAX_A; j += i) {
+                prime_factors[j].push_back(i);
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    init();
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            int val = a[i];
+            for (int p : prime_factors[val]) {
+                positions[p].push_back(i + 1);
+            }
+        }
+        
+        while (q--) {
+            int k, l, r;
+            cin >> k >> l >> r;
+            
+            vector<int> primes = prime_factors[k];
+            int cur = l;
+            long long ans = 0;
+            
+            while (cur <= r) {
+                // 找到下一个位置 nxt >= cur 且 a[nxt] 与 k 不互质
+                int nxt = r + 1;
+                for (int p : primes) {
+                    auto it = lower_bound(positions[p].begin(), positions[p].end(), cur);
+                    if (it != positions[p].end() && *it <= r) {
+                        nxt = min(nxt, *it);
+                    }
+                }
+                if (nxt > r) {
+                    ans += 1LL * k * (r - cur + 1);
+                    break;
+                }
+                // 处理 cur 到 nxt-1
+                ans += 1LL * k * (nxt - cur);
+                // 处理位置 nxt
+                int val = a[nxt - 1];
+                while (k % val == 0) {
+                    k /= val;
+                }
+                ans += k;
+                cur = nxt + 1;
+                if (k == 1) {
+                    ans += (r - nxt);
+                    break;
+                }
+                // 更新 primes
+                primes = prime_factors[k];
+            }
+            cout << ans << '\n';
+        }
+        
+        // 清空 positions
+        for (int i = 0; i < n; i++) {
+            int val = a[i];
+            for (int p : prime_factors[val]) {
+                positions[p].clear();
+            }
+        }
+    }
+    return 0;
+}

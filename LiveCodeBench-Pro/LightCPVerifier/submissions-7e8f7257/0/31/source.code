@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int floor_of(int a) {
+    return a / 100;
+}
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<pair<int, int>> classrooms(m); // (floor, original index)
+    for (int i = 0; i < m; i++) {
+        int a;
+        cin >> a;
+        classrooms[i] = {floor_of(a), a};
+    }
+    sort(classrooms.begin(), classrooms.end(), [](auto &p1, auto &p2) {
+        if (p1.first != p2.first) return p1.first < p2.first;
+        return p1.second < p2.second;
+    });
+    int left = 0, right = m - 1;
+    vector<vector<int>> schedule(n, vector<int>(6));
+    int group_idx = 0;
+    while (group_idx < n) {
+        if (group_idx + 1 < n && left < right) {
+            int low = classrooms[left].second;
+            int high = classrooms[right].second;
+            schedule[group_idx] = {high, low, high, low, high, low};
+            schedule[group_idx + 1] = {low, high, low, high, low, high};
+            left++;
+            right--;
+            group_idx += 2;
+        } else {
+            // only one group left
+            int low = classrooms[left].second;
+            int high = classrooms[right].second;
+            schedule[group_idx] = {high, low, high, low, high, low};
+            group_idx++;
+        }
+    }
+    for (int i = 0; i < n; i++) {
+        for (int k = 0; k < 6; k++) {
+            cout << schedule[i][k] << " \n"[k == 5];
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,58 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Statement {
+    int type, a, b;
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<Statement> stmts(m+1);
+        for (int i = 1; i <= m; ++i) {
+            cin >> stmts[i].type >> stmts[i].a >> stmts[i].b;
+        }
+        int q;
+        cin >> q;
+        vector<pair<int,int>> queries(q);
+        for (int i = 0; i < q; ++i) {
+            cin >> queries[i].first >> queries[i].second;
+        }
+        // 预处理类型1区间
+        vector<tuple<int,int,int>> type1; // (index, a, b)
+        for (int i = 1; i <= m; ++i) {
+            if (stmts[i].type == 1) {
+                type1.emplace_back(i, stmts[i].a, stmts[i].b);
+            }
+        }
+        // 对于每个查询，检查是否存在类型1区间被某个类型0区间完全覆盖
+        for (auto& qry : queries) {
+            int l = qry.first, r = qry.second;
+            bool ok = true;
+            for (auto& t1 : type1) {
+                int idx1 = get<0>(t1);
+                if (idx1 < l || idx1 > r) continue;
+                int a1 = get<1>(t1), b1 = get<2>(t1);
+                // 检查是否存在类型0区间完全覆盖 [a1,b1]
+                for (int j = l; j <= r; ++j) {
+                    if (stmts[j].type == 0) {
+                        if (stmts[j].a <= a1 && stmts[j].b >= b1) {
+                            ok = false;
+                            break;
+                        }
+                    }
+                }
+                if (!ok) break;
+            }
+            cout << (ok ? "YES" : "NO") << endl;
+        }
+    }
+    return 0;
+}

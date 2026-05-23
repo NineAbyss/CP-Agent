@@ -1,0 +1,26 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int ceil_log2(long long n) {
+    if (n <= 1) return 0;
+    return 64 - __builtin_clzll(n - 1);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n, m, a, b;
+        cin >> n >> m >> a >> b;
+        int r = ceil_log2(n);
+        int c = ceil_log2(m);
+        long long L_row = min(a, n - a + 1);
+        long long L_col = min(b, m - b + 1);
+        int opt1 = ceil_log2(L_row) + c;
+        int opt2 = r + ceil_log2(L_col);
+        cout << 1 + min(opt1, opt2) << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,30 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+ll mod(ll x, ll m) {
+    return ((x % m) + m) % m;
+}
+
+bool solve(ll w, ll h, ll a, ll b, ll x1, ll y1, ll x2, ll y2) {
+    if ((x1 - x2) % a != 0 || (y1 - y2) % b != 0) return false;
+    ll dx = abs(x1 - x2) / a;
+    ll dy = abs(y1 - y2) / b;
+    ll nx = (w + a - 1) / a;
+    ll ny = (h + b - 1) / b;
+    if (dx + 1 > nx || dy + 1 > ny) return false;
+    ll ox = mod(x1, a);
+    ll oy = mod(y1, b);
+    if (ox > a * nx - w || oy > b * ny - h) return false;
+    return true;
+}
+
+int main() {
+    int t; cin >> t;
+    while (t--) {
+        ll w, h, a, b, x1, y1, x2, y2;
+        cin >> w >> h >> a >> b >> x1 >> y1 >> x2 >> y2;
+        cout << (solve(w, h, a, b, x1, y1, x2, y2) ? "Yes" : "No") << "\n";
+    }
+    return 0;
+}

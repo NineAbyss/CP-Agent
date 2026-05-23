@@ -1,0 +1,26 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        long long sum_x = 0, sum_y = 0;
+        for (int i = 0; i < n; ++i) {
+            long long x, y;
+            cin >> x >> y;
+            sum_x += x;
+            sum_y += y;
+        }
+        // 由于 n 是奇数，sum_x 和 sum_y 的奇偶性决定了 s 和 t 的奇偶性。 // 我们输出满足奇偶性的任意点，例如 (0,0) 或 (1,1)，但为了简单，输出 (sum_x mod 2, sum_y mod 2)。
+        // 但 sum_x mod 2 可能是负数，所以调整。
+        int s = (sum_x % 2 + 2) % 2;
+        int t = (sum_y % 2 + 2) % 2;
+        cout << s << ' ' << t << '\n';
+    }
+    return 0;
+}

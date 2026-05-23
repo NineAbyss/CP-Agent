@@ -1,0 +1,232 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// 单个怪物的解决方案
+double solveSingleMonster(int m, double p, int h) {
+    if (h == 1) return 1.0;
+    
+    int a = h - 1;
+    
+    vector<double> dp_curr(a + 2, 0.0);
+    vector<double> dp_next(a + 2, 0.0);
+    dp_curr[a] = 1.0;
+    
+    for (int i = 0; i < m; i++) {
+        fill(dp_next.begin(), dp_next.end(), 0.0);
+        
+        for (int j = 0; j <= a + 1; j++) {
+            double prob = dp_curr[j];
+            if (prob == 0.0) continue;
+            
+            if (j == 0) {
+                dp_next[j] += prob;
+                continue;
+            }
+            
+            // 剑发光的情况：只要 j >= 1 就可以攻击
+            dp_next[j-1] += prob * p;
+            
+            // 剑不发光的情况：只要 j >= 1 就可以攻击
+            dp_next[j-1] += prob * (1-p);
+        }
+        
+        swap(dp_curr, dp_next);
+    }
+    
+    return dp_curr[0];
+}
+
+// 状态：cnt[k] = 需要减少 k 点 HP 的怪物数量
+struct State {
+    vector<short> cnt; // cnt[1..max_a]
+    short max_a;
+    
+    State(int ma) : max_a(ma) {
+        cnt.assign(max_a + 1, 0);
+    }
+    
+    string encode(int rounds) const {
+        string s = to_string(rounds) + ":";
+        for (int k = 1; k <= max_a; k++) {
+            s += to_string(cnt[k]) + ",";
+        }
+        return s;
+    }
+    
+    bool isSuccess() const {
+        for (int k = 1; k <= max_a; k++) {
+            if (cnt[k] > 0) return false;
+        }
+        return true;
+    }
+    
+    // 总怪物数
+    int total() const {
+        int sum = 0;
+        for (int k = 1; k <= max_a; k++) {
+            sum += cnt[k];
+        }
+        return sum;
+    }
+};
+
+unordered_map<string, double> memo;
+
+double dfs(int rounds, State state, double p, int n) {
+    if (rounds == 0) {
+        return state.isSuccess() ? 1.0 : 0.0;
+    }
+    
+    // 剪枝：如果所有怪物都已经达到目标
+    if (state.isSuccess()) {
+        return 1.0;
+    }
+    
+    string key = state.encode(rounds);
+    if (memo.count(key)) return memo[key];
+    
+    // 剑发光的情况
+    double shine_val = 0.0;
+    bool can_attack_all = (state.total() == n); // 所有怪物都需要减少 HP
+    
+    if (can_attack_all) {
+        // 攻击：所有 cnt[k] 移动到 cnt[k-1] (k>1)
+        State new_state(state.max_a);
+        for (int k = 2; k <= state.max_a; k++) {
+            if (state.cnt[k] > 0) {
+                new_state.cnt[k-1] += state.cnt[k];
+            }
+        }
+        // k=1 的怪物攻击后达到目标，不记录
+        shine_val = p * dfs(rounds - 1, new_state, p, n);
+    } else {
+        shine_val = p * dfs(rounds - 1, state, p, n);
+    }
+    
+    // 剑不发光的情况
+    double no_shine_val = 0.0;
+    
+    // 选项1：不攻击
+    double no_attack = (1-p) * dfs(rounds - 1, state, p, n);
+    
+    // 选项2：攻击一个怪物（攻击需要减少量最大的）
+    double attack_val = 0.0;
+    int max_k = 0;
+    for (int k = state.max_a; k >= 1; k--) {
+        if (state.cnt[k] > 0) {
+            max_k = k;
+            break;
+        }
+    }
+    
+    if (max_k > 0) {
+        State new_state = state;
+        new_state.cnt[max_k]--;
+        if (max_k > 1) {
+            new_state.cnt[max_k-1]++;
+        }
+        attack_val = (1-p) * dfs(rounds - 1, new_state, p, n);
+    }
+    
+    no_shine_val = max(no_attack, attack_val);
+    
+    double result = shine_val + no_shine_val;
+    memo[key] = result;
+    return result;
+}
+
+double solveTestCase(int n, int m, double p, vector<int>& h) {
+    // 特判：n = 1
+    if (n == 1) {
+        return solveSingleMonster(m, p, h[0]);
+    }
+    
+    // 特判：p = 1.0
+    if (abs(p - 1.0) < 1e-9) {
+        // 检查是否所有怪物初始 HP >= 1（总是成立） // 但如果有怪物 HP = 1，剑发光时不能攻击
+        bool all_gt_one = true;
+        for (int hp : h) {
+            if (hp == 1) {
+                all_gt_one = false;
+                break;
+            }
+        }
+        
+        if (all_gt_one) {
+            // 所有怪物 HP > 1，剑发光时总是可以攻击
+            int max_reduce = 0;
+            for (int hp : h) {
+                max_reduce = max(max_reduce, hp - 1);
+            }
+            return (m >= max_reduce) ? 1.0 : 0.0;
+        } else {
+            // 有怪物 HP = 1，剑发光时不能攻击 // 只能依靠剑不发光时的单点攻击，但 p=1.0，剑总是发光，所以永远不能攻击
+            // 除非所有怪物初始 HP = 1，那么已经成功
+            bool all_eq_one = true;
+            for (int hp : h) {
+                if (hp != 1) {
+                    all_eq_one = false;
+                    break;
+                }
+            }
+            return all_eq_one ? 1.0 : 0.0;
+        }
+    }
+    
+    // 特判：p = 0.0
+    if (abs(p) < 1e-9) {
+        long long total_reduce = 0;
+        for (int hp : h) {
+            total_reduce += hp - 1;
+        }
+        return (m >= total_reduce) ? 1.0 : 0.0;
+    }
+    
+    memo.clear();
+    
+    int max_a = 0;
+    for (int hp : h) {
+        max_a = max(max_a, hp - 1);
+    }
+    
+    // 如果 max_a 太大，限制它，因为超过 m 的值没有意义
+    max_a = min(max_a, m);
+    
+    State init_state(max_a);
+    for (int hp : h) {
+        int a = hp - 1;
+        if (a > 0) {
+            if (a > max_a) a = max_a; // 截断
+            init_state.cnt[a]++;
+        }
+    }
+    
+    return dfs(m, init_state, p, n);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    // 输出精度设置为6位小数
+    cout << fixed << setprecision(6);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m, p_prime;
+        cin >> n >> m >> p_prime;
+        double p = p_prime / 100.0;
+        
+        vector<int> h(n);
+        for (int i = 0; i < n; i++) {
+            cin >> h[i];
+        }
+        
+        double result = solveTestCase(n, m, p, h);
+        cout << result << '\n';
+    }
+    
+    return 0;
+}

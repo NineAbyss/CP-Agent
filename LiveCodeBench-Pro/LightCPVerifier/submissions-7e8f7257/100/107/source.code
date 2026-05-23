@@ -1,0 +1,74 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+int compute_score(const set<int>& s) {
+    if (s.empty()) return 0;
+    vector<int> p(s.begin(), s.end());
+    int k = p.size();
+    // q[i] = 2*i - p[i]
+    int min_q = 2*0 - p[0];
+    int max_diff = 0;
+    for (int i = 0; i < k; i++) {
+        int q_val = 2*i - p[i];
+        min_q = min(min_q, q_val);
+        max_diff = max(max_diff, q_val - min_q);
+    }
+    int M = max_diff + 1;
+    return M / 2; // floor(M/2)
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        vector<int> a(n);
+        vector<set<int>> pos(n+1);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            pos[a[i]].insert(i);
+        }
+        multiset<int> scores;
+        for (int v = 1; v <= n; v++) {
+            scores.insert(compute_score(pos[v]));
+        }
+        for (int qi = 0; qi < q; qi++) {
+            int idx, x;
+            cin >> idx >> x;
+            idx--;
+            int old = a[idx];
+            if (old == x) {
+                cout << *scores.rbegin();
+                if (qi != q-1) cout << ' ';
+                continue;
+            }
+            // remove old score
+            auto it = scores.find(compute_score(pos[old]));
+            if (it != scores.end()) scores.erase(it);
+            // remove idx from old
+            pos[old].erase(idx);
+            // add new score for old
+            scores.insert(compute_score(pos[old]));
+            // remove new score if exists
+            if (!pos[x].empty()) {
+                auto it2 = scores.find(compute_score(pos[x]));
+                if (it2 != scores.end()) scores.erase(it2);
+            }
+            // add idx to new
+            pos[x].insert(idx);
+            // add new score for new
+            scores.insert(compute_score(pos[x]));
+            a[idx] = x;
+            cout << *scores.rbegin();
+            if (qi != q-1) cout << ' ';
+        }
+        cout << '\n';
+    }
+    return 0;
+}

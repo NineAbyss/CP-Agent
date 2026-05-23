@@ -1,0 +1,75 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+const int MAXN = 1000005;
+
+struct Fenwick {
+    long long bit[MAXN];
+    int n;
+    void init(int _n) {
+        n = _n;
+        memset(bit, 0, sizeof(bit));
+    }
+    void update(int idx, long long delta) {
+        for (; idx <= n; idx += idx & -idx)
+            bit[idx] += delta;
+    }
+    long long query(int idx) {
+        long long res = 0;
+        for (; idx > 0; idx -= idx & -idx)
+            res += bit[idx];
+        return res;
+    }
+    long long query_range(int l, int r) {
+        if (l > r) return 0;
+        return query(r) - query(l-1);
+    }
+} fenw_cnt, fenw_sum;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n+1);
+        vector<long long> pa(n+1, 0);
+        for (int i = 1; i <= n; i++) {
+            cin >> a[i];
+            pa[i] = pa[i-1] + a[i];
+        }
+        vector<long long> b(n+1);
+        vector<long long> vals;
+        for (int i = 1; i <= n; i++) {
+            b[i] = a[i] + i;
+            vals.push_back(b[i]);
+        }
+        sort(vals.begin(), vals.end());
+        vals.erase(unique(vals.begin(), vals.end()), vals.end());
+        int m = vals.size();
+        fenw_cnt.init(m);
+        fenw_sum.init(m);
+        vector<long long> saving(n+1, 0);
+        for (int i = 1; i <= n; i++) {
+            int idx = lower_bound(vals.begin(), vals.end(), b[i]) - vals.begin() + 1;
+            // count of b_j > b_i
+            int cnt_bigger = fenw_cnt.query_range(idx+1, m);
+            long long sum_bigger = fenw_sum.query_range(idx+1, m);
+            long long inc = sum_bigger - b[i] * cnt_bigger;
+            saving[i] = saving[i-1] + inc;
+            // update
+            fenw_cnt.update(idx, 1);
+            fenw_sum.update(idx, b[i]);
+        }
+        for (int i = 1; i <= n; i++) {
+            long long ans = pa[i] - saving[i];
+            cout << ans << (i == n ? '\n' : ' ');
+        }
+    }
+    return 0;
+}

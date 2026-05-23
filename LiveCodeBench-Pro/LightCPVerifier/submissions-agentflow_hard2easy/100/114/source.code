@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+
+int modpow(int a, int e) {
+    int res = 1;
+    while (e) {
+        if (e & 1) res = 1LL * res * a % MOD;
+        a = 1LL * a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+int solve(string s, int k) {
+    int n = s.size();
+    vector<vector<int>> C(n+5, vector<int>(n+5, 0));
+    for (int i = 0; i <= n; i++) {
+        C[i][0] = C[i][i] = 1;
+        for (int j = 1; j < i; j++)
+            C[i][j] = (C[i-1][j-1] + C[i-1][j]) % MOD;
+    }
+    vector<int> pow2(n+5);
+    pow2[0] = 1;
+    for (int i = 1; i <= n; i++) pow2[i] = pow2[i-1] * 2 % MOD;
+    
+    vector<vector<int>> dp(n+1, vector<int>(k+1, 0));
+    dp[0][0] = 1;
+    
+    for (int i = 1; i <= n; i++) {
+        for (int j = 0; j <= k; j++) {
+            dp[i][j] = dp[i-1][j];
+            if (s[i-1] == '0') {
+                for (int p = 0; p < j; p++) {
+                    int diff = j - p;
+                    dp[i][j] = (dp[i][j] + 1LL * dp[i-1][p] * pow2[p] % MOD * C[k-p-1][diff-1]) % MOD;
+                }
+            }
+        }
+    }
+    
+    return dp[n][k];
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        string s;
+        cin >> s;
+        cout << solve(s, k) << endl;
+    }
+    return 0;
+}

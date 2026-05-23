@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long ceil_log2(long long x) {
+    if (x <= 1) return 0;
+    return 64 - __builtin_clzll(x - 1);
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n, m, a, b;
+        cin >> n >> m >> a >> b;
+        
+        long long best_row = min(
+            ceil_log2(a) + ceil_log2(m),
+            ceil_log2(n - a + 1) + ceil_log2(m)
+        );
+        
+        long long best_col = min(
+            ceil_log2(n) + ceil_log2(b),
+            ceil_log2(n) + ceil_log2(m - b + 1)
+        );
+        
+        cout << 1 + min(best_row, best_col) << '\n';
+    }
+    return 0;
+}

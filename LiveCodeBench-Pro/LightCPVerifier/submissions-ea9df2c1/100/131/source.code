@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int query(int pos) {
+    cout << "? " << pos << endl;
+    cout.flush();
+    int res;
+    cin >> res;
+    return res;
+}
+
+void answer(int a, int b) {
+    cout << "! " << a << " " << b << endl;
+    cout.flush();
+}
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    
+    // 查询前 k 个位置
+    vector<int> first_k(k);
+    for (int i = 0; i < k; i++) {
+        first_k[i] = query(i + 1);
+    }
+    
+    // 对于每个余数 r，找到最后一个值等于 first_k[r] 的位置 // 我们使用二分搜索，但限制查询次数
+    int p_low = k, p_high = n - k;
+    
+    for (int r = 0; r < k && p_low < p_high; r++) {
+        int val = first_k[r];
+        // 二分搜索最大的位置 pos ≡ r (mod k) 使得 C[pos] == val
+        int lo = 0, hi = (n - 1 - r) / k; // t 的最大值
+        int last_same = 0;
+        while (lo <= hi) {
+            int mid = (lo + hi) / 2;
+            int pos = r + mid * k + 1; // 1-based
+            int q = query(pos);
+            if (q == val) {
+                last_same = pos;
+                lo = mid + 1;
+            } else {
+                hi = mid - 1;
+            }
+        }
+        // 现在 last_same 是最后一个值等于 val 的位置 // p 必须在 (last_same, last_same + k] 范围内
+        int low = last_same + 1;
+        int high = last_same + k;
+        p_low = max(p_low, low);
+        p_high = min(p_high, high);
+    }
+    
+    if (p_low == p_high) {
+        answer(p_low, n - p_low);
+    } else {
+        answer(-1, -1);
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

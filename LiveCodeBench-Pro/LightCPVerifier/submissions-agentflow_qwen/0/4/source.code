@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int l1, b1, l2, b2, l3, b3;
+        cin >> l1 >> b1 >> l2 >> b2 >> l3 >> b3;
+        vector<array<int,2>> rects = {{l1,b1}, {l2,b2}, {l3,b3}};
+        bool found = false;
+        sort(rects.begin(), rects.end());
+        do {
+            int l[3], b[3];
+            for (int i = 0; i < 3; i++) {
+                l[i] = rects[i][0];
+                b[i] = rects[i][1];
+            }
+            long area = 1LL * l[0]*b[0] + l[1]*b[1] + l[2]*b[2];
+            int s = sqrt(area);
+            if (s * s != area) continue;
+
+            // Layout 1: all in a row (same height)
+            if (b[0] == b[1] && b[1] == b[2] && b[0] == s && l[0] + l[1] + l[2] == s) {
+                found = true;
+                break;
+            }
+
+            // Layout 2: all in a column (same width)
+            if (l[0] == l[1] && l[1] == l[2] && l[0] == s && b[0] + b[1] + b[2] == s) {
+                found = true;
+                break;
+            }
+
+            // Layout 3: first on left, second and third stacked on right
+            if (b[0] == s && l[1] == l[2] && l[0] + l[1] == s && b[1] + b[2] == s) {
+                found = true;
+                break;
+            }
+
+            // Layout 4: first on bottom, second and third stacked on top (side by side)
+            if (l[0] == s && b[1] == b[2] && b[0] + b[1] == s && l[1] + l[2] == s) {
+                found = true;
+                break;
+            }
+
+        } while (next_permutation(rects.begin(), rects.end()));
+
+        cout << (found ? "YES" : "NO") << "\n";
+    }
+    return 0;
+}

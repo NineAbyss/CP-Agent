@@ -1,0 +1,36 @@
+#include <iostream>
+#include <vector>
+#include <numeric>
+
+int main() {
+    int t;
+    std::cin >> t;
+    while (t--) {
+        int n;
+        std::cin >> n;
+        std::vector<int> a(n);
+        
+        for (int i = 0; i < n; ++i) {
+            std::cin >> a[i];
+        }
+        
+        // Compute the gcd of the entire array
+        int overall_gcd = a[0];
+        for (int i = 1; i < n; ++i) {
+            overall_gcd = std::gcd(overall_gcd, a[i]);
+        }
+        
+        // Count elements equal to overall_gcd
+        int gcd_count = 0;
+        for (int i = 0; i < n; ++i) {
+            if (a[i] != overall_gcd) {
+                ++gcd_count;
+            }
+        }
+        
+        // The number of operations needed: elements not equal to overall_gcd
+        std::cout << gcd_count << std::endl;
+    }
+    
+    return 0;
+}

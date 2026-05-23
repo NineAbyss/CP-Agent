@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t; 
+    cin >> t;
+    
+    while (t--) {
+        int n, m; 
+        cin >> n >> m;
+        
+        vector<vector<int>> a(n, vector<int>(m));
+        vector<int> max_row(n, INT_MIN);
+        vector<int> max_col(m, INT_MIN);
+
+        // Fill matrix and calculate max per row and column beforehand
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                cin >> a[i][j];
+                max_row[i] = max(max_row[i], a[i][j]);
+                max_col[j] = max(max_col[j], a[i][j]);
+            }
+        }
+
+        int min_possible_max = INT_MAX;
+
+        // Calculate the minimum possible maximum value after decrement operations
+        for (int r = 0; r < n; ++r) {
+            for (int c = 0; c < m; ++c) {
+                // Calculate the new potential maximum
+                int reduced_max = max(max_row[r] - 1, max_col[c] - 1);
+                min_possible_max = min(min_possible_max, reduced_max);
+            }
+        }
+
+        cout << min_possible_max << '\n';
+    }
+
+    return 0;
+}

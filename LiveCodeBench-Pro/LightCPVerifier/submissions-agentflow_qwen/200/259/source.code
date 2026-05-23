@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        vector<int> odd_vals, even_vals;
+        // Extract values at odd and even positions (1-indexed) // 0-indexed: even indices -> 1st,3rd,... (odd positions in 1-indexed)
+        //           odd indices -> 2nd,4th,... (even positions)
+        for (int i = 0; i < n; i++) {
+            if (i % 2 == 0) {
+                odd_vals.push_back(a[i]);
+            } else {
+                even_vals.push_back(a[i]);
+            }
+        }
+
+        sort(odd_vals.begin(), odd_vals.end());
+        sort(even_vals.begin(), even_vals.end());
+
+        vector<int> res;
+        int oi = 0, ei = 0;
+        for (int i = 0; i < n; i++) {
+            if (i % 2 == 0) {
+                res.push_back(odd_vals[oi++]);
+            } else {
+                res.push_back(even_vals[ei++]);
+            }
+        }
+
+        for (int i = 0; i < n; i++) {
+            cout << res[i];
+            if (i < n-1) cout << " ";
+        }
+        cout << "\n";
+    }
+    return 0;
+}

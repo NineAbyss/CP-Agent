@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int solve_case(vector<int>& a) {
+    int n = a.size();
+    vector<int> cnt(51, 0);
+    for (int x : a) cnt[x]++;
+    
+    int ans = n; // worst case: delete all but one? actually delete n-1 // enumerate mn and mx
+    for (int mn = 1; mn <= 50; mn++) {
+        if (cnt[mn] == 0) continue;
+        for (int mx = mn; mx <= 50; mx++) {
+            if (cnt[mx] == 0) continue;
+            if ((mn + mx) % 2 != 0) continue;
+            // compute deletions
+            int del = 0;
+            for (int v = 1; v < mn; v++) del += cnt[v];
+            for (int v = mx + 1; v <= 50; v++) del += cnt[v];
+            // we keep at least one element in [mn, mx]
+            // but if del == n, that means we delete all elements, not allowed
+            // we need at least one element remaining
+            if (del == n) continue; // cannot delete all
+            ans = min(ans, del);
+        }
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        cout << solve_case(a) << '\n';
+    }
+    return 0;
+}

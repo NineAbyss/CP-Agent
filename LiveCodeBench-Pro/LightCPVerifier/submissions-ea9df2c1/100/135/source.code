@@ -1,0 +1,28 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <set>
+using namespace std;
+
+string S(int x) {
+    string a = to_string(x);
+    string b = to_string(x + 1);
+    string s = a + b;
+    sort(s.begin(), s.end());
+    return s;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        set<string> st;
+        for (int x = 1; x <= n; x++) {
+            st.insert(S(x));
+        }
+        cout << st.size() << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        
+        long long ans = 0;
+        for (int l = 0; l < n; l++) {
+            // 对于每个左端点，维护递增和递减的tails
+            vector<int> inc_tails, dec_tails;
+            for (int r = l; r < n; r++) {
+                // 更新递增tails
+                auto it = lower_bound(inc_tails.begin(), inc_tails.end(), a[r]);
+                if (it == inc_tails.end()) inc_tails.push_back(a[r]);
+                else *it = a[r];
+                // 更新递减tails
+                auto it2 = lower_bound(dec_tails.begin(), dec_tails.end(), a[r], greater<int>());
+                if (it2 == dec_tails.end()) dec_tails.push_back(a[r]);
+                else *it2 = a[r];
+                
+                int m = r - l + 1;
+                int lis = inc_tails.size();
+                int lds = dec_tails.size();
+                if (lis + lds == m + 1) ans++;
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

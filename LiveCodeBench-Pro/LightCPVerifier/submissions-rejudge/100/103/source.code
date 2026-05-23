@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+vector<int> g[MAXN];
+int parent[MAXN];
+long long a[MAXN];
+long long odd[MAXN], even[MAXN], ans[MAXN];
+int order[MAXN];
+
+void solve() {
+    int n;
+    scanf("%d", &n);
+    for (int i = 1; i <= n; i++) {
+        scanf("%lld", &a[i]);
+        g[i].clear();
+    }
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        scanf("%d%d", &u, &v);
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+    
+    // BFS
+    int ql = 0, qr = 0;
+    order[qr++] = 1;
+    parent[1] = -1;
+    while (ql < qr) {
+        int u = order[ql++];
+        for (int v : g[u]) {
+            if (v == parent[u]) continue;
+            parent[v] = u;
+            order[qr++] = v;
+        }
+    }
+    // order[0..n-1] 是 BFS 顺序
+    
+    const long long INF = 1e18;
+    for (int i = 0; i < n; i++) {
+        int u = order[i];
+        if (parent[u] == -1) {
+            odd[u] = a[u];
+            even[u] = INF;
+            ans[u] = odd[u];
+        } else {
+            int p = parent[u];
+            odd[u] = max(a[u], a[u] - even[p]);
+            even[u] = a[u] - odd[p];
+            ans[u] = max(odd[u], even[u]);
+        }
+    }
+    
+    for (int i = 1; i <= n; i++) {
+        printf("%lld%c", ans[i], " \n"[i==n]);
+    }
+}
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

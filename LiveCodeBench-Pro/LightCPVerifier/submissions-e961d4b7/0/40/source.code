@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> p(n), q(n);
+        for (int i = 0; i < n; i++) cin >> p[i];
+        for (int i = 0; i < n; i++) cin >> q[i];
+        vector<int> posP(n), posQ(n);
+        for (int i = 0; i < n; i++) {
+            posP[p[i]] = i;
+            posQ[q[i]] = i;
+        }
+        vector<int> invPosP(n), invPosQ(n);
+        for (int x = 0; x < n; x++) {
+            invPosP[posP[x]] = x;
+            invPosQ[posQ[x]] = x;
+        }
+        vector<long long> two(n);
+        for (int i = 0; i < n; i++) {
+            two[i] = 1LL << i; // 可能溢出，但我们需要模 MOD 的值
+        }
+        vector<int> r(n);
+        for (int i = 0; i < n; i++) {
+            long long cur = 0;
+            for (int k = n - 1; k >= 0; k--) {
+                // candidate1: use k as max exponent from p
+                int pos = i - posP[k];
+                if (pos >= 0 && pos < n) {
+                    int y = invPosQ[pos];
+                    long long cand = two[k] + two[y];
+                    if (cand > cur) cur = cand;
+                }
+                // candidate2: use k as max exponent from q
+                pos = i - posQ[k];
+                if (pos >= 0 && pos < n) {
+                    int x = invPosP[pos];
+                    long long cand = two[x] + two[k];
+                    if (cand > cur) cur = cand;
+                }
+                // early termination
+                if (two[k] + two[n - 1] <= cur) break;
+            }
+            r[i] = cur % MOD;
+        }
+        for (int i = 0; i < n; i++) {
+            cout << r[i] << " \n"[i == n - 1];
+        }
+    }
+    return 0;
+}

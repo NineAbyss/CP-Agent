@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to calculate gold collected from one explosion centered at (x, y)
+int count_gold(vector<string>& grid, int n, int m, int x, int y, int k) {
+    int collected_gold = 0;
+    
+    for (int dx = -k; dx <= k; ++dx) {
+        for (int dy = -k; dy <= k; ++dy) {
+            if (abs(dx) == k || abs(dy) == k) {
+                int nx = x + dx;
+                int ny = y + dy;
+                if (nx >= 0 && nx < n && ny >= 0 && ny < m && grid[nx][ny] == 'g') {
+                    collected_gold++;
+                }
+            }
+        }
+    }
+    
+    return collected_gold;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        
+        vector<string> grid(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> grid[i];
+        }
+        
+        int max_gold = 0;
+
+        // Track dynamically gathered gold after bomb detonations
+        vector<vector<bool>> boom(n, vector<bool>(m, false));
+        
+        // Traverse each empty cell for potential dynamite placement
+        for (int x = 0; x < n; ++x) {
+            for (int y = 0; y < m; ++y) {
+                if (grid[x][y] == '.') {
+                    int collected = 0;
+                    for (int dx = -k; dx <= k; ++dx) {
+                        for (int dy = -k; dy <= k; ++dy) {
+                            if (abs(dx) == k || abs(dy) == k) {
+                                int nx = x + dx;
+                                int ny = y + dy;
+                                if (nx >= 0 && nx < n && ny >= 0 && ny < m && grid[nx][ny] == 'g' && !boom[nx][ny]) {
+                                    collected++;
+                                    boom[nx][ny] = true;  // Mark bomb region as engaged
+                                }
+                            }
+                        }
+                    }
+                    max_gold += collected;  // Continue accumulating shared bomb dynamic
+                }
+            }
+        }
+        
+        cout << max_gold << '\n';
+    }
+    
+    return 0;
+}

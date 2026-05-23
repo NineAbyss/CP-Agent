@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve_one(const string& s) {
+    int n = s.size();
+    vector<int> a(n+2);
+    for (int i = 1; i <= n; i++) a[i] = s[i-1] - '0';
+    
+    // number of segments
+    int k = 1;
+    for (int i = 1; i < n; i++) if (a[i] != a[i+1]) k++;
+    int orig_cost = n + (k-1) + (a[1] == 1 ? 1 : 0);
+    
+    // diff[i] = 1 if a[i] != a[i+1]
+    vector<int> diff(n+1, 0);
+    for (int i = 1; i < n; i++) diff[i] = (a[i] != a[i+1]) ? 1 : 0;
+    
+    const int INF_NEG = -1e9;
+    // sufmax[a][b][r] = max_{t >= r} C_{a,b}(t)
+    vector<vector<vector<int>>> sufmax(2, vector<vector<int>>(2, vector<int>(n+2, INF_NEG)));
+    for (int a_val = 0; a_val <= 1; a_val++) {
+        for (int b_val = 0; b_val <= 1; b_val++) {
+            vector<int> C(n+1, INF_NEG);
+            for (int r = 1; r <= n; r++) {
+                if (r < n) {
+                    int x = a[r];
+                    int y = a[r+1];
+                    int I_r = diff[r];
+                    int left = (a_val != x) ? 1 : 0;
+                    int right = (b_val != y) ? 1 : 0;
+                    C[r] = I_r - left - right;
+                } else {
+                    C[r] = -((a_val != a[n]) ? 1 : 0);
+                }
+            }
+            for (int r = n; r >= 1; r--) {
+                sufmax[a_val][b_val][r] = max(C[r], sufmax[a_val][b_val][r+1]);
+            }
+        }
+    }
+    
+    int val_max = INF_NEG;
+    
+    // case l = 1
+    for (int r = 1; r <= n; r++) {
+        int val;
+        if (r < n) {
+            int I_r = diff[r];
+            int left = (a[1] != a[r+1]) ? 1 : 0;
+            int delta = I_r - left;
+            int I_t0 = (a[r] == 1) ? 1 : 0;
+            val = delta - I_t0;
+        } else {
+            val = -((a[n] == 1) ? 1 : 0);
+        }
+        if (val > val_max) val_max = val;
+    }
+    
+    // case l > 1
+    for (int l = 2; l <= n; l++) {
+        int a_val = a[l-1];
+        int b_val = a[l];
+        int best_C = sufmax[a_val][b_val][l];
+        int I_l = (a_val != b_val) ? 1 : 0;
+        int delta = I_l + best_C;
+        int I_t0 = (a[1] == 1) ? 1 : 0;
+        int val = delta - I_t0;
+        if (val > val_max) val_max = val;
+    }
+    
+    int cost_reduction = val_max + (a[1] == 1 ? 1 : 0);
+    int min_cost = orig_cost - cost_reduction;
+    return min_cost;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+        cout << solve_one(s) << '\n';
+    }
+    return 0;
+}

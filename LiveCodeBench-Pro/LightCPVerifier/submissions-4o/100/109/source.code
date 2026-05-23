@@ -1,0 +1,78 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+
+using namespace std;
+
+string willEscape(vector<long long>& positions, vector<long long>& delays, long long k, long long startPos) {
+    unordered_map<long long, int> visited;
+    long long direction = 1; // Assume starting direction is towards increasing positions
+    long long currentPosition = startPos;
+    
+    while (true) {
+        long long closestLight = -1;
+        // Find next red light in current direction
+        if (direction == 1) {
+            for (long long pos : positions) {
+                if (pos >= currentPosition) {
+                    closestLight = pos;
+                    break;
+                }
+            }
+        } else {
+            for (auto it = positions.rbegin(); it != positions.rend(); ++it) {
+                if (*it <= currentPosition) {
+                    closestLight = *it;
+                    break;
+                }
+            }
+        }
+        
+        if (closestLight == -1) return "YES";  // No more traffic lights in the direction, escape possible
+        
+        // Check if the closest light is red
+        long long delay = delays[lower_bound(positions.begin(), positions.end(), closestLight) - positions.begin()];
+        
+        if ((closestLight - delay) % k == 0) {
+            // Red light, turn around
+            direction *= -1;
+            if (visited[currentPosition]) return "NO";  // We've been to this position before with a cycle
+            visited[currentPosition] = 1;
+        } else {
+            // Green light, move forward
+            currentPosition += direction;
+            if (currentPosition >= 1LL && currentPosition <= 1e15) {
+                continue;
+            } else {
+                return "YES";
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+
+        vector<long long> positions(n), delays(n);
+        for (int i = 0; i < n; ++i) cin >> positions[i];
+        for (int i = 0; i < n; ++i) cin >> delays[i];
+
+        int q;
+        cin >> q;
+
+        while (q--) {
+            long long startPos;
+            cin >> startPos;
+            cout << willEscape(positions, delays, k, startPos) << "\n";
+        }
+    }
+    return 0;
+}

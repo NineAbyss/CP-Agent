@@ -1,0 +1,129 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+const int N = 5005;
+
+int modpow(int a, int e) {
+    int res = 1;
+    while (e) {
+        if (e & 1) res = 1LL * res * a % MOD;
+        a = 1LL * a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+int fact[N], invfact[N];
+bool precomputed = false;
+
+void precompute_all() {
+    if (precomputed) return;
+    precomputed = true;
+    fact[0] = 1;
+    for (int i = 1; i < N; i++) fact[i] = 1LL * fact[i-1] * i % MOD;
+    invfact[N-1] = modpow(fact[N-1], MOD-2);
+    for (int i = N-2; i >= 0; i--) invfact[i] = 1LL * invfact[i+1] * (i+1) % MOD;
+}
+
+int C(int n, int k) {
+    if (k < 0 || k > n) return 0;
+    return 1LL * fact[n] * invfact[k] % MOD * invfact[n-k] % MOD;
+}
+
+int solve_case(int n, vector<int>& a) {
+    precompute_all();
+    
+    vector<bool> is_fixed_num(n, false);
+    vector<bool> is_fixed_pos(n, false);
+    int fixed_count = 0;
+    for (int i = 0; i < n; i++) {
+        if (a[i] != -1) {
+            is_fixed_num[a[i]] = true;
+            is_fixed_pos[i] = true;
+            fixed_count++;
+        }
+    }
+    int m = n - fixed_count; // number of missing numbers
+    
+    // Precompute c[x] = number of fixed numbers < x
+    vector<int> c(n+1, 0);
+    for (int x = 1; x <= n; x++) {
+        c[x] = c[x-1] + (x-1 < n && is_fixed_num[x-1] ? 1 : 0);
+    }
+    
+    int total = 0;
+    
+    // For each subsegment [l, r]
+    for (int l = 0; l < n; l++) {
+        vector<bool> fixed_num_in_seg(n, false);
+        int s = 0; // number of fixed positions in segment
+        
+        for (int r = l; r < n; r++) {
+            if (is_fixed_pos[r]) {
+                s++;
+                fixed_num_in_seg[a[r]] = true;
+            }
+            int t = (r - l + 1) - s; // free positions in segment
+            
+            // For each possible mex x // x must satisfy x - c[x] <= t
+            for (int x = 0; x <= n; x++) {
+                if (x - c[x] > t) {
+                    // Since x-c[x] is non-decreasing, we can break // but need to check x=n separately
+                    if (x < n) continue;
+                    else break;
+                }
+                
+                // Check if x is fixed and in segment
+                if (x < n && is_fixed_num[x] && fixed_num_in_seg[x]) {
+                    continue;
+                }
+                
+                // All fixed numbers < x must be in segment
+                bool ok = true;
+                // We can optimize by checking only fixed numbers < x
+                for (int y = 0; y < x; y++) {
+                    if (is_fixed_num[y] && !fixed_num_in_seg[y]) {
+                        ok = false;
+                        break;
+                    }
+                }
+                if (!ok) continue;
+                
+                int a_missing = x - c[x]; // missing numbers < x that need to be in segment
+                if (a_missing < 0 || t < a_missing) continue;
+                
+                int b_missing = (x < n && !is_fixed_num[x]) ? 1 : 0;
+                
+                int ways = C(m - a_missing - b_missing, t - a_missing);
+                ways = 1LL * ways * fact[t] % MOD;
+                ways = 1LL * ways * fact[m - t] % MOD;
+                
+                total = (total + 1LL * x * ways) % MOD;
+            }
+        }
+    }
+    
+    return total;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    precompute_all();
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        cout << solve_case(n, a) << '\n';
+    }
+    
+    return 0;
+}

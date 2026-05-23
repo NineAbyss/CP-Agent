@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+ll zebra_like(int n) {
+    ll res = 1;
+    for (int i = 0; i < n; i++) res *= 4;
+    res = res * 4 - 1;
+    res /= 3;
+    return res;
+}
+
+int zebra_value(ll e) {
+    vector<ll> Z;
+    for (int n = 0; n < 62; n++) {
+        ll val = zebra_like(n);
+        if (val > 1e18) break;
+        Z.push_back(val);
+    }
+    int cnt = 0;
+    while (e > 0) {
+        int idx = upper_bound(Z.begin(), Z.end(), e) - Z.begin() - 1;
+        e -= Z[idx];
+        cnt++;
+    }
+    return cnt;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        ll l, r, k;
+        cin >> l >> r >> k;
+        if (k > 100) {
+            cout << 0 << endl;
+            continue;
+        }
+        ll ans = 0;
+        for (ll x = l; x <= r; x++) {
+            if (zebra_value(x) == k) ans++;
+        }
+        cout << ans << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, s;
+        cin >> n >> s;
+        int ans = 0;
+        for (int i = 0; i < n; ++i) {
+            int dx, dy, x, y;
+            cin >> dx >> dy >> x >> y;
+            // 四个角点
+            vector<pair<int,int>> corners = {{0,0}, {0,s}, {s,0}, {s,s}};
+            bool potted = false;
+            for (auto& corner : corners) {
+                int cx = corner.first, cy = corner.second;
+                long long tx = 1LL * dx * (cx - x);
+                long long ty = 1LL * dy * (cy - y);
+                if (tx == ty && tx >= 0) {
+                    potted = true;
+                    break;
+                }
+            }
+            if (potted) ans++;
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

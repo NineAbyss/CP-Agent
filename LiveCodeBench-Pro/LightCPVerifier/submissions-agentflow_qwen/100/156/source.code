@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<int> deg(n + 1, 0);
+        vector<pair<int, int>> edges;
+        for (int i = 0; i < m; ++i) {
+            int u, v;
+            cin >> u >> v;
+            deg[u]++;
+            deg[v]++;
+            edges.emplace_back(u, v);
+        }
+
+        vector<bool> is_odd(n + 1, false);
+        for (int i = 1; i <= n; ++i) {
+            if (deg[i] % 2 == 1) {
+                is_odd[i] = true;
+            }
+        }
+
+        int odd_even_count = 0;
+        for (auto& e : edges) {
+            if (is_odd[e.first] != is_odd[e.second]) {
+                odd_even_count++;
+            }
+        }
+
+        if (k == 1) {
+            cout << (odd_even_count == 0 || odd_even_count == 2 ? "YES" : "NO") << '\n';
+        } else {
+            cout << (odd_even_count == 0 || odd_even_count == 2 ? "YES" : "NO") << '\n';
+        }
+    }
+    return 0;
+}

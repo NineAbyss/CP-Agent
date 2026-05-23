@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <cstring>
+using namespace std;
+
+const int MAXB = 60;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n), b(n);
+        for (int i=0;i<n;i++) cin >> a[i];
+        for (int i=0;i<n;i++) cin >> b[i];
+        string c;
+        cin >> c;
+        long long base = 0;
+        for (int i=0;i<n;i++) base ^= a[i];
+        vector<long long> d(n);
+        for (int i=0;i<n;i++) d[i] = a[i] ^ b[i];
+        
+        long long basis[MAXB] = {0};
+        int player_of_basis[MAXB];
+        memset(player_of_basis, -1, sizeof player_of_basis);
+        
+        for (int i=0;i<n;i++) {
+            long long x = d[i];
+            int player = (c[i] == '0') ? 0 : 1;
+            for (int bit=MAXB-1; bit>=0; bit--) {
+                if (!(x >> bit)) continue;
+                if (!basis[bit]) {
+                    basis[bit] = x;
+                    player_of_basis[bit] = player;
+                    break;
+                }
+                x ^= basis[bit];
+            }
+        }
+        
+        long long x = base;
+        for (int bit=MAXB-1; bit>=0; bit--) {
+            if (!basis[bit]) continue;
+            int current_bit = (x >> bit) & 1;
+            if (player_of_basis[bit] == 0) {
+                if (current_bit == 1) {
+                    x ^= basis[bit];
+                }
+            } else {
+                if (current_bit == 0) {
+                    x ^= basis[bit];
+                }
+            }
+        }
+        cout << x << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,87 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<pair<int,int>> edges(n-1);
+    vector<int> deg(n+1, 0);
+    vector<vector<int>> adj(n+1);
+    for(int i=0; i<n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        edges[i] = {u, v};
+        deg[u]++;
+        deg[v]++;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    // check if star
+    int center = -1;
+    for(int i=1; i<=n; i++) {
+        if(deg[i] == n-1) {
+            center = i;
+            break;
+        }
+    }
+    if(center != -1) {
+        if(n == 3) {
+            cout << "YES\n";
+            int leaf1 = -1, leaf2 = -1;
+            for(int i=1; i<=n; i++) {
+                if(deg[i] == 1) {
+                    if(leaf1 == -1) leaf1 = i;
+                    else leaf2 = i;
+                }
+            }
+            cout << center << " " << leaf1 << "\n";
+            cout << leaf2 << " " << center << "\n";
+        } else {
+            cout << "NO\n";
+        }
+        return;
+    }
+    
+    // non-star tree: always possible // find any edge (u,v) with deg[u]>=2 and deg[v]>=2
+    int u = -1, v = -1;
+    for(auto &e : edges) {
+        if(deg[e.first] >= 2 && deg[e.second] >= 2) {
+            u = e.first;
+            v = e.second;
+            break;
+        }
+    }
+    // such edge must exist // root at u
+    vector<int> parent(n+1, -1);
+    function<void(int,int)> dfs = [&](int node, int par) {
+        parent[node] = par;
+        for(int nei : adj[node]) {
+            if(nei == par) continue;
+            dfs(nei, node);
+        }
+    };
+    dfs(u, -1);
+    
+    cout << "YES\n";
+    for(auto &e : edges) {
+        int a = e.first, b = e.second;
+        if((a == u && b == v) || (a == v && b == u)) {
+            cout << u << " " << v << "\n";
+        } else {
+            if(parent[a] == b) cout << a << " " << b << "\n";
+            else cout << b << " " << a << "\n";
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while(t--) {
+        solve();
+    }
+    return 0;
+}

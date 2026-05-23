@@ -1,0 +1,26 @@
+#include <iostream>
+using namespace std;
+
+// Function to determine if rectangles can form a square
+bool canFormSquare(int l1, int b1, int l2, int b2, int l3, int b3) {
+    int side = max(l1, b1); // Check if l1 or b1 can be the side of the square
+    // Check configuration for forming a perfect square
+    // Sorting constraints ensure l3 <= l2 <= l1 and b3 <= b2 <= b1
+    return ((l1 == side && l2 + l3 == side && b1 == b2 && b2 == b3) ||
+            (b1 == side && b2 + b3 == side && l1 == l2 && l2 == l3));
+}
+
+int main() {
+    int t;
+    cin >> t; // Number of test cases
+    while (t--) {
+        int l1, b1, l2, b2, l3, b3;
+        cin >> l1 >> b1 >> l2 >> b2 >> l3 >> b3;
+        if (canFormSquare(l1, b1, l2, b2, l3, b3)) {
+            cout << "YES\n"; // Output YES if a square can be formed
+        } else {
+            cout << "NO\n"; // Output NO otherwise
+        }
+    }
+    return 0;
+}

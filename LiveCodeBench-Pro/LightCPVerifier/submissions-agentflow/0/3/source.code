@@ -1,0 +1,70 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+
+    vector<vector<int>> edges(n);
+    vector<int> degree(n, 0);
+
+    // Read and store edges
+    for (int i = 0; i < n - 1; ++i) {
+        int u, v;
+        cin >> u >> v;
+        --u; --v;  // Convert to 0-based index
+        edges[u].push_back(v);
+        edges[v].push_back(u);
+        degree[u]++;
+        degree[v]++;
+    }
+
+    // Check if any node has a degree greater than 2
+    for (int i = 0; i < n; ++i) {
+        if (degree[i] > 2) {
+            cout << "NO\n";
+            return;
+        }
+    }
+
+    cout << "YES\n";
+
+    vector<bool> visited(n, false);
+    int current = 0;
+
+    // Find a leaf node to start directing
+    for (int i = 0; i < n; ++i) {
+        if (degree[i] == 1) { // It's a leaf
+            current = i;
+            break;
+        }
+    }
+
+    visited[current] = true;
+
+    // Direct edges from the found leaf
+    for (int i = 0; i < n - 1; ++i) {
+        for (int neighbor : edges[current]) {
+            if (!visited[neighbor]) {
+                cout << current + 1 << " " << neighbor + 1 << "\n"; // Restore 1-based index in output
+                visited[neighbor] = true;
+                current = neighbor;
+                break;
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

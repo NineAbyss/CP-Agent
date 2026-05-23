@@ -1,0 +1,129 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+using ll = long long;
+
+const ll L = 1000000000000000LL;
+
+int n, k;
+vector<ll> p;
+vector<int> d;
+
+inline int get_id(int i, int dir, int tm) {
+    return i * 2 * k + dir * k + tm;
+}
+
+int compute_next(int i, int dir, int tm) {
+    int cur_dir = (dir == 0) ? 1 : -1;
+    if (tm == d[i]) cur_dir = -cur_dir;
+    ll pos = p[i] + cur_dir;
+    int tm1 = (tm + 1) % k;
+    int new_dir = (cur_dir == 1) ? 0 : 1;
+    // check if pos is a light
+    auto it = lower_bound(p.begin(), p.end(), pos);
+    if (it != p.end() && *it == pos) {
+        int j = it - p.begin();
+        return get_id(j, new_dir, tm1);
+    }
+    // otherwise jump to next light
+    if (cur_dir == 1) {
+        it = upper_bound(p.begin(), p.end(), pos);
+        if (it == p.end()) return -1;
+        int j = it - p.begin();
+        ll delta = p[j] - pos;
+        int new_tm = (tm1 + delta) % k;
+        return get_id(j, new_dir, new_tm);
+    } else {
+        it = lower_bound(p.begin(), p.end(), pos);
+        if (it == p.begin()) return -1;
+        --it;
+        int j = it - p.begin();
+        ll delta = pos - p[j];
+        int new_tm = (tm1 + delta) % k;
+        return get_id(j, new_dir, new_tm);
+    }
+}
+
+bool dfs(int id, vector<int>& nxt, vector<int>& color, vector<bool>& res) {
+    if (color[id] == 2) return res[id];
+    if (color[id] == 1) {
+        return false;
+    }
+    color[id] = 1;
+    int v = nxt[id];
+    bool r;
+    if (v == -1) {
+        r = true;
+    } else {
+        r = dfs(v, nxt, color, res);
+    }
+    res[id] = r;
+    color[id] = 2;
+    return r;
+}
+
+void solve() {
+    cin >> n >> k;
+    p.resize(n);
+    for (int i = 0; i < n; i++) cin >> p[i];
+    d.resize(n);
+    for (int i = 0; i < n; i++) cin >> d[i];
+    
+    int S = n * 2 * k;
+    vector<int> nxt(S, -2);
+    vector<int> color(S, 0);
+    vector<bool> res(S, false);
+    
+    for (int i = 0; i < n; i++) {
+        for (int dir = 0; dir < 2; dir++) {
+            for (int tm = 0; tm < k; tm++) {
+                int id = get_id(i, dir, tm);
+                nxt[id] = compute_next(i, dir, tm);
+            }
+        }
+    }
+    
+    for (int i = 0; i < S; i++) {
+        if (color[i] == 0) {
+            dfs(i, nxt, color, res);
+        }
+    }
+    
+    int q;
+    cin >> q;
+    while (q--) {
+        ll a;
+        cin >> a;
+        auto it = lower_bound(p.begin(), p.end(), a);
+        if (it != p.end() && *it == a) {
+            int i = it - p.begin();
+            int id = get_id(i, 0, 0);
+            cout << (res[id] ? "YES" : "NO") << '\n';
+        } else {
+            it = upper_bound(p.begin(), p.end(), a);
+            if (it == p.end()) {
+                cout << "YES" << '\n';
+            } else {
+                int j = it - p.begin();
+                ll delta = p[j] - a;
+                int tm = delta % k;
+                int id = get_id(j, 0, tm);
+                cout << (res[id] ? "YES" : "NO") << '\n';
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

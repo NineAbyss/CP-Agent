@@ -1,0 +1,29 @@
+#include <iostream>
+using namespace std;
+
+#define MOD 1000000007
+
+// Function to compute the minimum matrix dimensions (n, m)
+pair<long long, long long> computeNM(int a, int b, int k) {
+    // Using the pigeonhole principle logic
+    long long n = a + (a - 1) * (k - 1);
+    long long m = b + (b - 1) * (k - 1);
+    return {n % MOD, m % MOD};
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while(t--) {
+        int a, b, k;
+        cin >> a >> b >> k;
+
+        pair<long long, long long> result = computeNM(a, b, k);
+        cout << result.first << " " << result.second << "\n";
+    }
+
+    return 0;
+}

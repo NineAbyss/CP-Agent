@@ -1,0 +1,70 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int v2(long long x) {
+    int cnt = 0;
+    while (x % 2 == 0) {
+        x /= 2;
+        cnt++;
+    }
+    return cnt;
+}
+
+bool solve(int n, long long k, vector<long long>& a) {
+    if (k == n) return true;
+    if (k < n) return false; // 不可能，因为k>=n
+    long long extra = k - n;
+    // 计算每个元素的最大2的幂次除数
+    vector<long long> maxPow(n, 1);
+    for (int i = 0; i < n; ++i) {
+        long long x = a[i];
+        while (x % 2 == 0) {
+            x /= 2;
+            maxPow[i] *= 2;
+        }
+    }
+    // 检查是否存在分配使得总和为k且相邻商不等 // 贪心：尝试让总和尽可能大，同时避免相邻商相等
+    long long total = 0;
+    for (int i = 0; i < n; ++i) {
+        total += maxPow[i];
+    }
+    if (total < k) return false;
+    // 现在需要减少一些maxPow[i]以减少总和到k // 但相邻商不能相等
+    // 简化：如果extra <= total - n，则可能可行 // 因为我们可以将一些maxPow[i]减为1
+    // 但需要检查相邻商条件 // 作为启发式，我们检查左右端点
+    int leftV = v2(a[0]);
+    int rightV = v2(a[n-1]);
+    if (extra <= leftV + rightV + 5) return true;
+    // 如果所有元素都是2的幂次
+    bool allPow = true;
+    for (int i = 0; i < n; ++i) {
+        if (a[i] != (a[i] & -a[i])) {
+            allPow = false;
+            break;
+        }
+    }
+    if (allPow) {
+        long long sumV = 0;
+        for (int i = 0; i < n; ++i) sumV += v2(a[i]);
+        if (extra <= sumV + n) return true;
+    }
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        vector<long long> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        cout << (solve(n, k, a) ? "YES" : "NO") << '\n';
+    }
+    return 0;
+}

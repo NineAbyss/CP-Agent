@@ -1,0 +1,21 @@
+#include <bits/stdc++.h>
+using namespace std;
+int main() {
+    int t; cin >> t;
+    while (t--) {
+        int n, q; string s;
+        cin >> n >> q >> s;
+        vector<int> f = {0,1,2};
+        vector<pair<char,char>> ops(q);
+        for (auto &[x,y] : ops) cin >> x >> y;
+        for (int i = q-1; i >= 0; --i) {
+            int x = ops[i].first - 'a';
+            int y = ops[i].second - 'a';
+            if (f[x] > f[y]) 
+                f[x] = f[y];
+        }
+        for (char &c : s) 
+            c = 'a' + f[c-'a'];
+        cout << s << '\n';
+    }
+}

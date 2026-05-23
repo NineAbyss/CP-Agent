@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<string> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        vector<vector<string>> b(m, vector<string>(n));
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                cin >> b[i][j];
+            }
+        }
+        // match[i][j] = true if b[i][j] == a[j]
+        vector<vector<bool>> match(m, vector<bool>(n, false));
+        vector<bool> pos_ok(n, false);
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (b[i][j] == a[j]) {
+                    match[i][j] = true;
+                    pos_ok[j] = true;
+                }
+            }
+        }
+        // if any position has no matching network, impossible
+        bool impossible = false;
+        for (int j = 0; j < n; j++) {
+            if (!pos_ok[j]) {
+                impossible = true;
+                break;
+            }
+        }
+        if (impossible) {
+            cout << -1 << '\n';
+            continue;
+        }
+        // greedy set cover: choose network covering most uncovered positions
+        vector<bool> covered(n, false);
+        int k = 0;
+        int remaining = n;
+        while (remaining > 0) {
+            int best_i = -1, best_cnt = 0;
+            for (int i = 0; i < m; i++) {
+                int cnt = 0;
+                for (int j = 0; j < n; j++) {
+                    if (match[i][j] && !covered[j]) cnt++;
+                }
+                if (cnt > best_cnt) {
+                    best_cnt = cnt;
+                    best_i = i;
+                }
+            }
+            // best_cnt > 0 guaranteed because each position is covered by at least one network
+            k++;
+            for (int j = 0; j < n; j++) {
+                if (match[best_i][j] && !covered[j]) {
+                    covered[j] = true;
+                    remaining--;
+                }
+            }
+        }
+        int ans = n + 2 * (k - 1);
+        cout << ans << '\n';
+    }
+    return 0;
+}

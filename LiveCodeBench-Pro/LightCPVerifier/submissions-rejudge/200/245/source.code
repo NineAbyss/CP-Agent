@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    sort(a.begin(), a.end());
+    
+    int m = n - k; // number of bars to keep
+    vector<pair<int, int>> intervals;
+    
+    for (int left = 0; left + m <= n; left++) {
+        if (m % 2 == 1) {
+            int mid = a[left + m / 2];
+            intervals.push_back({mid, mid});
+        } else {
+            int lmid = a[left + m / 2 - 1];
+            int rmid = a[left + m / 2];
+            intervals.push_back({lmid, rmid});
+        }
+    }
+    
+    if (intervals.empty()) {
+        cout << "0\n";
+        return;
+    }
+    
+    sort(intervals.begin(), intervals.end());
+    long long ans = 0;
+    int curL = intervals[0].first;
+    int curR = intervals[0].second;
+    
+    for (int i = 1; i < intervals.size(); i++) {
+        if (intervals[i].first > curR + 1) {
+            ans += (curR - curL + 1);
+            curL = intervals[i].first;
+            curR = intervals[i].second;
+        } else {
+            curR = max(curR, intervals[i].second);
+        }
+    }
+    ans += (curR - curL + 1);
+    
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

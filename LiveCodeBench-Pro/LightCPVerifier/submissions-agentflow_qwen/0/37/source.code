@@ -1,0 +1,88 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> d(n);
+    for (int i = 0; i < n; i++) {
+        cin >> d[i];
+    }
+    vector<pair<int, int>> obstacles(n);
+    for (int i = 0; i < n; i++) {
+        cin >> obstacles[i].first >> obstacles[i].second;
+    }
+
+    vector<int> min_h(n+1), max_h(n+1);
+    min_h[0] = max_h[0] = 0;
+
+    for (int i = 0; i < n; i++) {
+        int l = obstacles[i].first, r = obstacles[i].second;
+        if (d[i] == 0) {
+            min_h[i+1] = min_h[i];
+            max_h[i+1] = max_h[i];
+        } else if (d[i] == 1) {
+            min_h[i+1] = min_h[i] + 1;
+            max_h[i+1] = max_h[i] + 1;
+        } else { // d[i] == -1
+            min_h[i+1] = min_h[i];
+            max_h[i+1] = max_h[i] + 1;
+        }
+        min_h[i+1] = max(min_h[i+1], l);
+        max_h[i+1] = min(max_h[i+1], r);
+        if (min_h[i+1] > max_h[i+1]) {
+            cout << "-1\n";
+            return;
+        }
+    }
+
+    vector<int> ans(n);
+    int cur = min_h[n]; // 使用最终最小合法高度
+
+    for (int i = n-1; i >= 0; i--) {
+        int target_low = cur - 1;  // 如果 d[i] == 1
+        int target_high = cur;     // 如果 d[i] == 0
+
+        bool can_go_0 = (target_high >= min_h[i] && target_high <= max_h[i]);
+        bool can_go_1 = (target_low >= min_h[i] && target_low <= max_h[i]);
+
+        if (d[i] != -1) {
+            if ((d[i] == 0 && !can_go_0) || (d[i] == 1 && !can_go_1)) {
+                cout << "-1\n";
+                return;
+            }
+            ans[i] = d[i];
+            cur = (d[i] == 0) ? target_high : target_low;
+        } else {
+            if (can_go_0) {
+                ans[i] = 0;
+                cur = target_high;
+            } else if (can_go_1) {
+                ans[i] = 1;
+                cur = target_low;
+            } else {
+                cout << "-1\n";
+                return;
+            }
+        }
+    }
+
+    // 正确输出格式：无尾随空格
+    for (int i = 0; i < n; i++) {
+        cout << ans[i];
+        if (i < n-1) cout << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

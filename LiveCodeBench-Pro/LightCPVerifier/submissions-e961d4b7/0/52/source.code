@@ -1,0 +1,29 @@
+#include <iostream>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+int ceil_log2(long long x) {
+    if (x <= 1) return 0;
+    return 64 - __builtin_clzll(x - 1);
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n, m, a, b;
+        cin >> n >> m >> a >> b;
+        long long dr = min(a - 1, n - a);
+        long long dc = min(b - 1, m - b);
+        int row_val = 1 + ceil_log2(dr + 1);
+        int col_val = 1 + ceil_log2(dc + 1);
+        int R = ceil_log2(n);
+        int C = ceil_log2(m);
+        int ans = row_val + col_val + min(R - row_val, C - col_val);
+        cout << ans << '\n';
+    }
+    return 0;
+}

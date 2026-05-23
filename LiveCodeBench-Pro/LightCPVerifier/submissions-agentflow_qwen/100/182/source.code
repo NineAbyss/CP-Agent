@@ -1,0 +1,90 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+
+        // If n == 2*k, the only possible split is |A| = k, |B| = k
+        if (n == 2 * k) {
+            cout << "! " << k << " " << k << "\n";
+            cout.flush();
+            continue;
+        }
+
+        // If k == 1, then any split with |A|>=1, |B>=1 is valid, so if n > 2, multiple solutions
+        if (k == 1) {
+            cout << "! -1\n";
+            cout.flush();
+            continue;
+        }
+
+        const int MAX_QUERIES = 250;
+        map<int, int> cache;
+        int total_queries = 0;
+
+        // Query the first L = min(3*k, MAX_QUERIES, n) positions
+        int L = min({3*k, MAX_QUERIES, n});
+        for (int i = 1; i <= L; i++) {
+            if (total_queries >= MAX_QUERIES) break;
+            cout << "? " << i << "\n";
+            cout.flush();
+            total_queries++;
+            cin >> cache[i];
+        }
+
+        // The possible length of A must be in [k, n-k]
+        int low_bound = k;
+        int high_bound = n - k;
+        bool found_bad = false;
+
+        // Check every window of length k within the queried range
+        for (int i = 1; i <= L - k + 1; i++) {
+            set<int> seen;
+            bool duplicate = false;
+            for (int j = 0; j < k; j++) {
+                int pos = i + j;
+                if (cache.find(pos) == cache.end()) {
+                    // We didn't query this position, skip window
+                    duplicate = true; // or break
+                    break;
+                }
+                if (seen.find(cache[pos]) != seen.end()) {
+                    duplicate = true;
+                    break;
+                }
+                seen.insert(cache[pos]);
+            }
+            if (!duplicate) continue; // This window is good
+
+            // This window has duplicate -> it must cross the boundary
+            found_bad = true;
+            low_bound = max(low_bound, i);
+            high_bound = min(high_bound, i + k - 2);
+        }
+
+        if (!found_bad) {
+            cout << "! -1\n";
+        } else {
+            if (low_bound > high_bound) {
+                cout << "! -1\n";
+            } else if (low_bound == high_bound) {
+                cout << "! " << low_bound << " " << n - low_bound << "\n";
+            } else {
+                cout << "! -1\n";
+            }
+        }
+        cout.flush();
+    }
+    return 0;
+}

@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int q;
+        cin >> q;
+        vector<long long> arr;
+        long long rizziness = 0;
+        
+        while (q--) {
+            int s;
+            cin >> s;
+
+            if (s == 3) {
+                int k;
+                cin >> k;
+                arr.push_back(k);
+                rizziness += (long long)k * arr.size();
+                
+            } else if (s == 1 && !arr.empty()) {
+                long long last = arr.back();
+                arr.pop_back();
+                arr.insert(arr.begin(), last);
+                
+                // Correct the change in rizziness due to cyclic shift.
+                rizziness -= last * arr.size();  // Remove contribution of last position
+                rizziness += last;  // Add contribution to first position
+                
+            } else if (s == 2) {
+                reverse(arr.begin(), arr.end());
+                
+                // Recalculate rizziness after reversal
+                rizziness = 0;
+                for (int i = 0; i < arr.size(); ++i) {
+                    rizziness += (long long)(i + 1) * arr[i];
+                }
+            }
+
+            cout << rizziness << "\n";
+        }
+    }
+
+    return 0;
+}

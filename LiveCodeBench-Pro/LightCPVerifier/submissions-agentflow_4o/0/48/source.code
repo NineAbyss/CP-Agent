@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+
+using namespace std;
+
+// Zebra-like number generation
+vector<uint64_t> generate_zebra_numbers() {
+    vector<uint64_t> zebra_numbers;
+    uint64_t num = 1;
+    while (num > 0) {  // Generates zebra-like numbers by alternating 1s
+        zebra_numbers.push_back(num);
+        num = (num << 2) | 1;  // Shift bits and add 1 to alternate.
+    }
+    return zebra_numbers;
+}
+
+// Count numbers with zebra value k in a defined range
+size_t count_zebra_sums(uint64_t l, uint64_t r, int k, const vector<uint64_t>& zebra_numbers) {
+    unordered_set<uint64_t> valid_sums = {0};
+    
+    // Recursive accumulation of sums
+    for (int depth = 0; depth < k; ++depth) {
+        unordered_set<uint64_t> new_sums;
+        for (uint64_t sum : valid_sums) {
+            for (uint64_t zebra_num : zebra_numbers) {
+                uint64_t new_sum = sum + zebra_num;
+                if (new_sum > r) break;  // Break if exceeds r
+                new_sums.insert(new_sum);
+            }
+        }
+        valid_sums.swap(new_sums);
+    }
+
+    // Valid sum count
+    size_t count = 0;
+    for (uint64_t sum : valid_sums) {
+        if (sum >= l && sum <= r) ++count;
+    }
+    return count;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    vector<uint64_t> zebra_numbers = generate_zebra_numbers();
+
+    while (t--) {
+        uint64_t l, r;
+        int k;
+        cin >> l >> r >> k;
+        cout << count_zebra_sums(l, r, k, zebra_numbers) << endl;
+    }
+}

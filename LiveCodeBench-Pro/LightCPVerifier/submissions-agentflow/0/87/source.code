@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <string>
+
+using namespace std;
+
+vector<string> rearrange_beautiful_numbers(int t, vector<string> test_cases) {
+    vector<string> results;
+    vector<int> constraints = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+
+    for (const auto &s : test_cases) {
+        vector<int> digits;
+        for (char c : s) {
+            digits.push_back(c - '0');
+        }
+
+        string beautiful_phone_number(10, '0');
+        for (size_t i = 0; i < constraints.size(); ++i) {
+            int constraint = constraints[i];
+            auto it = min_element(digits.begin(), digits.end(), [constraint](int a, int b) {
+                return (a >= constraint && b >= constraint) ? a < b : a >= constraint;
+            });
+            beautiful_phone_number[i] = *it + '0';
+            digits.erase(it);
+        }
+        results.push_back(beautiful_phone_number);
+    }
+
+    return results;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    vector<string> test_cases(t);
+    for (int i = 0; i < t; ++i) {
+        cin >> test_cases[i];
+    }
+
+    vector<string> results = rearrange_beautiful_numbers(t, test_cases);
+    for (const auto &res : results) {
+        cout << res << endl;
+    }
+
+    return 0;
+}

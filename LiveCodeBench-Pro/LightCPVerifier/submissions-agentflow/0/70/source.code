@@ -1,0 +1,21 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        long long n, m, a, b;
+        cin >> n >> m >> a >> b;
+
+        long long max_horizontal_distance = max(a - 1, n - a);
+        long long max_vertical_distance = max(b - 1, m - b);
+
+        long long turns = max_horizontal_distance + max_vertical_distance;
+        cout << turns << endl;
+    }
+
+    return 0;
+}

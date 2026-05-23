@@ -1,0 +1,80 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        // 计算每个元素最后出现的位置
+        vector<int> last_pos(n + 1, -1);
+        for (int i = 0; i < n; i++) {
+            last_pos[a[i]] = i;
+        }
+        
+        int segments = 0;
+        vector<bool> must_contain(n + 1, false);
+        vector<bool> in_current_segment(n + 1, false);
+        int must_contain_total = 0;
+        int current_has_must = 0;
+        int current_min_last = n;
+        
+        for (int i = 0; i < n; i++) {
+            int val = a[i];
+            
+            // 将a[i]加入当前段
+            if (!in_current_segment[val]) {
+                in_current_segment[val] = true;
+                if (must_contain[val]) {
+                    current_has_must++;
+                }
+            }
+            current_min_last = min(current_min_last, last_pos[val]);
+            
+            // 检查是否可以在i处分割
+            if (current_has_must == must_contain_total && current_min_last > i) {
+                segments++;
+                // 下一段必须包含当前段的所有元素
+                must_contain = in_current_segment;
+                must_contain_total = 0;
+                for (int x = 1; x <= n; x++) {
+                    if (must_contain[x]) must_contain_total++;
+                }
+                // 重置当前段
+                fill(in_current_segment.begin(), in_current_segment.end(), false);
+                current_has_must = 0;
+                current_min_last = n;
+            }
+        }
+        
+        // 最后一段
+        if (current_min_last != n) {
+            if (current_has_must == must_contain_total) {
+                segments++;
+            }
+        }
+        
+        // 至少有一段
+        if (segments == 0) segments = 1;
+        
+        cout << segments << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    solve();
+    
+    return 0;
+}

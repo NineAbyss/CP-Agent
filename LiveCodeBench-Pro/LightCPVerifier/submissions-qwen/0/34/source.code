@@ -1,0 +1,716 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Precompute Fibonacci numbers up to n=10 (since n <= 10)
+vector<long long> get_fibonacci(int n) {
+    vector<long long> fib(n + 1);
+    if (n >= 1) fib[1] = 1;
+    if (n >= 2) fib[2] = 2;
+    for (int i = 3; i <= n; ++i) {
+        fib[i] = fib[i - 1] + fib[i - 2];
+    }
+    return fib;
+}
+
+// Calculate the total volume of cubes from 1 to n
+long long total_volume(const vector<long long>& fib, int n) {
+    long long vol = 0;
+    for (int i = 1; i <= n; ++i) {
+        long long side = fib[i];
+        vol += side * side * side;
+    }
+    return vol;
+}
+
+// Check if a box with dimensions w, l, h can fit all cubes
+bool can_fit(int n, const vector<long long>& fib, long long max_vol, int w, int l, int h) {
+    // The box's volume must be at least the total volume of cubes
+    if (1LL * w * l * h < max_vol) {
+        return false;
+    }
+
+    // We need to simulate stacking: cubes must be placed in decreasing order of size // since larger cube cannot be on top of smaller one. So we sort cubes by side descending.
+    vector<long long> sides;
+    for (int i = 1; i <= n; ++i) {
+        sides.push_back(fib[i]);
+    }
+    sort(sides.rbegin(), sides.rend()); // descending order
+
+    // We will try to pack the cubes layer by layer. // At each level, we fill a 2D base (floor) as much as possible.
+
+    // Sort box dimensions to fix orientation: assume we use w and l as base, h as height
+    vector<int> dims = {w, l, h};
+    sort(dims.begin(), dims.end());
+    // Try different orientations? Actually, we can reorder arbitrarily. // Let’s denote the two largest as base dimensions, smallest as height? Not necessarily.
+    // But note: we can orient the box any way. So we can assign any two as base.
+
+    // Instead of trying all permutations, we can simulate greedy packing. // However, due to small n (<=10) and small dimensions (<=150), we can simulate.
+
+    // But note: cubes are large (Fibonacci grows fast). For n=10, f10 = 144 -> volume = 144^3 ~ 3e6 // But box dimensions only up to 150 -> max volume = 150^3 = 3.375e6 -> tight.
+
+    // However, we already checked volume. Now check physical feasibility.
+
+    // Important: cubes must be stacked such that below every cube is fully occupied.
+    // This means we build layers: each layer is filled completely before going to next.
+    // But actually, "all space below" means no gaps — so it's like building solid columns?
+
+    // Actually, rule: "all space below the cube is occupied" → implies that when placing a cube, // the region directly beneath it must be fully filled. So we can have multiple stacks,
+    // but within a stack, cubes are aligned and fill the footprint.
+
+    // So idea: we can divide the base into grids. Each cube occupies a square area of s x s. // We need to pack squares (of sizes given by Fibonacci cubes in descending order) into a W x L base,
+    // and total height used <= H.
+
+    // This is a 2D bin packing problem per layer, but with constraint that we can stack only if lower part is solid.
+
+    // Alternate interpretation: we can place cubes side-by-side on the floor or on top of other cubes,
+    // but the support must be complete. So a cube of side s can be placed on top only if there is a solid
+    // block of at least s x s below it.
+
+    // Strategy: // - Process cubes in decreasing order (largest first).
+    // - Use a 2D grid representing the current top surface (initially all 0). // - For each cube of side s, find a position on the base (or on top of existing structure)
+    //   where a s x s area is available at the same height, and place it there, increasing height by s.
+
+    // But the state space might be too big? However, n <= 10, and dimensions <= 150, but worst-case 150x150 grid.
+
+    // But note: total m across test cases <= 200,000, so we cannot do heavy simulation per box.
+
+    // Alternative insight: because the cubes are very large (especially later ones), and n is small, // perhaps only volume and maximum dimension constraints matter?
+
+    // Let's look at constraints: // - Largest cube has side = fib[n]. The box must have each dimension at least fib[n],
+    //   otherwise the largest cube won't fit.
+
+    // But wait: we can orient the cube and box arbitrarily. So the box must have at least two dimensions >= fib[n] // to place the largest cube on its face? Actually, no: the cube has all sides equal, so we just need
+    // each dimension of the box >= fib[n]? No: cube of side s needs s in each dimension.
+
+    // Actually: to place a cube of side s, we need the box to have each dimension >= s? No: the cube occupies s in each axis. // So yes: the box must have w >= s, l >= s, h >= s? Not exactly: we can rotate the box arbitrarily.
+    // So we can permute the box dimensions. So condition: min(w,l,h) >= s? No: we need each dimension of the cube (s) // to fit in some dimension of the box. Since cube is symmetric, we just need that the box has all three dimensions >= s?
+    // No: actually, no. The cube requires s units in each of the three orthogonal directions. // So regardless of orientation, we must have:
+    //   w >= s, l >= s, h >= s?  // But wait: no, we assign cube's x-axis to box's w, y to l, z to h. So yes: we require w>=s, l>=s, h>=s.
+
+    // But that would mean the box must have all dimensions >= fib[n]. Is that correct?
+
+    // Example: n=2: cubes of side 1 and 2. Box: 3 1 2 -> dimensions 3,1,2. Can we fit cube of side 2? // We need 2 in each dimension? But the box has dimension 1 which is < 2 -> cannot fit cube of side 2.
+    // And indeed the first example output says '0' for this box.
+
+    // So necessary condition: the box must have all dimensions >= fib[n] (the largest cube).
+
+    if (w < fib[n] || l < fib[n] || h < fib[n]) {
+        return false;
+    }
+
+    // But is that sufficient along with volume? Probably not.
+
+    // Consider stacking: we must stack in non-increasing order. So we place the largest cube first. // Then the next largest, etc.
+
+    // After placing the largest cube, we have remaining space. But the remaining space is fragmented.
+
+    // However, note that the cubes are huge. In fact, the sum of volumes of smaller cubes might be less than the volume of the largest?
+    // Let's compute for n=5:
+    // f1=1, f2=2, f3=3, f4=5, f5=8 // volumes: 1, 8, 27, 125, 512 -> total = 673
+    // volume of largest = 512, and 1+8+27+125 = 161 < 512 -> so the remaining cubes can potentially fit beside the largest?
+    // But base: 8x8 required for largest. If box is 9x8x13, then base is 9x8 -> after placing 8x8, we have 1x8 strip left.
+    // Can we place a cube of side 5? needs 5x5 -> no.
+
+    // Alternatively, stack on top? But we cannot put a larger cube on a smaller one. But we can put smaller on larger.
+    // So we can stack the smaller cubes on top of the largest cube? Only if the top face of the largest cube (8x8) can support them.
+
+    // Cube of side 5: needs 5x5 area -> fits on 8x8. // Then cube of side 3: needs 3x3 -> fits on remaining space of 8x8 (either on the 8x8 base or on the 5x5? but 5x5 is smaller than 8x8, so we can put beside? no, stacking: we can have multiple stacks on the 8x8 base).
+
+    // Actually, we can build multiple stacks on the base of the largest cube.
+
+    // So strategy: // - Place the largest cube (side = fib[n]) at the bottom. It occupies [0,fib[n]] x [0,fib[n]] x [0,fib[n]].
+    // - Then we have a base of size fib[n] x fib[n] at height fib[n] where we can place smaller cubes. // - Also, we have leftover regions in the original box:
+    //   Region A: [fib[n], w] x [0, l] x [0, h]  -> width leftover //   Region B: [0, min(w,fib[n])] x [fib[n], l] x [0, h] -> length leftover
+    //   But these are L-shaped and hard to use.
+
+    // However, note: we can also place cubes beside the largest cube on the floor, provided they fit in the leftover base area.
+
+    // But the next largest cube has side fib[n-1]. For n=5: fib[4]=5.  // To place a cube of side 5, we need a 5x5 area either:
+    //   - on the floor: so we need either (w - fib[n] >= 5 and l >= 5) OR (w >= 5 and l - fib[n] >= 5)  //     -> in 9x8: w-fib[n]=9-8=1 <5, l-fib[n]=8-8=0 -> no.
+    //   - or on top of the largest cube: which has an 8x8 area -> 5<=8 -> yes.
+
+    // So we place the cube of side 5 on top of the largest cube.
+
+    // Then we have a new surface at height 8+5=13 on top of the 5x5 area, and the rest of the 8x8 base is still at height 8.
+
+    // Next cube: side 3. We can place it: //   - on the floor: needs 3x3 in the leftover L-shape?
+    //         width leftover: 1x8 -> 1<3 -> no. //         length leftover: 8x0 -> no.
+    //   - on the base of the largest cube (8x8) at height 8: 3<=8 -> yes, and we have space (8x8 minus 5x5 = 39 sq units, which is > 3x3=9). //   - or on top of the 5x5 cube: then at height 13, but that's higher.
+
+    // We prefer to minimize height? But we just need to fit in h.
+
+    // Similarly, cube of side 2: can go on the 8x8 base at height 8 (if space) or on the 5x5 base at height 13, or on the 3x3 base at height 11 (if placed at height 8+3=11) -> but we haven't decided placement.
+
+    // And cube of side 1: anywhere.
+
+    // But note: we are allowed to arrange arbitrarily as long as no gaps below.
+
+    // However, simulating the 2D packing on the base at various heights is complex.
+
+    // Given the constraints (n<=10, but m up to 200,000 per test case? but total m <= 200,000 across test cases), // and the fact that Fibonacci numbers grow very fast, we can try a greedy recursive packing?
+
+    // But 200,000 boxes and n=10, and 2D packing is NP-hard.
+
+    // Alternative idea from known problems: 
+    // There is a known result: the minimal bounding box for Fibonacci cubes stacked optimally has volume = sum of cubes and 
+    // the minimal side is fib[n], and often the optimal arrangement is to stack everything on the largest cube.
+
+    // Claim: the optimal way is to place the largest cube at the bottom, and then recursively pack all remaining cubes  // on top of it (on its top face). Why?
+    // - Because the largest cube dominates the space, and the sum of volumes of the rest is less than the volume of the largest cube (for n>=4? let's check): //   n=5: 1+8+27+125 = 161 < 512 -> true.
+    //   n=4: 1+8+27 = 36 < 125 -> true. //   n=3: 1+8 = 9 > 27? no, 9<27 -> true.
+    //   n=2: 1 < 8 -> true.
+    //   Actually: fib[1]^3 + ... + fib[n-1]^3 < fib[n]^3 for n>=2?
+    //   n=2: 1 < 8 -> yes. //   n=3: 1+8=9 < 27 -> yes.
+    //   n=4: 1+8+27=36 < 125 -> yes. //   n=5: 36+125=161 < 512 -> yes.
+    //   n=6: f6=13, volume=2197, sum_prev=1+8+27+125+512=673 < 2197 -> yes. //   So by induction: since fib[n] = fib[n-1]+fib[n-2] >= 2*fib[n-2], and fib[n]^3 grows fast.
+
+    // Therefore, the entire remaining set of cubes can fit in a cube of side fib[n] (because their total volume < fib[n]^3,  // and they are smaller than fib[n]), so they can be packed in a fib[n] x fib[n] x fib[n] space.
+
+    // But we don't need a cube, we need a rectangular box. However, we can pack them in a fib[n] x fib[n] x H space for some H.
+
+    // How high? We can stack them in one column: height = sum_{i=1}^{n-1} fib[i]^? no, the height added is the side of the cube, not the volume.
+
+    // Actually, when stacking, the height is the sum of the sides of the cubes in the stack.
+
+    // But we can make multiple stacks on the top of the largest cube.
+
+    // The minimal height needed for the upper part: we have a base of fib[n] x fib[n] and we want to pack squares of sides fib[1], fib[2], ..., fib[n-1] (in any order, but we can choose)  // and minimize the maximum height over the base.
+
+    // This is 2D strip packing with variable height.
+
+    // However, we can use a greedy method: sort the remaining cubes in descending order and pack using a shelf algorithm.
+
+    // But note: we are not required to compute the minimal height, only to decide if it fits in the given box.
+
+    // Given the complexity and the fact that n is at most 10, we can try to simulate a simple packing:
+
+    // Algorithm for a given box (w, l, h) and n:
+    // Step 1: Check volume: if w*l*h < total_volume -> fail.
+    // Step 2: Check that w>=fib[n], l>=fib[n], h>=fib[n] -> else fail. // Step 3: Now, we know the largest cube fits. Place it in the corner.
+    //         Then we have two regions: //           Region 1: on top of the largest cube: a base of fib[n] x fib[n] at height fib[n].
+    //           Region 2: beside the largest cube: an L-shaped region on the floor. //         But the L-shaped region has dimensions:
+    //           A: (w - fib[n]) x l   [if w > fib[n]]
+    //           B: fib[n] x (l - fib[n]) [if l > fib[n]], but overlapping with A in (w-fib[n]) x (l-fib[n]) -> so total area = (w - fib[n])*l + fib[n]*(l - fib[n]) = w*l - fib[n]^2.
+    //         However, packing in L-shape is hard.
+
+    // But recall: the total volume of the remaining cubes is less than fib[n]^3, so they could fit in a fib[n] x fib[n] x fib[n] space.  // And we have such a space available on top of the largest cube (which is fib[n] x fib[n] in base and height available = h - fib[n]).
+    // So if h - fib[n] >= fib[n], then we have a full cube of fib[n]^3 available -> definitely fits.
+
+    // But what if h - fib[n] < fib[n]? Then we cannot put a cube of side fib[n-1] on top if fib[n-1] > h - fib[n].
+
+    // However, we might place some cubes beside the largest cube on the floor.
+
+    // Given the complexity, and the fact that known similar problems use the following solution:
+
+    // Insight from known solution to "Fibonacci Cubes" packing: 
+    //   The answer is "1" if and only if:
+    //     (1) w * l * h >= total_volume, and //     (2) w >= fib[n], l >= fib[n], h >= fib[n], and
+    //     (3) at least two of the dimensions are >= fib[n] + fib[n-1]   ??? 
+
+    // But let's test with the example: // Test case 1: n=5, fib[5]=8, fib[4]=5.
+    //   Box 1: 3 1 2 -> fails (2) -> 0 -> matches. //   Box 2: 10 10 10 ->
+    //        volume: 1000 >= 673 -> ok. //        10>=8 -> ok.
+    //        Now, condition (3): at least two dimensions >= 8+5=13? -> 10<13 -> fails -> would give 0, but expected 0 then 1 then 0 -> third box is 9 8 13 -> which should be 1. //   Box 3: 9 8 13 ->
+    //        volume: 9*8*13 = 936 >= 673 -> ok. //        all >=8 -> ok.
+    //        dimensions: 9,8,13 -> sorted: 8,9,13 -> two largest: 9 and 13 -> 9<13? 9<13 -> 9<13, but 13>=13, 9<13 -> only one >=13 -> fails.
+
+    // So that condition is not matching.
+
+    // Another idea:  //   After placing the largest cube, we need to place the second largest (fib[n-1]). It can go:
+    //     Option A: on the floor beside the largest cube. //         Needs: either (w >= fib[n] + fib[n-1] and l >= fib[n-1]) OR (w >= fib[n-1] and l >= fib[n] + fib[n-1])
+    //     Option B: on top of the largest cube. //         Needs: h >= fib[n] + fib[n-1]
+
+    //   So overall, we require: //        (w >= fib[n] + fib[n-1] and l >= fib[n-1]) OR
+    //        (w >= fib[n-1] and l >= fib[n] + fib[n-1]) OR //        (h >= fib[n] + fib[n-1])
+
+    //   But wait, we might place it rotated? no, the condition is on the base.
+
+    //   Actually, for the floor placement: we require a rectangle of fib[n-1] x fib[n-1] in the leftover region. //   The leftover region on the floor has:
+    //        width: w - fib[n] (if we placed the largest cube taking fib[n] in w) and length: l, plus the part in w but extra in l: but it's L-shaped. //   To place a cube of side s=fib[n-1], we need a contiguous s x s area in the leftover.
+    //   This exists if: //        (w - fib[n] >= s and l >= s) OR (w >= s and l - fib[n] >= s)
+
+    //   But note: we can also swap which dimension we use for the largest cube? Actually, we can orient the largest cube arbitrarily.
+
+    //   So we should try all 6 orientations of the box and see if there's one that works.
+
+    //   However, the problem is symmetric in the box dimensions.
+
+    //   So without loss of generality, assume we assign the largest cube to occupy fib[n] in two of the dimensions.
+
+    //   Then the condition for placing the second largest cube on the floor is:
+    //        There exists an assignment of the largest cube to two dimensions (say dim_i and dim_j) such that in the third dimension (dim_k) we have enough for the second cube in the leftover of dim_i or dim_j.
+
+    //   Specifically, let the box dimensions be a,b,c.
+    //   We place the largest cube using 'a' and 'b' for its base: then we require a>=fib[n], b>=fib[n].
+    //   Then the second cube can be placed on the floor if: //        (a - fib[n] >= fib[n-1] and c >= fib[n-1]) OR (b - fib[n] >= fib[n-1] and c >= fib[n-1])
+    //        -> wait, no: the second cube needs two dimensions for its base.
+
+    //   Actually, the second cube needs two dimensions for its base. The available floor space after placing the largest cube in the a-b plane is: //        - a strip of size (a - fib[n]) x b x c, and
+    //        - a strip of size fib[n] x (b - fib[n]) x c, but note the overlap is (a-fib[n]) x (b-fib[n]) x c. //   To place a cube of side s=fib[n-1], we need a contiguous s x s area in the floor (z=0) in the union of these two strips.
+
+    //   This is possible if: //        (a - fib[n] >= s and b >= s) OR (a >= s and b - fib[n] >= s) OR (a - fib[n] >= s and b - fib[n] >= s) ??? -> not necessarily.
+
+    //   Actually, the two strips together form an L-shape. An s x s square can be placed in the L-shape if: //        the width of one arm is >= s and the length of the other arm is >= s, but also the corner is there.
+
+    //   Known result: an s x s square can be placed in an L-shape made from a rectangle A x B with a smaller rectangle a x b removed from the corner if: //        (A >= s and B - b >= s) or (A - a >= s and B >= s) -> but here the removed part is fib[n] x fib[n], so a=b=fib[n].
+    //   So condition: (a >= s and b - fib[n] >= s) or (a - fib[n] >= s and b >= s)
+
+    //   But wait, this is exactly the condition for being able to place it in one of the arms.
+
+    //   However, there is a catch: the arm might be long enough but not wide enough. For example, if we have an arm of width w1 and length L1, to place an s x s square we need w1>=s and L1>=s.
+
+    //   So for the horizontal arm: width = a - fib[n], length = b -> requires (a - fib[n] >= s and b >= s)
+    //   for the vertical arm: width = a, length = b - fib[n] -> requires (a >= s and b - fib[n] >= s)
+
+    //   But note: we might also use the third dimension? no, we are on the floor.
+
+    //   However, we haven't used the third dimension c for the base of the second cube? Actually, the base of the second cube must be in the floor, so it uses two of the three dimensions.
+
+    //   But we are free to choose which two dimensions for the base of the second cube.
+
+    //   So to place the second cube on the floor, we need that there exists two dimensions among the three such that the above condition holds for the corresponding two.
+
+    //   But we already used two dimensions for the largest cube.
+
+    //   This is getting very complicated.
+
+    // Given the complexity and the low constraints on n (only up to 10) and the total m <= 200,000, but note that 200,000 is the total across test cases, and t<=1000, but the sum of m<=200,000, so average m=200.
+
+    // And n is at most 10, but typically small.
+
+    // We can try a DFS with memo for packing the remaining cubes in the available spaces.
+
+    // Available spaces: initially, we have the whole box: one space of size w x l x h. // When we place a cube of side s, we split the space into up to 3 new spaces:
+    //   - beside in width: (w-s) x l x h //   - beside in length: s x (l-s) x h
+    //   - above: s x s x (h-s)   [but wait, the above space is only over the placed cube]
+
+    // Actually, the typical way is to use a list of free spaces (rectangular boxes), and when placing a cube in a space, we split the space.
+
+    // But the state space might be large.
+
+    // However, n is only up to 10, and we place cubes in decreasing order, so we can try a recursive backtracking.
+
+    // Steps: //   - Sort the cubes in decreasing order: fib[n], fib[n-1], ..., fib[1]
+    //   - Maintain a list of free rectangular spaces (each with dimensions a,b,c) //   - For the next cube of side s, try to place it in every free space that can contain it (i.e., a>=s, b>=s, c>=s), and in every orientation (6 orientations, but since the cube is symmetric, only one matters) -> actually the cube is symmetric, so we just need the space to have each dimension>=s.
+    //   - When placing in a space of size (a,b,c), we can generate new free spaces: //         Option: we cut the space into:
+    //            - beside in x: (a-s, b, c) //            - beside in y: (s, b-s, c)  [but careful: this is not independent]
+    //         Actually, standard way: when placing a box in a container, you can split the remaining space into three parts: //            - to the right: (a-s) x b x c
+    //            - to the back: s x (b-s) x c //            - on top: s x s x (c-s)
+    //         But these three may overlap in representation, but in practice we add them as separate free spaces. //   - But note: the new spaces might be inside the old space and not overlapping.
+
+    //   However, this is a well-known heuristic for 3D bin packing.
+
+    //   We'll try to implement a simple version.
+
+    //   But worst-case, the number of free spaces might grow as O(3^n), and n=10 -> 3^10 = 59049, and we have 10 cubes, so total states might be around 10 * 59049 = 600k per box? and m up to 200,000 -> 200,000 * 600k = 120e9 -> too slow.
+
+    // We need a better approach.
+
+    // Found a known solution for this exact problem (from a past contest):  //   It checks:
+    //      total_volume = sum_{i=1}^{n} fib[i]^3
+    //      if (w * l * h < total_volume) -> 0
+    //      else if (min({w, l, h}) < fib[n]) -> 0
+    //      else {
+    //          // Check if the second largest cube can be placed
+    //          int s1 = fib[n];   // largest
+    //          int s2 = fib[n-1]; // second largest
+    //          // They can be placed if either:
+    //          //   - the height is enough to stack the second on the first: h >= s1+s2
+    //          //   - or there is enough room beside in the base: meaning that in the base (after removing s1 x s1), there is room for s2 x s2
+    //          // How to check the base? the base has dimensions w x l, and we've used s1 x s1. //          // We need that the L-shaped region can accommodate a s2 x s2 square.
+    //          // This is possible if (w >= s1+s2 && l >= s2) || (w >= s2 && l >= s1+s2) //          // But wait, we can orient arbitrarily.
+    //          // So we try all permutations of (w,l,h) for the roles.
+    //          vector<int> dims = {w, l, h};
+    //          sort(dims.begin(), dims.end()); //          // But we need to try all assignments.
+    //          bool found = false;
+    //          do {
+    //             int a = dims[0], b = dims[1], c = dims[2];
+    //             // use a,b for the base of the largest cube
+    //             if (a >= s1 && b >= s1) { //                 // space beside:
+    //                 //   arm1: (a-s1) x b //                 //   arm2: a x (b-s1)
+    //                 // can we place a s2 x s2 in the L-shape?
+    //                 if ((a - s1 >= s2 && b >= s2) || (a >= s2 && b - s1 >= s2)) {
+    //                     found = true;
+    //                 }
+    //                 // or stack on top: requires c >= s1+s2
+    //                 if (c >= s1+s2) {
+    //                     found = true;
+    //                 }
+    //             }
+    //          } while (next_permutation(dims.begin(), dims.end()) && !found);
+    //          // But next_permutation requires sorted to start.
+    //          // We did sort above, but then do-while will do all permutations.
+    //          // Actually, we should generate all permutations. //          // Let's do: try all 6.
+    //          // But easier: try all 6 explicitly.
+    //      }
+
+    // But note: after placing the largest and the second largest, we have to place the rest. 
+    // However, because the sum of the volumes of the remaining cubes is less than s2^3 (wait, not necessarily: for n=5, s2=5, volume=125, sum of rest=1+8+27=36<125), 
+    // and they are smaller than s2, they can be packed in a s2 x s2 x s2 space, which can be placed either:
+    //   - on the floor in the leftover (if we placed the second cube on the floor, then we might have even more leftover, or if we placed it on the largest, then on the largest's top which has s1>=s2)
+    //   - or on the second cube's top if it's on the floor, or on the largest's top if the second is on the largest.
+
+    // But if we placed the second cube on the largest, then the largest's top has area s1 x s1, and we've used s2 x s2 of it, leaving an L-shape of s1 x s1 minus s2 x s2, and we can pack the rest in the available spaces.
+
+    // Given the exponential growth, it's likely that the only obstacle is the largest and second largest.
+
+    // In fact, known solution in Codeforces for a similar problem is to only check up to the second largest.
+
+    // Let me look at the sample:  //   Box: 9 8 13, n=5, fib[5]=8, fib[4]=5.
+    //   Volume: 9*8*13=936 >= 673 -> ok. //   min>=8 -> 8>=8 -> ok.
+    //   Try all permutations of (9,8,13) for (a,b,c) for the largest cube's base in a,b and height c. //   Permutation: a=9, b=8, c=13:
+    //        a>=8, b>=8 -> yes. //        beside: (9-8=1>=5? no) and (8-8=0>=5? no) -> no.
+    //        stack on top: c>=8+5=13 -> 13>=13 -> yes -> valid.
+    //   So return true.
+
+    //   Box: 10 10 10:  //        volume: 1000>=673 -> ok.
+    //        min>=8 -> ok. //        try a=10, b=10, c=10:
+    //           beside: (10-8=2>=5? no) and (10-8=2>=5? no) -> no. //           stack: c>=13? 10<13 -> no.
+    //        try other orientations? but the condition is symmetric in a,b for the base, and c for height. //        all are the same.
+    //        -> invalid? but expected output has '1' for the second box in the first test case?  //        Wait, the first test case output is "0010", so the second box (10,10,10) is the second character -> '0', then the third box is '1'.
+    //        So 10,10,10 should be '0'?  //        But our calculation: volume=1000>=673, min>=8, but cannot place the second cube either beside or on top -> '0'.
+    //        And the third box (9,8,13) -> '1'. fourth box (14,7,20):  //           14,7,20: min=7<8 -> fails the min condition -> '0'.
+    //        So we get "0010", which matches.
+
+    //   Second test case: n=2, so only two cubes: fib[1]=1, fib[2]=2. //        total_volume = 1+8=9.
+    //        Boxes: //          3 3 3: volume=27>=9, min=3>=2 -> then check second cube (fib[1]=1) -> wait, second largest is fib[1]=1.
+    //          s1=2, s2=1.
+    //          try a permutation for the largest cube: need a>=2, b>=2.
+    //          take a=3, b=3, c=3. //          beside: (3-2=1>=1 and 3>=1) -> true, or (3>=1 and 3-2=1>=1) -> true.
+    //          or stack: c>=2+1=3 -> 3>=3 -> true. //          so valid -> '1'
+    //          next: 1 2 1: min=1<2 -> '0' //          next: 2 1 2: min=1<2 -> '0'
+    //          next: 3 2 2: min=2>=2 -> ok. //                try a=3, b=2, c=2: a>=2, b>=2 -> b=2>=2 -> yes.
+    //                beside: (3-2=1>=1 and 2>=1) -> true. //                stack: c>=3? 2<3 -> no.
+    //                -> valid by beside -> '1' //          next: 2 3 1: min=1<2 -> '0'
+    //          next: 3 2 4: min=2>=2 -> ok. //                try a=3, b=2, c=4: base: a>=2, b>=2 -> b=2>=2 -> yes.
+    //                beside: (3-2=1>=1 and 2>=1) -> true. //                stack: c>=3 -> 4>=3 -> true.
+    //                -> '1' //          so we get "100101", but expected is "100101" -> matches.
+
+    //   However, wait: the second test case has n=2, and the output is "100101", which is length 6, and there are 6 boxes.
+
+    //   But in our for the last box (3,2,4): we got '1', but the expected sixth character is '1'.  //   But the example output is written as "100101", so positions:
+    //        1: 3 3 3 -> '1' //        2: 1 2 1 -> '0'
+    //        3: 2 1 2 -> '0' //        4: 3 2 2 -> '1'
+    //        5: 2 3 1 -> '0' //        6: 3 2 4 -> '1'
+    //   -> "100101"
+
+    //   But our result for the fourth box (3,2,2) was '1', and fifth '0', sixth '1' -> "100101", matches.
+
+    //   However, wait: the fourth box is "3 2 2":  //        volume=12>=9 -> ok.
+    //        min=2>=2 -> ok.
+    //        then for the second cube (size 1): 
+    //           try base: a=3, b=2, c=2 -> a>=2, b>=2 -> yes. //           beside: (3-2=1>=1 and 2>=1) -> true -> valid.
+    //        -> '1'
+
+    //   But can we really pack it?  //        Place the 2x2x2 cube in the corner of the 3x2x2 box. It takes [0,2]x[0,2]x[0,2] -> but the box is only 2 in the last dimension, so it fits in height.
+    //        Then we have a 1x2x2 space left: [2,3]x[0,2]x[0,2].  //        In this space, we can place the 1x1x1 cube easily.
+    //        So yes.
+
+    //   But note: the rule "all space below the cube is occupied" — for the 1x1x1 cube, if we place it in the leftover space, the space below it is the floor, which is fully occupied?  //        The floor under the 1x1x1 cube is part of the floor of the box, and there is nothing under it except the box's floor, which is solid.
+    //        So it's okay.
+
+    //   However, if we had to stack, but here we are not stacking.
+
+    //   Therefore, the algorithm for a box (w,l,h) and given n: //        Let fib = get_fibonacci(n)
+    //        total_vol = sum_{i=1}^{n} fib[i]^3
+    //        if (w * l * h < total_vol) -> return false
+    //        if (min({w,l,h}) < fib[n]) -> return false
+    //        if (n == 1) -> return true   [only one cube, and we've checked volume and min>=fib[1]=1, and fib[1]=1, so min>=1 always holds if volume>=1, but volume>=1 and min>=1 -> but if n==1, fib[1]=1, so volume>=1, and we need min>=1 -> always true if volume>=1? not if dimensions are 1,1,1 then volume=1>=1, min=1>=1 -> true. But if dimensions are 2,1,1 -> volume=2>=1, min=1>=1 -> true, and we can place a 1x1x1 cube. So for n==1, it's always true if volume>=1 and min>=1, which we have.
+    //        But note: n>=2 per input. //        So we assume n>=2.
+    //        Let s1 = fib[n], s2 = fib[n-1] //        // We need to place the largest cube and then the second largest.
+    //        // Generate all permutations of (w,l,h)
+    //        vector<int> dims = {w, l, h};
+    //        sort(dims.begin(), dims.end());
+    //        bool valid = false;
+    //        do {
+    //            int a = dims[0], b = dims[1], c = dims[2];
+    //            // use a and b for the base of the largest cube, c for height
+    //            if (a >= s1 && b >= s1) {
+    //                // Option 1: place the second cube on the floor in the leftover
+    //                if ((a - s1 >= s2 && b >= s2) || (a >= s2 && b - s1 >= s2)) {
+    //                    valid = true;
+    //                    break;
+    //                } //                // Option 2: stack the second cube on top of the largest
+    //                if (c >= s1 + s2) {
+    //                    valid = true;
+    //                    break;
+    //                }
+    //            }
+    //        } while (next_permutation(dims.begin(), dims.end()));
+    //        return valid;
+
+    //   But note: in the condition for beside, we require the second cube's base to fit in one of the arms, and the arm's width and length must be>=s2.
+
+    //   However, in the arm of size (a-s1) x b, to place a cube of side s2, we need (a-s1)>=s2 and b>=s2. //   Similarly, in the arm of size a x (b-s1), we need a>=s2 and (b-s1)>=s2.
+
+    //   But wait, could the second cube be placed in the corner of the L-shape using both arms? 
+    //        For example, if we have a= s1+s2-1, b=s1+s2-1, then (a-s1)=s2-1 < s2, and (b-s1)=s2-1 < s2, so neither arm alone can hold the s2 x s2 cube.
+    //        But the L-shape might still have a s2 x s2 square if the corner is there?  //        Actually, no: the maximum square in the L-shape is limited by the narrowest arm.
+
+    //   So our condition is correct.
+
+    //   However, note: the second cube might be placed in a different orientation of the base?  //        But we are iterating over all permutations of the box dimensions, so we cover all possibilities.
+
+    //   But in the loop, we are only using a and b for the base of the largest cube, and c for height. 
+    //   What if we use a and c for the base and b for height? 
+    //        That is covered in a permutation where the dimensions are assigned differently.
+
+    //   So we are good.
+
+    //   Let's test with the box (14,7,20) from the first test case: n=5, s1=8, s2=5.
+    //        min=7<8 -> fails the min condition -> returns false -> '0', which is correct.
+
+    //   Another box: could there be a box that passes volume and min>=s1, but fails the second cube placement in all orientations? //        Example: n=3, fib[3]=3, fib[2]=2.
+    //        total_vol = 1+8+27 = 36. //        Box: 3,3,4 -> volume=36, min=3>=3 -> ok.
+    //        s1=3, s2=2. //        Try permutations:
+    //           (3,3,4): a=3,b=3,c=4 -> a>=3, b>=3 -> yes. //               beside: (3-3=0>=2? no) and (3>=2 and 3-3=0>=2? no) -> no.
+    //               stack: c>=3+2=5? 4<5 -> no. //           (3,4,3): a=3,b=4,c=3 -> a>=3, b>=4>=3 -> yes.
+    //               beside: (3-3=0>=2? no) and (3>=2 and 4-3=1>=2? no) -> no. //               stack: c>=5? 3<5 -> no.
+    //           (4,3,3): a=4,b=3,c=3 -> a>=3, b>=3 -> yes. //               beside: (4-3=1>=2? no) and (4>=2 and 3-3=0>=2? no) -> no.
+    //               stack: c>=5? 3<5 -> no. //           -> fails.
+    //        But can we pack it? //           Place the 3x3x3 cube. Then we have to place the 2x2x2 and 1x1x1.
+    //           The 2x2x2 cube:  //               Option: on the floor: needs a 2x2 area in the leftover. The leftover on the floor is L-shaped:
+    //                   arm1: (4-3)=1 in one dimension and 3 in the other -> 1x3 -> cannot fit 2x2. //                   arm2: 3x(3-3)=0 -> gone.
+    //               So no. //               On top of the 3x3x3: needs height>=3+2=5, but we only have 3 or 4 in the height dimension?
+    //                   In the first orientation: the height is 4, so if we use the 3x3 base in the 3x3 face, then the height is 4, so we can go up to 4. //                   Placing the 3x3x3 uses 3 in height, leaving 1, which is <2 -> cannot place the 2x2x2 on top.
+    //           So indeed cannot pack.
+
+    //   Therefore, the algorithm is:
+
+    //   Precomputation for the test case:  //        fib = get_fibonacci(n)
+    //        total_vol = 0;
+    //        for i=1..n: total_vol += fib[i]*fib[i]*fib[i]
+
+    //   For each box (w,l,h):
+    //        if (w*l*h < total_vol) -> '0'
+    //        else if (min({w,l,h}) < fib[n]) -> '0'
+    //        else if (n == 1) -> '1'   [though n>=2, so skip]
+    //        else: //            s1 = fib[n], s2 = fib[n-1]
+    //            vector<int> d = {w,l,h} //            sort(d.begin(), d.end())
+    //            found = false
+    //            do {
+    //                a=d[0], b=d[1], c=d[2]
+    //                if (a>=s1 && b>=s1) {
+    //                    if ( (a-s1>=s2 && b>=s2) || (a>=s2 && b-s1>=s2) || (c>=s1+s2) ) {
+    //                        found = true; break;
+    //                    }
+    //                }
+    //            } while (next_permutation(d.begin(), d.end())) //            found ? '1' : '0'
+
+    //   But note: in the condition, we have three conditions: two for beside and one for stacking.
+
+    //   Let's code accordingly.
+
+    //   However, note: the condition for beside might be satisfied in a different orientation of the second cube's base?  //        But we are iterating over all permutations, so the roles of a,b,c are varied.
+
+    //   But in the loop, we are fixing the largest cube to use dimensions a and b for its base and c for height. 
+    //   The second cube, if placed on the floor, will use two of the three dimensions for its base, but we are not iterating over its orientation separately because the condition (a-s1>=s2 and b>=s2) means we are using the arm in the a-direction and the full b, so the base of the second cube is in the a and b dimensions? 
+    //        Specifically, we are assuming the second cube's base is in the same two dimensions as the largest cube's base.
+
+    //   Could the second cube be placed in a base that uses, say, a and c? 
+    //        That would be if we use the arm in the a-direction and then use the height dimension for the other base dimension? 
+    //        But the floor is only in the base (a,b) plane. The height dimension is vertical.
+
+    //   So the second cube, if on the floor, must have its base in the horizontal plane, which is defined by the two dimensions we used for the largest cube's base.
+
+    //   Therefore, our condition is correct.
+
+    //   But wait: we might choose a different pair of dimensions for the largest cube's base.  //        That is covered by the permutation.
+
+    //   So we are good.
+
+    //   Let's run through the example: n=2, box=(3,2,2) //        total_vol=9, 3*2*2=12>=9 -> ok.
+    //        min=2>=2 -> ok. //        s1=2, s2=1.
+    //        d = {2,2,3} -> sorted: [2,2,3] //        permutations:
+    //           (2,2,3): a=2,b=2,c=3 -> a>=2, b>=2 -> yes. //               beside: (2-2=0>=1? no) and (2>=1 and 2-2=0>=1? no) -> no.
+    //               stack: c>=2+1=3 -> 3>=3 -> yes -> found=true. //           -> '1'
+    //        But wait, we could also have the largest cube's base in (2,3) and height=2: //           permutation (2,3,2): a=2,b=3,c=2 -> a>=2, b>=3>=2 -> yes.
+    //               beside: (2-2=0>=1? no) and (2>=1 and 3-2=1>=1) -> true -> found=true. //        So we break at the first valid.
+
+    //   So we return '1'.
+
+    //   But note: in the permutation (2,2,3) we found by stacking, and in (2,3,2) by beside.
+
+    //   We only need one.
+
+    //   Implementation:
+
+    //   Note: We must be cautious: the condition for beside is: //        (a - s1 >= s2 && b >= s2)   --> arm in a-direction
+    //        (a >= s2 && b - s1 >= s2)   --> arm in b-direction
+
+    //   But note: the arm in a-direction has dimensions (a-s1) x b, so to place a s2 x s2 cube, we need (a-s1)>=s2 and b>=s2.
+    //   Similarly for the other.
+
+    //   Code accordingly.
+
+    //   Let's write the code.
+
+    //   Edge: n=1 -> but input says n>=2.
+
+    //   We'll assume n>=2.
+
+    //   However, the input constraint is n>=2.
+
+    //   So we don't need to handle n=1.
+
+    //   Let's code accordingly.
+
+    //   But note: the total_vol might be large? n<=10, fib[10]=144, 144^3 = about 3e6, and 10 of them, so total_vol <= 10 * (144^3) = 30e6, which fits in long long.
+
+    //   Dimensions up to 150, so volume up to 150^3 = 3.375e6, but wait: 3.375e6 < 30e6? 
+    //        Actually, for n=10, total_vol = sum_{i=1}^{10} fib[i]^3.
+    //        fib:  //          1:1, 2:2, 3:3, 4:5, 5:8, 6:13, 7:21, 8:34, 9:55, 10:89?
+    //        But wait: the problem says: //           f1=1, f2=2, f3=3, f4=5, f5=8, f6=13, f7=21, f8=34, f9=55, f10=89.
+    //        But the example says n=5: cubes of side 1,2,3,5,8 -> so f5=8. //        Then f6=13, f7=21, f8=34, f9=55, f10=89.
+    //        So fib[10]=89, not 144.
+
+    //        Volume of 89^3 = 89*89=7921, 7921*89 = about 700,000. //        Sum: we can compute.
+
+    //   But anyway, it's within long long.
+
+    //   Let's compute fib for n up to 10.
+
+    //   We'll do:
+
+    //   fib[1]=1, fib[2]=2, then fib[i]=fib[i-1]+fib[i-2]
+
+    //   So:  //     1:1
+    //     2:2 //     3:3
+    //     4:5 //     5:8
+    //     6:13 //     7:21
+    //     8:34 //     9:55
+    //    10:89
+
+    //   So fib[10]=89.
+
+    //   total_vol for n=10: we can compute, but not needed explicitly.
+
+    //   We'll compute it.
+
+    //   But note: the box dimensions are at most 150, so volume at most 150^3 = 3,375,000.
+    //   total_vol for n=10: 
+    //        1^3=1 //        2^3=8
+    //        3^3=27 //        5^3=125
+    //        8^3=512 //        13^3=2197
+    //        21^3=9261 //        34^3=39304
+    //        55^3=166375 //        89^3=704969
+    //        Sum = 1+8=9, +27=36, +125=161, +512=673, +2197=2870, +9261=12131, +39304=51435, +166375=217810, +704969 = 922779. //   922779 < 3.375e6 -> so a box of 150^3 can hold it in terms of volume.
+
+    //   But the min dimension must be at least 89.
+
+    //   So we are safe.
+
+    //   Code accordingly.
+
+    //   Let's write the code.
+
+    //   Note: We must be careful: the condition for the second cube: we require the largest cube to be placed in a base of two dimensions, and then the second cube either beside in the same base or stacked on top (requiring extra height).
+
+    //   We'll implement as described.
+
+    //   However, note: the condition (a>=s2 && b-s1>=s2) might be affected by integer comparison.
+
+    //   We'll do it.
+
+    //   Also note: the permutation generation: we can use next_permutation in a do-while, but we must start from sorted.
+
+    //   But note: next_permutation generates in lex order, and we want to try all.
+
+    //   We'll do:
+
+    //   sort the dimensions
+    //   do {
+    //      ...
+    //   } while (next_permutation(dims.begin(), dims.end()));
+
+    //   This will try all 6 permutations.
+
+    //   But if there are duplicates, it will still work.
+
+    //   Let's code.
+
+    //   We'll precompute fib for the test case for n (given in input).
+
+    //   Since t up to 1000, but n<=10, we can compute fib for each test case.
+
+    //   Or we can precompute up to 10 once.
+
+    //   But we'll compute per test case.
+
+    //   Steps for one test case: //        read n, m
+    //        fib = vector<long long>(n+1)
+    //        if n>=1: fib[1]=1
+    //        if n>=2: fib[2]=2
+    //        for i=3 to n: fib[i]=fib[i-1]+fib[i-2]
+    //        total_vol = 0
+    //        for i=1 to n: total_vol += fib[i]*fib[i]*fib[i]
+    //        s1 = fib[n], s2 = fib[n-1]   [since n>=2]
+    //        for each of the m boxes:
+    //            read w, l, h
+    //            if (w*l*h < total_vol) -> append '0'
+    //            else if (min({w,l,h}) < s1) -> append '0'
+    //            else:
+    //                vector<int> d = {w,l,h} //                sort(d.begin(), d.end())
+    //                bool found = false;
+    //                do {
+    //                    int a = d[0], b = d[1], c = d[2];
+    //                    if (a >= s1 && b >= s1) {
+    //                        if ( (a - s1 >= s2 && b >= s2) || //                             (a >= s2 && b - s1 >= s2) ||
+    //                             (c >= s1 + s2) ) {
+    //                            found = true;
+    //                            break;
+    //                        }
+    //                    }
+    //                } while (next_permutation(d.begin(), d.end()));
+    //                found ? '1' : '0'
+
+    //   But note: the condition (a - s1 >= s2) might be negative? but a>=s1 so a-s1>=0, and if a-s1 < s2 then condition fails.
+
+    //   We can write it as is.
+
+    //   Let's test with the provided examples.
+
+    //   Example 1: n=5, s1=8, s2=5. //        Box: 9,8,13 ->
+    //           volume=9*8*13=936, total_vol=673 -> 936>=673 -> ok. //           min=8>=8 -> ok.
+    //           d = {8,9,13} -> sorted: [8,9,13] //           permutations: we try until we find one.
+    //           First: a=8, b=9, c=13 -> a>=8, b>=9>=8 -> yes. //                  (8-8=0>=5? no) and (8>=5 and 9-8=1>=5? no) -> no.
+    //                  c>=8+5=13 -> 13>=13 -> yes -> found=true. //           -> '1'
+    //        But the expected third box is '1', and this is the third box?  //           The boxes are:
+    //              3 1 2 -> '0' //              10 10 10 -> '0'
+    //              9 8 13 -> '1' //              14 7 20 -> '0'
+    //           -> "0010", matches.
+
+    //   Example: 10,10,10:  //        volume=1000>=673 -> ok.
+    //        min=10>=8 -> ok.
+    //        d={10,10,10}
+    //        permutations: only one distinct, but next_permutation will cycle through 6, but all same. //        a=10, b=10, c=10 -> a>=8, b>=8 -> yes.
+    //        (10-8=2>=5? no) and (10>=5 and 10-8=2>=5? no) -> no. //        c>=13? 10<13 -> no.
+    //        -> not found -> '0'
+
+    //   Example: 14,7,20: min=7<8 -> '0'
+
+    //   So it matches.
+
+    //   We'll code accordingly.
+
+    //   Note: performance: m up to 200,000 per test case? but the sum of m across test cases <= 200,000.
+    //        And for each box, we do 6 permutations (constant) and each does a few comparisons.
+    //        So total operations: 200,000 * 6 = 1.2e6, which is acceptable.
+
+    //   Let's code.
+
+    //   Important: use long long for total_vol and for fib[i] (though fib[i] for i<=10 is at most 89, so int is enough, but for cubing: 89^3 = 700,000, so int is enough, but let's use long long to avoid overflow in multiplication? 150^3=3.375e6, which fits in int, but let's use long long for volume.
+
+    //   But the product w*l*h: w,l,h <= 150 -> 150^3 = 3,375,000 < 2^31, so int is enough, but to be safe, cast to long long.
+
+    //   We'll do: 1LL * w * l * h
+
+    //   Similarly for total_vol: we compute with long long.
+
+    //   Code:
+
+    //   Note: the fib array: indices 1..n.
+
+    //   We'll do.
+
+    //   Let me write the code.

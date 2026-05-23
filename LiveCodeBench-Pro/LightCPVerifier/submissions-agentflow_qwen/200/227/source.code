@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+string simulate(int i, int d_in, int tm, const vector<long long>& p, const vector<int>& d, int k) {
+    int n = p.size();
+    set<tuple<int, int, int>> seen;
+    while (true) {
+        if (seen.count({i, d_in, tm})) {
+            return "NO";
+        }
+        seen.insert({i, d_in, tm});
+
+        // Check the light at i
+        int d_out;
+        if (tm == d[i]) {
+            d_out = -d_in;
+        } else {
+            d_out = d_in;
+        }
+
+        // Move one step in d_out // Then determine next light
+        if (d_out == 1) {
+            // Moving right
+            if (i == n-1) {
+                return "YES";
+            }
+            int j = i+1;
+            long long delta_t = p[j] - p[i];  // time increment
+            tm = (tm + delta_t) % k;
+            i = j;
+            d_in = d_out;
+        } else {
+            // d_out == -1, moving left
+            if (i == 0) {
+                return "YES";
+            }
+            int j = i-1;
+            long long delta_t = p[i] - p[j];
+            tm = (tm + delta_t) % k;
+            i = j;
+            d_in = d_out;
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<long long> p(n);
+        for (int i = 0; i < n; i++) {
+            cin >> p[i];
+        }
+        vector<int> d(n);
+        for (int i = 0; i < n; i++) {
+            cin >> d[i];
+        }
+        int q;
+        cin >> q;
+        vector<long long> a(q);
+        for (int i = 0; i < q; i++) {
+            cin >> a[i];
+        }
+
+        long long min_p = p[0];
+        long long max_p = p[n-1];
+
+        for (long long pos : a) {
+            if (pos > max_p) {
+                cout << "YES\n";
+            } else if (pos < min_p) {
+                long long dist = min_p - pos;
+                int tm = dist % k;
+                cout << simulate(0, 1, tm, p, d, k) << '\n';
+            } else {
+                // Find if pos is in p
+                auto it = lower_bound(p.begin(), p.end(), pos);
+                if (it != p.end() && *it == pos) {
+                    int i = it - p.begin();
+                    cout << simulate(i, 1, 0, p, d, k) << '\n';
+                } else {
+                    // it is the first >= pos
+                    int i = it - p.begin();
+                    long long dist = p[i] - pos;
+                    int tm = dist % k;
+                    cout << simulate(i, 1, tm, p, d, k) << '\n';
+                }
+            }
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,106 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int compute_max_gap(const set<int>& pos_set) {
+    int f = pos_set.size();
+    if (f == 0) return 0;
+    int max_gap = 1;
+    int idx = 0;
+    int min_v;
+    for (int p : pos_set) {
+        idx++;
+        int v = 2*idx - p;
+        if (idx == 1) {
+            min_v = v;
+        } else {
+            max_gap = max(max_gap, v - min_v + 1);
+            if (v < min_v) min_v = v;
+        }
+    }
+    return max_gap;
+}
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    if (n == 0) {
+        while (q--) {
+            int i, x;
+            cin >> i >> x;
+            cout << 0 << " \n"[q == 0];
+        }
+        return;
+    }
+    vector<int> a(n+1);
+    map<int, set<int>> pos_map;
+    
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        pos_map[a[i]].insert(i);
+    }
+    
+    map<int, int> max_gap_of;
+    for (auto& [val, s] : pos_map) {
+        max_gap_of[val] = compute_max_gap(s);
+    }
+    
+    multiset<int> global_gaps;
+    for (auto& [val, mg] : max_gap_of) {
+        global_gaps.insert(mg);
+    }
+    global_gaps.insert(0);
+    
+    vector<int> ans;
+    while (q--) {
+        int i, x;
+        cin >> i >> x;
+        
+        int old_val = a[i];
+        if (old_val == x) {
+            int global_max_gap = *global_gaps.rbegin();
+            ans.push_back(global_max_gap / 2);
+            continue;
+        }
+        
+        // 从 old_val 删除 i
+        {
+            auto& old_set = pos_map[old_val];
+            global_gaps.erase(global_gaps.find(max_gap_of[old_val]));
+            old_set.erase(i);
+            max_gap_of[old_val] = compute_max_gap(old_set);
+            global_gaps.insert(max_gap_of[old_val]);
+        }
+        
+        // 添加到 x
+        {
+            auto& new_set = pos_map[x];
+            if (max_gap_of.find(x) != max_gap_of.end()) {
+                global_gaps.erase(global_gaps.find(max_gap_of[x]));
+            }
+            new_set.insert(i);
+            max_gap_of[x] = compute_max_gap(new_set);
+            global_gaps.insert(max_gap_of[x]);
+        }
+        
+        a[i] = x;
+        
+        int global_max_gap = *global_gaps.rbegin();
+        ans.push_back(global_max_gap / 2);
+    }
+    
+    for (size_t t = 0; t < ans.size(); t++) {
+        cout << ans[t] << " \n"[t == ans.size()-1];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+const ll INF = 1000000000000000LL;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<ll> p(n);
+        vector<int> d(n);
+        for (int i = 0; i < n; i++) cin >> p[i];
+        for (int i = 0; i < n; i++) cin >> d[i];
+        
+        map<ll, int> delay_at;
+        for (int i = 0; i < n; i++) delay_at[p[i]] = d[i];
+        
+        int q;
+        cin >> q;
+        vector<ll> queries(q);
+        for (int i = 0; i < q; i++) cin >> queries[i];
+        
+        for (ll start : queries) {
+            ll pos = start;
+            int dir = 1; // 1=right, -1=left
+            int tm = 0;
+            
+            set<tuple<ll, int, int>> visited;
+            visited.insert({pos, dir, tm});
+            
+            bool left_strip = false;
+            // 状态数上界 (n+2)*2*k，乘以 2 保证足够
+            const int LIMIT = 4 * n * k + 10;
+            int steps = 0;
+            while (steps < LIMIT) {
+                steps++;
+                if (pos <= 0 || pos > INF) {
+                    left_strip = true;
+                    break;
+                }
+                
+                // 检查是否在灯上且需要掉头
+                auto it = delay_at.find(pos);
+                if (it != delay_at.end() && it->second == tm) {
+                    dir = -dir;
+                }
+                
+                // 找到下一个目标
+                ll target;
+                if (dir == 1) {
+                    auto it2 = delay_at.upper_bound(pos);
+                    if (it2 == delay_at.end()) {
+                        target = INF + 1;
+                    } else {
+                        target = it2->first;
+                    }
+                } else {
+                    auto it2 = delay_at.lower_bound(pos);
+                    if (it2 == delay_at.begin()) {
+                        target = 0;
+                    } else {
+                        --it2;
+                        target = it2->first;
+                    }
+                }
+                
+                ll dist = abs(target - pos);
+                pos = target;
+                tm = (tm + dist) % k;
+                
+                auto state = make_tuple(pos, dir, tm);
+                if (visited.count(state)) {
+                    break;
+                }
+                visited.insert(state);
+            }
+            
+            cout << (left_strip ? "YES" : "NO") << '\n';
+        }
+    }
+    return 0;
+}

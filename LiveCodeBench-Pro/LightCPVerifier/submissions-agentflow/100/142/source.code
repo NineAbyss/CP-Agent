@@ -1,0 +1,51 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+// Function to send commands and handle responses from the interactor
+void send_command(const string& command) {
+    cout << command << endl;
+    cout.flush();
+    int response;
+    cin >> response;
+    if (response == -1) {
+        exit(-1); // Exit if the command is invalid
+    }
+}
+
+void solve_test_case(int n) {
+    send_command("digit");  // Start with digit to reduce x
+    int current_x = 1; // Assume resulting x after "digit" is small
+    
+    if (n <= 9) {
+        // For small n, use add to adjust directly to n
+        send_command("add " + to_string(n - current_x));
+    } else {
+        // Scale up towards n using multiplication
+        while (current_x < n) {
+            if (current_x * 10 <= n) {
+                send_command("mul 10");
+                current_x *= 10;
+            } else {
+                break; // Exit if further multiplication would overshoot n
+            }
+        }
+        // Finally adjust to the exact value of n using add
+        int needed = n - current_x;
+        if (needed != 0) {
+            send_command("add " + to_string(needed));
+        }
+    }
+
+    send_command("!"); // Conclude with confirmation
+}
+
+int main() {
+    int t, n;
+    cin >> t; // Read number of test cases
+    while (t--) {
+        cin >> n; // Read target value for each test case
+        solve_test_case(n);
+    }
+    return 0;
+}

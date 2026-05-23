@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+bool check(int n, int k, vector<ll>& l, vector<ll>& r, ll x) {
+    vector<ll> m(n), M(n);
+    ll total_m = 0;
+    for (int i = 0; i < n; i++) {
+        m[i] = min(l[i], r[i]);
+        M[i] = max(l[i], r[i]);
+        total_m += m[i];
+    }
+    if (x <= total_m) return true;
+    ll y = x - total_m;
+    int K = k - 1;
+    // DP over m_i <= K
+    vector<ll> dp(K + 1, -1);
+    dp[0] = 0;
+    for (int i = 0; i < n; i++) {
+        if (m[i] > K) continue;
+        ll diff = M[i] - m[i];
+        for (int s = K; s >= m[i]; s--) {
+            if (dp[s - m[i]] != -1) {
+                dp[s] = max(dp[s], dp[s - m[i]] + diff);
+            }
+        }
+    }
+    ll max_diff = 0;
+    for (int s = 0; s <= K; s++) {
+        if (dp[s] != -1) {
+            max_diff = max(max_diff, dp[s]);
+        }
+    }
+    return (total_m + K + max_diff >= x);
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<ll> l(n), r(n);
+        for (int i = 0; i < n; i++) cin >> l[i];
+        for (int i = 0; i < n; i++) cin >> r[i];
+        if (k == 1) {
+            ll sum_l = accumulate(l.begin(), l.end(), 0LL);
+            ll sum_r = accumulate(r.begin(), r.end(), 0LL);
+            cout << max(sum_l, sum_r) + 1 << '\n';
+            continue;
+        }
+        ll total_m = 0;
+        for (int i = 0; i < n; i++) {
+            total_m += min(l[i], r[i]);
+        }
+        ll left = 0, right = 0;
+        for (int i = 0; i < n; i++) {
+            right += l[i] + r[i];
+        }
+        right++;
+        while (left + 1 < right) {
+            ll mid = (left + right) / 2;
+            if (check(n, k, l, r, mid)) {
+                left = mid;
+            } else {
+                right = mid;
+            }
+        }
+        cout << right << '\n';
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

@@ -1,0 +1,30 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MAX_M = 500000;
+vector<int> dp(MAX_M + 1, -1);
+
+void precompute() {
+    for (int m = 1; m <= MAX_M; m += 2) {
+        dp[m] = (m + 1) / 2;
+        if (m % 3 == 0) {
+            dp[m] = min(dp[m], 1 + dp[m / 3]);
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    precompute();
+    int t;
+    cin >> t;
+    while (t--) {
+        int m;
+        cin >> m;
+        cout << dp[m] << '\n';
+    }
+    return 0;
+}

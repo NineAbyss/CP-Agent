@@ -1,0 +1,109 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int query1(int k, vector<int>& nodes) {
+    printf("? 1 %d", k);
+    for (int u : nodes) printf(" %d", u);
+    printf("\n");
+    fflush(stdout);
+    int res;
+    scanf("%d", &res);
+    return res;
+}
+
+void query2(int u) {
+    printf("? 2 %d\n", u);
+    fflush(stdout);
+    // 类型2查询没有响应
+}
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        int n;
+        scanf("%d", &n);
+        vector<vector<int>> adj(n+1);
+        for (int i=0; i<n-1; i++) {
+            int u, v;
+            scanf("%d %d", &u, &v);
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+        
+        // 查询所有f(u)
+        vector<int> f(n+1);
+        int sum_f = 0;
+        for (int i=1; i<=n; i++) {
+            vector<int> nodes = {i};
+            f[i] = query1(1, nodes);
+            sum_f += f[i];
+        }
+        
+        // 收集奇数值节点
+        vector<int> odd_nodes;
+        for (int i=1; i<=n; i++) {
+            if (abs(f[i]) % 2 == 1) odd_nodes.push_back(i);
+        }
+        // 按|f|降序排序
+        sort(odd_nodes.begin(), odd_nodes.end(), [&](int x, int y) {
+            return abs(f[x]) > abs(f[y]);
+        });
+        
+        int root = -1;
+        int limit = min((int)odd_nodes.size(), 66);
+        for (int idx=0; idx<limit; idx++) {
+            int u = odd_nodes[idx];
+            // 切换节点u
+            query2(u);
+            // 查询所有节点的和
+            vector<int> all_nodes;
+            for (int i=1; i<=n; i++) all_nodes.push_back(i);
+            int sum2 = query1(n, all_nodes);
+            int delta = sum2 - sum_f;
+            if (abs(delta) == 2*n) {
+                root = u;
+                // 切换回来
+                query2(u);
+                break;
+            } else {
+                // 切换回来
+                query2(u);
+            }
+        }
+        if (root == -1) {
+            // 如果没有找到，选择第一个奇数值节点
+            if (!odd_nodes.empty()) {
+                root = odd_nodes[0];
+            } else {
+                // 理论上不会发生，但为了安全
+                root = 1;
+            }
+        }
+        
+        // 现在计算a值
+        vector<int> a(n+1, 0);
+        vector<int> vis(n+1, 0);
+        queue<int> q;
+        q.push(root);
+        vis[root] = 1;
+        a[root] = f[root];
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            for (int v : adj[u]) {
+                if (vis[v]) continue;
+                // 确保|f[u]-f[v]| == 1 // 假设v是u的子节点
+                a[v] = f[v] - f[u];
+                vis[v] = 1;
+                q.push(v);
+            }
+        }
+        
+        // 输出答案
+        printf("!");
+        for (int i=1; i<=n; i++) printf(" %d", a[i]);
+        printf("\n");
+        fflush(stdout);
+    }
+    return 0;
+}

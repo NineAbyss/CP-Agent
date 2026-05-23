@@ -1,0 +1,42 @@
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        vector<int> cnt(26, 0);
+        for (char c : s) {
+            cnt[c - 'a']++;
+        }
+        vector<bool> prefix(26, false);
+        bool found = false;
+        for (int i = 0; i < n; ++i) {
+            // remove current character from suffix count
+            cnt[s[i]-'a']--;
+            // check condition for middle positions
+            if (i >= 1 && i <= n-2) {
+                if (prefix[s[i]-'a'] || cnt[s[i]-'a'] > 0) {
+                    found = true;
+                    break;
+                }
+            }
+            // add current character to prefix set
+            prefix[s[i]-'a'] = true;
+        }
+        if (found) {
+            cout << "Yes\n";
+        } else {
+            cout << "No\n";
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,53 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    vector<set<int>> elements(n + 1);
+    vector<int> min_val(n + 1, 0);
+    vector<vector<int>> contain(q + 1);
+    vector<int> pos(n + 1);
+    for (int i = 1; i <= n; i++) pos[i] = i;
+    int last_ans = 0;
+    for (int i = 1; i <= q; i++) {
+        int a, b, c;
+        cin >> a >> b >> c;
+        if (a == 1) {
+            int r = (b + last_ans - 1) % n + 1;
+            for (int j = 1; j <= r; j++) {
+                int id = pos[j];
+                if (min_val[id] == 0) {
+                    min_val[id] = i;
+                }
+                elements[id].insert(i);
+                contain[i].push_back(id);
+            }
+        } else if (a == 2) {
+            int r = (b + last_ans - 1) % n + 1;
+            reverse(pos.begin() + 1, pos.begin() + r + 1);
+        } else if (a == 3) {
+            int x = (b + last_ans - 1) % q + 1;
+            for (int id : contain[x]) {
+                elements[id].erase(x);
+                if (min_val[id] == x) {
+                    if (elements[id].empty()) {
+                        min_val[id] = 0;
+                    } else {
+                        min_val[id] = *elements[id].begin();
+                    }
+                }
+            }
+            contain[x].clear();
+        }
+        int p = (c + last_ans - 1) % n + 1;
+        last_ans = min_val[pos[p]];
+        cout << last_ans << '\n';
+    }
+    return 0;
+}

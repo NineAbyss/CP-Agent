@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    
+    vector<int> b(n);
+    for (int i = 0; i < n; i++) {
+        cin >> b[i];
+    }
+    
+    vector<array<int, 3>> ops(q);
+    for (int i = 0; i < q; i++) {
+        cin >> ops[i][0] >> ops[i][1] >> ops[i][2];
+        ops[i][0]--; ops[i][1]--; ops[i][2]--;
+    }
+    
+    // 标记哪些位置被修改
+    vector<bool> modified(n, false);
+    for (auto &op : ops) {
+        int z = op[2];
+        modified[z] = true;
+    }
+    
+    // 计算下界
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        a[i] = b[i];
+    }
+    
+    // 应用约束：a_x ≥ b_z, a_y ≥ b_z
+    for (auto &op : ops) {
+        int x = op[0], y = op[1], z = op[2];
+        a[x] = max(a[x], b[z]);
+        a[y] = max(a[y], b[z]);
+    }
+    
+    // 检查未被修改的位置
+    for (int i = 0; i < n; i++) {
+        if (!modified[i] && a[i] != b[i]) {
+            cout << "-1\n";
+            return;
+        }
+    }
+    
+    // 检查所有操作是否满足min(a_x, a_y) ≥ b_z
+    for (auto &op : ops) {
+        int x = op[0], y = op[1], z = op[2];
+        if (min(a[x], a[y]) < b[z]) {
+            cout << "-1\n";
+            return;
+        }
+    }
+    
+    // 验证
+    vector<int> c = a;
+    for (auto &op : ops) {
+        int x = op[0], y = op[1], z = op[2];
+        c[z] = min(c[x], c[y]);
+    }
+    
+    for (int i = 0; i < n; i++) {
+        if (c[i] != b[i]) {
+            cout << "-1\n";
+            return;
+        }
+    }
+    
+    // 输出答案
+    for (int i = 0; i < n; i++) {
+        cout << a[i];
+        if (i == n-1) cout << '\n';
+        else cout << ' ';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

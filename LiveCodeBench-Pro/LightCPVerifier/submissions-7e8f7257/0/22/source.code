@@ -1,0 +1,35 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, x;
+        cin >> n >> x;
+        vector<int> a(n);
+        vector<int> closed;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            if (a[i] == 1) closed.push_back(i);
+        }
+        bool ok = false;
+        // 枚举按钮生效区间的开始时间 T
+        for (int T = 0; T <= n; T++) {
+            bool valid = true;
+            for (int idx : closed) {
+                if (idx < T || idx > T + x - 1) {
+                    valid = false;
+                    break;
+                }
+            }
+            if (valid) {
+                ok = true;
+                break;
+            }
+        }
+        cout << (ok ? "YES" : "NO") << endl;
+    }
+    return 0;
+}

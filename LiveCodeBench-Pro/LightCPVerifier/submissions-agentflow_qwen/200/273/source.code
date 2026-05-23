@@ -1,0 +1,50 @@
+#include <cstdio>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        int n;
+        scanf("%d", &n);
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            scanf("%lld", &a[i]);
+        }
+        
+        // Compute suffix sums: suff[i] = sum from index i to n-1
+        vector<long long> suff(n);
+        suff[n-1] = a[n-1];
+        for (int i = n-2; i >= 0; i--) {
+            suff[i] = a[i] + suff[i+1];
+        }
+        
+        // Compute prefix max: M[i] = max(a[0..i])
+        vector<long long> M(n);
+        M[0] = a[0];
+        for (int i = 1; i < n; i++) {
+            M[i] = max(M[i-1], a[i]);
+        }
+        
+        vector<long long> res;
+        for (int k = 1; k <= n; k++) {
+            int pos = n - k;  // starting position of last k elements
+            long long base_sum = suff[pos];
+            if (pos == 0) {
+                res.push_back(base_sum);
+            } else {
+                long long candidate = base_sum - a[pos] + M[pos-1];
+                res.push_back(max(base_sum, candidate));
+            }
+        }
+        
+        for (int i = 0; i < res.size(); i++) {
+            if (i > 0) printf(" ");
+            printf("%lld", res[i]);
+        }
+        printf("\n");
+    }
+    return 0;
+}

@@ -1,0 +1,23 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long a, b, c;
+        cin >> a >> b >> c;
+        // 条件1: 总和能被3整除
+        if ((a + b + c) % 3 != 0) {
+            cout << "NO\n";
+            continue;
+        }
+        // 条件2: a + c >= 2*b
+        if (a + c >= 2 * b) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

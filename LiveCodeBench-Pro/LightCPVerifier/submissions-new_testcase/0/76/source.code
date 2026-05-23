@@ -1,0 +1,85 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool can(const vector<int>& a, int k) {
+    int n = a.size();
+    if (k == 0) return false;
+    vector<int> cnt(n+1, 0);
+    for (int x : a) cnt[x]++;
+    vector<int> remain = cnt; // remaining occurrences
+    vector<bool> in_seg(n+1, false);
+    vector<int> seg_values; // values in current segment
+    seg_values.reserve(n);
+    
+    int seg = 0;
+    int i = 0;
+    while (seg < k && i < n) {
+        if (seg == k-1) {
+            // last segment
+            seg++;
+            i = n;
+            break;
+        }
+        seg_values.clear();
+        int min_remain = INT_MAX;
+        int j = i;
+        for (; j < n; ++j) {
+            int x = a[j];
+            remain[x]--;
+            if (!in_seg[x]) {
+                in_seg[x] = true;
+                seg_values.push_back(x);
+                if (remain[x] < min_remain) min_remain = remain[x];
+            } else {
+                if (remain[x] < min_remain) min_remain = remain[x];
+            }
+            if (min_remain >= k - seg - 1) {
+                // can end segment at j
+                break;
+            }
+        }
+        if (j == n) {
+            // cannot satisfy
+            return false;
+        }
+        // end segment [i, j]
+        seg++;
+        i = j + 1;
+        // clear in_seg marks
+        for (int val : seg_values) {
+            in_seg[val] = false;
+        }
+    }
+    return seg == k && i == n;
+}
+
+int solveOne(const vector<int>& a) {
+    int n = a.size();
+    int low = 1, high = n;
+    int ans = 1;
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        if (can(a, mid)) {
+            ans = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        cout << solveOne(a) << '\n';
+    }
+    return 0;
+}

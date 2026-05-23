@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+vector<int> solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    vector<int> c(n);
+    for (int i = 0; i < n; i++) cin >> c[i];
+    
+    // Build segments: each segment's min is at its end in a
+    vector<vector<int>> segs;
+    vector<int> cur;
+    int mn = n+1;
+    for (int i = n-1; i >= 0; i--) {
+        cur.push_back(a[i]);
+        if (a[i] < mn) {
+            mn = a[i];
+            reverse(cur.begin(), cur.end());
+            segs.push_back(cur);
+            cur.clear();
+        }
+    }
+    if (!cur.empty()) {
+        reverse(cur.begin(), cur.end());
+        segs.push_back(cur);
+    }
+    reverse(segs.begin(), segs.end());
+    
+    // Map value to segment
+    vector<int> val_to_seg(n+1, -1);
+    for (int i = 0; i < (int)segs.size(); i++) {
+        for (int x : segs[i]) {
+            val_to_seg[x] = i;
+        }
+    }
+    
+    // Check fixed values
+    vector<bool> used_val(n+1, false);
+    for (int i = 0; i < n; i++) {
+        if (c[i] != 0) {
+            int v = c[i];
+            if (used_val[v]) return {};
+            used_val[v] = true;
+            if (val_to_seg[v] == -1) return {};
+        }
+    }
+    
+    // Prepare segment multisets
+    vector<multiset<int>> seg_sets;
+    for (auto& seg : segs) {
+        multiset<int> ms;
+        for (int x : seg) ms.insert(x);
+        seg_sets.push_back(ms);
+    }
+    
+    // Determine which segment each position belongs to
+    vector<int> pos_to_seg(n, -1);
+    int pos = 0;
+    for (int i = 0; i < (int)segs.size(); i++) {
+        for (int j = 0; j < (int)segs[i].size(); j++) {
+            pos_to_seg[pos++] = i;
+        }
+    }
+    
+    // Fill result
+    vector<int> res(n, -1);
+    vector<int> seg_ptr(segs.size(), 0); // how many positions filled in this segment
+    for (int i = 0; i < n; i++) {
+        int s = pos_to_seg[i];
+        if (c[i] != 0) {
+            int v = c[i];
+            if (val_to_seg[v] != s) return {};
+            // If this is first position of segment, must be min of segment
+            if (seg_ptr[s] == 0) {
+                int seg_min = *seg_sets[s].begin();
+                if (v != seg_min) return {};
+            }
+            if (seg_sets[s].find(v) == seg_sets[s].end()) return {};
+            res[i] = v;
+            seg_sets[s].erase(seg_sets[s].find(v));
+            seg_ptr[s]++;
+        } else {
+            // Free position
+            if (seg_ptr[s] == 0) {
+                // Must place min of segment
+                int v = *seg_sets[s].begin();
+                res[i] = v;
+                seg_sets[s].erase(seg_sets[s].begin());
+            } else {
+                // Place any available value (smallest)
+                int v = *seg_sets[s].begin();
+                res[i] = v;
+                seg_sets[s].erase(seg_sets[s].begin());
+            }
+            seg_ptr[s]++;
+        }
+    }
+    
+    return res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        auto res = solve();
+        if (res.empty()) {
+            cout << "-1\n";
+        } else {
+            for (int i = 0; i < (int)res.size(); i++) {
+                cout << res[i] << " \n"[i == (int)res.size()-1];
+            }
+        }
+    }
+    return 0;
+}

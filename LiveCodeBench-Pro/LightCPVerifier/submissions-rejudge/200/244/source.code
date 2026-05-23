@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool solve(const vector<int>& a) {
+    int n = a.size();
+    map<int, int> cnt;
+    for (int x : a) cnt[x]++;
+    
+    // 条件1：存在某个值出现 >=4
+    for (auto& p : cnt) {
+        if (p.second >= 4) return true;
+    }
+    
+    // 条件2：存在两个不同值出现 >=2 且差值 <=2
+    vector<int> vals;
+    for (auto& p : cnt) {
+        if (p.second >= 2) vals.push_back(p.first);
+    }
+    for (int i = 0; i < (int)vals.size(); i++) {
+        for (int j = i+1; j < (int)vals.size(); j++) {
+            if (abs(vals[i] - vals[j]) <= 2) return true;
+        }
+    }
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        cout << (solve(a) ? "Yes" : "No") << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,194 @@
+#include <iostream>
+#include <string>
+#include <cmath>
+using namespace std;
+
+// Function to check if a number is prime
+bool isPrime(long long n) {
+    if (n < 2) return false;
+    if (n == 2) return true;
+    if (n % 2 == 0) return false;
+    for (long long i = 3; i * i <= n; i += 2) {
+        if (n % i == 0) return false;
+    }
+    return true;
+}
+
+// Function to create the number y by repeating x, k times
+long long repeatNumber(int x, int k) {
+    string s = to_string(x);
+    string result = "";
+    for (int i = 0; i < k; i++) {
+        result += s;
+    }
+    
+    // If the resulting number is too big, we can't store it in long long
+    // But note: k <= 7 and x <= 1e9 -> max length is 7 * 10 = 70 digits -> too big for long long
+    // So we need to handle large numbers with special observations
+    
+    // Instead of building huge numbers, use mathematical observations:
+    
+    // Observation: // If k >= 2 and x has only one digit, then y = d repeated k times.
+    // For example: 6 repeated 7 times = 6666666, which is divisible by some small primes.
+    
+    // Actually, we can observe: // - If k >= 2 and x consists of a single digit d, then:
+    //   y = d * (10^{k-1} + 10^{k-2} + ... + 1) = d * (10^k - 1)/9 //   This number is composite unless d=1 and k=1 or very special cases.
+    
+    // But since numbers can be up to 70 digits, we cannot use standard integer types. // We must rely on known facts about repdigits and repetition patterns.
+    
+    // Key insights:
+    // 1. If k == 1, just check if x is prime.
+    // 2. If k >= 2:
+    //    - If x itself has more than 1 digit, then y is formed by repeating multi-digit number.
+    //      Such numbers are generally composite due to algebraic factorization. //    - If x is single digit:
+    //        * Then y is a repdigit: d repeated k times. //        * Repdigits (except 11) are rarely prime.
+    //        * Known: Only repunit primes (all 1s) are rare. 11 is prime, but 111 = 3*37, etc. //
+    // However, let's analyze constraints: // k <= 7, so maximum repetition is 7 times.
+    // Let's consider possible cases where such number could be prime.
+    
+    // Actually, instead of handling huge integers manually, we can use the following logic: //
+    // Important fact: For k > 1, the number formed by repeating a number x multiple times
+    // is divisible by the number formed by repeating x once, under certain conditions.
+    // // But simpler approach:
+    // Since k <= 7 and x <= 1e9, the total number of digits in y is at most 70. // We cannot represent 70-digit number in C++ standard types.
+    // // Alternative idea: Use known results.
+    // // After checking known primes:
+    // - The only primes that can appear from this process with k >= 2 are extremely rare.
+    // - In fact, for k >= 2:
+    //     * If x has more than one digit: y = xx...x (k times). This number can be written as:
+    //         y = x * (10^{len*x*(k-1)} + 10^{len*x*(k-2)} + ... + 1)
+    //       So unless x = 1, this shows y has factors.
+    //     * But even for x=1, 11...1 (k times) is prime only for k=2 (11), but not for others?
+    //       However, 11 is prime, but our x=1, k=2 would give "11", which is prime. //       But wait: input x=1, k=7 gives "1111111" -> 1111111 = 239 * 4649 -> not prime.
+    // // However, looking at examples:
+    // Input:  //   52 3 -> 525252 -> even -> NO
+    //   6 7 -> 6666666 -> even -> NO //   7 1 -> 7 -> prime -> YES
+    //   1 7 -> 1111111 -> not prime -> NO //
+    // So we can deduce:
+    // Case 1: k == 1 -> check if x is prime.
+    // Case 2: k >= 2: //   - If the last digit of x is even or 5, then y ends with that digit -> divisible by 2 or 5 -> not prime (unless y == 2 or 5, but k>=2 means at least two digits)
+    //   - Also, if x ends with 1,3,7,9 — still likely composite. //
+    // But there is an important mathematical fact:
+    // Any number formed by concatenating a number x more than once (k >= 2) is divisible by the number formed by concatenating x once, if the length divides properly?
+    // Not exactly. //
+    // Better insight: // Consider y = f(x,k). If k >= 2, then:
+    // Let L = number of digits in x.
+    // Then y = x * (10^{L*(k-1)} + 10^{L*(k-2)} + ... + 10^L + 1)
+    // => y = x * R, where R = sum_{i=0}^{k-1} 10^{L*i} //
+    // Now, if k >= 2, then R >= 1 + 10^L >= 2. // And x >= 1.
+    // So y = x * R. // Is this always true? Wait: no! Example: x=12, k=2 -> y=1212, but 12 * (10^2 + 1) = 12 * 101 = 1212 -> yes!
+    // // So indeed:
+    //   y = x * (10^{L*(k-1)} + 10^{L*(k-2)} + ... + 1) //   => y = x * R
+    //
+    // Therefore, y is composite unless one of the factors is 1.
+    // But x >= 1, and R >= 1+10^L >= 1+10 = 11 (if L>=1) -> R >= 11 when L>=1 and k>=2. // And x >= 1.
+    //
+    // So y = x * R, with both x >= 1 and R >= 11 (for k>=2, L>=1).
+    // When is y prime? Only if one factor is 1 and the other is prime.
+    // But x >= 1: if x == 1, then y = R.
+    // So y = R = (10^{L*(k-1)} + ... + 1) //
+    // But L = len(str(x)) = len("1") = 1.
+    // So R = (10^{k-1} + 10^{k-2} + ... + 1) = (10^k - 1)/9
+    // That is, R is the repunit number: 1, 11, 111, 1111, etc. //
+    // So only case when y might be prime with k>=2 is when x==1 and R is prime. //
+    // Known repunit primes:  //   k=1: 1 -> not prime
+    //   k=2: 11 -> prime //   k=3: 111 = 3*37 -> not prime
+    //   k=4: 1111 = 11*101 -> not prime //   k=5: 11111 = 41*271 -> not prime
+    //   k=6: 111111 = 111*1001 = 3*7*11*13*37 -> not prime //   k=7: 1111111 = 239*4649 -> not prime
+    //
+    // So only repunit that is prime for k in [2,7] is k=2 -> 11.
+    //
+    // But wait: what if x has leading zeros? No, problem says without leading zeros.
+    //
+    // Also, what if x is not 1 but single digit? Then y = d repeated k times.
+    // But according to formula: y = d * R, where R = (10^k - 1)/9. // So unless d=1, we have y = d * R, with d>=2 and R>=11 -> y is composite.
+    // Only exception is if d=1, which we already considered. //
+    // Therefore, conclusion: // - If k == 1: answer is isPrime(x)
+    // - If k >= 2:
+    //     * If x != 1: then y = x * R, with R>1 and x>1 (or if x==1 handled below), so y is composite unless x==1
+    //     * If x == 1: then y = R = (10^k - 1)/9. Check if this repunit is prime.
+    //         -> Only for k=2: 11 is prime -> YES
+    //         -> For k=1: 1 -> not prime (but k>=2 here) //         -> k=3..7: not prime
+    // // But wait: what about x=11? Then L=2, and k=2: y = 1111 = 11 * 101 -> composite.
+    // Our formula: y = x * (10^(2*1)+1) = 11 * 101 = 1111 -> correct. //
+    // However, what if x=1 and k=2: y = 11 -> prime -> YES. // But in the example: x=1, k=7 -> NO.
+    // // But our sample input doesn't have x=1, k=2.
+    // // Let's reexamine the example:
+    //   Input: 7 1 -> x=7, k=1 -> check if 7 is prime -> YES //   Others: k>=2 -> should be NO, except possibly x=1 and k=2.
+    // // However, wait: is there any other possibility?
+    // What if x is a multi-digit number but y becomes prime?
+    // According to our factorization: y = x * R, where R = sum_{i=0}^{k-1} 10^(L*i)
+    // Since k>=2, R >= 1 + 10^L >= 1 + 10 = 11. // And x >= 1.
+    // So y = x * R, and both factors are >= 2 (if x>=2) or if x==1 then y=R.
+    // But if x>=2 and R>=11, then y is composite.
+    // If x==1, then y=R, which is repunit of length k*L = k*1 = k.
+    // So only chance for primality when k>=2 is x==1 and the repunit of k ones is prime.
+    // // And among k in [2,7], only k=2 gives a prime (11).
+    //
+    // Therefore:
+    //   if k == 1: return isPrime(x)
+    //   else: // k >= 2
+    //        if x != 1: return false (because y = x * R, x>=2 or x>=1 and R>=11 -> composite)
+    //        if x == 1:
+    //            if k == 2: return true  (11 is prime)
+    //            else: return false (1, 111, 1111, ..., 1111111 are not prime)
+    //
+    // BUT WAIT: what if x=1 and k=1? That would be 1 -> not prime. But k>=2 in this branch.
+    // // However, let's test edge: x=1, k=2 -> output YES.
+    //
+    // But wait: is there another possibility? What if x is not 1, but the representation causes overlap issues?
+    // The derivation y = x * R is mathematically sound. //
+    // Example: x=52, k=3: //   L = 2
+    //   R = 10^(2*2) + 10^(2*1) + 1 = 10000 + 100 + 1 = 10101 //   y = 52 * 10101 = 525252 -> matches.
+    // // So the factorization holds.
+    //
+    // Therefore, algorithm:
+    //   if k == 1:
+    //       return isPrime(x)
+    //   else:
+    //       if x == 1 and k == 2:
+    //           return true
+    //       else:
+    //           return false //
+    // But wait: what about x=1 and k=1? Handled in k==1: isPrime(1)=false -> correct. //
+    // However, let me double-check: are there any other repunit primes for k<=7? // k=1: 1 -> not prime
+    // k=2: 11 -> prime // k=3: 111 = 3*37 -> not prime
+    // k=4: 1111 = 11*101 -> not prime // k=5: 11111 = 41*271 -> not prime
+    // k=6: 111111 = 111*1001 = 3*7*11*13*37 -> not prime // k=7: 1111111 = 239*4649 -> not prime
+    //
+    // So only k=2 works for x=1.
+    //
+    // But wait: what if x is not 1, but after repetition forms a prime? According to factorization, it's impossible because y = x * R and both factors > 1.
+    //
+    // However, caution: what if x=11? Then k=1: check if 11 is prime -> yes.
+    // k=2: y = 1111 = 11 * 101 -> composite. //
+    // So final solution:
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        long long x;
+        int k;
+        cin >> x >> k;
+        
+        if (k == 1) {
+            // Just check if x is prime
+            if (isPrime(x)) {
+                cout << "YES" << endl;
+            } else {
+                cout << "NO" << endl;
+            }
+        } else {
+            // k >= 2 // Only possible prime is when x == 1 and k == 2 (gives 11)
+            if (x == 1 && k == 2) {
+                cout << "YES" << endl;
+            } else {
+                cout << "NO" << endl;
+            }
+        }
+    }
+    
+    return 0;
+}

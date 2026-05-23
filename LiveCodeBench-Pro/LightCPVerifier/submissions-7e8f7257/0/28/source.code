@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <numeric>
+#include <climits>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        int G = a[0];
+        for (int x : a) G = gcd(G, x);
+        bool hasG = false;
+        for (int x : a) if (x == G) { hasG = true; break; }
+        if (hasG) {
+            int cntG = 0;
+            for (int x : a) if (x == G) cntG++;
+            cout << n - cntG << '\n';
+            continue;
+        }
+        vector<int> b;
+        for (int x : a) b.push_back(x / G);
+        sort(b.begin(), b.end());
+        b.erase(unique(b.begin(), b.end()), b.end());
+        const int MAXV = 5000;
+        vector<int> dp(MAXV + 1, INT_MAX);
+        queue<int> q;
+        for (int x : b) {
+            dp[x] = 1;
+            q.push(x);
+        }
+        while (!q.empty()) {
+            int g = q.front(); q.pop();
+            for (int x : b) {
+                int ng = gcd(g, x);
+                if (dp[ng] > dp[g] + 1) {
+                    dp[ng] = dp[g] + 1;
+                    q.push(ng);
+                }
+            }
+        }
+        int m = dp[1];
+        cout << (m - 1) + (n - 1) << '\n';
+    }
+    return 0;
+}

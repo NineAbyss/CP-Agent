@@ -1,0 +1,68 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <limits>
+
+using namespace std;
+
+struct Edge {
+    int from, to, requiredBatteries;
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+
+        vector<int> batteries(n + 1);
+        for (int i = 1; i <= n; ++i) {
+            cin >> batteries[i];
+        }
+
+        vector<vector<Edge>> graph(n + 1);
+        for (int i = 0; i < m; ++i) {
+            int s, t, w;
+            cin >> s >> t >> w;
+            graph[s].push_back({s, t, w});
+        }
+
+        // Dijkstra-like approach using priority_queue
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+        vector<int> minBatteries(n + 1, numeric_limits<int>::max());
+        
+        pq.push({0, 1});  // Start with 0 batteries at checkpoint 1
+        minBatteries[1] = batteries[1];
+
+        while (!pq.empty()) {
+            auto [currBattery, u] = pq.top();
+            pq.pop();
+
+            if (currBattery > minBatteries[u]) continue;
+
+            for (const Edge &edge : graph[u]) {
+                int v = edge.to;
+                int required = edge.requiredBatteries;
+                int availableBatteries = currBattery + batteries[v];
+
+                // Check if we can make the move
+                if (currBattery >= required) {
+                    if (availableBatteries < minBatteries[v]) {
+                        minBatteries[v] = availableBatteries;
+                        pq.push({availableBatteries, v});
+                    }
+                }
+            }
+        }
+
+        // Final result for the current test case
+        cout << (minBatteries[n] == numeric_limits<int>::max() ? -1 : minBatteries[n]) << '\n';
+    }
+
+    return 0;
+}

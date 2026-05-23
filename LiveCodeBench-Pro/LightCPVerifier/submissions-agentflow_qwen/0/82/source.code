@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        ll m;
+        cin >> n >> m;
+
+        // Check bounds
+        if (m < n || m > 1LL * n * (n + 1) / 2) {
+            cout << "-1\n";
+            continue;
+        }
+
+        // Use the star-chain method: sum = r + (n-1)*1 = r + n - 1 // So r = m - n + 1
+        ll r = m - n + 1;
+        if (r < 1 || r > n) {
+            cout << "-1\n";
+            continue;
+        }
+
+        cout << r << "\n";
+
+        // Collect all other nodes
+        vector<int> others;
+        for (int i = 1; i <= n; i++) {
+            if (i != r) {
+                others.push_back(i);
+            }
+        }
+
+        // Ensure node 1 is the first in the chain
+        auto it = find(others.begin(), others.end(), 1);
+        swap(*it, others[0]);
+
+        // Connect root to 1
+        cout << r << " " << others[0] << "\n";
+
+        // Chain the remaining nodes
+        for (int i = 0; i < (int)others.size() - 1; i++) {
+            cout << others[i] << " " << others[i+1] << "\n";
+        }
+    }
+    return 0;
+}

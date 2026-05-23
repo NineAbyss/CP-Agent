@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+const int K = 500; // 保留最大的500个数
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        multiset<int> top;
+        int M = 0;
+        int ans = 0;
+        for (int i = 0; i < n; ++i) {
+            int x = a[i];
+            top.insert(x);
+            if (top.size() > K) {
+                top.erase(top.begin());
+            }
+            if (x > M) M = x;
+            // 检查是否存在 v > M/2 且 v < M
+            auto it = top.upper_bound(M / 2);
+            if (it != top.end() && *it < M) {
+                ans = M;
+            } else {
+                int max_g = 0;
+                for (int v : top) {
+                    if (v == M) continue;
+                    int g = v + (M % v);
+                    if (g > max_g) max_g = g;
+                }
+                ans = max(ans, max_g);
+            }
+            cout << ans << " \n"[i == n-1];
+        }
+    }
+    return 0;
+}

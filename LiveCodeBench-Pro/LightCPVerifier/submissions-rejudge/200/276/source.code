@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, k;
+        ll x;
+        cin >> n >> k >> x;
+        
+        vector<int> a(n);
+        ll S = 0;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            S += a[i];
+        }
+        
+        // 计算后缀和
+        vector<ll> suffix(n + 2, 0);
+        for (int i = n; i >= 1; i--) {
+            suffix[i] = suffix[i + 1] + a[i - 1];
+        }
+        
+        ll ans = 0;
+        for (int i = 1; i <= n; i++) {
+            ll need = max(0LL, x - suffix[i]);
+            if (need == 0) {
+                // 即使从最后一个周期开始也满足
+                ans += k;
+            } else {
+                // 需要 ceil(need / S) 个完整周期
+                ll cycles_needed = (need + S - 1) / S;
+                ll max_p = k - 1 - cycles_needed;
+                if (max_p >= 0) {
+                    ans += (max_p + 1);
+                }
+            }
+        }
+        
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

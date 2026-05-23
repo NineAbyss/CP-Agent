@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+long long solve_case(int n, long long k, long long x, vector<int>& a) {
+    long long S = 0;
+    for (int v : a) S += v;
+    
+    vector<long long> prefix(n+1, 0);
+    for (int i = 1; i <= n; i++) prefix[i] = prefix[i-1] + a[i-1];
+    
+    long long ans = 0;
+    for (int p = 1; p <= n; p++) {
+        long long suf = prefix[n] - prefix[p-1];
+        if (suf >= x) {
+            ans += k;
+        } else {
+            if (S > 0) {
+                long long need = x - suf;
+                // cycles_needed = ceil(need / S)
+                long long cycles_needed = (need + S - 1) / S;
+                if (cycles_needed < k) {
+                    ans += k - cycles_needed;
+                }
+            }
+            // else S <= 0: no contribution
+        }
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long k, x;
+        cin >> n >> k >> x;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        cout << solve_case(n, k, x, a) << '\n';
+    }
+    return 0;
+}

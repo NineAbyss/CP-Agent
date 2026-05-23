@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    char c;
+    string t = "";
+    int n = 0;
+    vector<pair<int,int>> ans;
+    int l = 1, r = 1;
+    while (cin >> c) {
+        if (c == '0') break;
+        n++;
+        t += c;
+        if (n == 1) {
+            ans.push_back({0,0});
+            continue;
+        }
+        if (t[l-1] == c) {
+            ans.push_back({n, l});
+            swap(t[n-1], t[l-1]);
+            l++;
+        } else {
+            ans.push_back({n, r});
+            swap(t[n-1], t[r-1]);
+            r++;
+        }
+    }
+    for (auto& p : ans) {
+        cout << p.first << " " << p.second << endl;
+    }
+    return 0;
+}

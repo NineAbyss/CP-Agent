@@ -1,0 +1,137 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int i = 0; i < n; i++) cin >> b[i];
+    
+    // 统计有序对出现次数
+    map<pair<int, int>, int> cnt;
+    for (int i = 0; i < n; i++) {
+        cnt[{a[i], b[i]}]++;
+    }
+    
+    // 可行性检查
+    bool ok = true;
+    // 非自环配对
+    for (int u = 1; u <= n; u++) {
+        for (int v = u + 1; v <= n; v++) {
+            if (cnt[{u, v}] != cnt[{v, u}]) {
+                ok = false;
+                break;
+            }
+        }
+        if (!ok) break;
+    }
+    // 自环总数
+    int total_loops = 0;
+    for (int u = 1; u <= n; u++) {
+        total_loops += cnt[{u, u}];
+    }
+    if (n % 2 == 1) {
+        if (total_loops % 2 == 0) ok = false;
+    } else {
+        if (total_loops % 2 != 0) ok = false;
+    }
+    
+    if (!ok) {
+        cout << "-1\n";
+        return;
+    }
+    
+    // 构造目标排列
+    vector<pair<int, int>> target(n);
+    map<pair<int, int>, vector<int>> available;
+    for (int i = 0; i < n; i++) {
+        available[{a[i], b[i]}].push_back(i);
+    }
+    
+    // 对称位置
+    for (int i = 0; i < n / 2; i++) {
+        int j = n - 1 - i;
+        // 找一对反向边
+        pair<int, int> p1, p2;
+        bool found = false;
+        for (auto& entry : available) {
+            auto p = entry.first;
+            if (p.first == p.second) continue;
+            auto it = available.find({p.second, p.first});
+            if (it != available.end() && !entry.second.empty() && !it->second.empty()) {
+                p1 = p;
+                p2 = {p.second, p.first};
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            ok = false;
+            break;
+        }
+        target[i] = p1;
+        target[j] = p2;
+        available[p1].pop_back();
+        available[p2].pop_back();
+    }
+    // 中间位置
+    if (n % 2 == 1) {
+        int mid = n / 2;
+        pair<int, int> loop;
+        for (auto& entry : available) {
+            if (entry.first.first == entry.first.second && !entry.second.empty()) {
+                loop = entry.first;
+                break;
+            }
+        }
+        target[mid] = loop;
+        available[loop].pop_back();
+    }
+    
+    // 通过交换实现 target
+    vector<pair<int, int>> current(n);
+    for (int i = 0; i < n; i++) {
+        current[i] = {a[i], b[i]};
+    }
+    vector<pair<int, int>> ops;
+    
+    for (int i = 0; i < n; i++) {
+        if (current[i] == target[i]) continue;
+        int j = -1;
+        for (int k = i + 1; k < n; k++) {
+            if (current[k] == target[i]) {
+                j = k;
+                break;
+            }
+        }
+        if (j == -1) {
+            ok = false;
+            break;
+        }
+        ops.push_back({i + 1, j + 1});
+        swap(current[i], current[j]);
+    }
+    
+    if (!ok) {
+        cout << "-1\n";
+        return;
+    }
+    
+    cout << ops.size() << '\n';
+    for (auto& op : ops) {
+        cout << op.first << ' ' << op.second << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

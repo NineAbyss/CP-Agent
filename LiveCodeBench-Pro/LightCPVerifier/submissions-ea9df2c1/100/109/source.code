@@ -1,0 +1,108 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+struct State {
+    int i;          // index of traffic light, 0-based
+    int dir;        // 0 for left, 1 for right
+    ll r;           // time modulo k
+    bool operator==(const State& other) const {
+        return i == other.i && dir == other.dir && r == other.r;
+    }
+};
+
+struct HashState {
+    size_t operator()(const State& s) const {
+        return ((hash<int>()(s.i) ^ (hash<int>()(s.dir) << 1)) >> 1) ^ hash<ll>()(s.r);
+    }
+};
+
+bool simulate(int n, ll k, const vector<ll>& p, const vector<ll>& d, ll a) {
+    // Find the first traffic light to the right
+    int idx = lower_bound(p.begin(), p.end(), a) - p.begin();
+    ll r;
+    if (idx == n) {
+        // a is to the right of all lights, will exit right
+        return true;
+    }
+    if (p[idx] == a) {
+        r = 0;
+    } else {
+        // move from a to p[idx]
+        r = (p[idx] - a) % k;
+    }
+    State cur{idx, 1, r}; // initial direction is right
+    unordered_map<State, bool, HashState> visited;
+    while (true) {
+        // if current light index is out of range, we have exited
+        if (cur.i < 0 || cur.i >= n) {
+            return true;
+        }
+        // check for cycle
+        if (visited.find(cur) != visited.end()) {
+            return false;
+        }
+        visited[cur] = true;
+        
+        ll pos = p[cur.i];
+        ll delay = d[cur.i];
+        int enter_dir = cur.dir;
+        ll r = cur.r;
+        
+        // check for turn
+        int exit_dir = enter_dir;
+        if (r == delay) {
+            exit_dir = 1 - exit_dir;
+        }
+        
+        // move to next traffic light
+        int next_i;
+        ll move_dist;
+        if (exit_dir == 1) { // moving right
+            if (cur.i == n-1) {
+                return true;
+            }
+            next_i = cur.i + 1;
+            move_dist = p[next_i] - pos;
+        } else { // moving left
+            if (cur.i == 0) {
+                return true;
+            }
+            next_i = cur.i - 1;
+            move_dist = pos - p[next_i];
+        }
+        ll r_next = (r + move_dist) % k;
+        cur.i = next_i;
+        cur.dir = exit_dir;
+        cur.r = r_next;
+    }
+}
+
+void solve() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        ll k;
+        cin >> n >> k;
+        vector<ll> p(n), d(n);
+        for (int i = 0; i < n; i++) cin >> p[i];
+        for (int i = 0; i < n; i++) cin >> d[i];
+        int q;
+        cin >> q;
+        while (q--) {
+            ll a;
+            cin >> a;
+            bool ans = simulate(n, k, p, d, a);
+            cout << (ans ? "YES" : "NO") << '\n';
+        }
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

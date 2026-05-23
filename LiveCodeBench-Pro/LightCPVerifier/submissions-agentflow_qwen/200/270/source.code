@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool can_complete(int cnt[]) {
+    vector<int> d;
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < cnt[i]; j++) {
+            d.push_back(i);
+        }
+    }
+    sort(d.begin(), d.end());
+    int n = d.size();
+    for (int i = 0; i < n; i++) {
+        if (d[i] < i) {
+            return false;
+        }
+    }
+    return true;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        int cnt[10] = {0};
+        for (char c : s) {
+            cnt[c - '0']++;
+        }
+        string result = "";
+        for (int pos = 0; pos < 10; pos++) {
+            int req = 9 - pos;
+            for (int d = req; d <= 9; d++) {
+                if (cnt[d] > 0) {
+                    cnt[d]--;
+                    if (can_complete(cnt)) {
+                        result += ('0' + d);
+                        break;
+                    } else {
+                        cnt[d]++;
+                    }
+                }
+            }
+        }
+        cout << result << '\n';
+    }
+    return 0;
+}

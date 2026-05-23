@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const long long INF = 1e18;
+
+long long solve(vector<int>& a) {
+    int n = a.size();
+    long long ans = 0;
+    for (int k = 2; k < n; k++) {
+        // R 是大于 a[k] 的最大元素（如果存在），否则为 -INF
+        long long R = (k < n-1) ? a[n-1] : -INF;
+        long long threshold = max((long long)a[k], R - a[k]);
+        // 双指针统计满足 a[i]+a[j] > threshold 的 (i,j) 对，其中 i<j<k
+        int j = k-1;
+        long long cnt = 0;
+        for (int i = 0; i < k-1; i++) {
+            // 确保 j > i
+            if (j <= i) j = i+1;
+            // 减少 j 直到 a[i]+a[j] <= threshold
+            while (j > i && a[i] + a[j] > threshold) {
+                j--;
+            }
+            // 现在 j 是满足 a[i]+a[j] <= threshold 的最大索引，或者 j == i // 那么满足条件的 j' 是 j+1 到 k-1，但必须 j' > i
+            int start = max(j+1, i+1);
+            if (start < k) {
+                cnt += (k - start);
+            }
+        }
+        ans += cnt;
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        // 输入保证已排序，但为了安全可以再排序一次（不过题目说已排序）
+        // sort(a.begin(), a.end());
+        cout << solve(a) << '\n';
+    }
+    return 0;
+}

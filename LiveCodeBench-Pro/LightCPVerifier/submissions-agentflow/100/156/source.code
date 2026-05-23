@@ -1,0 +1,118 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        // 数组已排序
+        
+        ll ans = 0;
+        
+        for (int i = 0; i < n; i++) {
+            for (int j = i+1; j < n; j++) {
+                ll sum_ij = a[i] + a[j];
+                
+                // 二分查找找到最大的 k 使得 a[k] < sum_ij
+                int lo = j+1, hi = n-1;
+                int max_k = -1;
+                while (lo <= hi) {
+                    int mid = (lo + hi) / 2;
+                    if (a[mid] < sum_ij) {
+                        max_k = mid;
+                        lo = mid + 1;
+                    } else {
+                        hi = mid - 1;
+                    }
+                }
+                
+                if (max_k == -1) continue;
+                
+                // 预处理：找出 a[n-1], a[n-2], a[n-3] 中不是 i, j 的最大值
+                vector<int> candidates;
+                if (n-1 != i && n-1 != j) candidates.push_back(a[n-1]);
+                if (n-2 >= 0 && n-2 != i && n-2 != j) candidates.push_back(a[n-2]);
+                if (n-3 >= 0 && n-3 != i && n-3 != j) candidates.push_back(a[n-3]);
+                
+                int max1 = 0;
+                if (!candidates.empty()) {
+                    sort(candidates.rbegin(), candidates.rend());
+                    max1 = candidates[0];
+                }
+                
+                // 情况1: k <= n-3
+                int limit_k = min(max_k, n-3);
+                if (j+1 <= limit_k) {
+                    // 需要满足: sum_ij + a[k] > max1  =>  a[k] > max1 - sum_ij
+                    ll target = max1 - sum_ij;
+                    
+                    // 二分查找找到第一个满足 a[k] > target 的 k
+                    int lo_k = j+1, hi_k = limit_k;
+                    int first_valid = -1;
+                    while (lo_k <= hi_k) {
+                        int mid_k = (lo_k + hi_k) / 2;
+                        if (a[mid_k] > target) {
+                            first_valid = mid_k;
+                            hi_k = mid_k - 1;
+                        } else {
+                            lo_k = mid_k + 1;
+                        }
+                    }
+                    
+                    if (first_valid != -1) {
+                        ans += (limit_k - first_valid + 1);
+                    }
+                }
+                
+                // 情况2: k = n-2
+                if (n-2 >= j+1 && n-2 <= max_k) {
+                    int k = n-2;
+                    ll S = sum_ij + a[k];
+                    
+                    // 计算 max_non_red
+                    int max_non_red = 0;
+                    if (n-1 != i && n-1 != j && n-1 != k) max_non_red = max(max_non_red, a[n-1]);
+                    if (n-2 >= 0 && n-2 != i && n-2 != j && n-2 != k) max_non_red = max(max_non_red, a[n-2]);
+                    if (n-3 >= 0 && n-3 != i && n-3 != j && n-3 != k) max_non_red = max(max_non_red, a[n-3]);
+                    
+                    if (S > 2LL * a[k] && S > max_non_red) {
+                        ans++;
+                    }
+                }
+                
+                // 情况3: k = n-1
+                if (n-1 >= j+1 && n-1 <= max_k) {
+                    int k = n-1;
+                    ll S = sum_ij + a[k];
+                    
+                    // 计算 max_non_red
+                    int max_non_red = 0;
+                    if (n-1 != i && n-1 != j && n-1 != k) max_non_red = max(max_non_red, a[n-1]);
+                    if (n-2 >= 0 && n-2 != i && n-2 != j && n-2 != k) max_non_red = max(max_non_red, a[n-2]);
+                    if (n-3 >= 0 && n-3 != i && n-3 != j && n-3 != k) max_non_red = max(max_non_red, a[n-3]);
+                    
+                    if (S > 2LL * a[k] && S > max_non_red) {
+                        ans++;
+                    }
+                }
+            }
+        }
+        
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

@@ -1,0 +1,39 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int solve(vector<int>& a) {
+    int minVal = *min_element(a.begin(), a.end());
+    int maxVal = *max_element(a.begin(), a.end());
+
+    // Already fashionable condition
+    if ((minVal + maxVal) % 2 == 0) {
+        return 0; // The array is fashionable
+    } else {
+        // Count odd and even numbers
+        int oddCount = count_if(a.begin(), a.end(), [](int x) { return x % 2 != 0; });
+        int evenCount = a.size() - oddCount;
+        
+        // Need to make removal, so take fewer removals among odd/even surplus
+        return min(oddCount, evenCount);
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        
+        cout << solve(a) << endl;
+    }
+    
+    return 0;
+}

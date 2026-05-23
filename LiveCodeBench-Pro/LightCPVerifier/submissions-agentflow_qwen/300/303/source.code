@@ -1,0 +1,116 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+
+        map<pair<int,int>, int> cnt;
+        for (int i = 0; i < n; i++) {
+            cnt[{a[i], b[i]}]++;
+        }
+
+        bool valid = true;
+        int diag_count = 0;
+        set<pair<int,int>> seen;
+
+        for (auto & [p, count] : cnt) {
+            if (p.first == p.second) {
+                diag_count++;
+            } else {
+                if (seen.count(p)) continue;
+                pair<int,int> rev = {p.second, p.first};
+                if (!cnt.count(rev) || cnt[rev] != count) {
+                    valid = false;
+                    break;
+                }
+                seen.insert(p);
+                seen.insert(rev);
+            }
+        }
+
+        if (n % 2 == 0 && diag_count != 0) valid = false;
+        if (n % 2 == 1 && diag_count != 1) valid = false;
+
+        if (!valid) {
+            cout << "-1\n";
+            continue;
+        }
+
+        vector<pair<int,int>> target(n);
+        map<pair<int,int>, int> cnt_copy = cnt;
+        int idx = 0;
+
+        vector<pair<int,int>> off_diag;
+        for (auto & [p, count] : cnt_copy) {
+            if (p.first < p.second && cnt_copy[p] > 0 && cnt_copy.find({p.second, p.first}) != cnt_copy.end()) {
+                off_diag.push_back(p);
+            }
+        }
+
+        for (auto & p : off_diag) {
+            while (cnt_copy[p] > 0) {
+                while (idx < n/2 && target[idx].first != 0) idx++;
+                if (idx >= n/2) break;
+                int left = idx++;
+                int right = n - 1 - left;
+                target[left] = p;
+                target[right] = {p.second, p.first};
+                cnt_copy[p]--;
+                cnt_copy[{p.second, p.first}]--;
+            }
+        }
+
+        if (n % 2 == 1) {
+            for (auto & [p, count] : cnt_copy) {
+                if (p.first == p.second && count > 0) {
+                    target[n/2] = p;
+                    break;
+                }
+            }
+        }
+
+        vector<pair<int,int>> ops;
+        map<pair<int,int>, set<int>> positions;
+        for (int i = 0; i < n; i++) {
+            positions[{a[i], b[i]}].insert(i);
+        }
+
+        for (int i = 0; i < n; i++) {
+            pair<int,int> cur_pair = {a[i], b[i]};
+            if (cur_pair == target[i]) continue;
+
+            auto it = positions[target[i]].lower_bound(i);
+            int j = *it;
+
+            ops.push_back({i, j});
+
+            pair<int,int> pair_i = {a[i], b[i]};
+            pair<int,int> pair_j = {a[j], b[j]};
+
+            swap(a[i], a[j]);
+            swap(b[i], b[j]);
+
+            positions[pair_i].erase(i);
+            positions[pair_j].erase(j);
+            positions[pair_j].insert(i);
+            positions[pair_i].insert(j);
+        }
+
+        cout << ops.size() << "\n";
+        for (auto & op : ops) {
+            cout << op.first+1 << " " << op.second+1 << "\n";
+        }
+    }
+
+    return 0;
+}

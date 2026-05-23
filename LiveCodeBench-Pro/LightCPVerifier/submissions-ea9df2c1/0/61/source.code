@@ -1,0 +1,53 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        vector<int> cnt(10, 0);
+        for (char c : s) cnt[c - '0']++;
+        vector<int> suf(10, 0);
+        for (int k = 0; k < 10; ++k) {
+            for (int d = k; d < 10; ++d) suf[k] += cnt[d];
+        }
+        string ans;
+        for (int pos = 0; pos < 10; ++pos) {
+            int r = 9 - pos;
+            for (int d = r; d <= 9; ++d) {
+                if (cnt[d] > 0) {
+                    // try choosing d
+                    cnt[d]--;
+                    for (int k = 0; k <= d; ++k) suf[k]--;
+                    // check feasibility
+                    bool ok = true;
+                    for (int k = 0; k < 10; ++k) {
+                        int need = max(0, 9 - k - pos);
+                        if (suf[k] < need) {
+                            ok = false;
+                            break;
+                        }
+                    }
+                    if (ok) {
+                        ans += char('0' + d);
+                        break;
+                    } else {
+                        // revert
+                        cnt[d]++;
+                        for (int k = 0; k <= d; ++k) suf[k]++;
+                    }
+                }
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

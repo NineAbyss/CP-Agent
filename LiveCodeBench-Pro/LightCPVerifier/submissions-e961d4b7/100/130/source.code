@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) cin >> a[i];
+    vector<long long> dp(n + 1);
+    dp[0] = 0;
+    // 单调栈，存储 (值, dp[prev] - (prev-1) * val) 的最小值
+    stack<pair<int, long long>> st;
+    for (int i = 1; i <= n; ++i) {
+        // 直接移动
+        dp[i] = dp[i - 1] + a[i - 1];
+        // 通过交换
+        if (!st.empty()) {
+            dp[i] = min(dp[i], st.top().second + (long long)i * st.top().first);
+        }
+        // 更新栈
+        long long cur = dp[i - 1] - (long long)(i - 1) * a[i - 1];
+        while (!st.empty() && st.top().first >= a[i - 1]) {
+            cur = min(cur, st.top().second);
+            st.pop();
+        }
+        if (st.empty() || cur < st.top().second) {
+            st.push({a[i - 1], cur});
+        }
+    }
+    for (int i = 1; i <= n; ++i) {
+        cout << dp[i] << " \n"[i == n];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

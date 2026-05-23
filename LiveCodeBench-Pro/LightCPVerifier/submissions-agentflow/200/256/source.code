@@ -1,0 +1,120 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct TwoSAT {
+    int n;
+    vector<vector<int>> g, rg;
+    vector<int> comp, order;
+    vector<bool> vis;
+    
+    TwoSAT(int n) : n(n), g(2*n), rg(2*n), comp(2*n, -1), vis(2*n, false) {}
+    
+    void add_implication(int a, bool na, int b, bool nb) {
+        int u = 2*a + (na ? 1 : 0);
+        int v = 2*b + (nb ? 1 : 0);
+        g[u].push_back(v);
+        rg[v].push_back(u);
+    }
+    
+    void add_or(int a, bool na, int b, bool nb) {
+        add_implication(a, !na, b, nb);
+        add_implication(b, !nb, a, na);
+    }
+    
+    void dfs1(int u) {
+        vis[u] = true;
+        for (int v : g[u]) if (!vis[v]) dfs1(v);
+        order.push_back(u);
+    }
+    
+    void dfs2(int u, int cl) {
+        comp[u] = cl;
+        for (int v : rg[u]) if (comp[v] == -1) dfs2(v, cl);
+    }
+    
+    bool solve(vector<bool>& ass) {
+        fill(vis.begin(), vis.end(), false);
+        for (int i = 0; i < 2*n; i++) if (!vis[i]) dfs1(i);
+        reverse(order.begin(), order.end());
+        int cl = 0;
+        for (int u : order) if (comp[u] == -1) dfs2(u, cl++);
+        ass.assign(n, false);
+        for (int i = 0; i < n; i++) {
+            if (comp[2*i] == comp[2*i+1]) return false;
+            ass[i] = comp[2*i] > comp[2*i+1];
+        }
+        return true;
+    }
+};
+
+bool solve_one(int n, const vector<vector<bool>>& adj, vector<bool>& type) {
+    TwoSAT ts(n);
+    for (int u = 1; u <= n; u++) {
+        for (int v = u+1; v <= n; v++) {
+            if (!adj[u][v]) {
+                ts.add_or(u-1, false, v-1, false);
+            } else {
+                ts.add_or(u-1, true, v-1, true);
+            }
+        }
+    }
+    return ts.solve(type);
+}
+
+void solve() {
+    int t; cin >> t;
+    while (t--) {
+        int n, k; cin >> n >> k;
+        vector<vector<vector<bool>>> adj(k, vector<vector<bool>>(n+1, vector<bool>(n+1, false)));
+        vector<vector<bool>> types(k);
+        vector<vector<int>> indep(k);
+        
+        bool ok = true;
+        for (int g = 0; g < k; g++) {
+            int m; cin >> m;
+            for (int i = 0; i < m; i++) {
+                int u, v; cin >> u >> v;
+                adj[g][u][v] = adj[g][v][u] = true;
+            }
+            vector<bool> type(n);
+            if (!solve_one(n, adj[g], type)) {
+                ok = false;
+            }
+            types[g] = type;
+            for (int i = 0; i < n; i++) {
+                if (!type[i]) indep[g].push_back(i);
+            }
+        }
+        
+        if (!ok) {
+            cout << "No\n";
+            continue;
+        }
+        
+        TwoSAT ts2(n);
+        for (int g = 0; g < k; g++) {
+            if (indep[g].size() >= 2) {
+                for (int i = 0; i < (int)indep[g].size(); i++) {
+                    for (int j = i+1; j < (int)indep[g].size(); j++) {
+                        int u = indep[g][i], v = indep[g][j];
+                        ts2.add_or(u, true, v, true);
+                    }
+                }
+            }
+        }
+        
+        vector<bool> ass;
+        if (ts2.solve(ass)) {
+            cout << "Yes\n";
+        } else {
+            cout << "No\n";
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

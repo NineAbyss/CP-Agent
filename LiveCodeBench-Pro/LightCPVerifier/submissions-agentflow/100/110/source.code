@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+using namespace std;
+
+// Validate if current MEX can be achieved in `k` segments
+bool canAchieveMEX(int x, int k, const unordered_map<int, int>& frequency) {
+    int total_needed = x * k;
+    int available = 0;
+    for (int i = 0; i < x && frequency.count(i); ++i) {
+        available += frequency.at(i);
+    }
+    return available >= total_needed;
+}
+
+int maxAchievableMEX(int n, int k, const vector<int>& a) {
+    unordered_map<int, int> frequency;
+    for (int value : a) {
+        frequency[value]++;
+    }
+
+    int left = 0, right = n, best_mex = 0;
+    while (left <= right) {
+        int mid = (left + right) / 2;
+        if (canAchieveMEX(mid, k, frequency)) {
+            best_mex = mid;
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return best_mex;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        cout << maxAchievableMEX(n, k, a) << "\n";
+    }
+    return 0;
+}

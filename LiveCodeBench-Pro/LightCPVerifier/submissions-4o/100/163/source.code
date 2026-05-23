@@ -1,0 +1,75 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int t; // number of test cases
+    cin >> t;
+
+    while(t--) {
+        int n, m; // number of airports and number of days
+        cin >> n >> m;
+
+        vector<int> s(n); // initial lost pieces at each airport
+        for(int i = 0; i < n; ++i) {
+            cin >> s[i];
+        }
+
+        vector<vector<int>> a(m, vector<int>(n)), b(m, vector<int>(n)), c(m, vector<int>(n));
+
+        for(int i = 0; i < m; ++i) {
+            for(int j = 0; j < n; ++j) {
+                cin >> a[i][j];
+            }
+            for(int j = 0; j < n; ++j) {
+                cin >> b[i][j];
+            }
+            for(int j = 0; j < n; ++j) {
+                cin >> c[i][j];
+            }
+        }
+
+        // We need to calculate for each day from 1 to m
+        vector<long long> max_unfound(m, 0);
+
+        vector<int> current = s;
+
+        for(int day = 0; day < m; ++day) {
+            vector<int> next(n, 0);
+
+            // Flight transfers
+            for(int j = 0; j < n; ++j) {
+                // Flight to previous
+                int prev = (j - 1 + n) % n;
+                int moved_to_prev = min(current[j], a[day][j]);
+                current[j] -= moved_to_prev;
+                next[prev] += moved_to_prev;
+
+                // Flight to next
+                int next_index = (j + 1) % n;
+                int moved_to_next = min(current[j], c[day][j]);
+                current[j] -= moved_to_next;
+                next[next_index] += moved_to_next;
+
+                // Remaining inspection unfound pieces
+                current[j] = max(current[j] - b[day][j], 0);
+            }
+
+            // Transfer completion for evening
+            for(int j = 0; j < n; ++j) {
+                current[j] += next[j];
+            }
+
+            // Calculate maximum unfound luggage
+            max_unfound[day] = accumulate(current.begin(), current.end(), 0LL);
+        }
+
+        for(int day = 0; day < m; ++day) {
+            cout << max_unfound[day] << "\n";
+        }
+    }
+
+    return 0;
+}

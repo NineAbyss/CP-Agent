@@ -1,0 +1,55 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+// Function to calculate modulus beauty:
+int calculate_beauty(int x, int y) {
+    return (x % y) + (y % x);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        // Using a multiset to keep track of the prefix elements, lets you query for elements efficiently.
+        multiset<int> elements;
+        int current_beauty = 0;
+
+        for (int i = 0; i < n; ++i) {
+            int ai = a[i];
+            elements.insert(ai);
+
+            auto it = elements.end();
+            if (elements.size() > 1) {
+                --it;
+                auto top = *it;
+                current_beauty = max(current_beauty, calculate_beauty(ai, top));
+
+                if (--it != elements.begin()) {
+                    auto second_top = *it;
+                    current_beauty = max(current_beauty, calculate_beauty(ai, second_top));
+                }
+            }
+
+            cout << current_beauty << ' ';
+        }
+        cout << '\n';
+    }
+
+    return 0;
+}

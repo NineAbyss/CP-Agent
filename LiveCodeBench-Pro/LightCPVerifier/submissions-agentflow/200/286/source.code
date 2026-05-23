@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while(t--) {
+        int n, k;
+        cin >> n >> k;
+        
+        if(k == 1) {
+            cout << "! -1" << endl;
+            continue;
+        }
+        
+        if(n == 2 * k) {
+            // 当n=2k时，可能p=k是唯一解
+            cout << "! " << k << " " << k << endl;
+            continue;
+        }
+        
+        // 否则，使用简单的启发式方法 // 查询位置k和k+1
+        cout << "? " << k << endl;
+        int v1;
+        cin >> v1;
+        cout << "? " << k+1 << endl;
+        int v2;
+        cin >> v2;
+        
+        // 如果v2 == (v1 % k) + 1，那么k和k+1在同一个数组中，所以p >= k+1 // 否则，p = k
+        if(v2 == (v1 % k) + 1) {
+            // 还需要更多信息，但时间有限，假设p = n/2
+            int p = n/2;
+            if(p < k) p = k;
+            if(p > n - k) p = n - k;
+            cout << "! " << p << " " << n - p << endl;
+        } else {
+            cout << "! " << k << " " << n - k << endl;
+        }
+    }
+    
+    return 0;
+}

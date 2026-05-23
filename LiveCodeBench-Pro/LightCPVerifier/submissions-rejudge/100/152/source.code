@@ -1,0 +1,250 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const long long INF = 1e18;
+
+int n, r, k;
+vector<vector<int>> a;
+vector<string> color;
+
+bool can_reach(int sx, int sy, int tx, int ty, int limit) {
+    if (a[sx][sy] > limit) return false;
+    vector<vector<bool>> vis(n+1, vector<bool>(n+1, false));
+    queue<pair<int,int>> q;
+    q.push({sx, sy});
+    vis[sx][sy] = true;
+    int dx[4] = {1,-1,0,0};
+    int dy[4] = {0,0,1,-1};
+    while (!q.empty()) {
+        auto [x,y] = q.front(); q.pop();
+        if (x == tx && y == ty) return true;
+        for (int d=0; d<4; d++) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+            if (nx<1 || nx>n || ny<1 || ny>n) continue;
+            if (vis[nx][ny]) continue;
+            if (a[nx][ny] > limit) continue;
+            vis[nx][ny] = true;
+            q.push({nx,ny});
+        }
+    }
+    return false;
+}
+
+vector<vector<bool>> compute_RM(int D_M) {
+    vector<vector<bool>> from_start(n+1, vector<bool>(n+1, false));
+    queue<pair<int,int>> q;
+    if (a[1][1] <= D_M) {
+        q.push({1,1});
+        from_start[1][1] = true;
+    }
+    int dx[4] = {1,-1,0,0};
+    int dy[4] = {0,0,1,-1};
+    while (!q.empty()) {
+        auto [x,y] = q.front(); q.pop();
+        for (int d=0; d<4; d++) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+            if (nx<1 || nx>n || ny<1 || ny>n) continue;
+            if (from_start[nx][ny]) continue;
+            if (a[nx][ny] > D_M) continue;
+            from_start[nx][ny] = true;
+            q.push({nx,ny});
+        }
+    }
+    vector<vector<bool>> to_end(n+1, vector<bool>(n+1, false));
+    queue<pair<int,int>> q2;
+    if (a[r][n] <= D_M) {
+        q2.push({r,n});
+        to_end[r][n] = true;
+    }
+    while (!q2.empty()) {
+        auto [x,y] = q2.front(); q2.pop();
+        for (int d=0; d<4; d++) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+            if (nx<1 || nx>n || ny<1 || ny>n) continue;
+            if (to_end[nx][ny]) continue;
+            if (a[nx][ny] > D_M) continue;
+            to_end[nx][ny] = true;
+            q2.push({nx,ny});
+        }
+    }
+    vector<vector<bool>> RM(n+1, vector<bool>(n+1, false));
+    for (int i=1; i<=n; i++)
+        for (int j=1; j<=n; j++)
+            RM[i][j] = from_start[i][j] && to_end[i][j];
+    return RM;
+}
+
+struct Dinic {
+    struct Edge {
+        int to, rev;
+        long long cap;
+    };
+    int n;
+    vector<vector<Edge>> g;
+    vector<int> level, iter;
+    Dinic(int n): n(n), g(n+1), level(n+1), iter(n+1) {}
+    void add_edge(int u, int v, long long cap) {
+        g[u].push_back({v, (int)g[v].size(), cap});
+        g[v].push_back({u, (int)g[u].size()-1, 0});
+    }
+    void bfs(int s) {
+        fill(level.begin(), level.end(), -1);
+        queue<int> q;
+        level[s] = 0;
+        q.push(s);
+        while (!q.empty()) {
+            int v = q.front(); q.pop();
+            for (auto &e : g[v]) {
+                if (e.cap > 0 && level[e.to] < 0) {
+                    level[e.to] = level[v] + 1;
+                    q.push(e.to);
+                }
+            }
+        }
+    }
+    long long dfs(int v, int t, long long f) {
+        if (v == t) return f;
+        for (int &i = iter[v]; i < (int)g[v].size(); i++) {
+            Edge &e = g[v][i];
+            if (e.cap > 0 && level[v] < level[e.to]) {
+                long long d = dfs(e.to, t, min(f, e.cap));
+                if (d > 0) {
+                    e.cap -= d;
+                    g[e.to][e.rev].cap += d;
+                    return d;
+                }
+            }
+        }
+        return 0;
+    }
+    long long max_flow(int s, int t) {
+        long long flow = 0;
+        while (true) {
+            bfs(s);
+            if (level[t] < 0) return flow;
+            fill(iter.begin(), iter.end(), 0);
+            long long f;
+            while ((f = dfs(s, t, INF)) > 0) {
+                flow += f;
+            }
+        }
+    }
+};
+
+bool check(int X, int D_M, const vector<vector<bool>>& RM) {
+    if (a[n][1] >= X || a[r][n] >= X) return true;
+    
+    int nodes = 2 * n * n;
+    int S_id = (n-1)*n + 1 - 1;
+    int T_id = (r-1)*n + n - 1;
+    int S = S_id * 2;
+    int T = T_id * 2 + 1;
+    Dinic dinic(nodes);
+    int dx[4] = {1,-1,0,0};
+    int dy[4] = {0,0,1,-1};
+    for (int i=1; i<=n; i++) {
+        for (int j=1; j<=n; j++) {
+            int id = (i-1)*n + j - 1;
+            int in = id*2, out = id*2+1;
+            long long cap = INF;
+            if (a[i][j] >= X) {
+                cap = 0;
+            } else {
+                if (color[i][j] == '1') {
+                    if (!RM[i][j]) {
+                        // 不在 RM 中，可以增加到 X
+                        cap = X - a[i][j];
+                    } else {
+                        // 在 RM 中，只能增加到 min(X, D_M)
+                        int target = min(X, D_M);
+                        if (a[i][j] < target) {
+                            cap = target - a[i][j];
+                        } else {
+                            cap = INF; // 不能增加
+                        }
+                    }
+                } else {
+                    // 白色格子不能增加
+                    cap = INF;
+                }
+            }
+            if (id == S_id || id == T_id) cap = INF;
+            dinic.add_edge(in, out, cap);
+            for (int d=0; d<4; d++) {
+                int ni = i + dx[d];
+                int nj = j + dy[d];
+                if (ni<1 || ni>n || nj<1 || nj>n) continue;
+                int nid = (ni-1)*n + nj - 1;
+                int nin = nid*2;
+                dinic.add_edge(out, nin, INF);
+            }
+        }
+    }
+    long long min_cut = dinic.max_flow(S, T);
+    return min_cut <= k;
+}
+
+void solve() {
+    cin >> n >> r >> k;
+    a.assign(n+1, vector<int>(n+1));
+    for (int i=1; i<=n; i++)
+        for (int j=1; j<=n; j++)
+            cin >> a[i][j];
+    color.assign(n+1, "");
+    for (int i=1; i<=n; i++) {
+        string s;
+        cin >> s;
+        color[i] = " " + s;
+    }
+    
+    int lo = 1, hi = 1e6, D_M = hi;
+    while (lo <= hi) {
+        int mid = (lo + hi) / 2;
+        if (can_reach(1, 1, r, n, mid)) {
+            D_M = mid;
+            hi = mid - 1;
+        } else {
+            lo = mid + 1;
+        }
+    }
+    
+    auto RM = compute_RM(D_M);
+    
+    lo = 1, hi = 1e6;
+    int D_F_init = hi;
+    while (lo <= hi) {
+        int mid = (lo + hi) / 2;
+        if (can_reach(n, 1, r, n, mid)) {
+            D_F_init = mid;
+            hi = mid - 1;
+        } else {
+            lo = mid + 1;
+        }
+    }
+    
+    int left = D_F_init, right = 1e6 + k, ans = D_F_init;
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        if (check(mid, D_M, RM)) {
+            ans = mid;
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    cout << D_M << " " << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,134 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 70005;
+const int LOG_MAX = 17; // since 2^17 > 70000
+
+vector<int> tree[MAXN];
+int depth[MAXN];
+int parent[LOG_MAX+1][MAXN];
+
+void dfs_lca(int u, int p, int d) {
+    depth[u] = d;
+    parent[0][u] = p;
+    for (int v : tree[u]) {
+        if (v != p) {
+            dfs_lca(v, u, d + 1);
+        }
+    }
+}
+
+int lca(int u, int v) {
+    if (depth[u] < depth[v]) swap(u, v);
+    int diff = depth[u] - depth[v];
+    for (int i = 0; i <= LOG_MAX; i++) {
+        if (diff & (1 << i)) {
+            u = parent[i][u];
+        }
+    }
+    if (u == v) return u;
+    for (int i = LOG_MAX; i >= 0; i--) {
+        if (parent[i][u] != parent[i][v]) {
+            u = parent[i][u];
+            v = parent[i][v];
+        }
+    }
+    return parent[0][u];
+}
+
+int dist(int u, int v) {
+    int w = lca(u, v);
+    return depth[u] + depth[v] - 2 * depth[w];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+
+        for (int i = 1; i <= n; i++) {
+            tree[i].clear();
+            depth[i] = 0;
+            for (int j = 0; j <= LOG_MAX; j++) {
+                parent[j][i] = -1;
+            }
+        }
+
+        for (int i = 0; i < n - 1; i++) {
+            int u, v;
+            cin >> u >> v;
+            tree[u].push_back(v);
+            tree[v].push_back(u);
+        }
+
+        // Build LCA table
+        dfs_lca(1, -1, 0);
+        for (int i = 1; i <= LOG_MAX; i++) {
+            for (int j = 1; j <= n; j++) {
+                if (parent[i-1][j] != -1) {
+                    parent[i][j] = parent[i-1][parent[i-1][j]];
+                } else {
+                    parent[i][j] = -1;
+                }
+            }
+        }
+
+        // Active nodes
+        vector<int> active;
+        for (int i = 0; i < n; i++) {
+            if (s[i] == '1') {
+                active.push_back(i + 1);
+            }
+        }
+
+        int k = active.size();
+        vector<int> ans(n + 1, -1); // 1-indexed
+
+        if (k == 0) {
+            for (int i = 1; i <= n; i++) {
+                cout << -1 << " \n"[i == n];
+            }
+            continue;
+        }
+
+        // For each active node as start
+        for (int start_idx = 0; start_idx < k; start_idx++) {
+            map<pair<int, int>, int> memo;
+
+            function<int(int, int)> dfs = [&](int u_idx, int last_w) {
+                auto state = make_pair(u_idx, last_w);
+                if (memo.count(state)) {
+                    return memo[state];
+                }
+                int max_len = 1;
+                int u_node = active[u_idx];
+                for (int v_idx = 0; v_idx < k; v_idx++) {
+                    if (v_idx == u_idx) continue;
+                    int v_node = active[v_idx];
+                    int w = dist(u_node, v_node);
+                    if (last_w == -1 || w >= 2 * last_w) {
+                        max_len = max(max_len, 1 + dfs(v_idx, w));
+                    }
+                }
+                return memo[state] = max_len;
+            };
+
+            ans[active[start_idx]] = dfs(start_idx, -1);
+        }
+
+        for (int i = 1; i <= n; i++) {
+            if (i > 1) cout << " ";
+            cout << ans[i];
+        }
+        cout << "\n";
+    }
+
+    return 0;
+}

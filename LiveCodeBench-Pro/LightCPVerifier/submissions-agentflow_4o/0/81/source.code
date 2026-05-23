@@ -1,0 +1,51 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> x(n), y(n);
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> x[i] >> y[i];
+        }
+
+        sort(x.begin(), x.end());
+        sort(y.begin(), y.end());
+
+        int x_min = x[0];
+        int x_max = x[n - 1];
+        int y_min = y[0];
+        int y_max = y[n - 1];
+
+        long long initial_cost = static_cast<long long>(x_max - x_min + 1) * (y_max - y_min + 1);
+
+        // Consider moving any one monster to the first or last position of x or y to reduce the bounding box size
+        long long min_cost = initial_cost;
+
+        // Consider moving a monster to x_min/x_max or y_min/y_max
+        for (int i = 0; i < n; ++i) {
+            // Move x[i] to x_min and y[i] to y_min
+            int new_x_min = min(x_min, x[i]);
+            int new_x_max = max(x_max, x[i]);
+            int new_y_min = min(y_min, y[i]);
+            int new_y_max = max(y_max, y[i]);
+            long long new_cost = static_cast<long long>(new_x_max - new_x_min + 1) * (new_y_max - new_y_min + 1);
+            min_cost = min(min_cost, new_cost);
+
+            // Other combinations similarly...
+        }
+
+        cout << min_cost << "\n";
+    }
+
+    return 0;
+}

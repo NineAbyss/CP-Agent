@@ -1,0 +1,110 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> d(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> d[i];
+    }
+
+    vector<pair<int, int>> obstacles(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> obstacles[i].first >> obstacles[i].second;
+    }
+
+    // We'll maintain the possible range of current height [low, high]
+    int low = 0, high = 0;
+
+    for (int i = 0; i < n; ++i) {
+        int l = obstacles[i].first;
+        int r = obstacles[i].second;
+
+        // Update possible height range based on allowed changes (0 or 1)
+        int new_low = low;
+        int new_high = high + 1;
+
+        // Intersect with obstacle constraint
+        new_low = max(new_low, l);
+        new_high = min(new_high, r);
+
+        if (new_low > new_high) {
+            cout << "-1\n";
+            return;
+        }
+
+        // Now determine what d[i] should be based on constraints
+        if (d[i] != -1) {
+            // Fixed value: apply it and check consistency
+            int target_height = low + d[i];  // we can choose any starting point in [low,high], but we must increase by d[i]
+            if (target_height < new_low || target_height > new_high) {
+                // Even if we pick best from previous, this fixed step doesn't work
+                // Actually, we need to verify that there exists a prev height h in [low,high] such that h + d[i] is in [new_low, new_high]
+                if (!(low <= new_high - d[i] && high >= new_low - d[i])) {
+                    cout << "-1\n";
+                    return;
+                }
+            }
+            // After applying d[i], the new height is in [max(low+d[i], new_low), min(high+d[i], new_high)]
+            low = max(low + d[i], new_low);
+            high = min(high + d[i], new_high);
+        } else {
+            // d[i] is unknown: we can choose 0 or 1
+
+            // Option 1: set d[i] = 0 -> new height in [low, high] // Option 2: set d[i] = 1 -> new height in [low+1, high+1]
+
+            // We want to pick the option that keeps future flexibility. // But we must ensure at least one option works.
+
+            bool can_use_0 = (low >= new_low && high <= new_high); // [low, high] ⊆ [new_low, new_high]
+            bool can_use_1 = (low + 1 >= new_low && high + 1 <= new_high);
+
+            if (!can_use_0 && !can_use_1) {
+                // Try more precise check: does any value in [low, high] + x fall into [new_low, new_high] for x=0 or x=1?
+                can_use_0 = (low <= new_high && high >= new_low);
+                can_use_1 = (low + 1 <= new_high && high + 1 >= new_low);
+                if (!can_use_0 && !can_use_1) {
+                    cout << "-1\n";
+                    return;
+                }
+            }
+
+            // Greedy: prefer 0 if possible, otherwise use 1.
+            // But actually, we may want to prefer 1 only if 0 would make us too low for future obstacles?
+            // However, note: choosing 1 increases our height, which might help later. // But increasing unnecessarily may cause problems later (e.g., exceed upper bounds).
+            // So better to stay as low as possible unless forced to rise.
+
+            if (can_use_0) {
+                d[i] = 0;
+                low = max(low, new_low);
+                high = min(high, new_high);
+            } else {
+                d[i] = 1;
+                low = max(low + 1, new_low);
+                high = min(high + 1, new_high);
+            }
+        }
+    }
+
+    // Output the restored array
+    for (int i = 0; i < n; ++i) {
+        cout << d[i];
+        if (i < n - 1) cout << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<string> grid(n);
+        for (int i = 0; i < n; i++) {
+            cin >> grid[i];
+        }
+        // Precompute prefix sum of gold
+        vector<vector<int>> pref(n + 1, vector<int>(m + 1, 0));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                pref[i + 1][j + 1] = pref[i + 1][j] + pref[i][j + 1] - pref[i][j] + (grid[i][j] == 'g' ? 1 : 0);
+            }
+        }
+        auto query = [&](int r1, int c1, int r2, int c2) {
+            if (r1 < 0) r1 = 0;
+            if (c1 < 0) c1 = 0;
+            if (r2 >= n) r2 = n - 1;
+            if (c2 >= m) c2 = m - 1;
+            if (r1 > r2 || c1 > c2) return 0;
+            return pref[r2 + 1][c2 + 1] - pref[r1][c2 + 1] - pref[r2 + 1][c1] + pref[r1][c1];
+        };
+        int ans = 0;
+        for (int x = 0; x < n; x++) {
+            for (int y = 0; y < m; y++) {
+                if (grid[x][y] != '.') continue; // only empty cells // Square S: from (x-k, y-k) to (x+k, y+k)
+                int r1 = x - k, c1 = y - k;
+                int r2 = x + k, c2 = y + k;
+                int total_S = query(r1, c1, r2, c2);
+                // Inner square I: from (x-k+1, y-k+1) to (x+k-1, y+k-1)
+                int r1i = x - k + 1, c1i = y - k + 1;
+                int r2i = x + k - 1, c2i = y + k - 1;
+                int total_I = query(r1i, c1i, r2i, c2i);
+                int boundary = total_S - total_I;
+                ans = max(ans, boundary);
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

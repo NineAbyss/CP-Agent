@@ -1,0 +1,82 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXA = 100005;
+
+vector<int> pos[MAXA];
+int timestamp[MAXA];
+int cur_tc = 0;
+
+void clear_pos(int v) {
+    if (timestamp[v] != cur_tc) {
+        pos[v].clear();
+        timestamp[v] = cur_tc;
+    }
+}
+
+vector<int> get_factors(int x) {
+    vector<int> res;
+    for (int d = 1; d * d <= x; ++d) {
+        if (x % d == 0) {
+            res.push_back(d);
+            if (d != x / d) res.push_back(x / d);
+        }
+    }
+    return res;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    for (cur_tc = 1; cur_tc <= t; ++cur_tc) {
+        int n, q;
+        cin >> n >> q;
+        vector<int> a(n + 1);
+        for (int i = 1; i <= n; ++i) {
+            cin >> a[i];
+            clear_pos(a[i]);
+            pos[a[i]].push_back(i);
+        }
+        while (q--) {
+            int k, l, r;
+            cin >> k >> l >> r;
+            long long ans = 0;
+            int cur = k;
+            int p = l;
+            while (p <= r) {
+                if (cur == 1) {
+                    ans += (r - p + 1);
+                    break;
+                }
+                // 找到下一个位置 nxt (p <= nxt <= r) 使得 a[nxt] 是 cur 的因子
+                int nxt = r + 1;
+                vector<int> fac = get_factors(cur);
+                for (int d : fac) {
+                    if (timestamp[d] != cur_tc) continue;
+                    auto it = lower_bound(pos[d].begin(), pos[d].end(), p);
+                    if (it != pos[d].end() && *it <= r) {
+                        nxt = min(nxt, *it);
+                    }
+                }
+                if (nxt > r) {
+                    ans += 1LL * cur * (r - p + 1);
+                    break;
+                }
+                // 处理 [p, nxt-1]
+                ans += 1LL * cur * (nxt - p);
+                // 处理位置 nxt
+                while (cur % a[nxt] == 0) cur /= a[nxt];
+                ans += cur;
+                p = nxt + 1;
+            }
+            cout << ans << '\n';
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

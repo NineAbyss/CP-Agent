@@ -1,0 +1,33 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+bool can_explode(const vector<long long>& a, int n) {
+    long long total_sum = 0;
+    for(long long x : a) {
+        total_sum += x;
+    }
+
+    long long sum_indices = n * (n + 1) / 2;
+    return (total_sum % sum_indices == 0);
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while(t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n);
+        for(long long& ai : a) {
+            cin >> ai;
+        }
+        if(can_explode(a, n)) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

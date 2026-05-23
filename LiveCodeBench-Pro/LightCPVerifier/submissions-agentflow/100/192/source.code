@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+
+vector<int> adj[MAXN];
+int parent[MAXN], dep[MAXN];
+long long a[MAXN], pref[MAXN], val[MAXN], min_up[MAXN], max_up[MAXN], threat[MAXN];
+int order[MAXN];
+
+void solve() {
+    int n;
+    cin >> n;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        adj[i].clear();
+    }
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    int qh = 0, qt = 0;
+    order[qt++] = 1;
+    parent[1] = 0;
+    dep[1] = 0;
+    while (qh < qt) {
+        int u = order[qh++];
+        for (int v : adj[u]) {
+            if (v == parent[u]) continue;
+            parent[v] = u;
+            dep[v] = dep[u] + 1;
+            order[qt++] = v;
+        }
+    }
+    
+    pref[1] = a[1];
+    val[1] = 0;
+    min_up[1] = val[1];
+    max_up[1] = val[1];
+    threat[1] = a[1];
+    
+    for (int idx = 1; idx < qt; idx++) {
+        int u = order[idx];
+        int p = parent[u];
+        if (dep[u] % 2 == 0) {
+            pref[u] = pref[p] + a[u];
+        } else {
+            pref[u] = pref[p] - a[u];
+        }
+        val[u] = pref[p];
+        min_up[u] = min(val[u], min_up[p]);
+        max_up[u] = max(val[u], max_up[p]);
+        long long best;
+        if (dep[u] % 2 == 0) {
+            best = min_up[u];
+        } else {
+            best = max_up[u];
+        }
+        long long C = (dep[u] % 2 == 0) ? 1 : -1;
+        threat[u] = C * (pref[u] - best);
+    }
+    
+    for (int i = 1; i <= n; i++) {
+        if (i > 1) cout << ' ';
+        cout << threat[i];
+    }
+    cout << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

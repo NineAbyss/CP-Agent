@@ -1,0 +1,23 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, l, r;
+        cin >> n >> m >> l >> r;
+        int steps = n - m;
+        int a_low = max(0, steps - r);
+        int a_high = min(steps, -l);
+        int a;
+        if (a_low + 1 <= a_high)
+            a = a_low + 1;
+        else
+            a = a_low;
+        int l_prime = l + a;
+        int r_prime = r - (steps - a);
+        cout << l_prime << " " << r_prime << endl;
+    }
+    return 0;
+}

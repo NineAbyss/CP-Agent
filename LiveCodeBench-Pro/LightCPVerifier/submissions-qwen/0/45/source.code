@@ -1,0 +1,217 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to compute GCD of a vector
+int gcd_vector(vector<int>& v) {
+    int res = v[0];
+    for (int i = 1; i < v.size(); ++i) {
+        res = __gcd(res, v[i]);
+    }
+    return res;
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    // Try all possible non-trivial splits: at least one in each group // Since n <= 100 but we can't try all 2^n, we need a smarter idea
+
+    // Observation:
+    // If all elements are equal, then any split will result in same GCD for both groups -> No
+    bool all_equal = true;
+    for (int i = 1; i < n; ++i) {
+        if (a[i] != a[0]) {
+            all_equal = false;
+            break;
+        }
+    }
+    if (all_equal) {
+        cout << "No\n";
+        return;
+    }
+
+    // Another idea: try moving one element at a time to one group and the rest to another. // Since n is small (<=100), we can try all possibilities where one group has exactly one element.
+    for (int i = 0; i < n; ++i) {
+        vector<int> B, C;
+        B.push_back(a[i]); // put one element in B
+        for (int j = 0; j < n; ++j) {
+            if (j != i) C.push_back(a[j]);
+        }
+        int gcd_B = B[0]; // single element
+        int gcd_C = gcd_vector(C);
+        if (gcd_B != gcd_C) {
+            cout << "Yes\n";
+            for (int j = 0; j < n; ++j) {
+                if (j == i) cout << 1 << " ";
+                else cout << 2 << " ";
+            }
+            cout << "\n";
+            return;
+        }
+    }
+
+    // Try putting one element in group C and rest in B
+    for (int i = 0; i < n; ++i) {
+        vector<int> B, C;
+        C.push_back(a[i]); // put one element in C
+        for (int j = 0; j < n; ++j) {
+            if (j != i) B.push_back(a[j]);
+        }
+        int gcd_B = gcd_vector(B);
+        int gcd_C = C[0]; // single element
+        if (gcd_B != gcd_C) {
+            cout << "Yes\n";
+            for (int j = 0; j < n; ++j) {
+                if (j == i) cout << 2 << " ";
+                else cout << 1 << " ";
+            }
+            cout << "\n";
+            return;
+        }
+    }
+
+    // If no single-element split works, try something else? // But note: since not all elements are equal, there must be some variation.
+    // However, it's possible that every single-element vs rest gives same GCD.
+
+    // Let's try a different strategy: sort and try to separate smallest or largest?
+    // Actually, consider this: if we can find any subset such that its GCD differs from the complement, we're good.
+    // But trying all subsets is too expensive.
+
+    // Alternate Insight:
+    // Claim: if a solution exists, then there exists a solution where one group has size 1.
+    // Is this true? Not necessarily. Counterexample? // But let's think: suppose optimal solution has both groups with >=2 elements.
+    // Can we always reduce to one-element group?
+
+    // Actually, from known problems: often the answer is "Yes" unless all elements are equal. // But wait: test case 3: [1,2,2] -> output is Yes with assignment [1,2,2] meaning 1 goes to B, two 2s go to C.
+    // Then B = [1], C = [2,2]. GCD(B)=1, GCD(C)=2 -> valid.
+
+    // So in fact, in the third example, one group has size 1.
+
+    // Therefore, our above loop should have caught it.
+
+    // But why didn't it? Let's simulate [1,2,2]:
+    // Try i=0: B=[1], C=[2,2] -> gcd_B=1, gcd_C=2 -> 1 != 2 -> found! So we would have printed and returned.
+
+    // So why did we reach this point? Only if no single-element split worked.
+
+    // Therefore, if we reach here, no single-element split worked, and not all equal -> is it possible?
+
+    // Let me try to construct a counterexample: // Suppose a = [6, 10, 15]
+    // All pairs:  //   If we take 6 alone: gcd(6)=6, gcd(10,15)=5 -> 6 != 5 -> valid! So we would have taken it.
+
+    // Another: [4, 6, 8] // 4 alone: gcd=4, gcd(6,8)=2 -> 4!=2 -> valid.
+
+    // How about: [2, 3, 6] // 2 alone: gcd=2, gcd(3,6)=3 -> 2!=3 -> valid.
+
+    // It seems hard to find one that fails.
+
+    // Actually, known fact: the answer is "Yes" if and only if not all elements are equal. // Why?
+    // Because if not all equal, then there exists an element which is not equal to the GCD of all others? // Or: let g = gcd of entire array.
+    // Then divide each element by g: now we have array b_i = a_i / g, and gcd(b) = 1.
+    // Since gcd(b)=1, there exists a subset whose GCD is 1? But we want two groups with different GCDs.
+
+    // Alternate known solution from similar problems: // Sort the array. Put the smallest element in one group, and all others in the other.
+    // Then gcd(smallest) = x, and gcd(others) might be different.
+
+    // But we already tried all single-element splits.
+
+    // So if we get here, it means for every element x, when we put x alone, then gcd(x) == gcd(rest). // That is: x == gcd(all except x)
+
+    // Is this possible when not all elements are equal?
+
+    // Example: [2, 4, 4] // Try x=2: gcd(2)=2, gcd(4,4)=4 -> 2 != 4 -> valid -> we would have found it.
+
+    // [3, 6, 6]: 3 vs gcd(6,6)=6 -> 3!=6 -> valid.
+
+    // [4, 4, 8]:  //   4 alone: gcd=4, gcd(4,8)=4 -> equal -> skip.
+    //   4 alone (second): same -> skip. //   8 alone: gcd=8, gcd(4,4)=4 -> 8 != 4 -> valid.
+
+    // So we would have found it.
+
+    // How about: [6, 12, 18] // 6 alone: 6 vs gcd(12,18)=6 -> equal.
+    // 12 alone: 12 vs gcd(6,18)=6 -> 12 != 6 -> valid.
+
+    // So again, we find one.
+
+    // Therefore, it seems that as long as not all elements are equal, there is always a single-element split that works?
+
+    // But wait: what if for every element x, x == gcd(all others)?
+
+    // Let’s assume such an array exists. Let total_gcd = g.
+    // Then for any x, gcd(all without x) = x.
+    // But note: gcd(all without x) must divide every other element, so it divides g * (b_i) for others. // Also, since gcd(all) = g, then gcd(all without x) is a multiple of g? Not necessarily: removing x could increase GCD?
+
+    // Actually, removing an element can only increase or keep the same the GCD.
+
+    // Example: [2,3] -> gcd=1. Remove 2: gcd([3])=3 > 1. Remove 3: gcd([2])=2 > 1.
+
+    // So yes, it can increase.
+
+    // Now, can we have: for every i, a[i] = gcd of all other elements?
+
+    // Let n=3: a, b, c. // Conditions:
+    //   a = gcd(b,c) //   b = gcd(a,c)
+    //   c = gcd(a,b)
+
+    // From a = gcd(b,c) => a|b and a|c. // Similarly, b|a and b|c => so a|b and b|a => a=b.
+    // Similarly, a=c. So a=b=c.
+
+    // For n>=3: if for every i, a[i] = gcd_{j≠i} a[j], then all a[i] must be equal.
+
+    // Proof: fix i and j. We have a[i] divides every a[k] for k≠i, so in particular a[i] divides a[j]. // Similarly, a[j] divides a[i]. So a[i] = a[j].
+
+    // Therefore, the condition "for every element, it equals the GCD of the others" implies all elements are equal.
+
+    // Hence, if not all elements are equal, there exists at least one element a[i] such that a[i] != gcd(all others).
+
+    // Therefore, we can always do: put that a[i] alone in one group, and the rest in the other.
+
+    // So algorithm: //   If all elements are equal -> "No"
+    //   Else -> find an index i such that a[i] != gcd of all other elements, then assign that index to group 1, others to group 2.
+
+    // But note: we already tried all single-element splits in the loops above. So we should have found one.
+
+    // Therefore, we should never reach this point.
+
+    // So if we reach here, it's a bug. But logically we shouldn't.
+
+    // But to be safe, let's re-implement cleanly:
+
+    // Recompute: if all equal -> No // Otherwise, there must be an index i such that a[i] != gcd(all except i)
+    for (int i = 0; i < n; ++i) {
+        vector<int> others;
+        for (int j = 0; j < n; ++j) {
+            if (j != i) others.push_back(a[j]);
+        }
+        int g = gcd_vector(others);
+        if (g != a[i]) {
+            cout << "Yes\n";
+            for (int j = 0; j < n; ++j) {
+                if (j == i) cout << 1 << " ";
+                else cout << 2 << " ";
+            }
+            cout << "\n";
+            return;
+        }
+    }
+
+    // If we still haven't returned, then for every i: a[i] == gcd(others) -> implies all equal -> contradiction
+    cout << "No\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

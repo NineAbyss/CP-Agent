@@ -1,0 +1,274 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+const int N = 305;
+const int INF = 1e9;
+int n, r, k;
+int a[N][N];
+string c[N];
+bool mouf_path_black[N][N];
+
+int dir[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};
+
+bool bfs_no_limit(int sx, int sy, int tx, int ty, int limit, const vector<vector<int>>& val) {
+    vector<vector<bool>> vis(n+1, vector<bool>(n+1, false));
+    queue<pair<int,int>> q;
+    if (val[sx][sy] > limit) return false;
+    vis[sx][sy] = true;
+    q.push({sx, sy});
+    while (!q.empty()) {
+        auto [x, y] = q.front(); q.pop();
+        if (x == tx && y == ty) return true;
+        for (int d = 0; d < 4; d++) {
+            int nx = x + dir[d][0];
+            int ny = y + dir[d][1];
+            if (nx < 1 || nx > n || ny < 1 || ny > n) continue;
+            if (vis[nx][ny]) continue;
+            if (val[nx][ny] > limit) continue;
+            vis[nx][ny] = true;
+            q.push({nx, ny});
+        }
+    }
+    return false;
+}
+
+int get_dis_M() {
+    int low = 1, high = 1000000, ans = high;
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        vector<vector<int>> val(n+1, vector<int>(n+1));
+        for (int i = 1; i <= n; i++)
+            for (int j = 1; j <= n; j++)
+                val[i][j] = a[i][j];
+        if (bfs_no_limit(1, 1, r, n, mid, val)) {
+            ans = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+    return ans;
+}
+
+int get_initial_dis_F() {
+    int low = 1, high = 1000000, ans = high;
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        vector<vector<int>> val(n+1, vector<int>(n+1));
+        for (int i = 1; i <= n; i++)
+            for (int j = 1; j <= n; j++)
+                val[i][j] = a[i][j];
+        if (bfs_no_limit(n, 1, r, n, mid, val)) {
+            ans = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+    return ans;
+}
+
+void find_mouf_path_black(int disM, bool path_black[][N]) {
+    // 从起点可达的点
+    vector<vector<bool>> from_start(n+1, vector<bool>(n+1, false));
+    queue<pair<int,int>> q;
+    if (a[1][1] <= disM) {
+        from_start[1][1] = true;
+        q.push({1,1});
+    }
+    while (!q.empty()) {
+        auto [x, y] = q.front(); q.pop();
+        for (int d = 0; d < 4; d++) {
+            int nx = x + dir[d][0];
+            int ny = y + dir[d][1];
+            if (nx < 1 || nx > n || ny < 1 || ny > n) continue;
+            if (from_start[nx][ny]) continue;
+            if (a[nx][ny] > disM) continue;
+            from_start[nx][ny] = true;
+            q.push({nx, ny});
+        }
+    }
+    // 从终点可达的点（反向）
+    vector<vector<bool>> to_end(n+1, vector<bool>(n+1, false));
+    if (a[r][n] <= disM) {
+        to_end[r][n] = true;
+        queue<pair<int,int>> q2;
+        q2.push({r, n});
+        while (!q2.empty()) {
+            auto [x, y] = q2.front(); q2.pop();
+            for (int d = 0; d < 4; d++) {
+                int nx = x + dir[d][0];
+                int ny = y + dir[d][1];
+                if (nx < 1 || nx > n || ny < 1 || ny > n) continue;
+                if (to_end[nx][ny]) continue;
+                if (a[nx][ny] > disM) continue;
+                to_end[nx][ny] = true;
+                q2.push({nx, ny});
+            }
+        }
+    }
+    // 标记值 = disM 的黑色格子且在交集中
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (a[i][j] == disM && c[i][j] == '1' && from_start[i][j] && to_end[i][j]) {
+                path_black[i][j] = true;
+            }
+        }
+    }
+}
+
+// ---------- 最大流 Dinic ----------
+struct Dinic {
+    struct Edge {
+        int to, cap, rev;
+    };
+    vector<vector<Edge>> g;
+    vector<int> level, iter;
+    int n;
+    Dinic(int n): n(n) {
+        g.resize(n);
+        level.resize(n);
+        iter.resize(n);
+    }
+    void add_edge(int from, int to, int cap) {
+        g[from].push_back({to, cap, (int)g[to].size()});
+        g[to].push_back({from, 0, (int)g[from].size()-1});
+    }
+    void bfs(int s) {
+        fill(level.begin(), level.end(), -1);
+        queue<int> q;
+        level[s] = 0;
+        q.push(s);
+        while (!q.empty()) {
+            int v = q.front(); q.pop();
+            for (auto& e : g[v]) {
+                if (e.cap > 0 && level[e.to] < 0) {
+                    level[e.to] = level[v] + 1;
+                    q.push(e.to);
+                }
+            }
+        }
+    }
+    int dfs(int v, int t, int f) {
+        if (v == t) return f;
+        for (int& i = iter[v]; i < (int)g[v].size(); i++) {
+            Edge& e = g[v][i];
+            if (e.cap > 0 && level[v] < level[e.to]) {
+                int d = dfs(e.to, t, min(f, e.cap));
+                if (d > 0) {
+                    e.cap -= d;
+                    g[e.to][e.rev].cap += d;
+                    return d;
+                }
+            }
+        }
+        return 0;
+    }
+    int max_flow(int s, int t) {
+        int flow = 0;
+        while (true) {
+            bfs(s);
+            if (level[t] < 0) return flow;
+            fill(iter.begin(), iter.end(), 0);
+            int f;
+            while ((f = dfs(s, t, INF)) > 0) {
+                flow += f;
+            }
+        }
+    }
+};
+
+bool can_make_disF_ge(int ansF, int disM, bool path_black[][N]) {
+    // 如果起点或终点值 > ansF-1，则 Fouad 在值 <= ansF-1 的图中无法走通，直接返回 true
+    if (a[n][1] > ansF-1 || a[r][n] > ansF-1) return true;
+    
+    int nodes = 2 * n * n + 2;
+    int S = 2 * n * n, T = S + 1;
+    Dinic dinic(nodes);
+    
+    auto in_id = [&](int i, int j) { return (i-1)*n + (j-1); };
+    auto out_id = [&](int i, int j) { return in_id(i,j) + n*n; };
+    
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (a[i][j] > ansF-1) continue; // 已经是障碍，不建边
+            int u_in = in_id(i,j);
+            int u_out = out_id(i,j);
+            // in -> out 边
+            int cap = INF;
+            if (c[i][j] == '1' && !path_black[i][j]) {
+                // 可加值的黑色格子，加到 ansF 的代价
+                if (a[i][j] < ansF) {
+                    cap = ansF - a[i][j];
+                } else {
+                    cap = 0; // 已经 >= ansF，已经是障碍
+                }
+            } else {
+                // 不可加值的格子，不能割
+                cap = INF;
+            }
+            dinic.add_edge(u_in, u_out, cap);
+        }
+    }
+    // 相邻格子双向连边
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (a[i][j] > ansF-1) continue;
+            int u_out = out_id(i,j);
+            for (int d = 0; d < 4; d++) {
+                int ni = i + dir[d][0];
+                int nj = j + dir[d][1];
+                if (ni < 1 || ni > n || nj < 1 || nj > n) continue;
+                if (a[ni][nj] > ansF-1) continue;
+                int v_in = in_id(ni, nj);
+                dinic.add_edge(u_out, v_in, INF);
+            }
+        }
+    }
+    // 源点：Fouad 起点 (n,1) 的 out
+    int start_out = out_id(n, 1);
+    dinic.add_edge(S, start_out, INF);
+    // 汇点：终点 (r,n) 的 in
+    int end_in = in_id(r, n);
+    dinic.add_edge(end_in, T, INF);
+    
+    int min_cut = dinic.max_flow(S, T);
+    return min_cut <= k;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        cin >> n >> r >> k;
+        for (int i = 1; i <= n; i++)
+            for (int j = 1; j <= n; j++)
+                cin >> a[i][j];
+        for (int i = 1; i <= n; i++) {
+            cin >> c[i];
+            c[i] = " " + c[i];
+        }
+        int disM = get_dis_M();
+        int initF = get_initial_dis_F();
+        memset(mouf_path_black, 0, sizeof mouf_path_black);
+        find_mouf_path_black(disM, mouf_path_black);
+        int low = initF, high = 1000000 + k, ansF = initF;
+        while (low <= high) {
+            int mid = (low + high) / 2;
+            if (can_make_disF_ge(mid, disM, mouf_path_black)) {
+                ansF = mid;
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+        cout << disM << " " << ansF << "\n";
+    }
+    return 0;
+}

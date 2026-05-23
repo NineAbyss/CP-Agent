@@ -1,0 +1,122 @@
+#include <iostream>
+#include <algorithm>
+#include <cstring>
+#include <tuple>
+using namespace std;
+
+const long long INF = 1e15;
+const int MAXN = 505;
+const int MAXK = 505;
+
+int n, k;
+long long p[MAXN];
+int d[MAXN];
+
+// next_state[i][dir][tmod] -> (j, new_dir, new_tmod), j=0 表示离开
+tuple<int, int, int> next_state[MAXN][2][MAXK];
+bool vis[MAXN][2][MAXK];
+
+void preprocess() {
+    // 构建转移
+    for (int i = 1; i <= n; ++i) {
+        for (int dir = 0; dir < 2; ++dir) { // 0=right, 1=left
+            for (int tmod = 0; tmod < k; ++tmod) {
+                int cur_dir = dir;
+                // 红灯检查
+                if (d[i] == tmod) {
+                    cur_dir = 1 - cur_dir;
+                }
+                long long next_pos = p[i] + (cur_dir == 0 ? 1 : -1);
+                // 离开检查
+                if (next_pos < 1 || next_pos > INF) {
+                    next_state[i][dir][tmod] = make_tuple(0, 0, 0); // 离开
+                    continue;
+                }
+                // 找下一个灯
+                int j = -1;
+                if (cur_dir == 0) { // 右 // 二分找第一个 p[j] >= next_pos
+                    int lo = 1, hi = n;
+                    while (lo <= hi) {
+                        int mid = (lo + hi) / 2;
+                        if (p[mid] >= next_pos) {
+                            j = mid;
+                            hi = mid - 1;
+                        } else {
+                            lo = mid + 1;
+                        }
+                    }
+                } else { // 左 // 二分找最后一个 p[j] <= next_pos
+                    int lo = 1, hi = n;
+                    while (lo <= hi) {
+                        int mid = (lo + hi) / 2;
+                        if (p[mid] <= next_pos) {
+                            j = mid;
+                            lo = mid + 1;
+                        } else {
+                            hi = mid - 1;
+                        }
+                    }
+                }
+                if (j == -1) { // 没有灯在那边，直接离开
+                    next_state[i][dir][tmod] = make_tuple(0, 0, 0);
+                    continue;
+                }
+                long long dist = abs(p[j] - next_pos);
+                int new_tmod = (tmod + 1 + dist) % k;
+                next_state[i][dir][tmod] = make_tuple(j, cur_dir, new_tmod);
+            }
+        }
+    }
+}
+
+bool simulate(long long start) {
+    if (start > p[n]) return true; // 直接右离开 // 找到第一个灯 i 使得 p[i] >= start
+    int i = 1;
+    while (i <= n && p[i] < start) ++i;
+    long long dist;
+    int tmod;
+    if (i > n) { // start > p[n] 已经处理
+        return true;
+    }
+    if (p[i] == start) {
+        dist = 0;
+    } else {
+        // start 在 p[i-1] 和 p[i] 之间
+        dist = p[i] - start;
+    }
+    tmod = dist % k;
+    int dir = 0; // 右
+    
+    memset(vis, 0, sizeof(vis));
+    while (true) {
+        if (i == 0) return true; // 离开
+        if (vis[i][dir][tmod]) return false; // 循环
+        vis[i][dir][tmod] = true;
+        auto [ni, ndir, ntmod] = next_state[i][dir][tmod];
+        i = ni;
+        dir = ndir;
+        tmod = ntmod;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        cin >> n >> k;
+        for (int i = 1; i <= n; ++i) cin >> p[i];
+        for (int i = 1; i <= n; ++i) cin >> d[i];
+        preprocess();
+        int q;
+        cin >> q;
+        while (q--) {
+            long long a;
+            cin >> a;
+            cout << (simulate(a) ? "YES" : "NO") << '\n';
+        }
+    }
+    return 0;
+}

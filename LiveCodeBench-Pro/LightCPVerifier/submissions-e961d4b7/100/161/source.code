@@ -1,0 +1,92 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct DSU {
+    vector<int> parent, size;
+    DSU(int n) : parent(n), size(n, 1) {
+        iota(parent.begin(), parent.end(), 0);
+    }
+    int find(int x) {
+        while (parent[x] != x) x = parent[x];
+        return x;
+    }
+    bool unite(int x, int y) {
+        x = find(x), y = find(y);
+        if (x == y) return false;
+        if (size[x] < size[y]) swap(x, y);
+        parent[y] = x;
+        size[x] += size[y];
+        return true;
+    }
+    int get_size(int x) { return size[find(x)]; }
+};
+
+long long solve_case(int n, int d, vector<int>& a) {
+    // positions sorted by height descending
+    vector<pair<int, int>> pos_hei;
+    pos_hei.reserve(n);
+    for (int i = 0; i < n; ++i) {
+        pos_hei.emplace_back(a[i], i);
+    }
+    sort(pos_hei.begin(), pos_hei.end(), greater<pair<int, int>>());
+    DSU dsu(n);
+    vector<bool> active(n, false);
+    long long total_ceil = 0;
+    auto seg_contrib = [&](int len) -> long long {
+        return (len + d - 1) / d;
+    };
+    auto add_pos = [&](int i) -> void {
+        active[i] = true;
+        total_ceil += seg_contrib(1);
+        // merge with left
+        if (i > 0 && active[i-1]) {
+            int s1 = dsu.get_size(i-1);
+            int s2 = 1;
+            dsu.unite(i, i-1);
+            int new_s = dsu.get_size(i);
+            total_ceil -= seg_contrib(s1) + seg_contrib(s2);
+            total_ceil += seg_contrib(new_s);
+        }
+        // merge with right
+        if (i+1 < n && active[i+1]) {
+            int s1 = dsu.get_size(i);
+            int s2 = dsu.get_size(i+1);
+            dsu.unite(i, i+1);
+            int new_s = dsu.get_size(i);
+            total_ceil -= seg_contrib(s1) + seg_contrib(s2);
+            total_ceil += seg_contrib(new_s);
+        }
+    };
+    long long ans = 0;
+    int cur_h = pos_hei.empty() ? 0 : pos_hei[0].first + 1;
+    int i = 0;
+    while (i < n) {
+        int h = pos_hei[i].first;
+        // heights from h+1 to cur_h have same total_ceil
+        ans += total_ceil * (cur_h - h);
+        cur_h = h;
+        // activate all positions with height h
+        while (i < n && pos_hei[i].first == h) {
+            add_pos(pos_hei[i].second);
+            i++;
+        }
+    }
+    // heights from 1 to cur_h
+    ans += total_ceil * cur_h;
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, d;
+        cin >> n >> d;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        cout << solve_case(n, d, a) << '\n';
+    }
+    return 0;
+}

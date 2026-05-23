@@ -1,0 +1,86 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+#include <algorithm>
+
+using namespace std;
+
+// State structure for keeping track of position and direction
+struct State {
+    long long position;
+    int direction;
+    bool operator==(const State &other) const {
+        return position == other.position && direction == other.direction;
+    }
+};
+
+namespace std {
+    template <> struct hash<State> {
+        size_t operator()(const State &s) const {
+            return hash<long long>()(s.position) ^ hash<int>()(s.direction);
+        }
+    };
+}
+
+bool will_escape(long long start, const vector<long long>& positions, const vector<long long>& delays, long long k) {
+    unordered_set<State> visited_states;
+    long long position = start;
+    int direction = 1;
+
+    while (true) {
+        // Escape condition by boundary check
+        if (position < positions.front() || position > positions.back()) {
+            return true;
+        }
+
+        // Check cycle by revisiting states
+        if (visited_states.count({position, direction}) > 0) {
+            return false;  // Cycle detected
+        }
+
+        visited_states.insert({position, direction});
+
+        // Traffic light evaluation
+        auto it = lower_bound(positions.begin(), positions.end(), position);
+        if (it != positions.end() && *it == position) {
+            long long index = distance(positions.begin(), it);
+            if (((position - delays[index]) % k) == 0) {
+                direction = -direction;  // Reverse direction on red light
+            }
+        }
+
+        position += direction;  // Move in the current direction
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n, k;
+        cin >> n >> k;
+
+        vector<long long> positions(n);
+        vector<long long> delays(n);
+
+        for (auto& p : positions) cin >> p;
+        for (auto& d : delays) cin >> d;
+
+        long long q;
+        cin >> q;
+        while (q--) {
+            long long start;
+            cin >> start;
+            if (will_escape(start, positions, delays, k)) {
+                cout << "YES\n";
+            } else {
+                cout << "NO\n";
+            }
+        }
+    }
+
+    return 0;
+}

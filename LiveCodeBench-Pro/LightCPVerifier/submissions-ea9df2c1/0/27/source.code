@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+long long modpow(long long a, long long b) {
+    long long res = 1;
+    while (b) {
+        if (b & 1) res = res * a % MOD;
+        a = a * a % MOD;
+        b >>= 1;
+    }
+    return res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> adj(n+1);
+        for (int i=0;i<n-1;i++) {
+            int u,v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+        // 以1为根，计算叶子节点数量（没有子节点的节点）
+        vector<int> parent(n+1);
+        vector<vector<int>> children(n+1);
+        function<void(int,int)> dfs = [&](int u, int p) {
+            parent[u] = p;
+            for (int v : adj[u]) {
+                if (v==p) continue;
+                children[u].push_back(v);
+                dfs(v, u);
+            }
+        };
+        dfs(1,0);
+        int leaves = 0;
+        for (int i=1;i<=n;i++) {
+            if (children[i].empty()) leaves++;
+        }
+        if (leaves > 2) {
+            cout << 0 << '\n';
+        } else {
+            // 假设答案是 2^{n-1}
+            long long ans = modpow(2, n-1);
+            cout << ans << '\n';
+        }
+    }
+    return 0;
+}

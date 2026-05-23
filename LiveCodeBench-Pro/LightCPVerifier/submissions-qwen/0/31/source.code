@@ -1,0 +1,282 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        long long a, b, c, d;
+        cin >> a >> b >> c >> d;
+
+        // Simulate optimal play: // Gellyfish wants to win. On her turn (odd k), she can choose to attack
+        // either Flower (reducing b) or Flower's knight (reducing d). // Similarly, Flower will act optimally on even turns.
+
+        // Key idea: Each player will try to eliminate the opponent's knight as soon as possible
+        // if it benefits them. But sometimes it's better to directly attack the player.
+
+        // However, note: // - If Gellyfish kills Flower's knight in ceil(d/c) rounds of attacking it,
+        //   but during that time, Flower can attack Gellyfish for floor((ceil(d/c)*2 - 1)/2) = ceil(d/c) - 1 full attacks? // Let's re-analyze:
+
+        // Actually, turns go: 1 (Gellyfish), 2 (Flower), 3 (Gellyfish), 4 (Flower), ... // So in the first k full rounds (k odd/even pairs), Gellyfish acts on (k+1)//2 times, Flower on k//2 times.
+
+        // Optimal strategy:
+        // - Gellyfish should always attack Flower's knight *unless* she can kill Flower before Flower's knight kills her.
+        // But actually, if Gellyfish can kill Flower's knight before Flower kills her, then she wins eventually.
+
+        // Alternate Insight: // Both players will act optimally. The key is:
+        // - Gellyfish can choose to attack Flower's knight and kill it in `d` moves (each move reduces by 1). //   During this time, Flower gets to make `(d + 1) / 2` attacks? Wait: turns are interleaved.
+
+        // Specifically: // - Gellyfish acts on turns 1, 3, 5, ..., up to the turn when d becomes 0.
+        // - To reduce d from initial value to 0, she needs d attacks -> takes d turns on her side -> total game turns = 2*d - 1 (since last is hers) // - During these 2*d - 1 turns, Flower gets to attack on turns 2,4,...,2*(d-1) -> exactly d-1 attacks.
+
+        // So if Gellyfish focuses on killing Flower's knight: //   Flower will get d-1 chances to attack Gellyfish.
+        //   So Gellyfish survives if: a > d - 1 //   Then after knight dies, Gellyfish can freely attack Flower: she needs b more attacks (on her turns), and Flower cannot retaliate.
+        //   She already used d turns, so next available turns: d+1, d+3, ... -> she can deliver b attacks in d + 2*b - 1 total turns? Doesn't matter.
+        //   So if a > d-1, then Gellyfish can survive and eventually win by first eliminating the knight.
+
+        // Similarly, Flower would prefer to eliminate Gellyfish's knight if she can, but only if it leads to her win.
+
+        // But wait: what if Gellyfish instead chooses to attack Flower directly? //   She needs b attacks on her turns -> total turns = 2*b - 1
+        //   During this time, Flower gets b-1 attacks on Gellyfish.
+        //   So Gellyfish survives if a > b-1? But Flower might not just attack Gellyfish — she can also target the knight.
+
+        // However, both play optimally. So: // - Gellyfish will choose the best strategy: either kill knight first or kill player first?
+        // But actually, if she can survive long enough to kill the knight, then she wins.
+        // Otherwise, if she cannot survive d-1 attacks (i.e., a <= d-1), then she must try to kill Flower first.
+
+        // But if she tries to kill Flower first: //   She needs b attacks -> takes 2*b - 1 turns.
+        //   Flower gets b-1 attacks in return.
+        //   But Flower, playing optimally, will try to kill Gellyfish's knight only if it helps her.
+        //   However, if Flower kills the knight, then she loses her ability to attack? No, the knight is doing the attacking.
+        //   Actually, the knight is the attacker. So if Gellyfish's knight dies, Gellyfish cannot attack anymore.
+
+        // Important: the knight is the one attacking. So if a knight dies, the player loses their attacking ability.
+
+        // Therefore:
+        // - Gellyfish's goal: prevent her knight from dying while either killing Flower or Flower's knight.
+        // - But note: if Gellyfish's knight dies, then Gellyfish cannot attack -> Flower will eventually win by just attacking.
+        // - Similarly, if Flower's knight dies, Flower cannot attack -> Gellyfish wins.
+
+        // So optimal play:
+        // Each player will try to kill the opponent's knight *if they can do so before their own player dies*.
+
+        // Strategy:
+        // Case 1: Can Gellyfish kill Flower's knight before Flower kills her?
+        //   Turns needed for Gellyfish to kill Flower's knight: d (her actions) -> occurs at turn 2*d - 1. //   By then, Flower has attacked d-1 times.
+        //   So if a > d - 1, then Gellyfish survives -> she can kill the knight -> then she can safely attack Flower (who cannot fight back) -> Gellyfish wins.
+
+        // Case 2: If a <= d - 1, then if Gellyfish tries to kill the knight, she dies before succeeding. //   So she must try to kill Flower first.
+        //   Turns needed: b (her actions) -> occurs at turn 2*b - 1. //   By then, Flower has attacked b-1 times.
+        //   But now, Flower is playing optimally: she will try to kill Gellyfish's knight to stop attacks. //   How many attacks does Flower need to kill Gellyfish's knight? c.
+        //   She gets b-1 attacks (because game ends at turn 2*b-1, and she acts on even turns up to 2*b-2).
+        //   So if c <= b-1, then Flower can kill the knight before Gellyfish kills her -> then Gellyfish stops attacking -> Flower wins.
+        //   But if c > b-1, then Flower cannot kill the knight in time -> Gellyfish succeeds in killing Flower -> Gellyfish wins.
+
+        // But wait: what if Flower chooses to attack Gellyfish instead of the knight? //   If Flower attacks Gellyfish, then she reduces a by 1 each time.
+        //   She gets b-1 attacks -> reduces a by b-1.
+        //   So Gellyfish survives if a > b-1.
+        //   But if a <= b-1, then Gellyfish dies -> Flower wins.
+
+        // So Flower has two options:
+        //   Option 1: Attack Gellyfish -> win if a <= b-1.
+        //   Option 2: Attack Gellyfish's knight -> win if c <= b-1 (then stop attacks and eventually win by attrition? Not necessarily).
+
+        // But after killing the knight, Flower still needs to kill Gellyfish.
+        //   After knight dies at turn 2*k (for some k <= b-1), then Gellyfish cannot attack anymore.
+        //   Then Flower can freely attack Gellyfish: she needs a more attacks. //   She already used k attacks to kill the knight, so she needs k + a attacks total.
+        //   But the game doesn't end until one player dies.
+
+        // However, if Flower can kill the knight in c attacks (turns 2,4,...,2*c), then at turn 2*c, the knight dies. // Then from turn 2*c+2 onward, she can attack Gellyfish.
+        // She needs a more attacks -> total turns = 2*(c + a) // But during the first 2*c turns, Gellyfish has attacked c times (on turns 1,3,...,2*c-1) -> reduced b by c.
+        // Then after that, Gellyfish cannot attack, so Flower can safely attack a times -> total attacks on Gellyfish: c (before knight died? no, Flower was attacking knight) + a (after) = a attacks on Gellyfish.
+
+        // Actually, Flower never attacked Gellyfish during the first 2*c turns — she attacked the knight. // So Gellyfish is still at a HP.
+        // Then Flower attacks Gellyfish a times -> wins.
+
+        // So if Flower kills the knight first, she wins regardless, because she can then kill Gellyfish without retaliation.
+
+        // Therefore, Flower will choose the faster way to win: //   Option 1: Kill Gellyfish directly: requires b attacks on her turns -> total turns = 2*b.
+        //      But during first 2*(b-1) turns, Gellyfish attacks b-1 times -> if b-1 >= a, then Gellyfish dies earlier? No: turns are interleaved.
+
+        // Let's clarify timing: // - Turn 1: Gellyfish attacks -> b -= 1
+        // - Turn 2: Flower attacks -> if she attacks Gellyfish: a -= 1 // - ...
+        // - Turn 2*b - 1: Gellyfish attacks -> b becomes 0 -> Gellyfish wins.
+        //   But only if a > 0 at that point.
+
+        // So if Flower attacks Gellyfish every time, then after k full rounds (each round: turn 2k-1 and 2k): //   b has been reduced k times, a has been reduced k times.
+        //   At turn 2*b - 1: Gellyfish makes her b-th attack -> b becomes 0 -> Gellyfish wins, provided a > b-1 (because Flower attacked b-1 times).
+        //   So if a > b-1, Gellyfish wins; else, a <= b-1, then at some point a becomes 0 first -> Flower wins.
+
+        // But Flower can choose to attack the knight instead. //   She needs c attacks to kill the knight -> takes 2*c turns.
+        //   During these 2*c turns, Gellyfish attacks c times (on her turns) -> b becomes b - c. //   Then after knight dies, Flower attacks Gellyfish a times -> total turns = 2*c + 2*a.
+        //   But note: after knight dies, Gellyfish cannot attack, so Flower can take her time.
+
+        // However, after 2*c turns, if b - c <= 0, then Gellyfish already won earlier?  //   Gellyfish makes her c-th attack at turn 2*c - 1. If after that attack, b <= 0, then Gellyfish wins at turn 2*c - 1.
+        //   So Flower can only use this strategy if b > c.
+
+        // Therefore, Flower's winning condition via knight-first: //   She must survive long enough to kill the knight: i.e., b > c (so that Gellyfish doesn't win at turn 2*c - 1).
+        //   And then she kills Gellyfish: which takes an additional a attacks -> total turns = 2*c + 2*a. //   But she doesn't need to worry about Gellyfish fighting back after turn 2*c.
+
+        // So Flower will win by knight-first if b > c and she can complete 2*c + 2*a turns without dying earlier? 
+        //   But she doesn't die during the process because Gellyfish stops attacking after turn 2*c - 1 if b > c.
+
+        // Actually, if b > c, then after 2*c turns, b is still positive -> Gellyfish hasn't won yet. // Then knight dies -> Gellyfish cannot attack -> Flower wins eventually.
+
+        // So Flower can win by knight-first if b > c? But wait: what if c is huge? She may not live that long.
+
+        // During the 2*c turns, Flower is not being attacked in terms of HP reduction? Only her knight is being reduced, but the knight is the attacker. // The knight's HP is d, but we're talking about Flower's knight attacking -> its HP isn't being reduced by anything unless Gellyfish attacks it.
+
+        // In this scenario, we assumed Gellyfish is attacking Flower (player), not the knight. // But Gellyfish is trying to kill Flower, so she attacks Flower -> reduces b, not d.
+
+        // So Flower's knight remains alive and keeps attacking.
+
+        // Therefore, if Gellyfish chooses to attack Flower (player), then Flower's knight remains alive and can keep attacking.
+
+        // So back to Gellyfish's choice:
+        //   Option A: Attack Flower's knight -> dies in d turns (her actions) -> total turns 2*d-1 -> Flower attacks d-1 times -> Gellyfish survives if a > d-1.
+        //   Option B: Attack Flower (player) -> dies in b turns -> total turns 2*b-1 -> Flower attacks b-1 times -> but Flower can choose where to attack.
+
+        // Now, if Gellyfish chooses Option B, Flower will respond optimally: //   Flower can either:
+        //     (i) Attack Gellyfish -> then Gellyfish dies if a <= b-1. //     (ii) Attack Gellyfish's knight -> then knight dies in c attacks -> which happens at turn 2*c -> then Gellyfish stops attacking -> then Flower kills Gellyfish in a more attacks -> total turns 2*c + 2*a.
+        //          But during the first 2*c turns, Gellyfish has attacked c times -> so b becomes b - c.
+        //          So if b - c <= 0, then Gellyfish already won at turn 2*c - 1 (if b == c, then at turn 2*c - 1, b becomes 0 -> Gellyfish wins).
+        //          Therefore, Flower can only use (ii) if b > c.
+
+        // So if Gellyfish chooses to attack Flower, then: //   - If a <= b-1, Flower can win by attacking Gellyfish.
+        //   - Else if b > c, Flower can win by first killing the knight and then Gellyfish. //   - Otherwise (a > b-1 and b <= c), then:
+        //         Flower cannot kill Gellyfish in b-1 attacks (since a > b-1) and cannot kill the knight in time (since b <= c, meaning knight dies after Gellyfish kills Flower) -> so Gellyfish wins.
+
+        // Therefore, Gellyfish will choose:
+        //   - Option A (kill knight) if it leads to win: i.e., if a > d-1.
+        //   - Otherwise, she chooses Option B (kill Flower), and then she wins only if (a > b-1 and b <= c).
+
+        // So overall, Gellyfish wins if: //   (a > d - 1) OR (a > b - 1 AND b <= c)
+        // Otherwise, Flower wins.
+
+        // But wait: what if both conditions are false? Then Flower wins.
+
+        // Let's validate with examples:
+
+        // Example 1: a=1, b=2, c=3, d=4 //   Condition 1: a > d-1 -> 1 > 3? false.
+        //   Condition 2: a > b-1 -> 1 > 1? false, and b<=c -> 2<=3 true -> but both parts must be true -> false. //   So Flower wins -> matches.
+
+        // Example 2: a=100, b=999, c=1, d=1 //   Condition 1: 100 > 1-1 = 0 -> true -> Gellyfish wins -> matches.
+
+        // Example 3: a=10, b=20, c=10, d=30 //   Condition 1: 10 > 29? false.
+        //   Condition 2: 10 > 19? false -> so Flower wins -> matches.
+
+        // Example 4: a=12, b=14, c=13, d=11 //   Condition 1: 12 > 10? true -> Gellyfish wins -> matches.
+
+        // Example 5: a=998, b=244, c=353, d=107 //   Condition 1: 998 > 106? true -> Gellyfish wins -> matches.
+
+        // But wait: example 3: why does Flower win?
+        //   Gellyfish cannot kill knight first because 10 <= 29 -> she would die in 29 attacks? But Flower only gets 29 attacks if it takes 30 of Gellyfish's turns? 
+        //   Actually, to kill knight: d=30 -> needs 30 of Gellyfish's turns -> total turns 59 -> Flower attacks 29 times -> 10 <= 29 -> Gellyfish dies -> so she cannot do that. //   Then she tries to kill Flower: needs 20 of her turns -> total turns 39 -> Flower attacks 19 times.
+        //   Now, Flower can choose: //      Option 1: Attack Gellyfish -> 19 attacks -> a becomes 10-19 = negative -> Gellyfish dies -> Flower wins.
+        //      Option 2: Attack knight -> needs 10 attacks to kill knight -> takes 20 turns -> at turn 20, knight dies -> then Gellyfish stops. //                Then Flower attacks Gellyfish 10 more times -> wins.
+        //   But during the first 20 turns, Gellyfish has attacked 10 times -> b becomes 20-10=10>0 -> so Flower survives knight-killing phase. //   So yes, Flower wins.
+
+        // But what if we had a case: a=3, b=3, c=5, d=5 //   Condition 1: 3 > 4? false.
+        //   Condition 2: 3 > 2 and 3<=5 -> true -> Gellyfish wins. //   Check:
+        //      Gellyfish attacks Flower: turn1: b=2 //      Flower attacks: suppose she attacks Gellyfish: a=2
+        //      Gellyfish: b=1 //      Flower: a=1
+        //      Gellyfish: b=0 -> wins. //   Yes, works.
+
+        // Another: a=3, b=3, c=2, d=5 //   Condition 1: 3>4? false.
+        //   Condition 2: 3>2 true, but b=3<=c=2? false -> so Flower wins. //   Why?
+        //      Gellyfish cannot kill knight first (would take 5 of her turns -> 9 total turns -> Flower attacks 4 times -> a=3-4<0 -> dies). //      So she tries to kill Flower: 3 of her turns -> 5 total turns -> Flower attacks 2 times.
+        //      Flower can: //         Option 1: attack Gellyfish twice: a=3-2=1>0 -> then Gellyfish kills her on turn5 -> Gellyfish wins?
+        //         But wait: after two attacks, a=1, then turn3: Gellyfish attacks -> b=2, turn4: Flower attacks -> a=0 -> Flower wins. //      So actually, at turn4: after Flower's second attack, a becomes 1->0?
+        //          Start: a=3,b=3 //          T1: Gellyfish attacks Flower -> b=2
+        //          T2: Flower attacks Gellyfish -> a=2 //          T3: Gellyfish attacks Flower -> b=1
+        //          T4: Flower attacks Gellyfish -> a=1 //          T5: Gellyfish attacks Flower -> b=0 -> Gellyfish wins.
+        //      So Gellyfish wins. //
+        //  But our condition said Flower wins? Contradiction.
+
+        // What's wrong? //   Condition 2: "a > b-1 AND b <= c"
+        //   Here: a=3, b=3, c=2 -> b=3 <= c=2? false -> so condition fails -> Flower wins, but actually Gellyfish wins.
+
+        // Why? Because in condition 2, we assumed that if b>c, then Flower can kill the knight in time. But here b=3, c=2 -> b>c -> so Flower can kill the knight in 2 attacks -> at turn 4. //   Sequence:
+        //      T1: Gellyfish attacks Flower -> b=2 //      T2: Flower attacks knight -> c=1
+        //      T3: Gellyfish attacks Flower -> b=1 //      T4: Flower attacks knight -> c=0 -> knight dies -> Gellyfish cannot attack anymore.
+        //      Then T5: Flower attacks Gellyfish -> a=2 //      T6: Flower attacks Gellyfish -> a=1
+        //      T7: Flower attacks Gellyfish -> a=0 -> Flower wins. //   So Flower wins.
+
+        // But wait: at T5, can Gellyfish attack? T5 is odd -> Gellyfish's turn, but her knight is dead -> cannot attack. //   So yes, Flower wins.
+
+        // But in my previous simulation I assumed Flower attacked Gellyfish, but optimally she should attack the knight.
+
+        // So if Gellyfish chooses to attack Flower, and Flower plays optimally by attacking the knight (since c=2 <= b-1=2? actually b-1=2, and c=2, so c<=b-1 -> true), then Flower can kill the knight in 2 attacks (by turn 4) and then kill Gellyfish.
+
+        // Therefore, Gellyfish cannot win by attacking Flower because Flower will kill her knight first.
+
+        // So when does Gellyfish win by attacking Flower? Only when Flower cannot prevent it, i.e., when Flower cannot kill the knight in time (c > b-1) AND cannot kill her in time (a > b-1).
+
+        // But if c > b-1, then Flower cannot kill the knight in b-1 attacks -> knight survives the entire b attacks -> so Gellyfish gets to make all b attacks -> kills Flower -> wins.
+
+        // So condition 2 should be: (a > b-1) AND (c > b-1)
+
+        // Let me check: //   Example above: a=3, b=3, c=2 -> c=2, b-1=2 -> c > b-1? 2>2? false -> so condition fails -> Flower wins -> correct.
+
+        //   Another: a=3, b=3, c=4 -> then c>2 -> true, and a>2 -> true -> Gellyfish wins. //   Simulation:
+        //      Gellyfish attacks Flower: b=2
+        //      Flower attacks: if she attacks knight: c=3 -> then Gellyfish: b=1 -> Flower: if attacks knight: c=2 -> Gellyfish: b=0 -> wins.
+        //      Or if Flower attacks Gellyfish: a=2 -> then Gellyfish: b=1 -> Flower: a=1 -> Gellyfish: b=0 -> wins. //   So yes, Gellyfish wins.
+
+        //   But what if Flower attacks knight? She needs 4 attacks to kill it -> but the game ends at turn 5 (when Gellyfish makes her 3rd attack) -> so she only gets 2 attacks on the knight -> c=4-2=2>0 -> knight alive -> Gellyfish wins.
+
+        // So corrected condition:
+        //   Gellyfish wins if:
+        //      (a > d - 1)   [she can kill Flower's knight and survive] //      OR
+        //      (a > b - 1 && c > b - 1)   [she can kill Flower before Flower can kill her or her knight]
+
+        // Let's test with provided examples:
+
+        // Ex1: a=1, b=2, c=3, d=4 //   a>d-1: 1>3? F
+        //   a>b-1: 1>1? F -> so Flower wins.
+
+        // Ex2: a=100, b=999, c=1, d=1 //   a>d-1: 100>0? T -> Gellyfish wins.
+
+        // Ex3: a=10, b=20, c=10, d=30 //   a>d-1: 10>29? F
+        //   a>b-1: 10>19? F -> Flower wins.
+
+        // Ex4: a=12, b=14, c=13, d=11 //   a>d-1: 12>10? T -> Gellyfish wins.
+
+        // Ex5: a=998, b=244, c=353, d=107 //   a>d-1: 998>106? T -> Gellyfish wins.
+
+        // All match.
+
+        // But consider: a=1, b=1, c=100, d=100 //   a>d-1: 1>99? F
+        //   a>b-1: 1>0? T, c>b-1: 100>0? T -> so Gellyfish wins. //   Simulation:
+        //      Turn1: Gellyfish attacks Flower -> b=0 -> Gellyfish wins. //   Correct.
+
+        // Another: a=1, b=2, c=100, d=100 //   a>d-1: 1>99? F
+        //   a>b-1: 1>1? F -> Flower wins. //   Simulation:
+        //      T1: Gellyfish attacks Flower -> b=1 //      T2: Flower attacks Gellyfish -> a=0 -> Flower wins.
+        //   Correct.
+
+        // One more: a=2, b=2, c=1, d=100 //   a>d-1: 2>99? F
+        //   a>b-1: 2>1? T, c>b-1: 1>1? F -> Flower wins. //   Why?
+        //      Gellyfish cannot kill knight (would take 100 of her turns -> 199 total -> Flower attacks 99 times -> a=2-99<0 -> dies). //      So she tries to kill Flower: needs 2 of her turns.
+        //      T1: Gellyfish attacks Flower -> b=1 //      T2: Flower can attack knight -> c=0 -> knight dies.
+        //      T3: Gellyfish cannot attack (knight dead) -> then T4: Flower attacks Gellyfish -> a=1 -> T5: no attack -> T6: Flower attacks -> a=0 -> wins. //   But wait: after knight dies at T2, then T3: Gellyfish's turn but knight dead -> no action.
+        //      Then T4: Flower attacks Gellyfish -> a=1 //      T5: Gellyfish cannot attack
+        //      T6: Flower attacks -> a=0 -> wins. //   So Flower wins.
+
+        // But could Gellyfish have done differently? She only has two options on T1: attack Flower or attack knight. //   If she attacks knight: d=99 -> then T2: Flower attacks Gellyfish -> a=1 -> T3: Gellyfish attacks knight -> d=98 -> T4: Flower attacks -> a=0 -> wins.
+        //   So same result.
+
+        // Therefore, the logic holds.
+
+        if (a > d - 1 || (a > b - 1 && c > b - 1)) {
+            cout << "Gellyfish\n";
+        } else {
+            cout << "Flower\n";
+        }
+    }
+
+    return 0;
+}

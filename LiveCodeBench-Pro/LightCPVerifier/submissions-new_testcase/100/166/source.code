@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <unordered_map>
+#include <bitset>
+#include <algorithm>
+using namespace std;
+
+const int MOD = 998244353;
+
+struct BitsetHash {
+    size_t operator()(const bitset<500>& bs) const {
+        size_t h = 0;
+        for (int i = 0; i < 500; i += 64) {
+            size_t val = 0;
+            for (int j = 0; j < 64 && i+j < 500; j++) {
+                if (bs[i+j]) val |= (1ULL << j);
+            }
+            h ^= val + 0x9e3779b9 + (h << 6) + (h >> 2);
+        }
+        return h;
+    }
+};
+
+int solve(string s, int k) {
+    int n = s.size();
+    bitset<500> init;
+    for (int i = 0; i < n; i++) if (s[i] == '1') init.set(i);
+    unordered_map<bitset<500>, int, BitsetHash> dp;
+    dp[init] = 1;
+    for (int step = 0; step < k; step++) {
+        unordered_map<bitset<500>, int, BitsetHash> ndp;
+        for (auto& [mask, val] : dp) {
+            // 预计算0的位置
+            vector<int> zero_pos;
+            for (int i = 0; i < n; i++) if (!mask[i]) zero_pos.push_back(i);
+            for (int i : zero_pos) {
+                bitset<500> nmask = mask;
+                for (int j = 0; j <= i; j++) nmask.flip(j);
+                ndp[nmask] = (ndp[nmask] + val) % MOD;
+            }
+        }
+        dp = ndp;
+    }
+    int ans = 0;
+    for (auto& [mask, val] : dp) ans = (ans + val) % MOD;
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        string s;
+        cin >> s;
+        cout << solve(s, k) << endl;
+    }
+    return 0;
+}

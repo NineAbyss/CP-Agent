@@ -1,0 +1,71 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m, l, r;
+        cin >> n >> m >> l >> r;
+        
+        // The total number of infected houses after n days is n+1 (including day 0)
+        // After m days, we have m+1 infected houses forming a contiguous segment [l', r']
+        
+        // We know the final segment is [l, r] with length r - l + 1 = n + 1 // We want to find any valid segment [l', r'] of length m+1 that could appear
+        // during the spread process from [0,0] to [l,r]
+        
+        // The idea: simulate the reverse process or use constraints // Since infection spreads one house per day and starts at 0,
+        // after m days, the infected segment must contain 0 and be of length m+1. // Also, it must be contained within [l, r] because [l,r] is the final state after n days.
+        
+        // We can greedily construct a valid segment: // Start from the fact that after m days, we have m+1 consecutive houses infected.
+        // We want a segment [l', r'] such that: //   r' - l' == m
+        //   l <= l' <= 0 <= r' <= r  (since 0 must be in the segment after m days) // But actually, 0 doesn't necessarily have to be in the segment on day m?
+        // Wait: Day 0: [0,0] -> contains 0 // Each day spreads to adjacent house. So at every step, the infected region is contiguous and includes the previous region.
+        // Therefore, once infected, stays infected. So since 0 was infected on day 0, it remains infected.
+        // Thus, 0 must be in [l', r'] for all m >= 0.
+        
+        // So we need: l' <= 0 <= r' and r' - l' == m, and l <= l' and r' <= r
+        
+        // Let's try to pick l' as close to l as possible, but ensuring 0 is included and r' <= r // If we set l' = max(l, r - m), then r' = l' + m
+        // Why? Because we need r' = l' + m <= r => l' <= r - m // But also l' >= l. So l' should be at least l, but also at most r-m
+        // Actually: we need l' >= l and l' <= r - m (so that r' = l' + m <= r) // Also, we need l' <= 0 and r' = l' + m >= 0 => l' >= -m and l' <= 0
+        // So combining: //   l' >= max(l, -m)
+        //   l' <= min(r - m, 0)
+        
+        // But note: since the final segment [l,r] has length n+1 and we're only at day m <= n, // and the process starts at 0, the constraints should allow at least one solution.
+        
+        // Alternatively, simpler approach: // We can try to "shrink" the final interval symmetrically or based on how far 0 is from ends.
+        
+        // Another idea: simulate backward from [l,r] by removing (n-m) houses, one from either end each day // But we don't know the exact path, so we just need any valid intermediate state.
+        
+        // Instead, think about how much expansion happened left and right: // From day 0 to day n: expanded |l| steps to the left (since l <= 0), and r steps to the right.
+        // Total expansions: |l| + r = -l + r = r - l = n (given)
+        
+        // In m days, we can expand at most m units total to the left and right combined. // Suppose we expand x to the left and (m - x) to the right, then segment is [-x, m-x]
+        // But this must be within [l, r], so: //   -x >= l  => x <= -l
+        //   m - x <= r => x >= m - r // So x in [max(0, m-r), min(m, -l)]
+        
+        // Then we can pick any valid x, say x = max(0, m - r), then l' = -x, r' = m - x
+        
+        int left_expansion_needed = -l;  // how many left expansions occurred in n days
+        int right_expansion_needed = r;  // how many right expansions
+        
+        // In m days, we can do at most m expansions total // We want to choose x (left expansions) such that:
+        //   x >= 0, x <= m //   x <= left_expansion_needed  (can't expand more left than final state)
+        //   m - x <= right_expansion_needed  => x >= m - right_expansion_needed
+        
+        int min_x = max(0, m - right_expansion_needed);
+        int max_x = min(m, left_expansion_needed);
+        
+        // There must be at least one solution since m <= n and the final state is reachable
+        int x = min_x;  // pick the smallest valid x
+        int lp = -x;
+        int rp = m - x;
+        
+        cout << lp << " " << rp << endl;
+    }
+    
+    return 0;
+}

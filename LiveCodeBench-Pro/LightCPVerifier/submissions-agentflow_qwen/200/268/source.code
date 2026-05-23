@@ -1,0 +1,55 @@
+#include <iostream>
+using namespace std;
+
+typedef long long ll;
+
+ll f(ll t) {
+    if (t == 0) {
+        return 2;
+    }
+    // Check if t is a power of two: (t & (t-1)) == 0
+    if (t > 0 && (t & (t-1)) == 0) {
+        if (t == 1) {
+            return 5;
+        } else {
+            return t + 2;
+        }
+    } else {
+        return t;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        ll n, x;
+        cin >> n >> x;
+
+        if (n == 1) {
+            if (x == 0) {
+                cout << -1 << '\n';
+            } else {
+                cout << x << '\n';
+            }
+        } else {
+            ll c = (n-1) % 2;
+            ll y = c ^ x;
+            ll sum1 = 1e18;
+            if (y != 0) {
+                sum1 = (n-1) + y;
+            }
+
+            ll d = (n-2) % 2;
+            ll t_val = x ^ d;
+            ll sum2 = (n-2) + f(t_val);
+
+            ll ans = min(sum1, sum2);
+            cout << ans << '\n';
+        }
+    }
+    return 0;
+}

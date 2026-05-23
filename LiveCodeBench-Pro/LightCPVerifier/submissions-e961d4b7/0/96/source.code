@@ -1,0 +1,114 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int i = 0; i < n; i++) cin >> b[i];
+    
+    // positions of values in a
+    vector<int> posA(n+1);
+    for (int i = 0; i < n; i++) posA[a[i]] = i;
+    
+    // mapping f: f[v] = b[posA[v]]
+    vector<int> f(n+1);
+    for (int v = 1; v <= n; v++) f[v] = b[posA[v]];
+    
+    // cycle decomposition
+    vector<bool> vis(n+1, false);
+    vector<pair<int,int>> cycles2;
+    vector<int> cycles1;
+    bool bad = false;
+    for (int v = 1; v <= n; v++) {
+        if (!vis[v]) {
+            vector<int> cycle;
+            int cur = v;
+            while (!vis[cur]) {
+                vis[cur] = true;
+                cycle.push_back(cur);
+                cur = f[cur];
+            }
+            if (cycle.size() == 1) {
+                cycles1.push_back(cycle[0]);
+            } else if (cycle.size() == 2) {
+                cycles2.push_back({cycle[0], cycle[1]});
+            } else {
+                bad = true;
+                break;
+            }
+        }
+    }
+    if (bad) {
+        cout << "-1" << endl;
+        return;
+    }
+    if (n % 2 == 0) {
+        if (!cycles1.empty()) {
+            cout << "-1" << endl;
+            return;
+        }
+    } else {
+        if (cycles1.size() != 1) {
+            cout << "-1" << endl;
+            return;
+        }
+    }
+    
+    // construct target placement of a-values
+    vector<int> target_a(n+1); // 1-indexed
+    if (n % 2 == 1) {
+        int mid = (n+1)/2;
+        target_a[mid] = cycles1[0];
+    }
+    int idx = 0;
+    for (int i = 1; i <= n/2; i++) {
+        int u = cycles2[idx].first;
+        int v = cycles2[idx].second;
+        // we can choose either orientation; here we put u at i, v at n+1-i
+        target_a[i] = u;
+        target_a[n+1-i] = v;
+        idx++;
+    }
+    
+    // current positions of values
+    vector<int> curPos(n+1);
+    for (int i = 0; i < n; i++) curPos[a[i]] = i+1;
+    // current a array (1-indexed)
+    vector<int> curA(n+1);
+    for (int i = 1; i <= n; i++) curA[i] = a[i-1];
+    
+    vector<pair<int,int>> ops;
+    for (int i = 1; i <= n; i++) {
+        int val = target_a[i];
+        if (curA[i] == val) continue;
+        int pos = curPos[val];
+        ops.push_back({i, pos});
+        // swap values at i and pos
+        int val_i = curA[i];
+        int val_pos = curA[pos];
+        swap(curA[i], curA[pos]);
+        // update positions
+        curPos[val_i] = pos;
+        curPos[val_pos] = i;
+    }
+    
+    // output
+    cout << ops.size() << endl;
+    for (auto [i, j] : ops) {
+        cout << i << " " << j << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

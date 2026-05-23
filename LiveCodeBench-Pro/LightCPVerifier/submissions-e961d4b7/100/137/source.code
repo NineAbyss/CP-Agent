@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+int n, q;
+int f[MAXN]; // 出边
+int parity; // S的奇偶性
+
+// 找到从start出发的环大小
+int get_cycle_size(int start) {
+    int slow = start, fast = start;
+    do {
+        slow = f[slow];
+        fast = f[f[fast]];
+    } while (slow != fast);
+    int len = 0;
+    do {
+        fast = f[fast];
+        len++;
+    } while (slow != fast);
+    return len;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cin >> n >> q;
+    for (int i = 1; i <= n; i++) {
+        cin >> f[i];
+    }
+    // 初始计算parity
+    parity = 0;
+    vector<bool> vis(n+1, false);
+    for (int i = 1; i <= n; i++) {
+        if (!vis[i]) {
+            int cur = i;
+            while (!vis[cur]) {
+                vis[cur] = true;
+                cur = f[cur];
+            }
+            int start = cur;
+            int size = 0;
+            do {
+                size++;
+                cur = f[cur];
+            } while (cur != start);
+            if (size > 1) {
+                parity ^= (size - 1) % 2;
+            }
+        }
+    }
+    while (q--) {
+        int x, y, k;
+        cin >> x >> y >> k;
+        if (f[x] != y) {
+            int old_cycle = get_cycle_size(x);
+            f[x] = y;
+            int new_cycle = get_cycle_size(x);
+            if (old_cycle > 1) parity ^= (old_cycle - 1) % 2;
+            if (new_cycle > 1) parity ^= (new_cycle - 1) % 2;
+        }
+        int ans;
+        if (k % 3 == 0) ans = 0;
+        else if (k % 3 == 1) ans = 1;
+        else {
+            if ((n + parity) % 2 == 0) ans = 1;
+            else ans = 2;
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

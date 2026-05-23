@@ -1,0 +1,102 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int fast_score(const vector<int>& P, const vector<int>& D) {
+    int n = P.size();
+    int i = 0, j = 0;
+    int score = 0;
+    for (int round = 0; round < n; round++) {
+        if (i >= n || j >= n) break;
+        if (P[i] > D[j]) {
+            score++;
+            i++;
+        } else {
+            j++;
+        }
+    }
+    return score;
+}
+
+int solve_one(int n, vector<int> player, vector<int> dealer) {
+    int base = fast_score(player, dealer);
+    int best = base;
+    
+    // 如果 n 小，尝试所有交换
+    if (n <= 2000) {
+        for (int i = 0; i < n; i++) {
+            for (int j = i+1; j < n; j++) {
+                swap(player[i], player[j]);
+                int s = fast_score(player, dealer);
+                if (s > best) best = s;
+                swap(player[i], player[j]);
+            }
+        }
+        return best;
+    }
+    
+    // 对于大 n，使用启发式 // 计算匹配情况
+    vector<bool> matched(n, false);
+    int ii = 0, jj = 0;
+    for (int round = 0; round < n; round++) {
+        if (ii >= n || jj >= n) break;
+        if (player[ii] > dealer[jj]) {
+            matched[ii] = true;
+            ii++;
+        } else {
+            jj++;
+        }
+    }
+    
+    vector<int> unmatched, matched_idx;
+    for (int i = 0; i < n; i++) {
+        if (matched[i]) matched_idx.push_back(i);
+        else unmatched.push_back(i);
+    }
+    
+    // 尝试交换未匹配和已匹配的牌 // 限制尝试次数
+    int limit = min(100, (int)unmatched.size() * (int)matched_idx.size());
+    int tried = 0;
+    for (int u : unmatched) {
+        for (int m : matched_idx) {
+            swap(player[u], player[m]);
+            int s = fast_score(player, dealer);
+            if (s > best) best = s;
+            swap(player[u], player[m]);
+            tried++;
+            if (tried >= limit) break;
+            if (best == n) return n;
+        }
+        if (tried >= limit) break;
+    }
+    
+    // 也尝试交换最大和最小牌
+    int max_pos = max_element(player.begin(), player.end()) - player.begin();
+    int min_pos = min_element(player.begin(), player.end()) - player.begin();
+    if (max_pos != min_pos) {
+        swap(player[max_pos], player[min_pos]);
+        int s = fast_score(player, dealer);
+        if (s > best) best = s;
+        swap(player[max_pos], player[min_pos]);
+    }
+    
+    return best;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> player(n), dealer(n);
+        for (int i = 0; i < n; i++) cin >> player[i];
+        for (int i = 0; i < n; i++) cin >> dealer[i];
+        
+        cout << solve_one(n, player, dealer) << '\n';
+    }
+    
+    return 0;
+}

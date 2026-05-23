@@ -1,0 +1,74 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <unordered_set>
+#include <algorithm> // For std::any_of
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+
+        vector<string> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        vector<vector<string>> b(m, vector<string>(n));
+        for (int i = 0; i < m; ++i) {
+            for (int j = 0; j < n; ++j) {
+                cin >> b[i][j];
+            }
+        }
+
+        // Step 1: Feasibility check
+        bool feasible = true;
+        for (int j = 0; j < n; ++j) {
+            bool can_fill = false;
+            for (int i = 0; i < m; ++i) {
+                if (b[i][j] == a[j]) {
+                    can_fill = true;
+                    break;
+                }
+            }
+            if (!can_fill) {
+                feasible = false;
+                break;
+            }
+        }
+
+        if (!feasible) {
+            cout << -1 << "\n";
+            continue;
+        }
+
+        // Step 2: Calculate the minimum guaranteed operations needed        
+        int operations = 0;
+        vector<bool> filled(n, false);
+
+        while (!all_of(filled.begin(), filled.end(), [](bool v) { return v; })) {
+            for (int j = 0; j < n; ++j) {
+                if (!filled[j]) {
+                    for (int i = 0; i < m; ++i) {
+                        if (b[i][j] == a[j]) {
+                            filled[j] = true;
+                            operations++;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        cout << operations << "\n";
+    }
+
+    return 0;
+}

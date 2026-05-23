@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        int k = (n + 1) / 2; // ceil(n/2)
+        int x = abs(a[0]);
+        
+        // 收集所有绝对值
+        vector<int> abs_vals;
+        for (int val : a) {
+            abs_vals.push_back(abs(val));
+        }
+        sort(abs_vals.begin(), abs_vals.end());
+        
+        // x在绝对值排序中的位置（从1开始）
+        int p = lower_bound(abs_vals.begin(), abs_vals.end(), x) - abs_vals.begin() + 1;
+        
+        // 绝对值小于x的元素个数
+        int L = p - 1;
+        // 绝对值大于x的元素个数
+        int G = n - p;
+        
+        // 情况1：目标值 +x // 需要: 0 <= k-1-L <= G
+        bool case1 = (k - 1 - L >= 0) && (k - 1 - L <= G);
+        
+        // 情况2：目标值 -x // 需要: k-1 <= G
+        bool case2 = (k - 1 <= G);
+        
+        if (case1 || case2) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    solve();
+    return 0;
+}

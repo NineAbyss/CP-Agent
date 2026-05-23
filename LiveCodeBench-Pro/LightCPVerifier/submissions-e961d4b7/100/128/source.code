@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+// 检查是否可以选择 k 个值，并返回最大总间隔
+pair<bool, ll> check(int k, int n, const vector<int>& a) {
+    if (k == 0) return {true, 0};
+    // 位置按 a 值从大到小排序，相同 a 值按索引升序
+    vector<int> order(n);
+    iota(order.begin(), order.end(), 0);
+    sort(order.begin(), order.end(), [&](int i, int j) {
+        if (a[i] != a[j]) return a[i] > a[j];
+        return i < j;
+    });
+    set<int> avail;
+    int idx = 0;
+    ll total = 0;
+    // 从 x = k 往下
+    for (int x = k; x >= 1; --x) {
+        // 加入所有 a[i] >= x 的位置
+        while (idx < n && a[order[idx]] >= x) {
+            avail.insert(order[idx]);
+            ++idx;
+        }
+        if (avail.size() < 2) return {false, 0};
+        int l = *avail.begin();
+        int r = *avail.rbegin();
+        total += r - l;
+        avail.erase(l);
+        avail.erase(r);
+    }
+    return {true, total};
+}
+
+ll solve(int n, const vector<int>& a) {
+    int lo = 0, hi = n / 2;
+    ll best = 0;
+    while (lo <= hi) {
+        int mid = (lo + hi) / 2;
+        auto [ok, val] = check(mid, n, a);
+        if (ok) {
+            best = max(best, val);
+            lo = mid + 1;
+        } else {
+            hi = mid - 1;
+        }
+    }
+    return best;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        cout << solve(n, a) << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, k;
+    cin >> n >> k;
+    string s;
+    cin >> s;
+    
+    // 预处理 next: nxt[i][c] 表示从位置 i 开始（包括 i）字符 c 第一次出现的位置，如果没有则为 n
+    vector<vector<int>> nxt(n + 1, vector<int>(k, n));
+    for (int i = n - 1; i >= 0; --i) {
+        for (int c = 0; c < k; ++c) {
+            nxt[i][c] = nxt[i + 1][c];
+        }
+        nxt[i][s[i] - 'a'] = i;
+    }
+    
+    // 预处理 dp: dp[i] 表示从位置 i 开始，添加字符使得不再是子序列的最少添加字符数，且假设当前字符串已经是 pleasant // 如果 i == n，则已经是 unpleasant，所以 dp[n] = 0？但递推需要 dp[n]=1，因为从 n 开始添加一个字符就失败。
+    // 但查询时，如果匹配到 n，答案是 0，所以我们需要区分。 // 定义 dp[i] 为从位置 i 开始，添加字符使得不再是子序列的最少添加字符数。
+    // 递推：dp[i] = min_{c} ( nxt[i][c] == n ? 1 : 1 + dp[nxt[i][c] + 1] ) // 初始化 dp[n] = 1（因为从 n 开始添加一个字符就失败）
+    const int INF = 1e9;
+    vector<int> dp(n + 1, INF);
+    dp[n] = 1;
+    for (int i = n - 1; i >= 0; --i) {
+        dp[i] = INF;
+        for (int c = 0; c < k; ++c) {
+            if (nxt[i][c] == n) {
+                dp[i] = 1;
+                break;
+            } else {
+                dp[i] = min(dp[i], 1 + dp[nxt[i][c] + 1]);
+            }
+        }
+    }
+    
+    int q;
+    cin >> q;
+    while (q--) {
+        string t;
+        cin >> t;
+        int pos = -1;
+        bool pleasant = true;
+        for (char ch : t) {
+            pos = nxt[pos + 1][ch - 'a'];
+            if (pos == n) {
+                pleasant = false;
+                break;
+            }
+        }
+        if (!pleasant) {
+            cout << 0 << '\n';
+        } else {
+            cout << dp[pos + 1] << '\n';
+        }
+    }
+    return 0;
+}

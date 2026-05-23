@@ -1,0 +1,29 @@
+#include <iostream>
+
+int minActions(int x) {
+    // Keep track of the number of actions needed
+    int actions = 0;
+    
+    // Count set bits (ones) in the binary representation of x
+    int countOfOnes = 0;
+    
+    while (x > 0) {
+        countOfOnes += (x & 1); // Check if the last bit is 1
+        x >>= 1; // Bit-shift x to the right by 1
+        actions++;
+    }
+    
+    // Total actions are the actions to cover all bit positions and set bits
+    return actions + countOfOnes - 1; // Subtract one since we count one extra in the loop
+}
+
+int main() {
+    int t;
+    std::cin >> t;
+    while (t--) {
+        int x;
+        std::cin >> x;
+        std::cout << minActions(x) << '\n';
+    }
+    return 0;
+}

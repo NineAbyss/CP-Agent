@@ -1,0 +1,94 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const long long INF = 1e18;
+
+long long solve_columns(int n, vector<vector<long long>>& h, vector<long long>& b) {
+    // dp[j][0/1]: minimum cost for first j columns with c[j] = 0 or 1
+    vector<vector<long long>> dp(n, vector<long long>(2, INF));
+    dp[0][0] = 0;
+    dp[0][1] = b[0];
+    
+    for (int j = 1; j < n; j++) {
+        // For edge between column j-1 and j (0-based indices)
+        // Check which differences -1, 0, 1 are forbidden
+        bool forbid_minus1 = false, forbid_0 = false, forbid_1 = false;
+        for (int i = 0; i < n; i++) {
+            long long diff = h[i][j] - h[i][j-1];
+            if (diff == -1) forbid_minus1 = true;
+            else if (diff == 0) forbid_0 = true;
+            else if (diff == 1) forbid_1 = true;
+        }
+        
+        for (int cur = 0; cur < 2; cur++) {
+            for (int prev = 0; prev < 2; prev++) {
+                long long diff = prev - cur; // -1, 0, or 1
+                if (diff == -1 && forbid_minus1) continue;
+                if (diff == 0 && forbid_0) continue;
+                if (diff == 1 && forbid_1) continue;
+                dp[j][cur] = min(dp[j][cur], dp[j-1][prev] + (cur == 1 ? b[j] : 0));
+            }
+        }
+    }
+    
+    return min(dp[n-1][0], dp[n-1][1]);
+}
+
+long long solve_rows(int n, vector<vector<long long>>& h, vector<long long>& a) {
+    vector<vector<long long>> dp(n, vector<long long>(2, INF));
+    dp[0][0] = 0;
+    dp[0][1] = a[0];
+    
+    for (int i = 1; i < n; i++) {
+        bool forbid_minus1 = false, forbid_0 = false, forbid_1 = false;
+        for (int j = 0; j < n; j++) {
+            long long diff = h[i][j] - h[i-1][j];
+            if (diff == -1) forbid_minus1 = true;
+            else if (diff == 0) forbid_0 = true;
+            else if (diff == 1) forbid_1 = true;
+        }
+        
+        for (int cur = 0; cur < 2; cur++) {
+            for (int prev = 0; prev < 2; prev++) {
+                long long diff = prev - cur;
+                if (diff == -1 && forbid_minus1) continue;
+                if (diff == 0 && forbid_0) continue;
+                if (diff == 1 && forbid_1) continue;
+                dp[i][cur] = min(dp[i][cur], dp[i-1][prev] + (cur == 1 ? a[i] : 0));
+            }
+        }
+    }
+    
+    return min(dp[n-1][0], dp[n-1][1]);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<long long>> h(n, vector<long long>(n));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                cin >> h[i][j];
+            }
+        }
+        vector<long long> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        
+        long long col_cost = solve_columns(n, h, b);
+        long long row_cost = solve_rows(n, h, a);
+        
+        if (col_cost >= INF/2 || row_cost >= INF/2) {
+            cout << -1 << '\n';
+        } else {
+            cout << col_cost + row_cost << '\n';
+        }
+    }
+    return 0;
+}

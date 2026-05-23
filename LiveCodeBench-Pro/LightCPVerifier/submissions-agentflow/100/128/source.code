@@ -1,0 +1,60 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+// Function to calculate potential points for given player-dealer configuration
+int calculate_points(const vector<int>& player, const vector<int>& dealer) {
+    int points = 0;
+    multiset<int> dealer_cards(dealer.begin(), dealer.end());
+
+    // Simulate each round
+    for (int p_card : player) {
+        auto it = dealer_cards.lower_bound(p_card);
+        if (it != dealer_cards.end()) {
+            // Dealer wins this round by using the card
+            dealer_cards.erase(it);
+        } else {
+            // Player wins this round
+            points++;
+            // Dealer uses smallest card for this loss
+            dealer_cards.erase(dealer_cards.begin());
+        }
+    }
+    return points;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;  // Number of test cases
+    cin >> t;
+    while (t--) {
+        int n;  // Number of cards each player holds
+        cin >> n;
+
+        vector<int> player(n), dealer(n);
+        for (int &card : player) cin >> card;
+        for (int &card : dealer) cin >> card;
+
+        // Sort the dealer's hand since it's analyzed as a multiset in our current use of lower_bound
+        sort(dealer.begin(), dealer.end());
+
+        // Initial point count
+        int max_points = calculate_points(player, dealer);
+
+        // Check every pair swap for potentially improving point outcomes
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                swap(player[i], player[j]);
+                max_points = max(max_points, calculate_points(player, dealer));
+                swap(player[i], player[j]);
+            }
+        }
+
+        cout << max_points << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,98 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct RollbackDSU {
+    vector<int> parent, rank;
+    vector<tuple<int, int, int>> history;
+    
+    RollbackDSU(int n) {
+        parent.resize(n);
+        rank.resize(n, 0);
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+    
+    int find(int x) {
+        while (parent[x] != x) x = parent[x];
+        return x;
+    }
+    
+    bool unite(int x, int y) {
+        x = find(x);
+        y = find(y);
+        if (x == y) return false;
+        if (rank[x] < rank[y]) swap(x, y);
+        history.emplace_back(x, y, rank[x]);
+        parent[y] = x;
+        if (rank[x] == rank[y]) rank[x]++;
+        return true;
+    }
+    
+    void undo() {
+        if (history.empty()) return;
+        auto [x, y, old_rank] = history.back();
+        history.pop_back();
+        parent[y] = y;
+        rank[x] = old_rank;
+    }
+    
+    bool connected(int x, int y) {
+        return find(x) == find(y);
+    }
+    
+    int snapshot() {
+        return history.size();
+    }
+    
+    void rollback(int snap) {
+        while ((int)history.size() > snap) undo();
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<tuple<int, int, int>> edges(m);
+        for (int i = 0; i < m; i++) {
+            int u, v, w;
+            cin >> u >> v >> w;
+            u--; v--;
+            edges[i] = {w, u, v};
+        }
+        sort(edges.begin(), edges.end());
+        
+        RollbackDSU dsu(n);
+        long long ans = LLONG_MAX;
+        int r = 0;
+        vector<int> snap(m, 0);
+        
+        for (int l = 0; l < m; l++) {
+            while (r < m && !dsu.connected(0, n-1)) {
+                snap[r] = dsu.snapshot();
+                auto [w, u, v] = edges[r];
+                dsu.unite(u, v);
+                r++;
+            }
+            if (dsu.connected(0, n-1)) {
+                auto [w_l, u_l, v_l] = edges[l];
+                auto [w_r, u_r, v_r] = edges[r-1];
+                ans = min(ans, (long long)w_l + w_r);
+            } else {
+                break;
+            }
+            // 移除边 l
+            dsu.rollback(snap[l]);
+            // 重新加入边 l+1 到 r-1
+            for (int i = l+1; i < r; i++) {
+                auto [w, u, v] = edges[i];
+                dsu.unite(u, v);
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

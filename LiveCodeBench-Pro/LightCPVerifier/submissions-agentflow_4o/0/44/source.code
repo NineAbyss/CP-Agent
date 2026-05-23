@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 205;
+const int MAX_COIN = 2005; // We set the DP table size based on reasonable constraints
+
+int n, m, c[MAXN], w[MAXN];
+vector<int> adj[MAXN];
+
+vector<int> topologicalSort() {
+    vector<int> in_degree(n+1, 0);
+    for (int u = 1; u <= n; ++u) {
+        for (int v : adj[u]) {
+            in_degree[v]++;
+        }
+    }
+    queue<int> q;
+    for (int i = 1; i <= n; ++i) {
+        if (in_degree[i] == 0) {
+            q.push(i);
+        }
+    }
+    vector<int> topo_order;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        topo_order.push_back(u);
+        for (int v : adj[u]) {
+            if (--in_degree[v] == 0) {
+                q.push(v);
+            }
+        }
+    }
+    return topo_order;
+}
+
+int main() {
+    cin >> n >> m;
+    for (int i = 1; i <= n; ++i) {
+        cin >> c[i] >> w[i];
+    }
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+    }
+    
+    // Topological sort
+    vector<int> topo_order = topologicalSort();
+    
+    int q;
+    cin >> q;
+    while (q--) {
+        int p, r;
+        cin >> p >> r;
+        
+        vector<vector<long long>> dp(n+1, vector<long long>(MAX_COIN, 0));
+        
+        for (int i = 0; i <= r / c[1]; ++i) {
+            dp[1][i * c[1]] = i * (long long)w[1];
+        }
+        
+        for (int u : topo_order) {
+            for (int coin = 0; coin <= r; ++coin) {
+                if (dp[u][coin] != 0 || (u == 1 && coin == 0)) {
+                    for (int v : adj[u]) {
+                        for (int buy = 0; coin + buy * c[v] <= r; ++buy) {
+                            dp[v][coin + buy * c[v]] = max(
+                                dp[v][coin + buy * c[v]],
+                                dp[u][coin] + buy * (long long)w[v]
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        
+        long long maxPower = 0;
+        for (int coin = 0; coin <= r; ++coin) {
+            maxPower = max(maxPower, dp[p][coin]);
+        }
+        cout << maxPower << '\n';
+    }
+    return 0;
+}

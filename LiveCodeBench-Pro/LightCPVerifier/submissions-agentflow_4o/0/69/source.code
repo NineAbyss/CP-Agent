@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve(int n, vector<int>& a, vector<int>& b) {
+    // Calculate initial matches
+    int initial_matches = 0;
+    for (int i = 0; i < n; ++i) {
+        if (a[i] == b[i]) initial_matches++;
+    }
+    
+    int max_matches = initial_matches;
+
+    // Consider removing each element to find the best possible outcome
+    for (int i = 0; i < n; ++i) {
+        // Temporarily remove the element
+        int cur_matches = initial_matches - (a[i] == b[i]);
+        unordered_map<int, int> freq_a, freq_b;
+
+        for (int j = 0; j < n; ++j) {
+            if (j != i) {
+                freq_a[a[j]]++;
+                freq_b[b[j]]++;
+            }
+        }
+
+        // Try to derive maximum matches using transformations
+        for (auto &pair : freq_a) {
+            int common_count = min(pair.second, freq_b[pair.first]);
+            cur_matches += common_count;
+        }
+
+        // Update max matches found
+        max_matches = max(max_matches, cur_matches);
+    }
+
+    return max_matches;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+
+        cout << solve(n, a, b) << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,93 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+// 在给定区间 [l, r) 内统计和为 s 的子段个数
+ll countSubarrays(const vector<ll>& a, int l, int r, ll s) {
+    if (l >= r) return 0;
+    unordered_map<ll, int> cnt;
+    cnt[0] = 1;
+    ll sum = 0, res = 0;
+    for (int i = l; i < r; ++i) {
+        sum += a[i];
+        ll need = sum - s;
+        if (cnt.find(need) != cnt.end()) {
+            res += cnt[need];
+        }
+        cnt[sum]++;
+    }
+    return res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        ll s_val, x_val;
+        cin >> n >> s_val >> x_val;
+        vector<ll> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        // 第一步：找出所有 a[i] > x_val 的位置作为分割点
+        vector<int> bad;
+        for (int i = 0; i < n; ++i) {
+            if (a[i] > x_val) {
+                bad.push_back(i);
+            }
+        }
+        bad.push_back(n); // 右哨兵
+
+        ll total_ans = 0;
+        int start = 0;
+
+        for (int pos : bad) {
+            if (start >= pos) {
+                start = pos + 1;
+                continue;
+            }
+
+            // 当前段 [start, pos) // 1. 统计整个段中和为 s_val 的子段总数
+            ll total_in_block = countSubarrays(a, start, pos, s_val);
+
+            // 2. 找出该段中所有 a[i] == x_val 的位置
+            vector<int> x_positions;
+            for (int i = start; i < pos; ++i) {
+                if (a[i] == x_val) {
+                    x_positions.push_back(i);
+                }
+            }
+            // 如果没有 x，则排除整个块
+            if (x_positions.empty()) {
+                start = pos + 1;
+                continue;
+            }
+
+            // 3. 统计该段中“不包含任何 x”的子段中和为 s_val 的数量
+            ll exclude = 0;
+            int seg_start = start;
+            for (int xp : x_positions) {
+                // [seg_start, xp) 是不含 x 的子段
+                exclude += countSubarrays(a, seg_start, xp, s_val);
+                seg_start = xp + 1;
+            }
+            // 最后一段 [last_x+1, pos)
+            exclude += countSubarrays(a, seg_start, pos, s_val);
+
+            // 有效子段数 = 总数 - 不含 x 的
+            total_ans += (total_in_block - exclude);
+
+            start = pos + 1;
+        }
+
+        cout << total_ans << '\n';
+    }
+
+    return 0;
+}

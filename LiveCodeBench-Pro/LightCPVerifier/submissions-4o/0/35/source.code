@@ -1,0 +1,40 @@
+#include <iostream>
+#include <cmath>
+#include <string>
+
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        string s;
+        cin >> s;
+        
+        int num = stoi(s);  // Convert string to integer
+
+        bool found = false;
+        // Check squares from 0 to 99
+        for (int n = 0; n <= 99; ++n) {
+            if (n * n == num) {
+                // num is a perfect square with root n
+                for (int a = 0; a <= n; ++a) {
+                    int b = n - a;
+                    if (b >= 0) {
+                        cout << a << " " << b << endl;
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) break;
+            }
+        }
+        
+        if (!found) {
+            cout << -1 << endl;
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,34 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, s;
+        cin >> n >> s;
+        vector<int> x(n);
+        for (int i = 0; i < n; i++) {
+            cin >> x[i];
+        }
+
+        int min_x = *min_element(x.begin(), x.end());
+        int max_x = *max_element(x.begin(), x.end());
+
+        // Calculate the minimum steps needed
+        int min_steps;
+        if (s <= min_x) {
+            min_steps = max_x - s; // Move from s to max_x
+        } else if (s >= max_x) {
+            min_steps = s - min_x; // Move from s to min_x
+        } else {
+            // s is between min_x and max_x
+            min_steps = min(s - min_x, max_x - s) + (max_x - min_x);
+        }
+
+        cout << min_steps << endl;
+    }
+    return 0;
+}

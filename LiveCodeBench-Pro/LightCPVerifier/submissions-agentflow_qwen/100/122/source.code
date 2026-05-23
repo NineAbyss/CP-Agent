@@ -1,0 +1,115 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, m, l;
+    cin >> n >> m >> l;
+    vector<int> A(l);
+    for (int i = 0; i < l; i++) {
+        cin >> A[i];
+    }
+
+    vector<vector<int>> adj(n + 1);
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    // Step 1: Compute shortest distance from 1 to all vertices
+    vector<int> dist(n + 1, -1);
+    queue<int> q;
+    dist[1] = 0;
+    q.push(1);
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        for (int v : adj[u]) {
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+
+    // Step 2: Check if the graph is bipartite
+    vector<int> color(n + 1, -1);
+    bool is_bipartite = true;
+    color[1] = 0;
+    queue<int> qc;
+    qc.push(1);
+    while (!qc.empty()) {
+        int u = qc.front();
+        qc.pop();
+        for (int v : adj[u]) {
+            if (color[v] == -1) {
+                color[v] = color[u] ^ 1;
+                qc.push(v);
+            } else if (color[v] == color[u]) {
+                is_bipartite = false;
+            }
+        }
+    }
+
+    int g = is_bipartite ? 2 : 1;
+
+    // Step 3: Use bitset to compute achievable sums up to MAXN
+    const int MAX_SUM = 200000;
+    bitset<MAX_SUM + 1> dp;
+    dp[0] = 1;
+    for (int a : A) {
+        if (a <= MAX_SUM) {
+            dp |= dp << a;
+        } else {
+            // If a > MAX_SUM, then only affects sums > MAX_SUM, which we ignore // But in our check, we will use total_sum
+        }
+    }
+
+    long long total_sum = accumulate(A.begin(), A.end(), 0LL);
+
+    string ans(n, '0');
+    for (int v = 1; v <= n; v++) {
+        int d = dist[v];
+        bool reachable = false;
+
+        // Check using bitset: find first s >= d where dp[s] is true and (s-d)%g==0
+        int start = d;
+        if (start > MAX_SUM) {
+            // Only check total_sum
+            if (total_sum >= d && (total_sum - d) % g == 0) {
+                reachable = true;
+            }
+        } else {
+            // Search in [d, MAX_SUM]
+            for (int s = dp._Find_next(start - 1); s <= MAX_SUM; s = dp._Find_next(s)) {
+                if ((s - d) % g == 0) {
+                    reachable = true;
+                    break;
+                }
+            }
+            // If not found and total_sum > MAX_SUM
+            if (!reachable && total_sum >= d) {
+                if ((total_sum - d) % g == 0) {
+                    reachable = true;
+                }
+            }
+        }
+
+        ans[v - 1] = reachable ? '1' : '0';
+    }
+
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

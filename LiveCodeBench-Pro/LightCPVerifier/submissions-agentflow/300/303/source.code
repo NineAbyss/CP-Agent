@@ -1,0 +1,129 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+long long modpow(long long a, long long e) {
+    long long res = 1;
+    while (e) {
+        if (e & 1) res = res * a % MOD;
+        a = a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+int solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    
+    // preprocess
+    vector<int> posGiven(n, -1);
+    vector<bool> isMissing(n, true);
+    int m = 0; // number of missing numbers
+    for (int i = 0; i < n; i++) {
+        if (a[i] != -1) {
+            posGiven[a[i]] = i + 1; // 1-indexed
+            isMissing[a[i]] = false;
+        } else {
+            m++;
+        }
+    }
+    // missing_before[k] = number of missing numbers < k
+    vector<int> missing_before(n + 1, 0);
+    for (int k = 1; k <= n; k++) {
+        missing_before[k] = missing_before[k - 1] + (isMissing[k - 1] ? 1 : 0);
+    }
+    // minPos[k], maxPos[k] for k = 0..n
+    vector<int> minPos(n + 1, n + 1);
+    vector<int> maxPos(n + 1, 0);
+    for (int k = 1; k <= n; k++) {
+        if (k - 1 >= 0 && posGiven[k - 1] != -1) {
+            minPos[k] = min(minPos[k - 1], posGiven[k - 1]);
+            maxPos[k] = max(maxPos[k - 1], posGiven[k - 1]);
+        } else {
+            minPos[k] = minPos[k - 1];
+            maxPos[k] = maxPos[k - 1];
+        }
+    }
+    // prefix count of -1
+    vector<int> pre(n + 1, 0);
+    for (int i = 1; i <= n; i++) {
+        pre[i] = pre[i - 1] + (a[i - 1] == -1 ? 1 : 0);
+    }
+    // factorials
+    vector<long long> fact(m + 1), inv_fact(m + 1);
+    fact[0] = 1;
+    for (int i = 1; i <= m; i++) fact[i] = fact[i - 1] * i % MOD;
+    inv_fact[m] = modpow(fact[m], MOD - 2);
+    for (int i = m; i >= 1; i--) inv_fact[i - 1] = inv_fact[i] * i % MOD;
+    // precompute f[d][t] for 0 <= d <= t <= m
+    vector<vector<long long>> f(m + 1, vector<long long>(m + 1, 0));
+    for (int d = 0; d <= m; d++) {
+        for (int t = d; t <= m; t++) {
+            f[d][t] = fact[m - d] * fact[t] % MOD * inv_fact[t - d] % MOD;
+        }
+    }
+    // precompute sumF[t][k] for t = 0..m, k = 0..n
+    vector<vector<long long>> sumF(m + 1, vector<long long>(n + 2, 0));
+    for (int t = 0; t <= m; t++) {
+        for (int k = 1; k <= n; k++) {
+            int d = missing_before[k];
+            if (d <= t) {
+                sumF[t][k] = (sumF[t][k - 1] + f[d][t]) % MOD;
+            } else {
+                sumF[t][k] = sumF[t][k - 1];
+            }
+        }
+    }
+    // precompute limitL[l] = max k such that minPos[k] >= l
+    vector<int> limitL(n + 2, 0);
+    int k_ptr = n;
+    for (int l = 1; l <= n; l++) {
+        while (k_ptr >= 1 && minPos[k_ptr] < l) k_ptr--;
+        limitL[l] = k_ptr;
+    }
+    // precompute limitR[r] = max k such that maxPos[k] <= r
+    vector<int> limitR(n + 2, 0);
+    int kr = 0;
+    for (int r = 1; r <= n; r++) {
+        while (kr <= n && maxPos[kr] <= r) kr++;
+        limitR[r] = kr - 1;
+    }
+    // precompute limitT[t] = max k such that missing_before[k] <= t
+    vector<int> limitT(m + 1, 0);
+    int kt = 0;
+    for (int t = 0; t <= m; t++) {
+        while (kt <= n && missing_before[kt] <= t) kt++;
+        limitT[t] = kt - 1;
+    }
+    long long ans = 0;
+    for (int l = 1; l <= n; l++) {
+        int k1 = limitL[l];
+        if (k1 < 1) continue;
+        int t = 0;
+        for (int r = l; r <= n; r++) {
+            t = pre[r] - pre[l - 1];
+            int k_max = limitR[r];
+            int k3 = limitT[t];
+            int right = min({k1, k_max, k3});
+            if (right >= 1) {
+                ans = (ans + sumF[t][right]) % MOD;
+            }
+        }
+    }
+    return ans % MOD;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << solve() << '\n';
+    }
+    return 0;
+}

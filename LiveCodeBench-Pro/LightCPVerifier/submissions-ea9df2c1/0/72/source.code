@@ -1,0 +1,106 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+typedef long long ll;
+
+const ll INF = 1e18;
+
+bool checkColumns(const vector<vector<int>>& h, int j1, int j2, int val1, int val2) {
+    int n = h.size();
+    for (int i = 0; i < n; i++) {
+        if (h[i][j1] + val1 == h[i][j2] + val2) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool checkRows(const vector<vector<int>>& h, int i1, int i2, int val1, int val2) {
+    int n = h.size();
+    for (int j = 0; j < n; j++) {
+        if (h[i1][j] + val1 == h[i2][j] + val2) {
+            return false;
+        }
+    }
+    return true;
+}
+
+ll solveTestCase(int n, vector<vector<int>>& h, vector<ll>& a, vector<ll>& b) {
+    // 列 DP：确保水平相邻不同
+    vector<vector<ll>> dp_col(n, vector<ll>(2, INF));
+    dp_col[0][0] = 0;
+    dp_col[0][1] = b[0];
+    
+    for (int j = 1; j < n; j++) {
+        for (int cur = 0; cur < 2; cur++) {
+            ll add = cur ? b[j] : 0;
+            for (int prev = 0; prev < 2; prev++) {
+                if (dp_col[j-1][prev] >= INF) continue;
+                if (checkColumns(h, j-1, j, prev, cur)) {
+                    dp_col[j][cur] = min(dp_col[j][cur], dp_col[j-1][prev] + add);
+                }
+            }
+        }
+    }
+    
+    ll col_cost = min(dp_col[n-1][0], dp_col[n-1][1]);
+    if (col_cost >= INF) return -1;
+    
+    // 行 DP：确保垂直相邻不同
+    vector<vector<ll>> dp_row(n, vector<ll>(2, INF));
+    dp_row[0][0] = 0;
+    dp_row[0][1] = a[0];
+    
+    for (int i = 1; i < n; i++) {
+        for (int cur = 0; cur < 2; cur++) {
+            ll add = cur ? a[i] : 0;
+            for (int prev = 0; prev < 2; prev++) {
+                if (dp_row[i-1][prev] >= INF) continue;
+                if (checkRows(h, i-1, i, prev, cur)) {
+                    dp_row[i][cur] = min(dp_row[i][cur], dp_row[i-1][prev] + add);
+                }
+            }
+        }
+    }
+    
+    ll row_cost = min(dp_row[n-1][0], dp_row[n-1][1]);
+    if (row_cost >= INF) return -1;
+    
+    return row_cost + col_cost;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<vector<int>> h(n, vector<int>(n));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                cin >> h[i][j];
+            }
+        }
+        
+        vector<ll> a(n), b(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        for (int j = 0; j < n; j++) {
+            cin >> b[j];
+        }
+        
+        ll result = solveTestCase(n, h, a, b);
+        cout << result << '\n';
+    }
+    
+    return 0;
+}

@@ -1,0 +1,49 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+void solve(int n, int m, int k) {
+    vector<vector<int>> grid(n, vector<int>(m));
+    
+    int num_per_type = (n * m) / k;  // Each number appears this many times
+    
+    int current = 1;
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            grid[i][j] = current;
+            // Move to the next number if the current number has been placed enough times
+            if ((i*m+j+1) % num_per_type == 0) {
+                current++;
+            }
+            if (current > k) current = 1;  // Wrap around to start number
+    
+            // Ensure alternating pattern by swapping elements in every alternate row
+            if (i % 2 == 1) {
+                if (j < m - 1) {
+                    swap(grid[i][j], grid[i][j+1]);
+                }
+            }
+        }
+    }
+    
+    for (const auto &row : grid) {
+        for (int value : row) {
+            cout << value << " ";
+        }
+        cout << endl;
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        
+        solve(n, m, k);
+    }
+    
+    return 0;
+}

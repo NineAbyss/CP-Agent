@@ -1,0 +1,87 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+string solve(string s, vector<pair<char,char>> ops) {
+    int n = s.size();
+    int q = ops.size();
+    int cnt[3][3] = {0};
+    for (auto &op : ops) {
+        int x = op.first - 'a';
+        int y = op.second - 'a';
+        cnt[x][y]++;
+    }
+    string t = s;
+    for (int i = 0; i < n; i++) {
+        int cur = t[i] - 'a';
+        // 尝试变成 'a'
+        int target = 0;
+        if (cur == target) continue;
+        bool ok = false;
+        // 直接边
+        if (cnt[cur][target] > 0) {
+            cnt[cur][target]--;
+            t[i] = 'a';
+            ok = true;
+        }
+        if (!ok) {
+            // 两步
+            for (int mid = 0; mid < 3; mid++) {
+                if (mid == cur || mid == target) continue;
+                if (cnt[cur][mid] > 0 && cnt[mid][target] > 0) {
+                    cnt[cur][mid]--;
+                    cnt[mid][target]--;
+                    t[i] = 'a';
+                    ok = true;
+                    break;
+                }
+            }
+        }
+        if (ok) continue;
+        // 尝试变成 'b'
+        target = 1;
+        if (cur == target) continue;
+        if (cnt[cur][target] > 0) {
+            cnt[cur][target]--;
+            t[i] = 'b';
+            ok = true;
+        }
+        if (!ok) {
+            for (int mid = 0; mid < 3; mid++) {
+                if (mid == cur || mid == target) continue;
+                if (cnt[cur][mid] > 0 && cnt[mid][target] > 0) {
+                    cnt[cur][mid]--;
+                    cnt[mid][target]--;
+                    t[i] = 'b';
+                    ok = true;
+                    break;
+                }
+            }
+        }
+        // 如果还不行，保持原样
+    }
+    return t;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        string s;
+        cin >> s;
+        vector<pair<char,char>> ops(q);
+        for (int i = 0; i < q; i++) {
+            char x, y;
+            cin >> x >> y;
+            ops[i] = {x, y};
+        }
+        cout << solve(s, ops) << endl;
+    }
+    return 0;
+}

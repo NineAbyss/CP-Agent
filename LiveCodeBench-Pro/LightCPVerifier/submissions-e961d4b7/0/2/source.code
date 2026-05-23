@@ -1,0 +1,67 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        
+        // 检查 0 次操作
+        bool beautiful = false;
+        for (int i = 0; i < n-1; ++i) {
+            if (abs(a[i] - a[i+1]) <= 1) {
+                beautiful = true;
+                break;
+            }
+        }
+        if (beautiful) {
+            cout << "0\n";
+            continue;
+        }
+        
+        if (n == 2) {
+            cout << "-1\n";
+            continue;
+        }
+        
+        int ans = -1;
+        // 对于每个起始位置 i，逐步扩展区间
+        for (int i = 0; i < n; ++i) {
+            int L = a[i], R = a[i];
+            // len 从 1 开始增加，但合并 len 个元素需要 len-1 次操作 // 实际上我们合并的元素个数是 len，操作次数 = len-1
+            for (int j = i; j < n; ++j) {
+                L = min(L, a[j]);
+                R = max(R, a[j]);
+                int len = j - i + 1; // 合并的元素个数
+                int k = len - 1;     // 操作次数
+                if (k < 1 || k > n-2) continue; // 至少1次，最多n-2次
+                
+                // 检查左边邻居
+                if (i > 0) {
+                    if (a[i-1] >= L-1 && a[i-1] <= R+1) {
+                        if (ans == -1 || k < ans) ans = k;
+                    }
+                }
+                // 检查右边邻居
+                if (j + 1 < n) {
+                    if (a[j+1] >= L-1 && a[j+1] <= R+1) {
+                        if (ans == -1 || k < ans) ans = k;
+                    }
+                }
+            }
+        }
+        
+        cout << ans << "\n";
+    }
+    return 0;
+}

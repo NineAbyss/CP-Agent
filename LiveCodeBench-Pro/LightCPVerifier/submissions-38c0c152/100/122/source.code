@@ -1,0 +1,37 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        if (n == 9) {
+            cout << "digit" << endl;
+            string res;
+            cin >> res;
+            cout << "mul 9" << endl;
+            cin >> res;
+            cout << "digit" << endl;
+            cin >> res;
+            cout << "!" << endl;
+            cin >> res;
+        } else {
+            cout << "digit" << endl;
+            string res;
+            cin >> res;
+            cout << "mul 9" << endl;
+            cin >> res;
+            cout << "digit" << endl;
+            cin >> res;
+            long long add_val = n - 9;
+            cout << "add " << add_val << endl;
+            cin >> res;
+            cout << "!" << endl;
+            cin >> res;
+        }
+    }
+    return 0;
+}

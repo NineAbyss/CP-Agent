@@ -1,0 +1,101 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool beats(int i, int j, int n) {
+    if (i == 1 && j == n) return true;
+    if (i == n && j == 1) return false;
+    return i > j;
+}
+
+string solve(int n, string s) {
+    // For n up to 15, use full DP.
+    if (n > 15) {
+        // placeholder, not correct
+        return "Alice";
+    }
+    int full = (1 << n) - 1;
+    int maskA = 0;
+    for (int i = 0; i < n; i++) {
+        if (s[i] == 'A') maskA |= (1 << i);
+    }
+    vector<int> win(1 << n, -1);
+    win[0] = 0;
+    win[full] = 1;
+    bool changed = true;
+    while (changed) {
+        changed = false;
+        for (int mask = 1; mask < full; mask++) {
+            if (win[mask] != -1) continue;
+            int maskB = full ^ mask;
+            bool hasWinningMove = false;
+            for (int a = 1; a <= n; a++) {
+                if (!(mask & (1 << (a-1)))) continue;
+                bool allWin = true;
+                for (int b = 1; b <= n; b++) {
+                    if (!(maskB & (1 << (b-1)))) continue;
+                    int nextMask;
+                    if (beats(a, b, n)) {
+                        nextMask = mask | (1 << (b-1));
+                    } else {
+                        nextMask = mask & ~(1 << (a-1));
+                    }
+                    if (win[nextMask] == 0) {
+                        allWin = false;
+                        break;
+                    }
+                }
+                if (allWin) {
+                    hasWinningMove = true;
+                    break;
+                }
+            }
+            if (hasWinningMove) {
+                win[mask] = 1;
+                changed = true;
+            } else {
+                bool allLose = true;
+                for (int a = 1; a <= n; a++) {
+                    if (!(mask & (1 << (a-1)))) continue;
+                    bool existsLose = false;
+                    for (int b = 1; b <= n; b++) {
+                        if (!(maskB & (1 << (b-1)))) continue;
+                        int nextMask;
+                        if (beats(a, b, n)) {
+                            nextMask = mask | (1 << (b-1));
+                        } else {
+                            nextMask = mask & ~(1 << (a-1));
+                        }
+                        if (win[nextMask] == 0) {
+                            existsLose = true;
+                            break;
+                        }
+                    }
+                    if (!existsLose) {
+                        allLose = false;
+                        break;
+                    }
+                }
+                if (allLose) {
+                    win[mask] = 0;
+                    changed = true;
+                }
+            }
+        }
+    }
+    return win[maskA] == 1 ? "Alice" : "Bob";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+        cout << solve(n, s) << '\n';
+    }
+    return 0;
+}

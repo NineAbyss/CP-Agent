@@ -1,0 +1,85 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const ll INF = 1e18;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<ll> b(n);
+    for (int i = 0; i < n; i++) {
+        cin >> b[i];
+    }
+
+    vector<vector<pair<int, ll>>> adj(n);
+    for (int i = 0; i < m; i++) {
+        int s, t;
+        ll w;
+        cin >> s >> t >> w;
+        s--; t--;
+        adj[s].push_back({t, w});
+    }
+
+    vector<ll> needed(n, INF);
+    needed[n-1] = 0;
+
+    for (int i = n-2; i >= 0; i--) {
+        for (auto &edge : adj[i]) {
+            int j = edge.first;
+            ll w = edge.second;
+            if (needed[j] == INF) continue;
+            ll required_for_edge = max(w, needed[j] - b[j]);
+            if (required_for_edge < needed[i]) {
+                needed[i] = required_for_edge;
+            }
+        }
+    }
+
+    vector<ll> dist(n, INF);
+    priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>>> pq;
+
+    dist[0] = 0;
+    pq.push({0, 0});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d != dist[u]) continue;
+
+        for (auto &edge : adj[u]) {
+            int v = edge.first;
+            ll w = edge.second;
+
+            if (needed[v] == INF) continue;
+
+            ll required_leave = max(w, needed[v] - b[v]);
+            if (d + b[u] < required_leave) {
+                continue;
+            }
+
+            ll leave_count = max(d, required_leave);
+            if (leave_count < dist[v]) {
+                dist[v] = leave_count;
+                pq.push({leave_count, v});
+            }
+        }
+    }
+
+    if (dist[n-1] == INF) {
+        cout << -1 << '\n';
+    } else {
+        cout << dist[n-1] << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

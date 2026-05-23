@@ -1,0 +1,101 @@
+#include <iostream>
+#include <vector>
+#include <cstring>
+using namespace std;
+
+const int MOD = 998244353;
+
+int modpow(int a, int e) {
+    int res = 1;
+    while (e) {
+        if (e & 1) res = 1LL * res * a % MOD;
+        a = 1LL * a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+void wht(vector<int> &a, bool invert) {
+    int n = a.size();
+    for (int len = 1; len < n; len <<= 1) {
+        for (int i = 0; i < n; i += len * 2) {
+            for (int j = 0; j < len; j++) {
+                int u = a[i + j];
+                int v = a[i + j + len];
+                a[i + j] = (u + v) % MOD;
+                a[i + j + len] = (u - v + MOD) % MOD;
+            }
+        }
+    }
+    if (invert) {
+        int inv_n = modpow(n, MOD - 2);
+        for (int i = 0; i < n; i++) {
+            a[i] = 1LL * a[i] * inv_n % MOD;
+        }
+    }
+}
+
+// 数位 DP 计算 P_k(R) = sum_{a=0}^R (-1)^{popcount(a & k)}
+int compute_PR(int R, int k, int m) {
+    if (R < 0) return 0;
+    // dp[pos][tight][parity]
+    int dp[20][2][2];
+    memset(dp, 0, sizeof dp);
+    dp[m][1][0] = 1;
+    for (int pos = m-1; pos >= 0; pos--) {
+        int bitR = (R >> pos) & 1;
+        int bitK = (k >> pos) & 1;
+        for (int tight = 0; tight < 2; tight++) {
+            for (int parity = 0; parity < 2; parity++) {
+                int cur = dp[pos+1][tight][parity];
+                if (cur == 0) continue;
+                int maxBit = tight ? bitR : 1;
+                for (int b = 0; b <= maxBit; b++) {
+                    int newTight = tight && (b == bitR);
+                    int newParity = parity;
+                    if (bitK && b) newParity ^= 1;
+                    dp[pos][newTight][newParity] += cur;
+                }
+            }
+        }
+    }
+    int pos0 = dp[0][0][0] + dp[0][1][0];
+    int pos1 = dp[0][0][1] + dp[0][1][1];
+    return pos0 - pos1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        int M = 1 << m;
+        vector<int> total(M, 1);
+        for (int i = 0; i < n; i++) {
+            int l, r;
+            cin >> l >> r;
+            vector<int> coeff(M);
+            for (int k = 0; k < M; k++) {
+                int val = compute_PR(r, k, m) - compute_PR(l-1, k, m);
+                val %= MOD;
+                if (val < 0) val += MOD;
+                coeff[k] = val;
+            }
+            for (int k = 0; k < M; k++) {
+                total[k] = 1LL * total[k] * coeff[k] % MOD;
+            }
+        }
+        wht(total, true);
+        long long h = 0;
+        for (int x = 0; x < M; x++) {
+            long long fx = total[x];
+            long long gx = fx * modpow(2, x) % MOD;
+            h ^= gx;
+        }
+        cout << h << '\n';
+    }
+    return 0;
+}

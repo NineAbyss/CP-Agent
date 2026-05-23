@@ -1,0 +1,93 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+ll count_segment(const vector<ll>& a, int L, int R, ll s) {
+    // 统计子数组 a[L..R] 中和为 s 的子段数量
+    int len = R - L + 1;
+    vector<ll> pre(len + 1);
+    pre[0] = 0;
+    for (int i = 0; i < len; i++) {
+        pre[i + 1] = pre[i] + a[L + i];
+    }
+    unordered_map<ll, int> cnt;
+    ll total = 0;
+    for (int i = 0; i <= len; i++) {
+        ll target = pre[i] - s;
+        if (cnt.find(target) != cnt.end()) {
+            total += cnt[target];
+        }
+        cnt[pre[i]]++;
+    }
+    return total;
+}
+
+void solve() {
+    int n;
+    ll s, x;
+    cin >> n >> s >> x;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    // 分割成段，每段中所有元素 <= x
+    vector<pair<int, int>> segments;
+    int start = 0;
+    while (start < n) {
+        if (a[start] > x) {
+            start++;
+            continue;
+        }
+        int end = start;
+        while (end < n && a[end] <= x) {
+            end++;
+        }
+        segments.push_back({start, end - 1});
+        start = end;
+    }
+    ll ans = 0;
+    for (auto& seg : segments) {
+        int L = seg.first;
+        int R = seg.second;
+        // 统计整个段中和为 s 的子段数量
+        ll total = count_segment(a, L, R, s);
+        // 找到段内所有 x 的位置
+        vector<int> x_pos;
+        for (int i = L; i <= R; i++) {
+            if (a[i] == x) {
+                x_pos.push_back(i);
+            }
+        }
+        // 减去不含 x 的子段
+        int prev = L - 1;
+        for (int p : x_pos) {
+            // 不含 x 的子段 [prev+1, p-1]
+            int l = prev + 1;
+            int r = p - 1;
+            if (l <= r) {
+                total -= count_segment(a, l, r, s);
+            }
+            prev = p;
+        }
+        // 最后一个不含 x 的子段 [prev+1, R]
+        int l = prev + 1;
+        int r = R;
+        if (l <= r) {
+            total -= count_segment(a, l, r, s);
+        }
+        ans += total;
+    }
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

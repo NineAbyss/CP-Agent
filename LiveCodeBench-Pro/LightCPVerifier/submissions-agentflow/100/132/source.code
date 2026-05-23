@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+bool constructShape(int p, int s, vector<pair<int, int>> &coordinates) {
+    // Check for direct rectangle possibilities (w * h = s, perimeter = 2*(w + h) = p)
+    for (int w = 1; w <= s; ++w) {
+        if (s % w == 0) {  // Width divides area perfectly
+            int h = s / w;
+            if (2 * (w + h) == p) {
+                // Generate w x h rectilinear arrangement
+                for (int i = 0; i < w; ++i)
+                    for (int j = 0; j < h; ++j)
+                        coordinates.push_back({i, j});
+                return true;
+            }
+        }
+    }
+    // Try to resolve if more complex configurations needed (ex: L-shapes)
+    if (p > 2 * s) {
+        if (p <= 4 + (s - 1) * 2) {
+            // form an L-shape
+            int remainder = s - 1;
+            for (int i = 0; i < remainder + 1; ++i) {
+                coordinates.push_back({i, 0});
+            }
+            if (remainder > 0)
+                coordinates.push_back({remainder, 1});
+            return true;
+        }
+    }
+    return false;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int p, s;
+        cin >> p >> s;
+
+        vector<pair<int, int>> shape;
+        if (constructShape(p, s, shape)) {
+            cout << shape.size() << endl;
+            for (const auto &[x, y] : shape)
+                cout << x << " " << y << endl;
+        } else {
+            cout << -1 << endl;
+        }
+    }
+    return 0;
+}

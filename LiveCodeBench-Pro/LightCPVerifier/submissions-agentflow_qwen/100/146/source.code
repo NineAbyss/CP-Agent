@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX_R = 40000;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<int> c(n+1), w(n+1);
+    for (int i = 1; i <= n; i++) {
+        cin >> c[i] >> w[i];
+    }
+
+    vector<vector<int>> in_edge(n+1), out_edge(n+1);
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        in_edge[v].push_back(u);
+        out_edge[u].push_back(v);
+    }
+
+    // Floyd to compute reachability
+    vector<vector<bool>> reach(n+1, vector<bool>(n+1, false));
+    for (int i = 1; i <= n; i++) reach[i][i] = true;
+    for (int u = 1; u <= n; u++) {
+        for (int v : out_edge[u]) {
+            reach[u][v] = true;
+        }
+    }
+    for (int k = 1; k <= n; k++)
+        for (int i = 1; i <= n; i++)
+            for (int j = 1; j <= n; j++)
+                reach[i][j] = reach[i][j] || (reach[i][k] && reach[k][j]);
+
+    // For each p, find best item in reachable set
+    vector<int> best_c(n+1, 1), best_w(n+1, 0);
+    for (int p = 1; p <= n; p++) {
+        double best_ratio = 0;
+        for (int j = 1; j <= n; j++) {
+            if (reach[1][j] && reach[j][p]) {
+                double ratio = (double)w[j] / c[j];
+                if (ratio > best_ratio) {
+                    best_ratio = ratio;
+                    best_c[p] = c[j];
+                    best_w[p] = w[j];
+                }
+            }
+        }
+        if (best_ratio == 0) best_c[p] = best_w[p] = 1;
+    }
+
+    // DP table
+    vector<vector<long long>> f(n+1, vector<long long>(MAX_R+1, 0));
+
+    for (int i = 1; i <= n; i++) {
+        for (int j : in_edge[i]) {
+            for (int r = 0; r <= MAX_R; r++) {
+                f[i][r] = max(f[i][r], f[j][r]);
+            }
+        }
+        for (int r = c[i]; r <= MAX_R; r++) {
+            f[i][r] = max(f[i][r], f[i][r - c[i]] + w[i]);
+        }
+    }
+
+    int q;
+    cin >> q;
+    while (q--) {
+        int p, r;
+        cin >> p >> r;
+        if (r <= MAX_R) {
+            cout << f[p][r] << '\n';
+        } else {
+            long long ans = 0;
+            int bound = min(r, MAX_R);
+            int rem = best_c[p];
+            for (int spent = max(0, r - rem); spent <= bound; spent++) {
+                if (spent < 0) continue;
+                long long cur = f[p][spent] + 1LL * ((r - spent) / best_c[p]) * best_w[p];
+                ans = max(ans, cur);
+            }
+            cout << ans << '\n';
+        }
+    }
+
+    return 0;
+}

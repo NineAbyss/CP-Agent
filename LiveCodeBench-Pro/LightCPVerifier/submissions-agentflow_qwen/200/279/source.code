@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<long long> a(n), b(m); // use long long to avoid overflow? values up to 1e9 -> int is enough, but safe
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < m; i++) cin >> b[i];
+
+        // Compute L[0..m]: L[i] = minimum prefix length of a to match first i elements of b
+        vector<int> L(m+1, n+1); // initialize with n+1 (invalid)
+        L[0] = 0;
+        int j = 0;
+        for (int i = 0; i < n && j < m; i++) {
+            if (a[i] >= b[j]) {
+                j++;
+                L[j] = i+1; // after matching j-th element, we've used up to index i
+            }
+        }
+
+        // If we can match all m without insertion
+        if (L[m] <= n) {
+            cout << 0 << '\n';
+            continue;
+        }
+
+        // Compute R[0..m]: R[i] = minimum starting index in a to match b[i..m-1] (i.e., from position R[i] onwards)
+        vector<int> R(m+1, -1); // initialize to -1
+        R[m] = n; // to match zero elements at end, start at n
+        j = m-1;
+        for (int i = n-1; i >= 0 && j >= 0; i--) {
+            if (a[i] >= b[j]) {
+                R[j] = i;
+                j--;
+            }
+        }
+
+        long long ans = 2e9;
+        bool found = false;
+        // Try each j: use inserted flower to cover b[j]
+        for (int j = 0; j < m; j++) {
+            // Check: can we match b[0..j-1] and b[j+1..m-1] with non overlapping parts?
+            // L[j] = end of prefix part (exclusive) for first j elements
+            // R[j+1] = start of suffix part for last m-j-1 elements
+            if (L[j] <= R[j+1]) {
+                if (b[j] < ans) {
+                    ans = b[j];
+                }
+                found = true;
+            }
+        }
+
+        if (found) {
+            cout << ans << '\n';
+        } else {
+            cout << -1 << '\n';
+        }
+    }
+    return 0;
+}

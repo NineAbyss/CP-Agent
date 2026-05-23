@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int BITS = 60;
+
+long long solve_case(int n, vector<long long>& a, vector<long long>& b, string& c) {
+    // 计算 A = XOR of all a_i
+    long long A = 0;
+    for (int i = 0; i < n; i++) {
+        A ^= a[i];
+    }
+    
+    // 计算 d_i = a_i XOR b_i
+    vector<long long> d(n);
+    for (int i = 0; i < n; i++) {
+        d[i] = a[i] ^ b[i];
+    }
+    
+    // 线性基，basis[b] 存储最高位为 b 的基向量 // owner[b] 记录该基向量的所有者（0: Gellyfish, 1: Flower）
+    vector<long long> basis(BITS, 0);
+    vector<int> owner(BITS, -1);
+    
+    // 按照原始顺序插入向量
+    for (int i = 0; i < n; i++) {
+        long long x = d[i];
+        int own = (c[i] == '0') ? 0 : 1;
+        
+        for (int b = BITS-1; b >= 0; b--) {
+            if (!(x >> b & 1)) continue;
+            if (basis[b] == 0) {
+                basis[b] = x;
+                owner[b] = own;
+                break;
+            }
+            x ^= basis[b];
+        }
+    }
+    
+    // 从高位到低位贪心决策
+    long long x = A;
+    for (int b = BITS-1; b >= 0; b--) {
+        if (basis[b] == 0) continue;
+        
+        bool current_bit = (x >> b) & 1;
+        if (owner[b] == 0) {
+            // Gellyfish 控制该位，她想要 0
+            if (current_bit == 1) {
+                x ^= basis[b];
+            }
+        } else {
+            // Flower 控制该位，她想要 1
+            if (current_bit == 0) {
+                x ^= basis[b];
+            }
+        }
+    }
+    
+    return x;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<long long> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        
+        string c;
+        cin >> c;
+        
+        cout << solve_case(n, a, b, c) << '\n';
+    }
+    
+    return 0;
+}

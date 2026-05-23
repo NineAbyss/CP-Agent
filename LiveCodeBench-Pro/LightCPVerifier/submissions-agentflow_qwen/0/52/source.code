@@ -1,0 +1,98 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const ll INF = 1LL * 1000000000000000000;
+
+ll max_subarray(vector<ll>& a) {
+    if (a.empty()) return -INF;
+    ll max_sum = a[0];
+    ll current_sum = a[0];
+    for (int i = 1; i < a.size(); ++i) {
+        current_sum = max(a[i], current_sum + a[i]);
+        max_sum = max(max_sum, current_sum);
+    }
+    return max_sum;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        ll k;
+        cin >> n >> k;
+        string s;
+        cin >> s;
+        vector<ll> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        // Step 1: Set missing values to 0 and compute current max subarray sum
+        vector<ll> temp = a;
+        for (int i = 0; i < n; ++i) {
+            if (s[i] == '0') {
+                temp[i] = 0;
+            }
+        }
+
+        ll cur_max = max_subarray(temp);
+
+        if (cur_max > k) {
+            cout << "No\n";
+            continue;
+        }
+
+        if (cur_max == k) {
+            for (int i = 0; i < n; ++i) {
+                if (s[i] == '0') {
+                    a[i] = -INF;
+                }
+            }
+            cout << "Yes\n";
+            for (int i = 0; i < n; ++i) {
+                cout << a[i] << " ";
+            }
+            cout << "\n";
+            continue;
+        }
+
+        // Try each missing position to place k
+        bool found = false;
+        for (int i = 0; i < n; ++i) {
+            if (s[i] == '0') {
+                // Save original value
+                ll orig = a[i];
+                // Set this to k, others to -INF
+                for (int j = 0; j < n; ++j) {
+                    if (s[j] == '0') {
+                        a[j] = -INF;
+                    }
+                }
+                a[i] = k;
+
+                if (max_subarray(a) == k) {
+                    found = true;
+                    break;
+                }
+                // Restore for next iteration
+                a[i] = orig;
+            }
+        }
+
+        if (found) {
+            cout << "Yes\n";
+            for (int i = 0; i < n; ++i) {
+                cout << a[i] << " ";
+            }
+            cout << "\n";
+        } else {
+            cout << "No\n";
+        }
+    }
+    return 0;
+}

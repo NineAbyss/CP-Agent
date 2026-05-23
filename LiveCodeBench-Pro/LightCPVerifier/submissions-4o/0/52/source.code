@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <numeric>
+using namespace std;
+
+// Function to find gcd of array elements
+int findGCD(const vector<int>& arr) {
+    int result = arr[0];
+    for (size_t i = 1; i < arr.size(); ++i) {
+        result = gcd(result, arr[i]);
+    }
+    return result;
+}
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        bool solutionFound = false;
+        vector<int> result(n, -1);
+
+        // Attempt to split based on differing gcd
+        for (int i = 1; i < n; ++i) {
+            vector<int> b(a.begin(), a.begin() + i);
+            vector<int> c(a.begin() + i, a.end());
+
+            int gcdB = findGCD(b);
+            int gcdC = findGCD(c);
+
+            if (gcdB != gcdC) {
+                solutionFound = true;
+
+                // Fill result vector
+                for (int j = 0; j < i; ++j) {
+                    result[j] = 1;
+                }
+                for (int j = i; j < n; ++j) {
+                    result[j] = 2;
+                }
+                break;
+            }
+        }
+
+        if (solutionFound) {
+            cout << "Yes\n";
+            for (int i = 0; i < n; ++i) {
+                cout << result[i] << " ";
+            }
+            cout << endl;
+        } else {
+            cout << "No\n";
+        }
+    }
+
+    return 0;
+}

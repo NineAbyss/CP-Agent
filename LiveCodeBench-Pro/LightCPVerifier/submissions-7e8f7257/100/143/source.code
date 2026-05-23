@@ -1,0 +1,104 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int nor(int x, int y, int k) {
+    int mask = (1<<k)-1;
+    return (~x) & (~y) & mask;
+}
+
+struct SegTree {
+    int n;
+    vector<int> tree, lazy;
+    SegTree(int size) {
+        n = size;
+        tree.assign(4*n, 0);
+        lazy.assign(4*n, 0);
+    }
+    void push(int idx) {
+        if (lazy[idx]) {
+            tree[idx*2] = max(tree[idx*2], lazy[idx]);
+            lazy[idx*2] = max(lazy[idx*2], lazy[idx]);
+            tree[idx*2+1] = max(tree[idx*2+1], lazy[idx]);
+            lazy[idx*2+1] = max(lazy[idx*2+1], lazy[idx]);
+            lazy[idx] = 0;
+        }
+    }
+    void update(int idx, int l, int r, int L, int R, int val) {
+        if (L <= l && r <= R) {
+            tree[idx] = max(tree[idx], val);
+            lazy[idx] = max(lazy[idx], val);
+            return;
+        }
+        push(idx);
+        int mid = (l+r)/2;
+        if (L <= mid) update(idx*2, l, mid, L, R, val);
+        if (R > mid) update(idx*2+1, mid+1, r, L, R, val);
+        tree[idx] = max(tree[idx*2], tree[idx*2+1]);
+    }
+    void update(int L, int R, int val) {
+        update(1, 0, n-1, L, R, val);
+    }
+    void collect(vector<int>& res, int idx, int l, int r) {
+        if (l == r) {
+            res[l] = tree[idx];
+            return;
+        }
+        push(idx);
+        int mid = (l+r)/2;
+        collect(res, idx*2, l, mid);
+        collect(res, idx*2+1, mid+1, r);
+    }
+    void collect(vector<int>& res) {
+        collect(res, 1, 0, n-1);
+    }
+};
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i=0; i<n; i++) cin >> a[i];
+        SegTree st(n);
+        vector<pair<int,int>> segs; // (val, start_l)
+        for (int r=0; r<n; r++) {
+            // update existing segments
+            for (auto& p : segs) {
+                p.first = nor(p.first, a[r], k);
+            }
+            // add new segment
+            segs.push_back({a[r], r});
+            // merge adjacent same val
+            vector<pair<int,int>> new_segs;
+            for (auto& p : segs) {
+                if (new_segs.empty() || new_segs.back().first != p.first) {
+                    new_segs.push_back(p);
+                }
+            }
+            segs = new_segs;
+            // apply updates
+            for (auto& p : segs) {
+                int L = p.second;
+                int R = r;
+                int val = p.first;
+                st.update(L, R, val);
+            }
+        }
+        vector<int> ans(n);
+        st.collect(ans);
+        for (int i=0; i<n; i++) {
+            cout << ans[i] << " \n"[i==n-1];
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

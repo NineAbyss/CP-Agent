@@ -1,0 +1,85 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+const int MAXN = 100000;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    // Precompute power2[0..MAXN] mod MOD
+    vector<long long> pow2(MAXN+1);
+    pow2[0] = 1;
+    for (int i = 1; i <= MAXN; i++) {
+        pow2[i] = (pow2[i-1] * 2) % MOD;
+    }
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> p(n), q(n);
+        for (int i = 0; i < n; i++) {
+            cin >> p[i];
+        }
+        for (int i = 0; i < n; i++) {
+            cin >> q[i];
+        }
+
+        // Precompute pos_p and pos_q: pos_p[x] = index of x in p
+        vector<int> pos_p(n), pos_q(n);
+        for (int i = 0; i < n; i++) {
+            pos_p[p[i]] = i;
+            pos_q[q[i]] = i;
+        }
+
+        int current_max_p = -1;
+        int current_max_q = -1;
+
+        vector<long long> r;
+        for (int i = 0; i < n; i++) {
+            // Update current maxima
+            if (p[i] > current_max_p) {
+                current_max_p = p[i];
+            }
+            if (q[i] > current_max_q) {
+                current_max_q = q[i];
+            }
+
+            // Get the two candidate indices
+            int j1 = pos_p[current_max_p];  // position of current_max_p in p
+            int j2 = i - pos_q[current_max_q]; // because we want q[i-j2] = current_max_q
+
+            // Get the exponent pairs for the two candidates
+            int a1 = p[j1], b1 = q[i - j1];
+            int a2 = p[j2], b2 = q[i - j2];
+
+            // Compare the two sums: 2^{a1} + 2^{b1} vs 2^{a2} + 2^{b2} // By comparing (max(a1,b1), min(a1,b1)) lexicographically
+            auto get_key = [](int x, int y) -> pair<int, int> {
+                return {max(x,y), min(x,y)};
+            };
+            pair<int,int> key1 = get_key(a1, b1);
+            pair<int,int> key2 = get_key(a2, b2);
+
+            int a, b;
+            if (key1 >= key2) {
+                a = a1; b = b1;
+            } else {
+                a = a2; b = b2;
+            }
+
+            long long sum_val = (pow2[a] + pow2[b]) % MOD;
+            r.push_back(sum_val);
+        }
+
+        // Output r
+        for (int i = 0; i < r.size(); i++) {
+            cout << r[i];
+            if (i < r.size()-1) cout << " ";
+        }
+        cout << '\n';
+    }
+    return 0;
+}

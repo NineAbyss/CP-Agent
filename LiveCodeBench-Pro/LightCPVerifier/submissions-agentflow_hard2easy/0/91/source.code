@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXM = 500000;
+const int INF = 1e9;
+
+int dp[MAXM+1];
+int g[MAXM+1];
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    for (int i = 1; i <= MAXM; i++) dp[i] = INF;
+    dp[1] = 1;
+    g[1] = 0;
+    
+    // 预处理所有奇数的 dp
+    for (int f = 3; f <= MAXM; f += 2) {
+        g[f] = INF;
+        // 枚举奇约数 a，a >= 3 // 注意：a 必须是奇数，因为 f 是奇数
+        for (int a = 3; a * a <= f; a += 2) {
+            if (f % a != 0) continue;
+            // 因子 a
+            int x = a - 2;
+            int rest = f / a;
+            if (dp[x] != INF && g[rest] != INF) {
+                g[f] = min(g[f], dp[x] + g[rest]);
+            }
+            // 另一个因子 b = f/a
+            int b = f / a;
+            if (b != a) {
+                int x2 = b - 2;
+                int rest2 = f / b; // 即 a
+                if (dp[x2] != INF && g[rest2] != INF) {
+                    g[f] = min(g[f], dp[x2] + g[rest2]);
+                }
+            }
+        }
+        // 检查 a = f 的情况
+        int a = f;
+        int x = a - 2;
+        int rest = 1;
+        if (dp[x] != INF && g[rest] != INF) {
+            g[f] = min(g[f], dp[x] + g[rest]);
+        }
+        
+        if (g[f] != INF) {
+            dp[f] = 1 + g[f];
+        }
+    }
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int m;
+        cin >> m;
+        if (m % 2 == 0) {
+            cout << -1 << '\n';
+        } else {
+            if (dp[m] == INF) {
+                cout << -1 << '\n';
+            } else {
+                cout << dp[m] << '\n';
+            }
+        }
+    }
+    return 0;
+}

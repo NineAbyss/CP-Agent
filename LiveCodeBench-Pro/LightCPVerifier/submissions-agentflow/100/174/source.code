@@ -1,0 +1,110 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int popcount(long long x) {
+    return __builtin_popcountll(x);
+}
+
+const int MAX_GAIN_PER_ELEMENT = 60;
+const long long INF = 2e18; // 因为 k 可能高达 1e18
+
+vector<pair<long long, int>> get_options(long long a) {
+    int pop_a = popcount(a);
+    vector<long long> best_cost(MAX_GAIN_PER_ELEMENT + 1, INF);
+    best_cost[0] = 0;
+    
+    // 尝试 b 从 a 到 a + LIMIT
+    const int LIMIT = 2000;
+    for (long long d = 0; d <= LIMIT; d++) {
+        long long b = a + d;
+        if (b < a) break; // 溢出
+        int pop_b = popcount(b);
+        int gain = pop_b - pop_a;
+        if (gain < 0 || gain > MAX_GAIN_PER_ELEMENT) continue;
+        if (d < best_cost[gain]) {
+            best_cost[gain] = d;
+        }
+    }
+    
+    // 尝试 b = 2^m - 1
+    for (int m = 0; m <= 60; m++) {
+        long long b = (1LL << m) - 1;
+        if (b < a) continue;
+        long long cost = b - a;
+        if (cost > INF) continue;
+        int pop_b = m;
+        int gain = pop_b - pop_a;
+        if (gain < 0 || gain > MAX_GAIN_PER_ELEMENT) continue;
+        if (cost < best_cost[gain]) {
+            best_cost[gain] = cost;
+        }
+    }
+    
+    // 收集选项
+    vector<pair<long long, int>> options;
+    for (int g = 0; g <= MAX_GAIN_PER_ELEMENT; g++) {
+        if (best_cost[g] != INF) {
+            options.push_back({best_cost[g], g});
+        }
+    }
+    return options;
+}
+
+long long solve_case(int n, long long k, vector<long long>& a) {
+    long long init_beauty = 0;
+    for (long long x : a) init_beauty += popcount(x);
+    
+    vector<vector<pair<long long, int>>> options(n);
+    for (int i = 0; i < n; i++) {
+        options[i] = get_options(a[i]);
+    }
+    
+    const int MAX_TOTAL_GAIN = n * MAX_GAIN_PER_ELEMENT;
+    vector<long long> dp(MAX_TOTAL_GAIN + 1, INF);
+    dp[0] = 0;
+    
+    for (int i = 0; i < n; i++) {
+        vector<long long> new_dp = dp;
+        for (int g = 0; g <= MAX_TOTAL_GAIN; g++) {
+            if (dp[g] == INF) continue;
+            if (dp[g] > k) continue; // 剪枝
+            for (auto &opt : options[i]) {
+                long long cost = opt.first;
+                int gain = opt.second;
+                int new_g = g + gain;
+                if (new_g > MAX_TOTAL_GAIN) continue;
+                if (dp[g] + cost < new_dp[new_g]) {
+                    new_dp[new_g] = dp[g] + cost;
+                }
+            }
+        }
+        dp = new_dp;
+    }
+    
+    int best_gain = 0;
+    for (int g = 0; g <= MAX_TOTAL_GAIN; g++) {
+        if (dp[g] <= k) best_gain = g;
+    }
+    
+    return init_beauty + best_gain;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        cout << solve_case(n, k, a) << '\n';
+    }
+    
+    return 0;
+}

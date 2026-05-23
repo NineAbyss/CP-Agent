@@ -1,0 +1,19 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    // 模拟最大数据
+    int n = 200000, m = 400000;
+    vector<vector<int>> g(n+1);
+    cout << "Created g size " << n+1 << endl;
+    // 模拟添加边
+    for (int i = 0; i < m; i++) {
+        int u = rand() % n + 1;
+        int v = rand() % n + 1;
+        if (u == v) continue;
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+    cout << "Done" << endl;
+    return 0;
+}

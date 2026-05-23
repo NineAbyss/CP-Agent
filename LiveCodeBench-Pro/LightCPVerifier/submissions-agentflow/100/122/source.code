@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to determine if L^k(G) has an Euler trail
+bool hasEulerTrail(int n, int m, int k, const vector<pair<int, int>>& edges) {
+    if (k % 2 == 0) return true; // Even k retains Euler trail due to symmetry
+
+    vector<int> degree(n + 1, 0);
+    for (const auto& edge : edges) {
+        degree[edge.first]++;
+        degree[edge.second]++;
+    }
+
+    int odd_count = 0;
+    for (int i = 1; i <= n; ++i) {
+        if (degree[i] % 2 != 0) {
+            odd_count++;
+        }
+    }
+
+    return (odd_count == 0 || odd_count == 2); // Ensure Euler trail validity
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<pair<int, int>> edges(m);
+        for (int i = 0; i < m; ++i) {
+            int u, v;
+            cin >> u >> v;
+            edges[i] = {u, v};
+        }
+        cout << (hasEulerTrail(n, m, k, edges) ? "YES" : "NO") << '\n';
+    }
+    return 0;
+}

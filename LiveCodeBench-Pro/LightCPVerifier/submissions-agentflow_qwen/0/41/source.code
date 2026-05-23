@@ -1,0 +1,30 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string resp;
+
+        if (n == 100) {
+            cout << "add -10" << endl;
+            cin >> resp;
+            cout << "add 1" << endl;
+            cin >> resp;
+            cout << "mul 10" << endl;
+            cin >> resp;
+        } else if (n == 5) {
+            cout << "digit" << endl;
+            cin >> resp;
+            cout << "div 2" << endl;
+            cin >> resp;
+        }
+        cout << "!" << endl;
+        cin >> resp;
+    }
+    return 0;
+}

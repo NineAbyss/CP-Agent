@@ -1,0 +1,53 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <unordered_map>
+using namespace std;
+
+string find_lexicographical_minimal(string& s, vector<pair<char, char>>& operations) {
+    unordered_map<char, char> conversion; // current optimal conversion for each character
+    conversion['a'] = 'a';
+    conversion['b'] = 'b';
+    conversion['c'] = 'c';
+    
+    for (auto& op : operations) {
+        char x = op.first, y = op.second;
+        if (conversion[x] > y) {
+            for (auto& p : conversion) {
+                if (p.second == x)
+                    p.second = y;
+            }
+        }
+    }
+    
+    for (auto& ch : s) {
+        ch = conversion[ch];
+    }
+    
+    return s;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        
+        string s;
+        cin >> s;
+        
+        vector<pair<char, char>> operations(q);
+        for (int i = 0; i < q; ++i) {
+            cin >> operations[i].first >> operations[i].second;
+        }
+
+        cout << find_lexicographical_minimal(s, operations) << '\n';
+    }
+
+    return 0;
+}

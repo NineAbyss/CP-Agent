@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int ceil_log2(long long x) {
+    if (x <= 1) return 0;
+    int p = 0;
+    while ((1LL << p) < x) p++;
+    return p;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n, m, a, b;
+        cin >> n >> m >> a >> b;
+        long long d_row = min(a, n - a + 1);
+        long long d_col = min(b, m - b + 1);
+        int log_dr = ceil_log2(d_row);
+        int log_dc = ceil_log2(d_col);
+        int log_n = ceil_log2(n);
+        int log_m = ceil_log2(m);
+        int A = log_dr + log_m;
+        int B = log_n + log_dc;
+        int ans = 1 + min(A, B);
+        cout << ans << '\n';
+    }
+    return 0;
+}

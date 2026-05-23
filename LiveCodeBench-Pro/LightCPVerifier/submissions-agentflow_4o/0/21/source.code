@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+vector<int> bfs_reachability(int n, const vector<vector<int>>& graph, const vector<int>& unique_lengths) {
+    vector<int> reachable(n, 0);
+    reachable[0] = 1;
+
+    for (int len : unique_lengths) {
+        queue<int> q;
+        q.push(0);
+
+        while (!q.empty()) {
+            int current = q.front();
+            q.pop();
+
+            vector<int> dist(n, -1);
+            dist[current] = 0;
+
+            queue<int> bfs_q;
+            bfs_q.push(current);
+
+            while (!bfs_q.empty()) {
+                int node = bfs_q.front();
+                bfs_q.pop();
+
+                for (int neighbor : graph[node]) {
+                    if (dist[neighbor] == -1) {
+                        dist[neighbor] = dist[node] + 1;
+                        bfs_q.push(neighbor);
+                        // When we reach a node at exactly 'len' steps, mark it reachable
+                        if (dist[neighbor] == len) {
+                            reachable[neighbor] = 1;
+                            // Optionally, avoid further BFS beyond needed step
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return reachable;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, m, l;
+        cin >> n >> m >> l;
+
+        vector<vector<int>> graph(n);
+        vector<int> lens(l);
+
+        for (int i = 0; i < l; ++i) {
+            cin >> lens[i];
+        }
+        
+        unordered_set<int> unique_lengths(lens.begin(), lens.end());
+
+        for (int i = 0; i < m; ++i) {
+            int u, v;
+            cin >> u >> v;
+            --u; --v;
+            graph[u].push_back(v);
+            graph[v].push_back(u);
+        }
+
+        vector<int> reachable = bfs_reachability(n, graph, unique_lengths);
+
+        for (int r : reachable) {
+            cout << r;
+        }
+        cout << '\n';
+    }
+
+    return 0;
+}

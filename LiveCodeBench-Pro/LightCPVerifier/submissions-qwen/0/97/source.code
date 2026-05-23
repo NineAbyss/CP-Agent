@@ -1,0 +1,129 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+
+int n, q;
+int p[MAXN];
+int pos[MAXN]; // position of value i in permutation
+
+// Precomputed data structures for RMQ (Range Minimum/Maximum Query)
+int log_2[MAXN];
+int min_sparse[20][MAXN], max_sparse[20][MAXN];
+
+// Precompute logarithms for RMQ
+void build_log() {
+    log_2[1] = 0;
+    for (int i = 2; i < MAXN; ++i) {
+        log_2[i] = log_2[i / 2] + 1;
+    }
+}
+
+// Build sparse tables for range min and max queries
+void build_sparse() {
+    for (int i = 0; i < n; ++i) {
+        min_sparse[0][i] = p[i];
+        max_sparse[0][i] = p[i];
+    }
+
+    for (int j = 1; (1 << j) <= n; ++j) {
+        for (int i = 0; i + (1 << j) <= n; ++i) {
+            min_sparse[j][i] = min(min_sparse[j-1][i], min_sparse[j-1][i + (1 << (j-1))]);
+            max_sparse[j][i] = max(max_sparse[j-1][i], max_sparse[j-1][i + (1 << (j-1))]);
+        }
+    }
+}
+
+// Range minimum query
+int rmq_min(int l, int r) {
+    int j = log_2[r - l + 1];
+    return min(min_sparse[j][l], min_sparse[j][r - (1 << j) + 1]);
+}
+
+// Range maximum query
+int rmq_max(int l, int r) {
+    int j = log_2[r - l + 1];
+    return max(max_sparse[j][l], max_sparse[j][r - (1 << j) + 1]);
+}
+
+// Check if subarray [l, r] is divisible
+bool is_divisible(int l, int r) {
+    // Convert to 0-indexed
+    l--; r--;
+    int len = r - l + 1;
+    if (len == 1) return true;
+
+    // The array is divisible if there exists a split point i (l <= i < r) // such that either:
+    //   Case 1: max(l, i) <= x < min(i+1, r) for some x
+    //   Case 2: min(l, i) > x >= max(i+1, r) for some x
+    // // This is equivalent to:
+    //   Case 1: max(l, i) < min(i+1, r) //   Case 2: min(l, i) > max(i+1, r)
+
+    // Precompute prefix max/min and suffix max/min? // But we can use RMQ to check each split quickly.
+
+    // However, note: we don't need to check every split necessarily.
+    // Insight: the condition holds if the entire segment can be split into two parts
+    // where one part has all values less than the other part.
+
+    // So we want to know: does there exist an index i in [l, r-1] such that //   max(p[l..i]) < min(p[i+1..r])   OR   min(p[l..i]) > max(p[i+1..r])
+
+    for (int i = l; i < r; ++i) {
+        int left_max = rmq_max(l, i);
+        int left_min = rmq_min(l, i);
+        int right_min = rmq_min(i+1, r);
+        int right_max = rmq_max(i+1, r);
+
+        if (left_max < right_min || left_min > right_max) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n;
+    for (int i = 0; i < n; ++i) {
+        cin >> p[i];
+        pos[p[i]] = i;
+    }
+
+    build_log();
+    build_sparse();
+
+    cin >> q;
+
+    vector<string> answers;
+    for (int idx = 0; idx < q; ++idx) {
+        int l, r;
+        cin >> l >> r;
+
+        if (is_divisible(l, r)) {
+            answers.push_back("YES");
+        } else {
+            answers.push_back("NO");
+        }
+
+        // After every 10 queries, flush output
+        if ((idx + 1) % 10 == 0) {
+            for (const string& ans : answers) {
+                cout << ans << '\n';
+            }
+            cout.flush();
+            answers.clear();
+        }
+    }
+
+    // In case q is not multiple of 10 (but problem says it is)
+    if (!answers.empty()) {
+        for (const string& ans : answers) {
+            cout << ans << '\n';
+        }
+        cout.flush();
+    }
+
+    return 0;
+}

@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        // 统计频率，只关心 <= n 的数字
+        vector<int> freq(n + 2, 0);
+        for (int x : a) {
+            if (x <= n) {
+                freq[x]++;
+            }
+        }
+        // 二分搜索
+        int lo = 0, hi = n + 2;
+        // 工作数组，用于时间戳技巧
+        vector<int> last(n + 2, 0);
+        vector<int> cnt(n + 2, 0);
+        int check_id = 0; // 用于生成唯一时间戳
+        while (lo < hi) {
+            int mid = (lo + hi + 1) / 2;
+            // 检查 mid 是否可行
+            bool ok = true;
+            // 频率检查
+            for (int j = 0; j < mid; ++j) {
+                if (freq[j] < k) {
+                    ok = false;
+                    break;
+                }
+            }
+            if (mid == 0) ok = true;
+            if (ok && mid > 0) {
+                // 贪心分段
+                int cur = ++check_id; // 当前段的时间戳
+                int need = mid;
+                int segments = 0;
+                for (int x : a) {
+                    if (x < mid) {
+                        if (last[x] != cur) {
+                            last[x] = cur;
+                            cnt[x] = 1;
+                            --need;
+                        } else {
+                            cnt[x]++;
+                        }
+                    }
+                    if (need == 0) {
+                        ++segments;
+                        if (segments >= k) break;
+                        cur = ++check_id; // 新段，新时间戳
+                        need = mid;
+                    }
+                }
+                ok = (segments >= k);
+            }
+            if (ok) {
+                lo = mid;
+            } else {
+                hi = mid - 1;
+            }
+        }
+        cout << lo << '\n';
+    }
+    return 0;
+}

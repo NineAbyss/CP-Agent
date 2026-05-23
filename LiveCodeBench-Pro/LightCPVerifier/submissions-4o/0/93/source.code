@@ -1,0 +1,60 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        for (int i = 0; i < n; ++i) cin >> b[i];
+
+        // Check if transformations are possible by comparing a and reversed b
+        vector<int> reverseB = b;
+        reverse(reverseB.begin(), reverseB.end());
+
+        if (a == reverseB) {
+            cout << 0 << '\n';
+            continue;
+        }
+
+        // Use a map to check how many elements can be matched
+        unordered_map<int, int> positionOfB;
+        for (int i = 0; i < n; ++i) {
+            positionOfB[b[i]] = i;
+        }
+
+        vector<pair<int, int>> operations;
+        bool possible = true;
+        for (int i = 0; i < n; ++i) {
+            // The element to find is a[n-i-1] in `b` to make them reverse permutation
+            int element = a[n - i - 1];
+            int posInB = positionOfB[element];
+
+            if (posInB == i) continue;
+
+            // Swap `a[i] with a[posInB]` and `b[i] with b[posInB]`
+            swap(a[i], a[posInB]);
+            swap(b[i], b[posInB]);
+            operations.emplace_back(i + 1, posInB + 1);
+        }
+
+        if (a == reverseB) {
+            cout << operations.size() << '\n';
+            for (auto [i, j] : operations) {
+                cout << i << ' ' << j << '\n';
+            }
+        } else {
+            cout << -1 << '\n';
+        }
+    }
+    return 0;
+}

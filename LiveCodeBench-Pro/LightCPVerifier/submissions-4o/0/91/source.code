@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+void solve() {
+    int n, m, k;
+    cin >> n >> m >> k;
+
+    // The remaining length after m removals of subarrays of length k
+    int remainingLength = n - m * k;
+
+    // Prepare a pattern of length `remainingLength` which will start the sequence
+    vector<int> pattern(remainingLength);
+    for (int i = 0; i < remainingLength; ++i) {
+        pattern[i] = i;
+    }
+
+    vector<int> result(n, 0);
+    int currentIndex = 0;
+
+    // Fill the result using the pattern, cyclically
+    for (int i = 0; i < n; ++i) {
+        result[i] = pattern[currentIndex++];
+        if (currentIndex == remainingLength) {
+            currentIndex = 0;
+        }
+    }
+
+    for (int i = 0; i < n; ++i) {
+        cout << result[i] << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

@@ -1,0 +1,46 @@
+#include <iostream>
+#include <string>
+#include <bitset>
+using namespace std;
+
+const int MAXN = 200000;
+using bs = bitset<MAXN+1>;
+
+bool solve(const string& p, const string& s) {
+    int m = p.size(), n = s.size();
+    bs maskL1, maskL2, maskR1, maskR2;
+    for (int i = 0; i < n; ++i) {
+        if (s[i] == 'L') maskL1.set(i);
+        else maskR1.set(i);
+    }
+    for (int i = 0; i+1 < n; ++i) {
+        if (s[i] == 'L' && s[i+1] == 'L') maskL2.set(i);
+        else if (s[i] == 'R' && s[i+1] == 'R') maskR2.set(i);
+    }
+    bs cur;
+    cur.set(0);
+    for (int i = 0; i < m; ++i) {
+        bs nxt;
+        if (p[i] == 'L') {
+            nxt = ((cur & maskL1) << 1) | ((cur & maskL2) << 2);
+        } else {
+            nxt = ((cur & maskR1) << 1) | ((cur & maskR2) << 2);
+        }
+        cur = nxt;
+        if (cur.none()) return false;
+    }
+    return cur.test(n);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        string p, s;
+        cin >> p >> s;
+        cout << (solve(p, s) ? "YES" : "NO") << '\n';
+    }
+    return 0;
+}

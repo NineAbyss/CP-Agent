@@ -1,0 +1,191 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+#include <cctype>
+#include <unordered_set>
+using namespace std;
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+
+    // If k==1, then every single element is valid window. // So any split with a in [1, n-1] is valid -> unless n==2, then only one split.
+    // But n>=2k=2, so if n==2, then a=1,b=1 is only split.
+    // But if n>2, many splits.
+    // So we can handle uniformly.
+
+    vector<int> c(n+1); // 1-indexed
+    unordered_set<int> queried;
+
+    auto query = [&](int i) -> int {
+        if (i < 1 || i > n) return -1;
+        if (queried.count(i)) return c[i];
+        cout << "? " << i << endl;
+        cout.flush();
+        int val;
+        cin >> val;
+        c[i] = val;
+        queried.insert(i);
+        return val;
+    };
+
+    // We'll try to simulate from left until we find a bad window or run out of queries // We are allowed up to 250 queries
+
+    // First, query first k elements
+    for (int i = 1; i <= k; i++) {
+        query(i);
+    }
+
+    // Check if first k are distinct
+    unordered_set<int> firstk;
+    for (int i = 1; i <= k; i++) {
+        firstk.insert(c[i]);
+    }
+    if (firstk.size() != k) {
+        // According to problem, this shouldn't happen // But theoretically, no valid A, but problem guarantees existence
+        // So ignore
+    }
+
+    // Sliding window: maintain the last k-1 values? Actually, for checking C[i] against C[i-k+1..i-1] // We'll go from i = k+1 to n, but stop at 250 queries
+    int bad_index = -1; // will be the i where C[i] is in the previous k-1
+
+    // We'll maintain a set of the last min(k-1, i-1) values, specifically from i-k+1 to i-1
+    unordered_set<int> window_set;
+    // initialize with C[2..k] for i=k+1
+    for (int i = 2; i <= k; i++) {
+        window_set.insert(c[i]);
+    }
+
+    int i;
+    for (i = k+1; i <= n; i++) {
+        if (queried.size() >= 250) break;
+
+        int val = query(i);
+
+        // Check if val is in the current window_set (which is C[i-k+1 .. i-1])
+        if (window_set.find(val) != window_set.end()) {
+            bad_index = i;
+            break;
+        }
+
+        // Update window_set: remove C[i-k+1] ??? 
+        // Current window_set is for indices [i-k+1, i-1] at the start of iteration i
+        // After adding C[i], for next i, we need to remove C[i-k+1] and add C[i]? 
+        // But we are not using C[i] in the set for this check.
+        // For next iteration, the window should be [i-k+2, i] // So remove C[i-k+1], add C[i]
+
+        // Remove C[i-k+1]
+        int to_remove = i - k + 1; // index to remove
+        // We need to remove one occurrence of c[to_remove] // But set doesn't allow duplicates anyway
+        auto it = window_set.find(c[to_remove]);
+        if (it != window_set.end()) {
+            window_set.erase(it);
+        }
+
+        // Add c[i-1]? No, we are at i, and we've just queried c[i] // For the next i+1, the window will be [i-k+2, i]
+        // So we need to add c[i] at the end of this iteration
+        window_set.insert(c[i]);
+    }
+
+    if (bad_index != -1) {
+        // We found a bad window ending at bad_index // Window is [bad_index-k+1, bad_index]
+        // So a must be in [bad_index-k+1, bad_index-1]
+        int low = bad_index - k + 1;
+        int high = bad_index - 1;
+        int a_low = max(k, low);
+        int a_high = min(n-k, high);
+
+        vector<int> candidates;
+        for (int a = a_low; a <= a_high; a++) {
+            // Check if prefix C[1..a] is valid
+            bool validA = true;
+            // Check every window in A: for start = 1 to a-k+1
+            for (int start = 1; start <= a - k + 1; start++) {
+                // We need to have queried C[start..start+k-1] // If any missing, query them
+                bool has_all = true;
+                for (int j = start; j < start+k; j++) {
+                    if (!queried.count(j)) {
+                        if (queried.size() >= 250) {
+                            has_all = false;
+                            break;
+                        }
+                        query(j);
+                    }
+                }
+                if (!has_all) {
+                    validA = false;
+                    break;
+                }
+                // Check if distinct
+                unordered_set<int> win;
+                for (int j = start; j < start+k; j++) {
+                    win.insert(c[j]);
+                }
+                if (win.size() != k) {
+                    validA = false;
+                    break;
+                }
+            }
+            if (!validA) continue;
+
+            // Check suffix C[a+1..n]
+            bool validB = true;
+            for (int start = a+1; start <= n-k+1; start++) {
+                bool has_all = true;
+                for (int j = start; j < start+k; j++) {
+                    if (!queried.count(j)) {
+                        if (queried.size() >= 250) {
+                            has_all = false;
+                            break;
+                        }
+                        query(j);
+                    }
+                }
+                if (!has_all) {
+                    validB = false;
+                    break;
+                }
+                unordered_set<int> win;
+                for (int j = start; j < start+k; j++) {
+                    win.insert(c[j]);
+                }
+                if (win.size() != k) {
+                    validB = false;
+                    break;
+                }
+            }
+            if (validB) {
+                candidates.push_back(a);
+            }
+        }
+
+        if (candidates.size() == 1) {
+            cout << "! " << candidates[0] << " " << n - candidates[0] << endl;
+        } else {
+            cout << "! -1" << endl;
+        }
+        return;
+    }
+
+    // If we get here, no bad window found in the first min(n,250) or we hit query limit // So either all windows are good, or we don't know.
+
+    // If all windows in C are good, then any a in [k, n-k] is valid.
+    // So if there is exactly one such a, i.e., n == 2k, then answer k,k
+    // Otherwise, -1
+
+    if (n == 2 * k) {
+        cout << "! " << k << " " << k << endl;
+    } else {
+        cout << "! -1" << endl;
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

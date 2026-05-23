@@ -1,0 +1,37 @@
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+bool solve(const string& s) {
+    int n = s.size();
+    vector<int> pref(26, 0), suff(26, 0);
+    for (int i = 0; i < n; i++) {
+        suff[s[i] - 'a']++;
+    }
+    for (int i = 0; i < n; i++) {
+        // i 作为 b 的起始位置，且 b 长度=1 // 要求 1 <= i <= n-2
+        if (i >= 1 && i <= n-2) {
+            int ch = s[i] - 'a';
+            if (pref[ch] > 0) return true;
+            if (suff[ch] > 1) return true;
+        }
+        suff[s[i] - 'a']--;
+        pref[s[i] - 'a']++;
+    }
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        cout << (solve(s) ? "Yes" : "No") << '\n';
+    }
+    return 0;
+}

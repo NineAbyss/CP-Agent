@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int B = 60; // 60 bits, since a_i, b_i < 2^60
+
+void solve() {
+    int n;
+    if (!(cin >> n)) {
+        // 输入结束，输出0
+        cout << "0\n";
+        return;
+    }
+    
+    // 根据题目，n >= 1，但为了安全起见
+    if (n <= 0) {
+        if (n == 0) {
+            string c;
+            cin >> c;
+            cout << "0\n";
+        } else {
+            cout << "0\n";
+        }
+        return;
+    }
+    
+    vector<long long> a(n), b(n);
+    for (int i = 0; i < n; i++) {
+        if (!(cin >> a[i])) {
+            cout << "0\n";
+            return;
+        }
+    }
+    for (int i = 0; i < n; i++) {
+        if (!(cin >> b[i])) {
+            cout << "0\n";
+            return;
+        }
+    }
+    
+    string c;
+    if (!(cin >> c)) {
+        cout << "0\n";
+        return;
+    }
+    
+    // 如果c长度不够，补足
+    if ((int)c.length() < n) {
+        c.resize(n, '0');
+    }
+    
+    // Compute C = xor of all a_i
+    long long C = 0;
+    for (int i = 0; i < n; i++) {
+        C ^= a[i];
+    }
+    
+    // Compute d_i = a_i xor b_i
+    vector<long long> d(n);
+    for (int i = 0; i < n; i++) {
+        d[i] = a[i] ^ b[i];
+    }
+    
+    // Linear basis and controller
+    vector<long long> basis(B, 0);
+    vector<int> controller(B, -1); // -1: not controlled, 0: Gellyfish, 1: Flower
+    
+    // Process from back to front
+    for (int i = n-1; i >= 0; i--) {
+        long long v = d[i];
+        int player = (c[i] == '1') ? 1 : 0;
+        
+        // Try to insert v into the basis
+        for (int k = B-1; k >= 0; k--) {
+            if (!(v >> k)) continue;
+            if (!basis[k]) {
+                // Found pivot
+                basis[k] = v;
+                controller[k] = player;
+                break;
+            }
+            v ^= basis[k];
+        }
+        // If v becomes 0, it's linearly dependent and doesn't give new control
+    }
+    
+    // Build the result starting from C
+    long long result = C;
+    
+    // Process from highest bit to lowest
+    for (int k = B-1; k >= 0; k--) {
+        if (!basis[k]) continue;
+        
+        if (controller[k] == 1) { // Flower controls this bit // Flower wants this bit to be 1
+            if (!(result >> k & 1)) {
+                result ^= basis[k];
+            }
+        } else if (controller[k] == 0) { // Gellyfish controls this bit // Gellyfish wants this bit to be 0
+            if (result >> k & 1) {
+                result ^= basis[k];
+            }
+        }
+    }
+    
+    cout << result << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    if (!(cin >> t)) {
+        return 0;
+    }
+    
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

@@ -1,0 +1,178 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+#include <climits>
+using namespace std;
+
+const int MAXN = 10;
+int n;
+vector<int> cubes;
+vector<int> dp; // dp[mask]: 子树 mask 作为一棵树的最小高度
+int total_mask;
+vector<int> H_min; // H_min[root_mask] 最小最大树高度
+vector<vector<int>> roots_list; // roots_list[root_mask] 根边长列表
+vector<vector<int>> memo; // memo[root_mask][mask] 用于记忆化
+
+int dfs(int root_mask, int mask) {
+    if (mask == 0) return 0;
+    if (memo[root_mask][mask] != -1) return memo[root_mask][mask];
+    int res = INT_MAX;
+    // 尝试分配一个根
+    for (int i=0;i<n;i++) if (root_mask>>i &1) {
+        int root = cubes[i];
+        // 枚举 mask 的子集 sub
+        for (int sub=mask; sub; sub=(sub-1)&mask) {
+            // 检查 sub 的最大边长 <= root
+            int max_len=0;
+            for (int j=0;j<n;j++) if (sub>>j &1) max_len = max(max_len, cubes[j]);
+            if (max_len > root) continue;
+            int new_max = max(dfs(root_mask, mask ^ sub), root + dp[sub]);
+            res = min(res, new_max);
+        }
+    }
+    memo[root_mask][mask] = res;
+    return res;
+}
+
+void precompute() {
+    int total = 1<<n;
+    total_mask = total-1;
+    dp.assign(total, INT_MAX);
+    // 初始化单元素
+    for (int i=0;i<n;i++) {
+        dp[1<<i] = cubes[i];
+    }
+    // 计算 dp
+    for (int mask=1; mask<total; mask++) {
+        if (__builtin_popcount(mask)==1) continue;
+        // 找到最大立方体作为根
+        int root_bit = -1;
+        for (int i=n-1;i>=0;i--) if (mask>>i &1) { root_bit=i; break; }
+        int root = cubes[root_bit];
+        int rest = mask ^ (1<<root_bit);
+        // 计算将 rest 划分成若干子树的最小最大高度 f
+        int f = INT_MAX;
+        // 枚举 rest 的所有非空子集划分 // 可以用 DP 计算
+        vector<int> fdp(total, INT_MAX);
+        fdp[0] = 0;
+        for (int sub=rest; sub; sub=(sub-1)&rest) {
+            // sub 作为一棵子树
+            fdp[sub] = dp[sub];
+        }
+        // 枚举所有子集覆盖 rest
+        for (int sub=rest; sub; sub=(sub-1)&rest) {
+            int other = rest ^ sub;
+            if (other == 0) continue;
+            f = min(f, max(fdp[sub], fdp[other]));
+        }
+        if (f == INT_MAX) f = 0;
+        dp[mask] = root + f;
+    }
+    // 计算 H_min 和 roots_list
+    H_min.assign(total, INT_MAX);
+    roots_list.resize(total);
+    memo.assign(total, vector<int>(total, -1));
+    for (int root_mask=1; root_mask<=total_mask; root_mask++) {
+        // 提取根边长
+        vector<int> roots;
+        for (int i=0;i<n;i++) if (root_mask>>i &1) roots.push_back(cubes[i]);
+        roots_list[root_mask] = roots;
+        // 计算 H_min
+        int rest = total_mask ^ root_mask;
+        H_min[root_mask] = dfs(root_mask, rest);
+    }
+}
+
+// 检查根正方形能否放入 w x l 矩形
+bool can_place(const vector<int>& roots, int w, int l) {
+    int k = roots.size();
+    if (k==0) return true;
+    // 尝试两种方向
+    for (int rot=0;rot<2;rot++) {
+        int W = w, L = l;
+        if (rot==1) swap(W,L);
+        // 状态压缩 DP: dp[mask] = 放置 mask 所需的最小总长度
+        int total = 1<<k;
+        vector<int> dp(total, INT_MAX);
+        dp[0] = 0;
+        // 预处理每个子集的总边长和最大边长
+        vector<int> sum_len(total,0), max_len(total,0);
+        for (int mask=1; mask<total; mask++) {
+            int lowbit = mask & -mask;
+            int idx = __builtin_ctz(lowbit);
+            int prev = mask ^ lowbit;
+            sum_len[mask] = sum_len[prev] + roots[idx];
+            max_len[mask] = max(max_len[prev], roots[idx]);
+        }
+        // DP
+        for (int mask=1; mask<total; mask++) {
+            // 枚举最后一行包含哪些正方形
+            for (int sub=mask; sub; sub=(sub-1)&mask) {
+                // 检查这一行能否放在宽度 W 内
+                if (sum_len[sub] <= W) {
+                    int other = mask ^ sub;
+                    if (dp[other] != INT_MAX) {
+                        dp[mask] = min(dp[mask], max_len[sub] + dp[other]);
+                    }
+                }
+            }
+        }
+        if (dp[total-1] <= L) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool solve_box(int w, int l, int h) {
+    int min_side = min(w,l);
+    // 最大立方体必须能放在地面
+    if (cubes.back() > min_side) return false;
+    // 枚举根集合，必须包含最大立方体（索引 n-1）
+    int must_root = 1<<(n-1);
+    for (int root_mask=1; root_mask<=total_mask; root_mask++) {
+        if ((root_mask & must_root) == 0) continue;
+        // 检查每个根的边长 <= min_side
+        bool ok = true;
+        for (int r : roots_list[root_mask]) {
+            if (r > min_side) { ok=false; break; }
+        }
+        if (!ok) continue;
+        if (H_min[root_mask] > h) continue;
+        // 检查根正方形放置
+        if (can_place(roots_list[root_mask], w, l)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int m;
+        cin >> n >> m;
+        // 生成斐波那契数列
+        vector<long long> fib(n+1);
+        fib[1]=1;
+        if (n>=2) fib[2]=2;
+        for (int i=3;i<=n;i++) fib[i]=fib[i-1]+fib[i-2];
+        cubes.clear();
+        for (int i=1;i<=n;i++) cubes.push_back(fib[i]);
+        // 排序递增
+        sort(cubes.begin(), cubes.end());
+        precompute();
+        string ans;
+        for (int i=0;i<m;i++) {
+            int w,l,h;
+            cin >> w >> l >> h;
+            ans += (solve_box(w,l,h) ? '1' : '0');
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

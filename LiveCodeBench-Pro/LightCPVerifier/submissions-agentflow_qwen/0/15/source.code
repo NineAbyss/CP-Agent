@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // For n==1, but problem says n>=2
+        if (n == 1) {
+            // Check if can become zero: need x*1 + y*1 = a[0] => x+y=a[0], always possible? // But operations: op1: subtract 1, op2: subtract 1 -> both same. So need a[0] >=0 and any nonneg x,y with x+y=a[0]
+            // So always YES if a[0]==0? but a[i]>=1. So impossible? Actually not our case. // Since n>=2, skip.
+            cout << "YES\n";
+            continue;
+        }
+
+        long long d = a[1] - a[0];
+        bool is_arith = true;
+        for (int i = 2; i < n; i++) {
+            if (a[i] - a[i-1] != d) {
+                is_arith = false;
+                break;
+            }
+        }
+
+        if (!is_arith) {
+            cout << "NO\n";
+            continue;
+        }
+
+        // Now check linear model: a_i = d * i + c // At i=1 (a[0]): a[0] = d * 1 + c => c = a[0] - d
+        long long c = a[0] - d;
+
+        // Conditions: // 1. c must be divisible by (n+1)
+        // 2. y = c / (n+1) >= 0 // 3. x = d + y >= 0
+        if (c < 0 || c % (n+1) != 0) {
+            cout << "NO\n";
+            continue;
+        }
+
+        long long y = c / (n+1);
+        long long x = d + y;
+
+        if (x >= 0 && y >= 0) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+
+    return 0;
+}

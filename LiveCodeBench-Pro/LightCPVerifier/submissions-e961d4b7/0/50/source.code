@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> grid(n, vector<int>(n));
+        
+        // Determine starting cell
+        int r, c;
+        if (n % 2 == 1) {
+            r = n / 2;
+            c = n / 2;
+        } else {
+            r = n / 2 - 1;
+            c = n / 2 - 1;
+        }
+        
+        // Directions: right, down, left, up
+        int dr[4] = {0, 1, 0, -1};
+        int dc[4] = {1, 0, -1, 0};
+        int dir = 0; // start moving right
+        
+        int step = 1;
+        int val = 0;
+        grid[r][c] = val++;
+        
+        while (val < n * n) {
+            for (int i = 0; i < 2; i++) {
+                for (int j = 0; j < step; j++) {
+                    r += dr[dir];
+                    c += dc[dir];
+                    grid[r][c] = val++;
+                    if (val >= n * n) goto done;
+                }
+                dir = (dir + 1) % 4;
+            }
+            step++;
+        }
+        done:
+        
+        // Output grid
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                cout << grid[i][j];
+                if (j < n - 1) cout << " ";
+            }
+            cout << endl;
+        }
+    }
+    return 0;
+}

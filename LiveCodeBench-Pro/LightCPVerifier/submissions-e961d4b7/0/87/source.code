@@ -1,0 +1,166 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+const int INF = 1e9;
+
+// 比较两个数字字符串的数值大小
+// 返回 -1 if a < b, 0 if a == b, 1 if a > b
+int compare_num_str(const string &a, const string &b) {
+    if (a.empty() && b.empty()) return 0;
+    if (a.empty()) return 1;   // a 无效，视为更大
+    if (b.empty()) return -1;
+    // 去掉前导零
+    size_t i = 0, j = 0;
+    while (i < a.size() && a[i] == '0') i++;
+    while (j < b.size() && b[j] == '0') j++;
+    string sa = a.substr(i);
+    string sb = b.substr(j);
+    if (sa.empty() && sb.empty()) return 0;
+    if (sa.empty()) return -1; // a=0, b>0
+    if (sb.empty()) return 1;  // a>0, b=0
+    if (sa.size() < sb.size()) return -1;
+    if (sa.size() > sb.size()) return 1;
+    if (sa < sb) return -1;
+    if (sa > sb) return 1;
+    return 0;
+}
+
+// 比较两个状态 (len1, num1) 和 (len2, num2) // 返回 true 如果状态1 优于状态2（数值更小，或数值相等时长度更大）
+bool better_state(int len1, const string &num1, int len2, const string &num2) {
+    int cmp = compare_num_str(num1, num2);
+    if (cmp < 0) return true;
+    if (cmp > 0) return false;
+    return len1 > len2; // 数值相等时，长度越大越好（删除越少）
+}
+
+// 字符串乘以一个小整数 (<=900)
+string mul_str(const string &s, int x) {
+    if (x == 0) return "0";
+    string res;
+    int carry = 0;
+    for (int i = s.size() - 1; i >= 0; --i) {
+        int d = (s[i] - '0') * x + carry;
+        res.push_back(d % 10 + '0');
+        carry = d / 10;
+    }
+    while (carry) {
+        res.push_back(carry % 10 + '0');
+        carry /= 10;
+    }
+    reverse(res.begin(), res.end());
+    return res;
+}
+
+// 比较两个分数 V1/S1 和 V2/S2 // 返回 true 如果 V1/S1 < V2/S2
+bool better_fraction(const string &V1, int S1, const string &V2, int S2) {
+    string left = mul_str(V1, S2);
+    string right = mul_str(V2, S1);
+    // 比较 left 和 right 的大小
+    if (left.size() < right.size()) return true;
+    if (left.size() > right.size()) return false;
+    return left < right;
+}
+
+int solve(const string &num) {
+    int n = num.size();
+    int max_sum = 9 * n;
+    vector<vector<int>> dp_len(n+1, vector<int>(max_sum+1, INF));
+    vector<vector<string>> dp_num(n+1, vector<string>(max_sum+1, ""));
+    dp_len[0][0] = 0;
+    dp_num[0][0] = "0";
+    for (int i = 0; i < n; ++i) {
+        int d = num[i] - '0';
+        for (int s = 0; s <= max_sum; ++s) {
+            if (dp_len[i][s] == INF) continue;
+            int cur_len = dp_len[i][s];
+            string cur_num = dp_num[i][s];
+            // 不选
+            if (dp_len[i+1][s] == INF) {
+                dp_len[i+1][s] = cur_len;
+                dp_num[i+1][s] = cur_num;
+            } else {
+                if (better_state(cur_len, cur_num, dp_len[i+1][s], dp_num[i+1][s])) {
+                    dp_len[i+1][s] = cur_len;
+                    dp_num[i+1][s] = cur_num;
+                }
+            }
+            // 选
+            int ns = s + d;
+            if (ns > max_sum) continue;
+            // 新数字
+            string new_num;
+            if (cur_num == "0") {
+                new_num = string(1, char('0' + d));
+            } else {
+                new_num = cur_num + char('0' + d);
+            }
+            // 去掉前导零
+            size_t pos = new_num.find_first_not_of('0');
+            if (pos == string::npos) {
+                new_num = "0";
+            } else {
+                new_num = new_num.substr(pos);
+            }
+            int new_len = cur_len + 1;
+            if (dp_len[i+1][ns] == INF) {
+                dp_len[i+1][ns] = new_len;
+                dp_num[i+1][ns] = new_num;
+            } else {
+                if (better_state(new_len, new_num, dp_len[i+1][ns], dp_num[i+1][ns])) {
+                    dp_len[i+1][ns] = new_len;
+                    dp_num[i+1][ns] = new_num;
+                }
+            }
+        }
+    }
+    // 寻找最小 cost
+    string best_V = "";
+    int best_S = 0;
+    int best_remove = n;
+    for (int s = 1; s <= max_sum; ++s) {
+        if (dp_len[n][s] == INF) continue;
+        string V = dp_num[n][s];
+        if (V == "0") {
+            // cost = 0
+            int remove = n - dp_len[n][s];
+            if (best_V.empty() || better_fraction(V, s, best_V, best_S)) {
+                best_V = V;
+                best_S = s;
+                best_remove = remove;
+            } else if (!better_fraction(best_V, best_S, V, s)) { // 相等
+                if (remove < best_remove) {
+                    best_remove = remove;
+                }
+            }
+            continue;
+        }
+        int remove = n - dp_len[n][s];
+        if (best_V.empty() || better_fraction(V, s, best_V, best_S)) {
+            best_V = V;
+            best_S = s;
+            best_remove = remove;
+        } else if (!better_fraction(best_V, best_S, V, s)) { // 分数相等
+            if (remove < best_remove) {
+                best_remove = remove;
+            }
+        }
+    }
+    return best_remove;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        string n;
+        cin >> n;
+        cout << solve(n) << '\n';
+    }
+    return 0;
+}

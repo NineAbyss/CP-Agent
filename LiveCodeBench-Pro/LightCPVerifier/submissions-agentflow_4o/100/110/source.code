@@ -1,0 +1,30 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    cin.ignore();  // Clear the newline character after reading t
+
+    vector<string> results;
+
+    for (int i = 0; i < t; ++i) {
+        string word1, word2, word3;
+        cin >> word1 >> word2 >> word3;
+        string modernName;
+        modernName += word1[0];
+        modernName += word2[0];
+        modernName += word3[0];
+        results.push_back(modernName);
+        cin.ignore(); // Clear the newline character after each line
+    }
+
+    for(const string& result : results) {
+        cout << result << endl;
+    }
+
+    return 0;
+}

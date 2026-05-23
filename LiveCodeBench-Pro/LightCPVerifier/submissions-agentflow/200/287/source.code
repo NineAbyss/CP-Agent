@@ -1,0 +1,156 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<vector<int>> adj(n+1);
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    // 以 1 为根进行 DFS
+    vector<int> par(n+1, -1), sz(n+1, 0), tin(n+1), tout(n+1);
+    int timer = 0;
+    function<void(int,int)> dfs = [&](int u, int p) {
+        par[u] = p;
+        tin[u] = ++timer;
+        sz[u] = 1;
+        for (int v : adj[u]) {
+            if (v == p) continue;
+            dfs(v, u);
+            sz[u] += sz[v];
+        }
+        tout[u] = timer;
+    };
+    dfs(1, 0);
+    auto is_ancestor = [&](int v, int b) {
+        return tin[v] <= tin[b] && tout[b] <= tout[v];
+    };
+    int m = n-1;
+    // 计算 w1, w2, delta
+    vector<long long> w1(n+1), w2(n+1), delta(n+1);
+    long long base = 0;
+    for (int v = 2; v <= n; v++) {
+        w1[v] = min(sz[v]-1, n - sz[v]);
+        w2[v] = min(sz[v], n - sz[v] - 1);
+        delta[v] = w1[v] - w2[v];
+        base += w2[v];
+    }
+    // 计算 up_sum
+    vector<long long> up_sum(n+1, 0);
+    function<void(int)> dfs2 = [&](int u) {
+        for (int v : adj[u]) {
+            if (v == par[u]) continue;
+            up_sum[v] = up_sum[u] + delta[v];
+            dfs2(v);
+        }
+    };
+    dfs2(1);
+    // 对于每个节点 b，计算 total, sum_contrib_b, sum_new_b
+    vector<long long> total(n+1), sum_contrib_b(n+1, 0), sum_new_b(n+1, 0);
+    vector<vector<pair<int,long long>>> neighbor_info(n+1);
+    for (int b = 1; b <= n; b++) {
+        total[b] = base + up_sum[b];
+        for (int x : adj[b]) {
+            long long contrib = 0;
+            long long comp = 0;
+            if (par[x] == b) {
+                contrib = w2[x];
+                comp = sz[x];
+            } else {
+                contrib = w1[b];
+                comp = n - sz[b];
+            }
+            sum_contrib_b[b] += contrib;
+            long long nc = min(comp, (long long)m - comp);
+            sum_new_b[b] += nc;
+            neighbor_info[b].push_back({x, nc});
+        }
+    }
+    // 找到最佳边
+    long long bestS = -1;
+    int best_a = -1, best_b = -1;
+    for (int a = 1; a <= n; a++) {
+        for (int b : adj[a]) {
+            if (a >= b) continue;
+            long long base_val = total[b] - sum_contrib_b[b] + sum_new_b[b];
+            long long nc_a = 0;
+            for (auto& p : neighbor_info[b]) {
+                if (p.first == a) {
+                    nc_a = p.second;
+                    break;
+                }
+            }
+            long long S = base_val - nc_a;
+            if (S > bestS) {
+                bestS = S;
+                best_a = a;
+                best_b = b;
+            }
+        }
+    }
+    // 输出最佳边
+    cout << best_a << " " << best_b << "\n";
+    // 构建 T'
+    int a = best_a, b = best_b;
+    vector<set<int>> new_adj(n+1);
+    for (int u = 1; u <= n; u++) {
+        for (int v : adj[u]) {
+            if (u == b || v == b) continue;
+            new_adj[u].insert(v);
+            new_adj[v].insert(u);
+        }
+    }
+    for (int x : adj[b]) {
+        if (x == a) continue;
+        new_adj[a].insert(x);
+        new_adj[x].insert(a);
+    }
+    // T' 的顶点集
+    vector<int> vertices;
+    for (int i = 1; i <= n; i++) if (i != b) vertices.push_back(i);
+    int m2 = vertices.size();
+    // 计算深度
+    vector<int> depth(n+1, -1);
+    function<void(int,int,int)> dfs3 = [&](int u, int p, int d) {
+        depth[u] = d;
+        for (int v : new_adj[u]) {
+            if (v == p) continue;
+            dfs3(v, u, d+1);
+        }
+    };
+    int root = vertices[0];
+    dfs3(root, -1, 0);
+    // 按深度排序
+    sort(vertices.begin(), vertices.end(), [&](int x, int y) {
+        return depth[x] > depth[y];
+    });
+    // 分配颜色
+    vector<int> color(n+1, 0);
+    color[b] = 0;
+    int half = m2 / 2;
+    for (int i = 0; i < half; i++) {
+        int u = vertices[i];
+        int v = vertices[m2-1-i];
+        color[u] = i+1;
+        color[v] = i+1;
+    }
+    // 输出颜色
+    for (int i = 1; i <= n; i++) {
+        cout << color[i] << (i == n ? "\n" : " ");
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

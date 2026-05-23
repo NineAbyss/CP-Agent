@@ -1,0 +1,30 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        
+        long long min_cost = LLONG_MAX;
+        for (int i = 0; i < n; ++i) {
+            long long cost = 0;
+            cost += (i) * a[i]; // Cost for making all elements to the left equal to a[i]
+            cost += (n - i - 1) * a[i]; // Cost for making all elements to the right equal to a[i]
+            
+            min_cost = min(min_cost, cost);
+        }
+        
+        cout << min_cost << "\n";
+    }
+    return 0;
+}

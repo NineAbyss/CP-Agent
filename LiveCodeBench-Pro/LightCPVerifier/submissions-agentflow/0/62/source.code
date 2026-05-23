@@ -1,0 +1,30 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        string s;
+        cin >> s;
+
+        int year = stoi(s);
+        bool found = false;
+
+        for (int sum = 32; sum <= 99; ++sum) {
+            if (sum * sum == year) {
+                // Output 0 and 'sum' as a valid (a + b) choice portraying (0 + sum)^2 = year.
+                cout << 0 << " " << sum << endl;
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            cout << -1 << endl;
+        }
+    }
+
+    return 0;
+}

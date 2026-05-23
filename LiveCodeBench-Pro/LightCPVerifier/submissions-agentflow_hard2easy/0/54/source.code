@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, k;
+    cin >> n >> k;
+    string s;
+    cin >> s;
+    
+    // 预处理 next 数组
+    vector<vector<int>> nxt(n+1, vector<int>(k, n));
+    for (int i = n-1; i >= 0; --i) {
+        for (int c = 0; c < k; ++c) {
+            nxt[i][c] = nxt[i+1][c];
+        }
+        int c = s[i] - 'a';
+        nxt[i][c] = i;
+    }
+    
+    // 计算 L 数组
+    vector<int> L(n+1, 0);
+    for (int i = n-1; i >= 0; --i) {
+        int min_val = INT_MAX;
+        for (int c = 0; c < k; ++c) {
+            int j = nxt[i][c];
+            if (j == n) {
+                min_val = 0;
+                break;
+            }
+            min_val = min(min_val, L[j+1] + 1);
+        }
+        L[i] = min_val;
+    }
+    
+    int q;
+    cin >> q;
+    while (q--) {
+        string t;
+        cin >> t;
+        int p = 0;
+        bool pleasant = true;
+        for (char ch : t) {
+            int c = ch - 'a';
+            if (p == n) {
+                pleasant = false;
+                break;
+            }
+            int j = nxt[p][c];
+            if (j == n) {
+                pleasant = false;
+                break;
+            }
+            p = j + 1;
+        }
+        if (!pleasant) {
+            cout << "0\n";
+        } else {
+            cout << L[p] + 1 << "\n";
+        }
+    }
+    
+    return 0;
+}

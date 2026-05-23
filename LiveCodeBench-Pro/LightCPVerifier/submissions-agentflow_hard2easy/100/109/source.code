@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<long long> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int i = 0; i < n; i++) cin >> b[i];
+    string c;
+    cin >> c;
+    long long base = 0;
+    for (int i = 0; i < n; i++) base ^= a[i];
+    vector<long long> d(n);
+    for (int i = 0; i < n; i++) d[i] = a[i] ^ b[i];
+    // 构建线性基，记录控制器
+    vector<long long> basis(60, 0);
+    vector<int> ctrl(60, -1); // 0 for Gellyfish, 1 for Flower
+    for (int i = 0; i < n; i++) {
+        long long x = d[i];
+        int player = (c[i] == '0' ? 0 : 1);
+        for (int b = 59; b >= 0; b--) {
+            if (!(x >> b & 1)) continue;
+            if (!basis[b]) {
+                basis[b] = x;
+                ctrl[b] = player;
+                break;
+            }
+            x ^= basis[b];
+        }
+    }
+    // 从高位到低位决定
+    long long res = base;
+    for (int b = 59; b >= 0; b--) {
+        if (!basis[b]) continue;
+        int player = ctrl[b];
+        long long new_res = res ^ basis[b];
+        if (player == 1) { // Flower
+            if (new_res > res) {
+                res = new_res;
+            }
+        } else { // Gellyfish
+            if (new_res < res) {
+                res = new_res;
+            }
+        }
+    }
+    cout << res << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

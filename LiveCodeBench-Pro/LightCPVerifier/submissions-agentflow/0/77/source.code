@@ -1,0 +1,36 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        long long total_apples = 0;
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+            total_apples += a[i];
+        }
+        
+        int max_apples = *max_element(a.begin(), a.end());
+        int min_apples = *min_element(a.begin(), a.end());
+        int initial_difference = max_apples - min_apples;
+        
+        if (initial_difference <= k) {
+            // Depending on the total parity, decide the winner
+            cout << (total_apples % 2 == 1 ? "Tom" : "Jerry") << '\n';
+        } else {
+            // Immediate condition where Tom can force a win
+            cout << "Tom" << '\n';
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,85 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+int solve_fast(const string& s) {
+    int n = s.size();
+    if (n == 0) return 0;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) a[i] = s[i] - '0';
+    
+    // base cost = n + cnt_diff + (a[0]==1)
+    int cnt_diff = 0;
+    for (int i = 1; i < n; i++) {
+        if (a[i] != a[i-1]) cnt_diff++;
+    }
+    int base = n + cnt_diff + (a[0] == 1);
+    
+    // precompute F for each (x,y) where x,y in {0,1} // F[xy][r] = (x != a[r]) + (r<n-1 ? (y != a[r+1]) - (a[r] != a[r+1]) : 0)
+    vector<vector<int>> F(4, vector<int>(n, 0));
+    for (int r = 0; r < n; r++) {
+        int ar = a[r];
+        int ar1 = (r < n-1) ? a[r+1] : -1;
+        for (int xy = 0; xy < 4; xy++) {
+            int x = xy >> 1;
+            int y = xy & 1;
+            int val = (x != ar);
+            if (r < n-1) {
+                val += (y != ar1) - (ar != ar1);
+            }
+            F[xy][r] = val;
+        }
+    }
+    
+    // suffix minima
+    vector<vector<int>> suf(4, vector<int>(n+1, INT_MAX));
+    for (int xy = 0; xy < 4; xy++) {
+        suf[xy][n] = INT_MAX;
+        for (int r = n-1; r >= 0; r--) {
+            suf[xy][r] = min(F[xy][r], suf[xy][r+1]);
+        }
+    }
+    
+    int min_change = 0;
+    
+    // case l>1: i from 0 to n-2, where i = l-1
+    for (int i = 0; i < n-1; i++) {
+        int x = a[i];
+        int y = a[i+1];
+        int xy = (x << 1) | y;
+        int C = - (x != y);
+        int best_f = suf[xy][i+1];
+        if (best_f == INT_MAX) continue;
+        min_change = min(min_change, C + best_f);
+    }
+    
+    // case l=1 (1-indexed): r from 0 to n-1
+    for (int r = 0; r < n; r++) {
+        int change = 0;
+        if (r < n-1) {
+            change += (a[0] != a[r+1]) - (a[r] != a[r+1]);
+        }
+        change += (a[r] == 1) - (a[0] == 1);
+        min_change = min(min_change, change);
+    }
+    
+    return base + min_change;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+        cout << solve_fast(s) << '\n';
+    }
+    return 0;
+}

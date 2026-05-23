@@ -1,0 +1,103 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstdint>
+using namespace std;
+
+using ll = long long;
+using i128 = __int128_t;
+
+ll k_global;
+
+ll floor_div2(ll x) {
+    ll res = x / 2;
+    if (x < 0 && x % 2 != 0) res--;
+    return res;
+}
+
+ll count_V(ll V, const vector<ll>& a) {
+    ll total = 0;
+    for (ll ai : a) {
+        ll limit1 = floor_div2(V + k_global);
+        ll c1 = min(ai, limit1);
+        if (c1 < 0) c1 = 0;
+        ll limit2 = floor_div2(V - k_global);
+        ll c2 = limit2 - ai;
+        if (c2 < 0) c2 = 0;
+        total += c1 + c2;
+    }
+    return total;
+}
+
+i128 sum_V(ll V, const vector<ll>& a) {
+    i128 total = 0;
+    for (ll ai : a) {
+        ll limit1 = floor_div2(V + k_global);
+        ll c1 = min(ai, limit1);
+        if (c1 < 0) c1 = 0;
+        i128 sum1 = (i128)c1 * (c1 + 1 - k_global);
+        ll limit2 = floor_div2(V - k_global);
+        ll c2 = limit2 - ai;
+        if (c2 < 0) c2 = 0;
+        i128 sum2 = (i128)c2 * (2 * ai + 1 + c2 + k_global);
+        total += sum1 + sum2;
+    }
+    return total;
+}
+
+void print_i128(i128 x) {
+    if (x == 0) {
+        cout << '0';
+        return;
+    }
+    if (x < 0) {
+        cout << '-';
+        x = -x;
+    }
+    string s;
+    while (x > 0) {
+        s += char('0' + (x % 10));
+        x /= 10;
+    }
+    reverse(s.begin(), s.end());
+    cout << s;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        ll k;
+        cin >> n >> k;
+        vector<ll> a(n);
+        ll S = 0;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            S += a[i];
+        }
+        k_global = k;
+        ll lo = 2 - k;
+        ll hi = 2 * S + k + 10;
+        while (lo < hi) {
+            ll mid = lo + (hi - lo) / 2;
+            if (count_V(mid, a) >= S) {
+                hi = mid;
+            } else {
+                lo = mid + 1;
+            }
+        }
+        ll V = lo;
+        ll cnt_lt = count_V(V - 1, a);
+        i128 sum_lt = sum_V(V - 1, a);
+        i128 need = S - cnt_lt;
+        i128 total_D = sum_lt + need * V;
+        i128 ans = (i128)k * S + total_D;
+        ans /= 2;
+        print_i128(ans);
+        cout << '\n';
+    }
+    return 0;
+}

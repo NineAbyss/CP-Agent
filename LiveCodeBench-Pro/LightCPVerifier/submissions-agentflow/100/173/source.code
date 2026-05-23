@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<long long> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    // 检查数组是否是线性序列 a[i] = k*i + b // 使用前两个点确定 k 和 b
+    long long k = a[1] - a[0];
+    long long b = a[0] - k;  // 因为 a[0] 对应 i=1: a[0] = k*1 + b
+    
+    // 验证所有点
+    for (int i = 0; i < n; i++) {
+        long long expected = k * (i+1) + b;
+        if (a[i] != expected) {
+            cout << "NO\n";
+            return;
+        }
+    }
+    
+    // 检查条件 // b 必须能被 (n+1) 整除
+    if (b % (n+1) != 0) {
+        cout << "NO\n";
+        return;
+    }
+    
+    long long y = b / (n+1);
+    long long x = k + y;
+    
+    if (x >= 0 && y >= 0) {
+        cout << "YES\n";
+    } else {
+        cout << "NO\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

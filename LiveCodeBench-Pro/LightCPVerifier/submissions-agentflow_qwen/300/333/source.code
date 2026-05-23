@@ -1,0 +1,204 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+const long long LINF = 1e18;
+
+// Function to compute minimum maximum value along any path
+int minMaxPath(int n, vector<vector<int>>& a, int sx, int sy, int ex, int ey) {
+    vector<vector<int>> dist(n, vector<int>(n, INF));
+    priority_queue<tuple<int, int, int>, vector<tuple<int, int, int>>, greater<tuple<int, int, int>>> pq;
+    
+    dist[sx][sy] = a[sx][sy];
+    pq.push({a[sx][sy], sx, sy});
+    
+    int dx[] = {0, 0, 1, -1};
+    int dy[] = {1, -1, 0, 0};
+    
+    while (!pq.empty()) {
+        auto [max_val, x, y] = pq.top();
+        pq.pop();
+        
+        if (max_val != dist[x][y]) continue;
+        
+        if (x == ex && y == ey) return max_val;
+        
+        for (int i = 0; i < 4; i++) {
+            int nx = x + dx[i], ny = y + dy[i];
+            if (nx < 0 || nx >= n || ny < 0 || ny >= n) continue;
+            
+            int new_max = max(max_val, a[nx][ny]);
+            if (new_max < dist[nx][ny]) {
+                dist[nx][ny] = new_max;
+                pq.push({new_max, nx, ny});
+            }
+        }
+    }
+    return dist[ex][ey];
+}
+
+// Maximum flow using Dinic's algorithm
+struct Dinic {
+    struct Edge {
+        int to, rev;
+        long long cap;
+    };
+    
+    vector<vector<Edge>> graph;
+    vector<int> level, iter;
+    int n;
+    
+    Dinic(int nodes) {
+        n = nodes;
+        graph.assign(n, vector<Edge>());
+        level.assign(n, 0);
+        iter.assign(n, 0);
+    }
+    
+    void add_edge(int from, int to, long long cap) {
+        graph[from].push_back({to, (int)graph[to].size(), cap});
+        graph[to].push_back({from, (int)graph[from].size()-1, 0});
+    }
+    
+    void bfs(int s) {
+        fill(level.begin(), level.end(), -1);
+        queue<int> q;
+        level[s] = 0;
+        q.push(s);
+        while (!q.empty()) {
+            int v = q.front(); q.pop();
+            for (auto& e : graph[v]) {
+                if (e.cap > 0 && level[e.to] < 0) {
+                    level[e.to] = level[v] + 1;
+                    q.push(e.to);
+                }
+            }
+        }
+    }
+    
+    long long dfs(int v, int t, long long f) {
+        if (v == t) return f;
+        for (int& i = iter[v]; i < graph[v].size(); i++) {
+            Edge& e = graph[v][i];
+            if (e.cap > 0 && level[v] < level[e.to]) {
+                long long d = dfs(e.to, t, min(f, e.cap));
+                if (d > 0) {
+                    e.cap -= d;
+                    graph[e.to][e.rev].cap += d;
+                    return d;
+                }
+            }
+        }
+        return 0;
+    }
+    
+    long long max_flow(int s, int t) {
+        long long flow = 0;
+        while (true) {
+            bfs(s);
+            if (level[t] < 0) return flow;
+            fill(iter.begin(), iter.end(), 0);
+            long long f;
+            while ((f = dfs(s, t, LINF)) > 0) {
+                flow += f;
+            }
+        }
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, r, k;
+        cin >> n >> r >> k;
+        
+        vector<vector<int>> a(n, vector<int>(n));
+        vector<string> c(n);
+        
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                cin >> a[i][j];
+            }
+        }
+        
+        for (int i = 0; i < n; i++) {
+            cin >> c[i];
+        }
+        
+        // Convert to 0-indexed
+        r--;
+        
+        // Compute base dis_M
+        int dis_M = minMaxPath(n, a, 0, 0, r, n-1);
+        
+        // Binary search on dis_F
+        int left = 1, right = 3000000;
+        int dis_F = 1;
+        
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            
+            // Create a flow network for vertex cut
+            int total_nodes = 2 * n * n + 2;
+            Dinic dinic(total_nodes);
+            int source = 2 * n * n;
+            int sink = 2 * n * n + 1;
+            
+            // Split each cell into in and out nodes
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    int in_node = i * n + j;
+                    int out_node = in_node + n * n;
+                    
+                    // Add edge from in to out with capacity based on cell properties
+                    long long capacity = 0;
+                    if (a[i][j] >= mid) {
+                        capacity = 0;
+                    } else if (c[i][j] == '0') {
+                        capacity = LINF;
+                    } else {
+                        capacity = mid - a[i][j];
+                    }
+                    
+                    dinic.add_edge(in_node, out_node, capacity);
+                    
+                    // Connect out node to neighbors' in nodes
+                    int dx[] = {0, 0, 1, -1};
+                    int dy[] = {1, -1, 0, 0};
+                    for (int d = 0; d < 4; d++) {
+                        int ni = i + dx[d], nj = j + dy[d];
+                        if (ni < 0 || ni >= n || nj < 0 || nj >= n) continue;
+                        int neighbor_in = ni * n + nj;
+                        dinic.add_edge(out_node, neighbor_in, LINF);
+                    }
+                }
+            }
+            
+            // Connect source to starting position (bottom-left)
+            int start_in = (n-1) * n + 0;
+            dinic.add_edge(source, start_in, LINF);
+            
+            // Connect ending position (r, n-1) to sink
+            int end_out = (r * n + (n-1)) + n * n;
+            dinic.add_edge(end_out, sink, LINF);
+            
+            // Calculate minimum cut which equals maximum flow
+            long long min_cut = dinic.max_flow(source, sink);
+            
+            if (min_cut <= k) {
+                dis_F = mid;
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        
+        cout << dis_M << " " << dis_F << endl;
+    }
+    return 0;
+}

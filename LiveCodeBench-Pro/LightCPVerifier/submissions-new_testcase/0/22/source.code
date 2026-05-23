@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<string> grid(n);
+        for (int i = 0; i < n; i++) {
+            cin >> grid[i];
+        }
+        // 标记空位
+        vector<vector<bool>> empty(n, vector<bool>(m, false));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (grid[i][j] == '.') {
+                    empty[i][j] = true;
+                }
+            }
+        }
+        int ans = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (grid[i][j] != 'g') continue;
+                // 检查是否存在空位距离正好 k
+                bool ok = false;
+                // 枚举边界格子
+                int x1 = i - k, x2 = i + k;
+                int y1 = j - k, y2 = j + k;
+                // 上边界
+                for (int y = y1; y <= y2; y++) {
+                    int x = x1;
+                    if (x >= 0 && x < n && y >= 0 && y < m && empty[x][y]) {
+                        ok = true;
+                        break;
+                    }
+                }
+                if (ok) { ans++; continue; }
+                // 下边界
+                for (int y = y1; y <= y2; y++) {
+                    int x = x2;
+                    if (x >= 0 && x < n && y >= 0 && y < m && empty[x][y]) {
+                        ok = true;
+                        break;
+                    }
+                }
+                if (ok) { ans++; continue; }
+                // 左边界（不包括角点，因为角点已包含在上下边界）
+                for (int x = x1 + 1; x <= x2 - 1; x++) {
+                    int y = y1;
+                    if (x >= 0 && x < n && y >= 0 && y < m && empty[x][y]) {
+                        ok = true;
+                        break;
+                    }
+                }
+                if (ok) { ans++; continue; }
+                // 右边界
+                for (int x = x1 + 1; x <= x2 - 1; x++) {
+                    int y = y2;
+                    if (x >= 0 && x < n && y >= 0 && y < m && empty[x][y]) {
+                        ok = true;
+                        break;
+                    }
+                }
+                if (ok) { ans++; continue; }
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

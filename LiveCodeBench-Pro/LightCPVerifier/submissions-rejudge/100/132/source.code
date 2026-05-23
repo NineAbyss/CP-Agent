@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int i = 0; i < n; i++) cin >> b[i];
+    
+    // Count frequency of each number
+    int max_val = 2 * n;
+    vector<int> freq(max_val + 1, 0);
+    for (int x : a) freq[x]++;
+    for (int x : b) freq[x]++;
+    
+    // Maximum possible answer: sum of min(2, cnt) for each number
+    int max_possible = 0;
+    for (int x = 1; x <= max_val; x++) {
+        max_possible += min(2, freq[x]);
+    }
+    cout << max_possible << '\n';
+    
+    // Prepare order of positions: process positions with smaller total frequency first
+    vector<int> order(n);
+    iota(order.begin(), order.end(), 0);
+    sort(order.begin(), order.end(), [&](int i, int j) {
+        return freq[a[i]] + freq[b[i]] < freq[a[j]] + freq[b[j]];
+    });
+    
+    vector<bool> inA(max_val + 1, false), inB(max_val + 1, false);
+    vector<bool> swap_flag(n, false);
+    
+    for (int idx : order) {
+        int i = idx;
+        if (a[i] == b[i]) {
+            inA[a[i]] = true;
+            inB[b[i]] = true;
+            continue;
+        }
+        
+        // Option 1: a[i] in A, b[i] in B
+        int cnt1 = (!inA[a[i]]) + (!inB[b[i]]);
+        // Option 2: b[i] in A, a[i] in B
+        int cnt2 = (!inA[b[i]]) + (!inB[a[i]]);
+        
+        if (cnt1 >= cnt2) {
+            inA[a[i]] = true;
+            inB[b[i]] = true;
+            swap_flag[i] = false;
+        } else {
+            inA[b[i]] = true;
+            inB[a[i]] = true;
+            swap_flag[i] = true;
+        }
+    }
+    
+    // Apply swaps
+    for (int i = 0; i < n; i++) {
+        if (swap_flag[i]) swap(a[i], b[i]);
+    }
+    
+    // Output
+    for (int i = 0; i < n; i++) {
+        cout << a[i] << " \n"[i == n-1];
+    }
+    for (int i = 0; i < n; i++) {
+        cout << b[i] << " \n"[i == n-1];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

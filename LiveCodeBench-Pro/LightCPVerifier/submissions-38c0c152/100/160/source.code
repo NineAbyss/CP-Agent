@@ -1,0 +1,130 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+using namespace std;
+
+struct DSU {
+    vector<int> parent, size;
+    DSU(int n) : parent(n), size(n, 1) {
+        iota(parent.begin(), parent.end(), 0);
+    }
+    
+    int find(int x) {
+        if (parent[x] != x) parent[x] = find(parent[x]);
+        return parent[x];
+    }
+    
+    bool unite(int x, int y) {
+        x = find(x); y = find(y);
+        if (x == y) return false;
+        if (size[x] < size[y]) swap(x, y);
+        parent[y] = x;
+        size[x] += size[y];
+        return true;
+    }
+};
+
+long long solve(int n, int d, vector<int>& a) {
+    // 位置按高度降序排序
+    vector<pair<int, int>> positions;
+    for (int i = 0; i < n; i++) {
+        positions.push_back({a[i], i});
+    }
+    sort(positions.rbegin(), positions.rend());
+    
+    DSU dsu(n);
+    vector<bool> active(n, false);
+    vector<int> comp_length(n, 0);
+    long long current_contrib = 0;
+    
+    long long total = 0;
+    int current_height = positions[0].first;
+    
+    for (int idx = 0; idx < n; ) {
+        // 处理所有高度为current_height的位置
+        int next_height = 0;
+        while (idx < n && positions[idx].first == current_height) {
+            int i = positions[idx].second;
+            active[i] = true;
+            
+            // 初始：自己一个分量，长度1
+            comp_length[i] = 1;
+            current_contrib += (1 + d - 1) / d;
+            
+            // 检查左边邻居
+            if (i > 0 && active[i-1]) {
+                int root1 = dsu.find(i);
+                int root2 = dsu.find(i-1);
+                if (root1 != root2) {
+                    int len1 = comp_length[root1];
+                    int len2 = comp_length[root2];
+                    dsu.unite(root1, root2);
+                    int new_root = dsu.find(i);
+                    // 减去旧分量的贡献
+                    current_contrib -= (len1 + d - 1) / d;
+                    current_contrib -= (len2 + d - 1) / d;
+                    // 加上新分量的贡献
+                    int new_len = len1 + len2;
+                    current_contrib += (new_len + d - 1) / d;
+                    comp_length[new_root] = new_len;
+                }
+            }
+            
+            // 检查右边邻居
+            if (i < n-1 && active[i+1]) {
+                int root1 = dsu.find(i);
+                int root2 = dsu.find(i+1);
+                if (root1 != root2) {
+                    int len1 = comp_length[root1];
+                    int len2 = comp_length[root2];
+                    dsu.unite(root1, root2);
+                    int new_root = dsu.find(i);
+                    // 减去旧分量的贡献
+                    current_contrib -= (len1 + d - 1) / d;
+                    current_contrib -= (len2 + d - 1) / d;
+                    // 加上新分量的贡献
+                    int new_len = len1 + len2;
+                    current_contrib += (new_len + d - 1) / d;
+                    comp_length[new_root] = new_len;
+                }
+            }
+            
+            idx++;
+        }
+        
+        // 计算下一个高度
+        if (idx < n) {
+            next_height = positions[idx].first;
+        } else {
+            next_height = 0;
+        }
+        
+        total += current_contrib * (current_height - next_height);
+        
+        current_height = next_height;
+    }
+    
+    return total;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, d;
+        cin >> n >> d;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        cout << solve(n, d, a) << '\n';
+    }
+    
+    return 0;
+}

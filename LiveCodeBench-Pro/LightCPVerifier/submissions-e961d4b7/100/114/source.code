@@ -1,0 +1,64 @@
+#include <iostream>
+using namespace std;
+
+void solve(int p, int s) {
+    if (p > 4 * s) {
+        cout << -1 << '\n';
+        return;
+    }
+    if (p == 4 * s) {
+        cout << 1 << '\n';
+        cout << "0 0" << '\n';
+        return;
+    }
+    if (p > 2 * s) {
+        int num = 2 * s;
+        int denom = p - 2 * s;
+        if (num % denom != 0) {
+            cout << -1 << '\n';
+            return;
+        }
+        int k = num / denom;
+        if (k > 50000) {
+            cout << -1 << '\n';
+            return;
+        }
+        cout << k << '\n';
+        for (int i = 0; i < k; ++i) {
+            cout << i << ' ' << 0 << '\n';
+        }
+        return;
+    }
+    // p <= 2 * s
+    const long long limit = 50000;
+    for (int a = 1; a <= limit; ++a) {
+        long long denom = 1LL * p * a - 2LL * s;
+        if (denom <= 0) continue;
+        if ((2LL * s * a) % denom != 0) continue;
+        long long b = (2LL * s * a) / denom;
+        if (b >= 1 && 1LL * a * b <= limit) {
+            int k = a * b;
+            cout << k << '\n';
+            for (int x = 0; x < a; ++x) {
+                for (int y = 0; y < b; ++y) {
+                    cout << x << ' ' << y << '\n';
+                }
+            }
+            return;
+        }
+    }
+    cout << -1 << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int p, s;
+        cin >> p >> s;
+        solve(p, s);
+    }
+    return 0;
+}

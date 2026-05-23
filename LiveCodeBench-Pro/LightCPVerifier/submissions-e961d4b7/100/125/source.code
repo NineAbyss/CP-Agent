@@ -1,0 +1,280 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const long long INF = 1e18;
+
+struct Dinic {
+    struct Edge {
+        int to, rev;
+        long long cap;
+        Edge(int to, int rev, long long cap) : to(to), rev(rev), cap(cap) {}
+    };
+    
+    int n;
+    vector<vector<Edge>> g;
+    vector<int> level, iter;
+    
+    Dinic(int n) : n(n), g(n), level(n), iter(n) {}
+    
+    void add_edge(int from, int to, long long cap) {
+        g[from].emplace_back(to, g[to].size(), cap);
+        g[to].emplace_back(from, g[from].size()-1, 0);
+    }
+    
+    void bfs(int s) {
+        fill(level.begin(), level.end(), -1);
+        queue<int> q;
+        level[s] = 0;
+        q.push(s);
+        while (!q.empty()) {
+            int v = q.front(); q.pop();
+            for (auto &e : g[v]) {
+                if (e.cap > 0 && level[e.to] < 0) {
+                    level[e.to] = level[v] + 1;
+                    q.push(e.to);
+                }
+            }
+        }
+    }
+    
+    long long dfs(int s, int t, long long f) {
+        vector<pair<int, int>> stk;
+        stk.emplace_back(s, 0);
+        vector<long long> flow(n, 0);
+        flow[s] = f;
+        while (!stk.empty()) {
+            int v = stk.back().first;
+            int &i = stk.back().second;
+            if (v == t) {
+                long long d = flow[t];
+                for (int j = stk.size()-1; j > 0; j--) {
+                    int u = stk[j-1].first;
+                    int idx = stk[j-1].second;
+                    Edge &e = g[u][idx];
+                    e.cap -= d;
+                    g[e.to][e.rev].cap += d;
+                }
+                return d;
+            }
+            if (i < g[v].size()) {
+                Edge &e = g[v][i];
+                if (e.cap > 0 && level[v] < level[e.to]) {
+                    flow[e.to] = min(flow[v], e.cap);
+                    stk.emplace_back(e.to, 0);
+                }
+                i++;
+            } else {
+                stk.pop_back();
+            }
+        }
+        return 0;
+    }
+    
+    long long max_flow(int s, int t) {
+        long long flow = 0;
+        while (true) {
+            bfs(s);
+            if (level[t] < 0) return flow;
+            fill(iter.begin(), iter.end(), 0);
+            long long f;
+            while ((f = dfs(s, t, INF)) > 0) {
+                flow += f;
+            }
+        }
+    }
+    
+    vector<bool> min_cut(int s) {
+        vector<bool> visited(n, false);
+        queue<int> q;
+        visited[s] = true;
+        q.push(s);
+        while (!q.empty()) {
+            int v = q.front(); q.pop();
+            for (auto &e : g[v]) {
+                if (e.cap > 0 && !visited[e.to]) {
+                    visited[e.to] = true;
+                    q.push(e.to);
+                }
+            }
+        }
+        return visited;
+    }
+};
+
+int n, r, k;
+vector<vector<int>> a;
+vector<string> c;
+
+int compute_dis(int sx, int sy, int ex, int ey) {
+    int low = 1, high = 1e6;
+    int ans = high;
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        vector<vector<bool>> vis(n, vector<bool>(n, false));
+        queue<pair<int,int>> q;
+        if (a[sx][sy] <= mid) {
+            q.push({sx,sy});
+            vis[sx][sy] = true;
+        }
+        int dx[4] = {1,-1,0,0};
+        int dy[4] = {0,0,1,-1};
+        bool found = false;
+        while (!q.empty()) {
+            auto [x,y] = q.front(); q.pop();
+            if (x == ex && y == ey) {
+                found = true;
+                break;
+            }
+            for (int d=0; d<4; d++) {
+                int nx = x+dx[d], ny = y+dy[d];
+                if (nx>=0 && nx<n && ny>=0 && ny<n && !vis[nx][ny] && a[nx][ny] <= mid) {
+                    vis[nx][ny] = true;
+                    q.push({nx,ny});
+                }
+            }
+        }
+        if (found) {
+            ans = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+    return ans;
+}
+
+bool check_D(int X, int D) {
+    // Build flow network only for cells with a[i][j] < D
+    int nodes = 2 * n * n;
+    Dinic dinic(nodes + 2);
+    int src = nodes, sink = nodes + 1;
+    auto idx = [&](int i, int j) { return i*n + j; };
+    
+    // For each cell, add edge from in to out with capacity
+    for (int i=0; i<n; i++) {
+        for (int j=0; j<n; j++) {
+            int in = 2*idx(i,j);
+            int out = in + 1;
+            long long cap = INF;
+            if (c[i][j] == '1' && a[i][j] < D) {
+                cap = D - a[i][j];
+            } else if (a[i][j] >= D) {
+                cap = 0; // already out of graph
+            }
+            dinic.add_edge(in, out, cap);
+        }
+    }
+    
+    // Add edges between adjacent cells only if both have a[i][j] < D
+    int dx[4] = {1,-1,0,0};
+    int dy[4] = {0,0,1,-1};
+    for (int i=0; i<n; i++) {
+        for (int j=0; j<n; j++) {
+            if (a[i][j] >= D) continue;
+            int out = 2*idx(i,j) + 1;
+            for (int d=0; d<4; d++) {
+                int ni = i+dx[d], nj = j+dy[d];
+                if (ni>=0 && ni<n && nj>=0 && nj<n && a[ni][nj] < D) {
+                    int nin = 2*idx(ni,nj);
+                    dinic.add_edge(out, nin, INF);
+                }
+            }
+        }
+    }
+    
+    // Connect source and sink
+    int src_cell = idx(n-1, 0);
+    int sink_cell = idx(r-1, n-1);
+    if (a[n-1][0] < D) {
+        dinic.add_edge(src, 2*src_cell, INF);
+    }
+    if (a[r-1][n-1] < D) {
+        dinic.add_edge(2*sink_cell+1, sink, INF);
+    }
+    
+    long long cost = dinic.max_flow(src, sink);
+    if (cost > k) return false;
+    
+    auto reachable = dinic.min_cut(src);
+    vector<vector<bool>> increased(n, vector<bool>(n, false));
+    for (int i=0; i<n; i++) {
+        for (int j=0; j<n; j++) {
+            int in = 2*idx(i,j);
+            int out = in + 1;
+            if (reachable[in] && !reachable[out]) {
+                increased[i][j] = true;
+            }
+        }
+    }
+    
+    // Check condition 1: exists path from (0,0) to (r-1,n-1) using cells with modified value <= X
+    // For increased cells, if D <= X, then after increase value is D <= X, so allowed.
+    // If D > X, then increased cells have value > X, so not allowed.
+    vector<vector<bool>> vis(n, vector<bool>(n, false));
+    queue<pair<int,int>> q;
+    bool start_allowed = (a[0][0] <= X) && (!increased[0][0] || (D <= X && a[0][0] <= X));
+    if (start_allowed) {
+        q.push({0,0});
+        vis[0][0] = true;
+    }
+    while (!q.empty()) {
+        auto [x,y] = q.front(); q.pop();
+        if (x == r-1 && y == n-1) return true;
+        for (int d=0; d<4; d++) {
+            int nx = x+dx[d], ny = y+dy[d];
+            if (nx>=0 && nx<n && ny>=0 && ny<n && !vis[nx][ny]) {
+                bool cell_allowed = (a[nx][ny] <= X) && (!increased[nx][ny] || (D <= X && a[nx][ny] <= X));
+                if (cell_allowed) {
+                    vis[nx][ny] = true;
+                    q.push({nx,ny});
+                }
+            }
+        }
+    }
+    return false;
+}
+
+void solve() {
+    cin >> n >> r >> k;
+    a.assign(n, vector<int>(n));
+    c.assign(n, "");
+    for (int i=0; i<n; i++) {
+        for (int j=0; j<n; j++) {
+            cin >> a[i][j];
+        }
+    }
+    for (int i=0; i<n; i++) {
+        cin >> c[i];
+    }
+    r--; // to 0-index
+    
+    int dis_M = compute_dis(0, 0, r, n-1);
+    int dis_F_orig = compute_dis(n-1, 0, r, n-1);
+    
+    // Binary search for max dis_F
+    int low = dis_F_orig;
+    int high = 1e6 + k;
+    int ans = dis_F_orig;
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        if (check_D(dis_M, mid)) {
+            ans = mid;
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+    cout << dis_M << " " << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

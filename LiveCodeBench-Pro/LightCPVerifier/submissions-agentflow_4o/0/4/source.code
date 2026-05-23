@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void apply_operations(vector<int>& a, const vector<tuple<int, int, int>>& operations) {
+    for (const auto& op : operations) {
+        int x, y, z;
+        tie(x, y, z) = op;
+        a[x] = min(a[x], a[y] + z);
+    }
+}
+
+bool is_unstable(vector<int> a_initial, vector<tuple<int, int, int>>& operations, int index, int k) {
+    vector<int> a_fixed = a_initial;
+    apply_operations(a_fixed, operations);
+    int stable_value = a_fixed[index];
+    
+    for (auto& op : operations) {
+        int x, y, z;
+        tie(x, y, z) = op;
+        
+        if (x == index && k >= (a_initial[x] - (a_initial[y] + z))) {
+            if (a_fixed[x] != min(a_fixed[x], a_initial[y] + z)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<tuple<int, int, int>> operations(m);
+    for (int i = 0; i < m; ++i) {
+        int x, y, z;
+        cin >> x >> y >> z;
+        operations[i] = make_tuple(x, y, z);
+    }
+
+    int q;
+    cin >> q;
+    while (q--) {
+        int k;
+        cin >> k;
+        vector<int> a_initial(n + 1);
+        for (int i = 1; i <= n; ++i) {
+            cin >> a_initial[i];
+        }
+
+        string result;
+        for (int i = 1; i <= n; ++i) {
+            if (is_unstable(a_initial, operations, i, k)) {
+                result += '1';
+            } else {
+                result += '0';
+            }
+        }
+        cout << result << endl;
+    }
+    return 0;
+}

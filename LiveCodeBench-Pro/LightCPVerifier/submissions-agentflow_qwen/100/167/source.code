@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        vector<int> b(n);
+        for (int i = 0; i < n; i++) {
+            cin >> b[i];
+        }
+        vector<tuple<int, int, int>> ops(q);
+        for (int i = 0; i < q; i++) {
+            int x, y, z;
+            cin >> x >> y >> z;
+            x--; y--; z--;
+            ops[i] = make_tuple(x, y, z);
+        }
+
+        vector<int> a = b;
+        vector<int> c = a;
+        for (int i = 0; i < q; i++) {
+            auto [x, y, z] = ops[i];
+            c[z] = min(c[x], c[y]);
+        }
+
+        if (c == b) {
+            for (int i = 0; i < n; i++) {
+                cout << a[i] << " \n"[i == n-1];
+            }
+        } else {
+            cout << "-1\n";
+        }
+    }
+    return 0;
+}

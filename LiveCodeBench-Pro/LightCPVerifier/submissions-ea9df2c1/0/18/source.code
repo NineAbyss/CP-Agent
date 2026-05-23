@@ -1,0 +1,99 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <bitset>
+using namespace std;
+
+bool willLeave(long long start, const vector<long long>& pos, const vector<vector<bool>>& isRed, int k) {
+    int n = pos.size();
+    // visited[light_index][dir][modk], dir: 0=left, 1=right
+    vector<vector<bitset<500>>> visited(n, vector<bitset<500>>(2));
+    
+    long long p = start;
+    int dir = 1; // 1=right, -1=left
+    int modk = 0;
+    
+    auto findRightIndex = [&](long long x) -> int {
+        auto it = upper_bound(pos.begin(), pos.end(), x);
+        if (it == pos.end()) return -1;
+        return it - pos.begin();
+    };
+    auto findLeftIndex = [&](long long x) -> int {
+        auto it = lower_bound(pos.begin(), pos.end(), x);
+        if (it == pos.begin()) return -1;
+        return (it - pos.begin()) - 1;
+    };
+    
+    while (true) {
+        // 如果当前位置没有灯，跳到下一个灯
+        int idx;
+        if (binary_search(pos.begin(), pos.end(), p)) {
+            idx = lower_bound(pos.begin(), pos.end(), p) - pos.begin();
+        } else {
+            if (dir == 1) {
+                idx = findRightIndex(p);
+                if (idx == -1) return true;
+            } else {
+                idx = findLeftIndex(p);
+                if (idx == -1) return true;
+            }
+            long long steps = abs(pos[idx] - p);
+            modk = (modk + steps) % k;
+            p = pos[idx];
+        }
+        
+        // 现在 p 在灯上
+        int dir_idx = (dir == 1) ? 1 : 0;
+        if (visited[idx][dir_idx][modk]) {
+            return false; // 循环
+        }
+        visited[idx][dir_idx][modk] = true;
+        
+        // 检查红灯
+        if (isRed[idx][modk]) {
+            dir = -dir;
+            dir_idx = (dir == 1) ? 1 : 0;
+        }
+        
+        // 移动一格
+        p += dir;
+        modk = (modk + 1) % k;
+        
+        if (p < 1 || p > 1000000000000000LL) return true;
+    }
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<long long> pos(n);
+        for (int i = 0; i < n; i++) cin >> pos[i];
+        vector<int> delay(n);
+        for (int i = 0; i < n; i++) cin >> delay[i];
+        
+        // 预处理 isRed[i][m]
+        vector<vector<bool>> isRed(n, vector<bool>(k, false));
+        for (int i = 0; i < n; i++) {
+            isRed[i][delay[i]] = true;
+        }
+        
+        int q;
+        cin >> q;
+        vector<long long> queries(q);
+        for (int i = 0; i < q; i++) cin >> queries[i];
+        
+        for (long long a : queries) {
+            cout << (willLeave(a, pos, isRed, k) ? "YES" : "NO") << '\n';
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

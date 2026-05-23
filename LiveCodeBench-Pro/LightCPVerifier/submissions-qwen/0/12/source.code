@@ -1,0 +1,55 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        
+        // We need to construct a bitstring of length n with exactly k ones // such that the number of "101" and "010" subsequences are equal.
+        
+        // Strategy: // - If k == 0: all zeros -> no 101 or 010 -> perfect.
+        // - If k == n: all ones -> no 010, and no 101 (since no 0) -> perfect. // - Otherwise: we can use a pattern that balances the counts.
+        
+        // One effective construction: place all 1s together and surround them with 0s. // But we must be careful. Let's try placing all 1s at the beginning, then all 0s.
+        // However, this may not balance 101 and 010.
+        
+        // Alternate idea: use symmetry. It can be proven that any string with symmetric // structure tends to have balanced 101 and 010. But simpler:
+        
+        // Known fact: strings like "1...10...0" or "0...01...1" often work. // But let's test small cases:
+        // Instead, use a known constructive solution:
+        
+        // Simple working construction:
+        // Place k ones, then (n-k) zeros. This forms "111...1000...0"
+        // In this case:
+        //   - Any '101' subsequence requires a 1, then a 0, then a 1 -> impossible since all 1s are before 0s.
+        //   - Similarly, '010' requires 0,1,0 -> but after a 0 we only have more 0s, so no 1 after a 0. // So both counts are 0 -> perfect!
+        
+        // But wait: what if we have isolated 1s? Actually in "111000", there is no 101 because once you go from 1 to 0,
+        // you never see a 1 again. Similarly for 010: once you leave 0s to go to 1s, you don't return to 0.
+        
+        // However, consider "1010": has one 101 and one 010. But our block method gives zero of both. // Zero equals zero -> still valid.
+        
+        // Therefore, the block construction works: all 1s first, then all 0s. // Both 101 and 010 counts are 0 -> equal.
+        
+        // But what about when k=0? Then it's all zeros -> valid. // What about k=n? All ones -> valid.
+        
+        // So we can safely output k ones followed by (n-k) zeros.
+        
+        string res = "";
+        for (int i = 0; i < k; i++) {
+            res += '1';
+        }
+        for (int i = 0; i < n - k; i++) {
+            res += '0';
+        }
+        
+        cout << res << endl;
+    }
+    
+    return 0;
+}

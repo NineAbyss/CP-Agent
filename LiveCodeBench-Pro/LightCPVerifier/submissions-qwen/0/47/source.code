@@ -1,0 +1,158 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+using namespace std;
+
+const int MAX_N = 500;
+vector<int> possible_values[MAX_N + 1];
+
+// Precompute all possible f(p) values for each n up to 500
+void precompute() {
+    // For n = 1
+    possible_values[1] = {0};
+    
+    for (int n = 2; n <= MAX_N; ++n) {
+        unordered_set<int> new_vals;
+        
+        // We use dynamic programming approach: // Consider inserting element n into permutations of size n-1
+        // But instead, we think about contributions to the sum
+        
+        // Alternate insight: f(p) is sum |p_i - i| // This is equivalent to sum of absolute deviations from identity
+        
+        // We can build up possible sums using DP on number of elements
+        vector<bool> dp(n * (n + 1) / 2 + 1, false); // max possible sum is roughly n*(n+1)/2
+        dp[0] = true;
+        
+        // For each position i from 1 to n, we can assign any value j from 1 to n // But we need to consider that it's a permutation
+        
+        // Instead, let's use known combinatorial structure: // After analysis of small cases and patterns in the expected outputs:
+        // The distinct values form a contiguous range with some gaps?
+        
+        // Actually, after checking known sequences and analyzing transitions, // we observe that the answer follows a recurrence.
+        
+        // However, direct computation via generating all possible sums
+        // for larger n is too expensive.
+        
+        // Insight: Use recurrence relation observed from sample outputs: // n=1 -> 1
+        // n=2 -> 2   // n=3 -> 3
+        // n=8 -> 17 // n=15 -> 57
+        // n=43 -> 463
+        
+        // Let's try to find pattern:
+        // Looking at differences or known sequences...
+        
+        // Actually, there's a known result: the number of distinct values of  // sum |p_i - i| over permutations of size n is equal to the number of integers k
+        // such that k has the same parity as floor(n^2/4) and 0 <= k <= floor(n^2/2) // BUT this doesn't match exactly.
+        
+        // Alternative approach: use DP where dp[i][s] = whether sum s is achievable for first i elements // But n up to 500, max sum ~ O(n^2), so total states O(n^3) = 500*500*125000 which is too big.
+        
+        // Another idea: use bitset to represent achievable sums efficiently.
+    }
+    
+    // After research and known problems: This is similar to CodeForces problem. // Known solution: use dynamic programming with bitset optimization.
+}
+
+// Efficient solution using bitset and DP
+void solve_fast() {
+    // We'll precompute answers for all n up to 500 using bitset
+    static bool computed = false;
+    static vector<int> ans(MAX_N + 1);
+    
+    if (!computed) {
+        ans[1] = 1;
+        if (MAX_N >= 2) ans[2] = 2;
+        if (MAX_N >= 3) ans[3] = 3;
+        
+        // From known pattern and verification with examples:
+        // There's a recurrence or closed form?
+        
+        // Alternatively, simulate using bitset for each n
+        vector<int> res(MAX_N + 1);
+        res[1] = 1;
+        
+        for (int n = 2; n <= MAX_N; ++n) {
+            // Maximum possible sum is sum_{i=1}^{n} max(|i-j|) but bounded by about n*n/2
+            int max_sum = n * n / 2 + 10;
+            vector<bool> dp(max_sum + 1, false);
+            dp[0] = true;
+            
+            // Try to build permutations incrementally? Not straightforward.
+            
+            // Known fact: The set of achievable sums is every integer from 0 to M // with fixed parity, except some initial ones?
+            
+            // After testing small cases:
+            // n=1: {0} -> 1 value
+            // n=2: {0,2} -> 2 values (missing 1)
+            // n=3: {0,2,4} -> 3 values
+            // n=4: let's compute manually: // Identity: 0
+            // Swap two adjacent: 2 // Swap opposite: e.g., [2,1,4,3]: |2-1|+|1-2|+|4-3|+|3-4| = 1+1+1+1=4
+            // [2,1,3,4]: 1+1+0+0=2 // [3,1,2,4]: |3-1|+|1-2|+|2-3|+|4-4|=2+1+1+0=4
+            // [4,1,2,3]: 3+1+1+1=6 // [2,3,4,1]: 1+1+1+3=6
+            // [3,4,1,2]: 2+2+2+2=8 // So far: 0,2,4,6,8
+            // Can we get 1? No, because sum of absolute differences has same parity as number of inversions? // Actually, each |p_i-i| has same parity as p_i+i, but overall sum parity?
+            // Note: sum |p_i - i| ≡ sum (p_i - i) mod 2? No, absolute value.
+            // But |x| ≡ x mod 2 only if x even? No.
+            // Actually, |x| ≡ x mod 2 always, since -x ≡ x mod 2. // So |p_i - i| ≡ p_i - i mod 2
+            // Sum |p_i - i| ≡ sum p_i - sum i ≡ 0 mod 2 // So sum is always even!
+            // Therefore only even numbers are possible.
+            
+            // So for n=4: possible sums are even numbers between 0 and max_sum. // What's maximum? n(n-1)? For reversed array: sum |n+1-i - i| = sum |n+1-2i|
+            // = sum_{i=1}^n |n+1-2i|
+            // = 2 * sum_{i=1}^{floor((n-1)/2)} (n+1-2i) ? 
+            // For even n=4: positions: i=1: |4+1-2|=3, i=2: |5-4|=1, i=3: |5-6|=1, i=4: |5-8|=3 → 3+1+1+3=8 // So max is 8.
+            // Are all even numbers from 0 to 8 achievable? 0,2,4,6,8 → 5 values.
+            // But expected output for n=8 is 17, not directly helpful.
+            // Wait, our example input doesn't have n=4, but let's assume. // Actually, looking at outputs: n=2→2, n=3→3, n=8→17, n=15→57, n=43→463
+            // Check OEIS or find recurrence.
+            
+            // Hypothesis: answer[n] = answer[n-1] + something // 1,2,3,?,...,17 at n=8
+            // Differences: 2-1=1, 3-2=1, then ? // Or maybe answer[n] = floor(n^2/4) + 1 ?
+            // n=2: 4/4+1=2 ✓ // n=3: 9/4=2.25→2+1=3 ✓
+            // n=8: 64/4=16+1=17 ✓ // n=15: 225/4=56.25→56+1=57 ✓
+            // n=43: 1849/4=462.25→462+1=463 ✓
+            
+            // So the formula is: floor(n²/4) + 1 // Why?
+            // Because the minimum value is 0 (identity) // The maximum value is floor(n²/4)*2? No, wait.
+            // But the number of distinct values is floor(n²/4)+1
+            
+            // And since we know the sum is always even, and likely all even numbers between 0 and max are achievable, // but max might be 2*floor(n²/4)?
+            // For n=3: floor(9/4)=2, so 2+1=3 values → 0,2,4
+            // Max sum for n=3: reversed [3,2,1]: |3-1|+|2-2|+|1-3|=2+0+2=4 = 2*2
+            // For n=4: floor(16/4)=4, so 4+1=5 values → 0,2,4,6,8 // Max sum: 8 = 2*4
+            // In general, maximum sum is 2 * floor(n²/4) = floor(n²/2) // And since sum is always even, and ranges from 0 to 2*floor(n²/4) in steps of 2,
+            // the count is floor(n²/4) + 1
+            
+            // Therefore:
+            res[n] = (n * n) / 4 + 1;
+        }
+        
+        for (int i = 1; i <= MAX_N; ++i) {
+            ans[i] = res[i];
+        }
+        computed = true;
+    }
+    
+    // Now assign to possible_values for interface
+    for (int i = 1; i <= MAX_N; ++i) {
+        possible_values[i].clear();
+        for (int j = 0; j < ans[i]; ++j) {
+            possible_values[i].push_back(j); // dummy, we only need count
+        }
+    }
+}
+
+int main() {
+    solve_fast();
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        // The number of distinct values is floor(n^2/4) + 1
+        cout << (n * n) / 4 + 1 << '\n';
+    }
+    
+    return 0;
+}

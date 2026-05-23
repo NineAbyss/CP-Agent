@@ -1,0 +1,36 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<long long> towers(n);
+        for(int i = 0; i < n; ++i) {
+            cin >> towers[i];
+        }
+        
+        long long carry = 0;  // Tracks the number of blocks we can distribute
+        long long maxHeight = 0;
+        
+        for(int i = 0; i < n; ++i) {
+            carry += towers[i]; // Add current tower blocks to carry
+            if(carry > 0) {
+                // We can increase heights here
+                maxHeight++;
+                carry--; // Using a block to increment this index
+            }
+        }
+        
+        cout << maxHeight << endl;
+    }
+    
+    return 0;
+}

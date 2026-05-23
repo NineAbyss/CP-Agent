@@ -1,0 +1,68 @@
+#include <iostream>
+#include <queue>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+using ll = long long;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        ll k;
+        cin >> n >> k;
+        vector<ll> a(n);
+        ll S = 0;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            S += a[i];
+        }
+        
+        ll total = 0;
+        for (ll v : a) total += v * (v + 1) / 2;
+        
+        // 来源堆: (可移出收益, 车道索引)
+        priority_queue<pair<ll, int>> source;
+        for (int i = 0; i < n; i++) {
+            if (a[i] > 0) {
+                source.push({a[i], i});
+            }
+        }
+        
+        // 目标堆: (增加成本, 车道索引)
+        priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<pair<ll, int>>> target;
+        vector<ll> cur = a;
+        for (int i = 0; i < n; i++) {
+            target.push({cur[i] + 1 + k, i});
+        }
+        
+        while (!source.empty()) {
+            auto [v, src] = source.top();
+            source.pop();
+            auto [c, dst] = target.top();
+            if (c >= v) break;
+            
+            // 移动一辆车
+            total += c - v;
+            
+            // 更新来源车道
+            cur[src]--;
+            if (cur[src] > 0) {
+                source.push({cur[src], src});
+            }
+            
+            // 更新目标车道
+            cur[dst]++;
+            target.pop();
+            target.push({cur[dst] + 1 + k, dst});
+        }
+        
+        cout << total << '\n';
+    }
+    return 0;
+}

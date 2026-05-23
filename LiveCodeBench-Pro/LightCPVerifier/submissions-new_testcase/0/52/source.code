@@ -1,0 +1,23 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, s;
+        cin >> n >> s;
+        int ans = 0;
+        for (int i = 0; i < n; ++i) {
+            int dx, dy, x, y;
+            cin >> dx >> dy >> x >> y;
+            // 计算 dy*x - dx*y
+            long long num = dy * 1LL * x - dx * 1LL * y;
+            if (num % s == 0) {
+                ++ans;
+            }
+        }
+        cout << ans << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,25 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+// Calculate the number of actions required to get every crystal from 0 to x.
+int calculateActions(int x) {
+    int actions = 0;
+    while (x > 0) {
+        actions += x & 1; // Increment count for a '1' encountered
+        x >>= 1;          // Shift right to process next higher bit
+        actions++;        // Each shift corresponds to a potential doubling action
+    }
+    return actions + 1;   // Consider final condition step ensuring inclusive
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int x;
+        cin >> x;
+        cout << calculateActions(x) << endl;
+    }
+    return 0;
+}

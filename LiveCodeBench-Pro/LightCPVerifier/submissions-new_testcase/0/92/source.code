@@ -1,0 +1,67 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <queue>
+#include <climits>
+using namespace std;
+
+typedef long long ll;
+
+bool check(int n, const vector<ll>& b, const vector<vector<pair<int, ll>>>& adj, ll X) {
+    vector<ll> maxBatt(n+1, -1);
+    maxBatt[1] = min(b[1], X);
+    queue<int> q;
+    q.push(1);
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (auto& e : adj[u]) {
+            int v = e.first;
+            ll w = e.second;
+            if (maxBatt[u] >= w) {
+                ll newBatt = maxBatt[u] + b[v];
+                if (newBatt > X) newBatt = X;
+                if (newBatt > maxBatt[v]) {
+                    maxBatt[v] = newBatt;
+                    q.push(v);
+                }
+            }
+        }
+    }
+    return maxBatt[n] != -1;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<ll> b(n+1);
+        for (int i = 1; i <= n; i++) cin >> b[i];
+        vector<vector<pair<int, ll>>> adj(n+1);
+        for (int i = 0; i < m; i++) {
+            int s, t; ll w;
+            cin >> s >> t >> w;
+            adj[s].emplace_back(t, w);
+        }
+        ll lo = 0, hi = 1e18;
+        ll ans = -1;
+        while (lo <= hi) {
+            ll mid = lo + (hi - lo) / 2;
+            if (check(n, b, adj, mid)) {
+                ans = mid;
+                hi = mid - 1;
+            } else {
+                lo = mid + 1;
+            }
+        }
+        cout << ans << '\n';
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

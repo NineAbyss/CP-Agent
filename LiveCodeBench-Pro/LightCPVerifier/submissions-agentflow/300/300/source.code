@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int nor(int x, int y, int k) {
+    int res = 0;
+    for (int j = 0; j < k; j++) {
+        int bx = (x >> j) & 1;
+        int by = (y >> j) & 1;
+        if (bx == 0 && by == 0) res |= (1 << j);
+    }
+    return res;
+}
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    
+    vector<int> ans(n, 0);
+    
+    // 对于每个位置 i，考虑所有包含 i 的子数组 // 但只考虑长度不超过 2k+5 的子数组
+    int limit = min(n, 2 * k + 5);
+    
+    for (int i = 0; i < n; i++) {
+        ans[i] = a[i];
+        // 枚举起点
+        for (int l = max(0, i - limit + 1); l <= i; l++) {
+            int cur = a[l];
+            // 枚举终点
+            for (int r = l; r < min(n, l + limit); r++) {
+                if (r > l) cur = nor(cur, a[r], k);
+                if (l <= i && i <= r) {
+                    ans[i] = max(ans[i], cur);
+                }
+            }
+        }
+    }
+    
+    for (int i = 0; i < n; i++) {
+        cout << ans[i] << " \n"[i == n-1];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

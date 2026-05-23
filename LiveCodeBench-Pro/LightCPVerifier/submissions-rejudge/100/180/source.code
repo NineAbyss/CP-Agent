@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+ll dp[64][2][128][64][2]; // pos, carry, sum, cnt, tight
+int digits[64];
+int len;
+
+ll dfs(int pos, int carry, int sum, int cnt, bool tight, ll k) {
+    if (sum - 2*cnt > k) return 0; // 剪枝
+    if (pos == len) {
+        return (sum - 2*cnt == k && carry == 0) ? 1 : 0;
+    }
+    if (!tight && dp[pos][carry][sum][cnt][tight] != -1) 
+        return dp[pos][carry][sum][cnt][tight];
+    
+    int up = tight ? digits[pos] : 3;
+    ll res = 0;
+    for (int d = 0; d <= up; d++) {
+        int val = d + carry;
+        int ncarry = val / 4;
+        val %= 4;
+        int nsum = sum + val;
+        int ncnt = cnt + (val == 3 && ncarry == 1 ? 1 : 0); // 简化进位计数
+        res += dfs(pos+1, ncarry, nsum, ncnt, tight && (d == up), k);
+    }
+    if (!tight) dp[pos][carry][sum][cnt][tight] = res;
+    return res;
+}
+
+ll count_up_to(ll n, ll k) {
+    if (n < 0) return 0;
+    len = 0;
+    ll tmp = n;
+    while (tmp) {
+        digits[len++] = tmp % 4;
+        tmp /= 4;
+    }
+    if (len == 0) len = 1, digits[0] = 0;
+    reverse(digits, digits + len);
+    memset(dp, -1, sizeof dp);
+    return dfs(0, 0, 0, 0, true, k);
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        ll l, r, k;
+        cin >> l >> r >> k;
+        if (k > 120) { // 安全上限，因为 e ≤ 1e18 时 zebra value 不会太大
+            cout << 0 << '\n';
+            continue;
+        }
+        ll ans = count_up_to(r, k) - count_up_to(l-1, k);
+        cout << ans << '\n';
+    }
+    return 0;
+}

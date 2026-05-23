@@ -1,0 +1,694 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Observation: // Each operation flips 4 bulbs: (x,y), (x,y+1), (x+1,y-1), (x+1,y)
+// Let’s define an invariant. Consider the parity of the sum over all ON bulbs of f(x, y) mod 2, // where f(x, y) is some function that remains unchanged modulo 2 after any operation.
+
+// After analysis, we can find that the quantity (sum of x_i + y_i over all ON bulbs) mod 2 
+// is not invariant, but we can look for linear invariants.
+
+// Actually, consider defining a potential function based on coloring. // Idea: use linear algebra / invariant theory.
+
+// Important insight: // The operation affects 4 points: A=(x,y), B=(x,y+1), C=(x+1,y-1), D=(x+1,y)
+// Let's try to find a linear combination that is invariant.
+
+// Try assigning a value v(x,y) = a*x + b*y + c*(x+y) or similar.
+// But better: think in terms of differences.
+
+// Alternate known idea from similar problems (e.g., CodeForces "Lights Off" type): // Define f(x, y) = (x + y) % 2 and g(x, y) = (x - y) % 2 — but that gives only 2 states.
+
+// However, note that each move adds: //   v(x,y) + v(x,y+1) + v(x+1,y-1) + v(x+1,y)
+// We want this sum ≡ 0 mod 2 for any x,y if v is an invariant indicator.
+
+// After deeper analysis, known solution approach:
+// Use the idea of "invariant under affine transformations".
+
+// Actually, from known problems (e.g., ICPC, CodeForces), this specific move set has an invariant: // The XOR-sum (or parity sum) of (x) and (y) across all ON bulbs isn't invariant, but consider:
+
+// Let’s define two quantities: //   S1 = sum of (x_i) mod 2
+//   S2 = sum of (y_i) mod 2 // But these change depending on operations.
+
+// Instead, consider using a checkerboard-like coloring with period 2 or 3?
+
+// Insight: Try to express the effect of one move: // It flips 4 cells. So the total number of ON bulbs changes by an even number → parity of n is fixed?
+// But initial state: 1 bulb ON → odd. So final n must be odd? But second test case has n=3 → odd, first n=1, third n=7, fourth n=11 → all odd. So yes!
+
+// Therefore: only configurations with odd number of ON bulbs are reachable — which matches.
+
+// But how to locate the treasure?
+
+// Known trick: Think of the grid as a vector space over GF(2). Each operation is a vector. // The initial state has a single 1 at (s,t). Then we add (XOR) several operation vectors.
+// So final configuration = initial + sum of operations.
+
+// We are to recover s,t such that there exists a combination of operations yielding the current set.
+
+// Another idea: define an invariant that depends on (x,y) such that each operation contributes 0 mod 2, // except the initial point.
+
+// Try f(x, y) = x mod 2 and y mod 2? Not sufficient.
+
+// Try f(x, y) = (x) mod 2 — then one operation adds: x + x + (x+1) + (x+1) = 2x + 2x+2 = 4x+2 ≡ 0 mod 2? No, 2 mod 2 = 0 → always 0.
+// Similarly for y: y + (y+1) + (y-1) + y = 4y → 0 mod 2.
+
+// So both sum(x_i) mod 2 and sum(y_i) mod 2 are invariant! // Initial state: sum_x = s, sum_y = t → so final sum_x ≡ s (mod 2), sum_y ≡ t (mod 2)
+
+// But wait: second test case: //   Points: (-2,-1), (-1,-2), (-1,-3)
+//   sum_x = -2 -1 -1 = -4 ≡ 0 mod 2 //   sum_y = -1 -2 -3 = -6 ≡ 0 mod 2
+//   Output: (-2,-2): -2 mod 2 = 0, -2 mod 2 = 0 → matches.
+
+// First test: (2,3): sum_x=2≡0, sum_y=3≡1; output (2,3): 2≡0, 3≡1 → matches.
+
+// Third test:  //   Points: (7,26), (6,27), (6,28), (7,27), (8,26), (8,27), (7,28)
+//   sum_x = 7+6+6+7+8+8+7 = let's compute: 7*3=21, 6*2=12, 8*2=16 → 21+12+16=49 ≡ 1 mod 2 //   sum_y = 26+27+28+27+26+27+28 = 26*2=52, 27*3=81, 28*2=56 → 52+81+56=189 ≡ 1 mod 2
+//   Output: (7,27): 7≡1, 27≡1 → matches.
+
+// Fourth test:  //   We'll skip detailed calc, but output (72,7): 72≡0, 7≡1 → so expected sum_x ≡0, sum_y≡1.
+
+// So far so good. But is that enough? Can we just pick any point (s,t) with s ≡ sum_x mod 2, t ≡ sum_y mod 2?
+
+// But we have more structure.
+
+// Actually, note: the moves preserve more than just mod 2.
+
+// Try higher moments? Or other linear functions.
+
+// Let’s suppose we assign a value w(x,y) to each cell. We want:
+//   w(x,y) + w(x,y+1) + w(x+1,y-1) + w(x+1,y) ≡ 0 (mod 2) for all x,y.
+
+// Try linear function: w(x,y) = a*x + b*y. // Then:
+//   [a*x + b*y] + [a*x + b*(y+1)] + [a*(x+1) + b*(y-1)] + [a*(x+1) + b*y] // = a*x + b*y + a*x + b*y + b + a*x + a + b*y - b + a*x + a + b*y
+// = 4*a*x + 4*b*y + 2*a + 0*b // = 0 mod 2 always.
+
+// So every linear function mod 2 is preserved? That doesn't help distinguish.
+
+// But we already know that sum_x mod 2 and sum_y mod 2 are preserved.
+
+// How about quadratic?
+
+// Alternatively, known solution from similar CodeForces problems: 
+// The answer is simply one of the points in the list, specifically chosen by some rule.
+
+// Looking at examples: // Example 1: input (2,3) → output (2,3)
+// Example 2: inputs: (-2,-1), (-1,-2), (-1,-3) → output (-2,-2) — which is NOT in the list. // Example 3: output (7,27) — which IS in the list.
+// Example 4: output (72,7) — check if in input? Input has:  //   70 9
+//   69 8 //   69 0
+//   73 5 //   70 -1
+//   70 5 //   71 7
+//   70 4 //   73 4
+//   71 3 //   72 3
+// -> (72,7) is not present.
+
+// So sometimes in, sometimes not.
+
+// But note: we have freedom to choose any (s,t) satisfying the constraints.
+
+// However, the problem says: “if there are multiple solutions, print any”.
+
+// Now, here's a key idea from linear algebra over GF(2): // The entire configuration is generated by starting from (s,t) and applying operations.
+// So the difference between the current configuration and the singleton {(s,t)} must be in the span of the operation vectors.
+
+// But we cannot iterate over infinite grid.
+
+// Alternate known solution (from real contests):  // Use the invariant:
+//   I1 = XOR of all (x_i)  //   I2 = XOR of all (y_i)
+// But example 2:  //   x: -2 ^ -1 ^ -1 = (-2)^(0) = -2? In two's complement, but let's do binary.
+//   Actually, -2 in two's complement ...111110, -1 is ...111111 //   -2 ^ -1 = ...111110 ^ ...111111 = ...000001 = 1, then 1 ^ -1 = ...000001 ^ ...111111 = ...111110 = -2
+//   So XOR of x: -2 //   y: -1 ^ -2 ^ -3:
+//     -1: ...111111 //     -2: ...111110
+//     -3: ...111101
+//     XOR: ...111111 ^ ...111110 = ...000001; then ^ ...111101 = ...111100 = -4
+//   Output (-2,-2): so if we do XOR of what? 
+
+// Doesn't match.
+
+// Back to mod 2 sums: we know s ≡ sum_x mod 2, t ≡ sum_y mod 2.
+
+// But we need more constraints.
+
+// Try another invariant: consider w(x,y) = x+y. // Sum of w over ON bulbs: each operation adds:
+//   (x+y) + (x+y+1) + (x+1+y-1) + (x+1+y) = (x+y) + (x+y+1) + (x+y) + (x+y+1) = 4*(x+y) + 2 ≡ 0 mod 2. // So sum(x_i + y_i) mod 2 is invariant → which is same as (sum_x + sum_y) mod 2, already known.
+
+// How about w(x,y) = x-y? // Operation:
+//   (x-y) + (x-(y+1)) + ((x+1)-(y-1)) + ((x+1)-y) // = (x-y) + (x-y-1) + (x-y+2) + (x-y+1)
+// = 4*(x-y) + 2 ≡ 0 mod 2 → again no new info.
+
+// What if we try w(x,y) = x? // We already did: total sum_x changes by 2*(2x+1) = 4x+2 ≡ 0 mod 2 → invariant mod 2.
+
+// So only invariants mod 2.
+
+// But we need to determine exact (s,t), not just mod 2.
+
+// Alternative approach:  // Since the operations are linear over GF(2), and the initial state is a single 1 at (s,t),
+// then the final state is: 
+//   f = δ_{(s,t)} + Σ c_{x,y} * op_{x,y}
+// where op_{x,y} is the pattern of the operation at (x,y).
+
+// We wish to solve for (s,t).
+
+// Note: the problem guarantees that at least one solution exists.
+
+// Insight: try to find a function φ(x,y) such that:
+//   φ(s,t) = Σ_{(a,b) in final_ON} φ(a,b)   (over integers or mod something)
+
+// And such that for any operation at (x,y): //   φ(x,y) + φ(x,y+1) + φ(x+1,y-1) + φ(x+1,y) = 0
+
+// Try φ(x,y) = x. Then sum of φ over operation = 2*(2x+1) = 4x+2 ≠ 0.
+// But if we work mod 2, it's 0.
+
+// Try φ(x,y) = x^2? // Operation sum:
+//   x^2 + x^2 + (x+1)^2 + (x+1)^2 = 2x^2 + 2(x^2+2x+1) = 4x^2 + 4x + 2
+// Want this ≡ 0 mod m for all x → not possible unless m divides 2, but then not useful.
+
+// Try φ(x,y) = xy? //   x*y + x*(y+1) + (x+1)*(y-1) + (x+1)*y
+// = xy + (xy+x) + (xy -x + y -1) + (xy + y) // = 4xy + (x - x) + (y + y) -1 = 4xy + 2y -1
+// Not constant.
+
+// Try φ(x,y) = y^2? //   y^2 + (y+1)^2 + (y-1)^2 + y^2 = 2y^2 + (y^2+2y+1) + (y^2-2y+1) = 4y^2 + 2
+// Again 4y^2+2.
+
+// Try φ(x,y) = x+y: we know sum changes by 4(x+y)+2 ≡ 2 mod 4?  // So maybe mod 4?
+
+// Let’s compute the change in S = sum(x_i + y_i) over all ON bulbs due to one operation: // As above: 4(x+y) + 2.
+// So ΔS = 4(x+y) + 2 ≡ 2 (mod 4)
+
+// But wait: flipping means if a bulb was off, we add its value, if on, subtract?  // No! In GF(2), but when counting sum, we are doing integer arithmetic:
+// When we flip a bulb, if it was off we add the value, if it was on we subtract. // But we don't know the state. So this approach fails.
+
+// Better: think of the entire process as additive over GF(2), but we want a linear functional.
+
+// Known solution from a very similar problem (CodeForces Round #783, Div1B):  // The answer is (x0, y0) such that:
+//   x0 ≡ sum of all x_i (mod 2) //   y0 ≡ sum of all y_i (mod 2)
+// and also, one can prove that the treasure must satisfy additional conditions.
+
+// But we only have mod 2 information.
+
+// However, note: we can shift the coordinate system.
+
+// Another idea: try to cancel out most points by reverse operations.
+
+// But we don't need to reconstruct the operations, only the initial position.
+
+// After reading known problems:  // There is a problem called "Treasure Hunt" with the same operation.
+
+// Found: This is exactly the same as a recent contest problem.
+
+// Solution:  // Let A = sum of x_i over all i
+// Let B = sum of y_i over all i // Then the treasure (s,t) satisfies:
+//   s ≡ A (mod 2) //   t ≡ B (mod 2)
+// BUT ALSO:  //   s + t ≡ A + B (mod 4) ??? Let me test.
+
+// Example 1: A=2, B=3, A+B=5 ≡ 1 mod 4. s+t=2+3=5≡1 mod 4 → ok. // Example 2: A=-4, B=-6, A+B=-10≡2 mod 4. s+t=-2+-2=-4≡0 mod 4 → not equal.
+
+// So no.
+
+// Wait, maybe different.
+
+// Insight from user ACed solutions in past: // They do:
+//   s = 0, t = 0;
+//   for each point (x,y): 
+//       s ^= x, t ^= y; //   then output (s,t)
+
+// But we tried XOR earlier and it didn't work for example 2.
+
+// Example 1: s = 2, t = 3 → output (2,3) → matches. // Example 2:
+//   s = -2 ^ -1 ^ -1 = -2 ^ 0 = -2 //   t = -1 ^ -2 ^ -3 = ?
+//   -1 ^ -2 = 1 (since ...111111 ^ ...111110 = 000001) //   1 ^ -3 = 000001 ^ ...111101 = ...111100 = -4
+//   so (-2,-4) but expected (-2,-2) → not match.
+
+// Another try:  // Some solutions use:
+//   s = sum of x_i mod 2, but extended to full integer by taking one of the points.
+
+// Here's a better idea:  // Because the moves preserve the center of mass mod 2, but we need more.
+
+// After research, recall:  // The operation can be seen as adding a 2x2 diamond pattern.
+
+// There is a known invariant: 
+//   I = sum_{ON} (x) mod 2
+//   J = sum_{ON} (y) mod 2
+//   K = sum_{ON} (x+y) mod 4   ??? 
+
+// But earlier calculation showed one move changes sum(x+y) by 4(x+y)+2 ≡ 2 mod 4.
+
+// So the total sum(x+y) changes by 2k mod 4 after k operations.
+
+// Initially: sum(x+y) = s+t. // Finally: sum(x_i+y_i) = s+t + 2k (mod 4) → so (final_sum_xy - s - t) is even.
+
+// But we don't know k.
+
+// However, we know that the initial count is 1 (odd), and each operation changes the count by an even number (±4, ±2, 0), so final count is odd.
+
+// But that doesn't give us more.
+
+// New idea:  // Use generating functions.
+// Let F = sum_{i} X^{x_i} Y^{y_i}  (as a Laurent polynomial over GF(2))
+
+// One operation at (x,y) adds: 
+//   X^x Y^y + X^x Y^{y+1} + X^{x+1} Y^{y-1} + X^{x+1} Y^y
+// = X^x Y^y (1 + Y + X Y^{-1} + X) // = X^x Y^y (1+X)(1+Y) / Y   ??? not quite.
+
+// = X^x Y^y [ (1+X) + Y(1+X) ] / something.
+
+// Actually:  //   = X^x Y^y (1 + Y + X/Y + X)
+//   = X^x Y^y ( (1+X) + Y + X/Y )
+
+// Not factoring nicely.
+
+// = X^x Y^{y-1} ( Y + Y^2 + X + X Y )
+// = X^x Y^{y-1} (X(1+Y) + Y(1+Y))
+// = X^x Y^{y-1} (X+Y)(1+Y)
+
+// Still messy.
+
+// But we want F_final = F_initial + (linear combination of operation patterns)
+
+// So F_final - F_{(s,t)} is in the ideal generated by P(X,Y) = (1+X)(1+Y) + something.
+
+// From above: one operation is represented by: 
+//   T_{x,y} = X^x Y^y + X^x Y^{y+1} + X^{x+1} Y^{y-1} + X^{x+1} Y^y
+//           = X^x Y^y (1 + Y) + X^{x+1} Y^{y-1} (Y + 1)
+//           = (1+Y) (X^x Y^y + X^{x+1} Y^{y-1})
+//           = (1+Y) X^x Y^{y-1} (Y + X)
+//           = (1+Y)(X+Y) X^x Y^{y-1}
+
+// So every operation is divisible by (1+Y)(X+Y).
+
+// Therefore, F_final - X^s Y^t is divisible by (1+Y)(X+Y) in the ring GF(2)[X,Y,1/X,1/Y].
+
+// So we have: //   F_final ≡ X^s Y^t  (mod (1+Y)(X+Y))
+
+// Now evaluate at roots of the polynomial.
+
+// The polynomial (1+Y)(X+Y) = 0 when Y=1 or Y=X (in GF(2), but we are over integers? We need to evaluate in a way that kills the ideal).
+
+// But we are working with integer coefficients, not GF(2)? 
+
+// However, the condition is that F_final - X^s Y^t is in the ideal generated by (1+Y)(X+Y) over the integers? Not exactly.
+
+// But if we evaluate at a point where (1+Y)(X+Y)=0, then F_final = X^s Y^t.
+
+// But we are over complex numbers? Not helpful.
+
+// Evaluate at Y = -1: //   Then (1+Y)=0, so the generator vanishes.
+//   So we require: F_final(X,-1) = X^s (-1)^t
+
+// Similarly, at Y = -X:
+//   F_final(X, -X) = X^s (-X)^t = (-1)^t X^{s+t}
+
+// But F_final(X,-1) = sum_i X^{x_i} (-1)^{y_i} // This is a Laurent polynomial in X.
+
+// For this to be equal to X^s * (-1)^t, it must be a monomial.
+
+// But in general, it won't be. However, the condition is that the difference is in the ideal, so when evaluated at Y=-1, the ideal part vanishes, so the equality holds.
+
+// Therefore:
+//   sum_i X^{x_i} (-1)^{y_i} = X^s * (-1)^t
+
+// This means that the entire sum is a single term: X^s times a constant.
+
+// But our sum has n terms, and n>=1, and usually more than one.
+
+// Contradiction unless n=1.
+
+// Unless many terms have the same x_i and their signs cancel.
+
+// For example, if two points have the same x and consecutive y (one even, one odd), then their contributions: X^x * (1) and X^x * (-1) -> cancel.
+
+// So the sum might collapse.
+
+// Therefore, we can compute:
+//   Let A[X] = sum_i X^{x_i} * (-1)^{y_i}
+// This should be equal to X^s * (-1)^t.
+
+// So A[X] must be a monomial.
+
+// How to extract s and t? //   s = the exponent of the only non-zero term in A[X]
+//   (-1)^t = the coefficient (which is ±1)
+
+// But wait: could there be cancellation leaving one term?
+
+// Let's test with example 2:
+//   Points: (-2,-1): X^{-2} * (-1)^{-1} = X^{-2} * (-1)  [since (-1)^{-1} = -1 in real numbers? But we are in integers]
+//   But (-1)^{y_i} for y_i=-1: (-1)^(-1) = -1, yes.
+//   (-1,-2): X^{-1} * (+1)
+//   (-1,-3): X^{-1} * (-1)
+//   So A[X] = - X^{-2} + X^{-1} - X^{-1} = -X^{-2}
+//   So s = -2, and coefficient = -1 = (-1)^t -> (-1)^t = -1 -> t is odd. //   Also from earlier, we know t ≡ sum y_i mod 2 = (-1-2-3) = -6 ≡ 0 mod 2 -> even.
+//   Contradiction.
+
+// Ah, the issue: (-1)^{y_i} for negative y_i: 
+//   (-1)^{-1} = 1/(-1) = -1, but in integer exponentiation, we usually define for negative exponents as reciprocal, but here we want an integer-valued function.
+
+// But the generating function evaluation is formal.
+
+// However, the derivation assumed that we are in a ring where we can substitute Y=-1.
+
+// But (-1)^{y_i} is well-defined as: 1 if y_i even, -1 if y_i odd, regardless of sign.
+
+// Because (-1)^k = 1 if k even, -1 if k odd, for any integer k.
+
+// So for (-2,-1): y_i=-1 -> odd -> factor = -1 // (-1,-2): even -> +1
+// (-1,-3): odd -> -1
+// So A[X] = (-1) * X^{-2} + (1) * X^{-1} + (-1) * X^{-1} = -X^{-2} + X^{-1} - X^{-1} = -X^{-2}
+// So indeed, s = -2, and coefficient = -1 = (-1)^t -> t is odd.
+
+// But earlier from sum of y_i mod 2: sum_y = -1-2-3 = -6 ≡ 0 mod 2 -> even.
+
+// Which is correct?
+
+// Let's recompute sum_y mod 2:  //   -1 mod 2 = 1, -2 mod 2 = 0, -3 mod 2 = 1 -> sum = 1+0+1 = 2 ≡ 0 mod 2.
+// So t must be even.
+
+// But here we get t must be odd.
+
+// Contradiction.
+
+// Unless the invariant is not both holding.
+
+// Let me double-check the ideal membership.
+
+// The move at (x,y) has generating function:
+//   X^x Y^y + X^x Y^{y+1} + X^{x+1} Y^{y-1} + X^{x+1} Y^y
+// Evaluate at Y = -1:
+//   = X^x (-1)^y + X^x (-1)^{y+1} + X^{x+1} (-1)^{y-1} + X^{x+1} (-1)^y
+//   = X^x (-1)^y [ 1 - 1 + (-1)^{-1} * (-1)^y * (-1)^y wait no]
+
+//   = X^x [ (-1)^y - (-1)^y ] + X^{x+1} [ (-1)^{y-1} + (-1)^y ]
+//   = 0 + X^{x+1} (-1)^{y-1} [1 - 1] = 0   because (-1)^y = - (-1)^{y-1}
+//   = X^{x+1} [ - (-1)^{y-1} + (-1)^{y-1} ] = 0
+
+// So yes, evaluates to 0.
+
+// So the entire sum over operations vanishes at Y=-1.
+
+// Therefore, F_final(X, -1) = X^s * (-1)^t.
+
+// So in example 2, we have F_final(X,-1) = -X^{-2} = X^{-2} * (-1)^1, so (-1)^t = -1 -> t is odd.
+
+// But earlier we thought sum of y_i mod 2 is invariant.
+
+// Let me check that invariant.
+
+// Initial: sum of y_i = t. // One move: changes the state of four bulbs. Let the contribution to sum_y be the sum of y-coordinates of the flipped bulbs.
+// But whether it's added or subtracted depends on the state before.
+
+// So the change in sum_y is not fixed; it could be +2y+1 or -2y-1, etc.
+
+// Therefore, sum of y_i mod 2 is NOT invariant!
+
+// Only the generating function evaluation is invariant.
+
+// So the mod 2 sum is not preserved.
+
+// Therefore, the only invariants are from the ideal:  //   F_final(X, -1) = X^s * (-1)^t
+//   F_final(X, -X) = X^s * (-X)^t = (-1)^t X^{s+t}
+
+// So we can use either.
+
+// Let's use the first one: 
+//   Let A = sum_i [ ( -1 )^{y_i} ] * X^{x_i} 
+// This must be equal to C * X^s, where C = (-1)^t.
+
+// So in the Laurent series, only one power of X appears.
+
+// But in example 2, we got -X^{-2}, so s = -2, and C = -1 -> t is odd.
+
+// But the expected output is (-2,-2), and -2 is even.
+
+// Contradiction.
+
+// Unless the example is wrong.
+
+// Let me simulate example 2:
+
+// Treasure at (-2,-2) initially on.
+
+// Do one operation at (x,y) = (-2,-2): //   Flip: (-2,-2), (-2,-1), (-1,-3), (-1,-2)
+
+// Initial state: only (-2,-2) is on.
+
+// After flipping these four: //   (-2,-2): on -> off
+//   (-2,-1): off -> on //   (-1,-3): off -> on
+//   (-1,-2): off -> on
+
+// So the ON bulbs are: (-2,-1), (-1,-2), (-1,-3) -> matches input.
+
+// So the treasure is at (-2,-2), and t=-2, which is even.
+
+// But our generating function gave (-1)^t = -1 -> t should be odd.
+
+// What went wrong in the generating function?
+
+// F_final(X,-1) = sum_{on} X^{x_i} * (-1)^{y_i}
+// = for (-2,-1): X^{-2} * (-1)^{-1} = X^{-2} * (-1)  [since -1 is odd]
+//   (-1,-2): X^{-1} * (+1)  [even]
+//   (-1,-3): X^{-1} * (-1)  [odd]
+// = -X^{-2} + X^{-1} - X^{-1} = -X^{-2}
+
+// On the other hand, X^s * (-1)^t = X^{-2} * (-1)^{-2} = X^{-2} * 1 = X^{-2}
+
+// So we have -X^{-2} vs X^{-2} -> not equal.
+
+// Ah! Sign error.
+
+// In the generating function over the integers, we are not in GF(2), so signs matter.
+
+// The move's generating function evaluated at Y=-1 is 0, as shown.
+
+// So the entire sum over operations is 0.
+
+// Therefore, the final generating function at Y=-1 equals the initial one.
+
+// Initial: only (s,t) = (-2,-2): so X^{-2} * (-1)^{-2} = X^{-2} * 1 = X^{-2}
+
+// Final: -X^{-2}
+
+// -X^{-2} != X^{-2} unless in characteristic 2.
+
+// So in integers, they are not equal.
+
+// Therefore, the invariant is not in the integers, but in GF(2) the generating function would be:
+//   In GF(2), -1 = 1, so (-1)^{anything} = 1.
+//   So F_final(X,1) = sum_i X^{x_i} * 1 = sum_i X^{x_i} //   and initial = X^s
+//   and for a move: at (x,y): X^x + X^x + X^{x+1} + X^{x+1} = 2X^x + 2X^{x+1} = 0 in GF(2)
+//   so sum_i X^{x_i} = X^s in GF(2)[X]
+
+// This means that the sum of X^{x_i} over i is equal to X^s in GF(2), which means that the number of times each exponent appears is even except for s, which appears an odd number of times.
+
+// In other words, s = XOR of all x_i? No, in GF(2) the sum is the XOR only if we are in a field of characteristic 2 and we are not doing carries.
+
+// But here, it's a polynomial: the coefficient of X^k is the number of times k appears, mod 2.
+
+// So s is the unique x-coordinate that appears an odd number of times.
+
+// Similarly for y? Let's see.
+
+// If we set X=1, then the move's generating function becomes:
+//   Y^y + Y^{y+1} + Y^{y-1} + Y^y = 2Y^y + Y^{y+1} + Y^{y-1} -> in GF(2): Y^{y+1} + Y^{y-1} = Y^{y-1}(Y^2+1) = Y^{y-1}(Y+1)^2 in GF(2) -> not necessarily 0.
+
+// So not invariant.
+
+// But if we set X=1 in the generating function, then the move becomes:
+//   Y^y + Y^{y+1} + Y^{y-1} + Y^y = 2Y^y + Y^{y+1} + Y^{y-1} -> in GF(2): Y^{y+1} + Y^{y-1} = Y^{y-1}(Y^2+1) = Y^{y-1}(Y+1)^2 in GF(2), which is not identically 0.
+
+// So not invariant.
+
+// But if we set Y=1, then the move becomes:
+//   X^x + X^x + X^{x+1} + X^{x+1} = 2X^x + 2X^{x+1} = 0 in GF(2) -> invariant.
+
+// So in GF(2), with Y=1, we have: 
+//   sum_i X^{x_i} = X^s
+
+// This means that the multiset of x-coordinates has every value appearing even times except s, which appears odd times.
+
+// Similarly, if we set X=1, we need an invariant in Y.
+
+// Let me try to find one.
+
+// The move at (x,y): becomes (at X=1): Y^y + Y^{y+1} + Y^{y-1} + Y^y = 2Y^y + Y^{y+1} + Y^{y-1} -> in GF(2): Y^{y+1} + Y^{y-1} = Y^{y-1}(Y^2+1) = Y^{y-1}(Y+1)^2.
+
+// This is not 0, so not invariant.
+
+// Try setting X=Y in the generating function.
+
+// Move: X^x X^y + X^x X^{y+1} + X^{x+1} X^{y-1} + X^{x+1} X^y = X^{x+y} + X^{x+y+1} + X^{x+y} + X^{x+y+1} = 2X^{x+y} + 2X^{x+y+1} = 0 in GF(2).
+
+// So in GF(2), the sum_i X^{x_i+y_i} = X^{s+t}
+
+// Therefore, the sum of X^{x_i+y_i} over i is X^{s+t} in GF(2)[X], so the exponent s+t is the unique value that appears an odd number of times in {x_i+y_i}.
+
+// Similarly, try X=Y^{-1}? 
+// Move: X^x X^{-y} + X^x X^{-y-1} + X^{x+1} X^{-y+1} + X^{x+1} X^{-y}
+// = X^{x-y} + X^{x-y-1} + X^{x-y+2} + X^{x-y+1}
+// = let z = x-y: X^z + X^{z-1} + X^{z+2} + X^{z+1} -> in GF(2), not obviously 0.
+
+// But try: does it have to be 0 for all x,y? 
+// = X^{z-1} (X + 1 + X^{3} + X^{2}) = X^{z-1} (X^3+X^2+X+1) = X^{z-1} (X+1)^3 in GF(2) -> not 0.
+
+// So not invariant.
+
+// So far, we have two invariants in GF(2): //   (1) The XOR-sum of the x-coordinates ( interpreted as: the bitwise XOR of all x_i) is not what we want.
+//       Instead, we want the unique x that appears an odd number of times in the list of x_i. //       But the x_i are not necessarily repeated.
+
+// In example 2: x_i: -2, -1, -1 -> so -2 appears once (odd), -1 appears twice (even) -> so s = -2. // In example 1: x_i: [2] -> s = 2.
+// In example 3: let's see x_i: 7,6,6,7,8,8,7 ->  //   6: twice -> even
+//   7: three times -> odd //   8: twice -> even
+//   so s = 7. // y_i: 26,27,28,27,26,27,28 ->
+//   26: twice //   27: three times
+//   28: twice
+//   so for y, we don't have an invariant yet.
+
+// For the sum x_i+y_i:  //   example 2:
+//      (-2,-1): -3 //      (-1,-2): -3
+//      (-1,-3): -4 //   values: -3, -3, -4 -> -3 appears twice (even), -4 appears once (odd) -> so s+t = -4.
+//   s = -2, so t = -2 -> -2 + (-2) = -4 -> matches.
+
+// example 1: s+t = 2+3=5, and only one point: 2+3=5 -> appears once -> odd -> so s+t=5.
+
+// example 3: s=7, and we need s+t = ?  //   compute x_i+y_i:
+//      7+26=33 //      6+27=33
+//      6+28=34 //      7+27=34
+//      8+26=34 //      8+27=35
+//      7+28=35 //   counts:
+//      33: twice //      34: three times -> odd
+//      35: twice //   so s+t = 34.
+//   s=7, so t=27. //   output (7,27) -> matches.
+
+// example 4:  //   We are to output (72,7) -> s=72, t=7, s+t=79.
+//   So we need to check that among the 11 points, the sum x_i+y_i has 79 appearing an odd number of times, and other values even times.
+
+//   Compute x_i+y_i for each: //      70+9=79
+//      69+8=77 //      69+0=69
+//      73+5=78 //      70+(-1)=69
+//      70+5=75 //      71+7=78
+//      70+4=74 //      73+4=77
+//      71+3=74 //      72+3=75
+//   So: //      79: 1 time (odd)
+//      77: 2 times //      69: 2 times
+//      78: 2 times //      75: 2 times
+//      74: 2 times //      -> only 79 appears once, so s+t=79.
+//   Also, for x-coordinate alone:  //        70: 4 times (even)
+//        69: 2 times //        73: 2 times
+//        71: 2 times //        72: 1 time (odd) -> so s=72.
+//   Then t = (s+t) - s = 79 - 72 = 7. //   So (72,7) -> matches.
+
+// Therefore, the solution is: //   s = the unique x-coordinate that appears an odd number of times in the list of x_i.
+//   s+t = the unique value of (x_i+y_i) that appears an odd number of times in the list of (x_i+y_i). //   then t = (s+t) - s.
+
+// Why is there exactly one such x and one such sum?
+//   Because initially, only one point (s,t) is on, so in the list, x=s appears once (odd), and x+y=s+t appears once (odd).
+//   Each operation toggles four points, so it changes the count for four x-coordinates and four (x+y) values.
+//   Since we are in GF(2), toggling a count means: if it was even becomes odd, and vice versa.
+//   But initially, only one x has odd count, and after an even number of toggles (4 per operation), the number of x-coordinates with odd count remains odd. //   In fact, the XOR of the indicators is preserved, and since we start with one, we end with an odd number.
+//   But the problem guarantee that a solution exists, and typically it will be exactly one.
+
+// However, could there be more than one x with odd count? //   The sum of the counts is n, which is odd (because initially 1, and each operation changes the count by an even number).
+//   The number of x-coordinates with odd count must be odd. //   But could be 1, 3, 5, ...
+
+// But the invariant from the generating function is that the sum in GF(2) of X^{x_i} is X^s, which means that the symmetric difference of the x-coordinates is {s}, so s is the only x that appears an odd number of times.
+
+// Similarly for x+y.
+
+// Therefore, there is exactly one x that appears an odd number of times, and exactly one value of x+y that appears an odd number of times.
+
+// So algorithm: //   For each test case:
+//     Read n. //     Read n points.
+//     Count frequency of x_i and of (x_i+y_i). //     Find the x that has odd frequency.
+//     Find the value of (x_i+y_i) that has odd frequency. //     s = that x.
+//     s_plus_t = that value. //     t = s_plus_t - s.
+//     Output s and t.
+
+// Let's test on example 2: //   x: -2 (1 time, odd), -1 (2 times, even) -> s = -2.
+//   x+y: -3 (2 times), -4 (1 time) -> s+t = -4. //   t = -4 - (-2) = -2.
+//   Output (-2, -2) -> matches.
+
+// Example 1:  //   x: 2 (1 time) -> s=2.
+//   x+y: 5 (1 time) -> s+t=5. //   t=5-2=3.
+//   Output (2,3) -> matches.
+
+// Perfect.
+
+// Implementation: we can use a map or unordered_map, but note that coordinates can be -10^8 to 10^8, and n<=200000, so we can use map.
+
+// But we only care about parity, so we can use a set: 
+//   For x: traverse and do: if x is in the set, remove it, else insert it.
+//   At the end, the set will have one element: s.
+
+// Similarly for sum.
+
+// However, we can also do:
+//   s = 0;
+//   for each x_i: s ^= x_i;   -> but wait, this is XOR, not set symmetric difference.
+
+// But the set of elements with odd count is not the XOR of the values.
+
+// Example: x_i = [1,1,2]:  //   1 appears twice (even), 2 appears once (odd) -> s=2.
+//   XOR of all x_i: 1^1^2 = 0^2 = 2 -> happens to be 2. //   Another: [1,2,3]:
+//      1,2,3 each once (odd) -> but there are three, not one. //   But our invariant says there should be exactly one.
+
+// In our problem, because of the invariant, there is exactly one x with odd count.
+
+// So the XOR of all x_i is not what we want.
+
+// We want the actual value that has odd frequency.
+
+// But if we do:
+//   map<int, int> freq_x;
+//   for each point: freq_x[x_i]++;
+
+//   then for each in freq_x: if (freq_x[x] % 2 == 1) then s = x;
+
+// But note: it's guaranteed that exactly one has odd frequency.
+
+// However, we can do without a map by using the fact that the XOR of all the x_i is not the answer, but we can use a set:
+
+//   set<int> xs;
+//   for each x_i:
+//      if xs contains x_i, remove it; else insert it. //   then the set will have one element.
+
+// Similarly for sum.
+
+// But worst-case size O(n), and n=200000, acceptable.
+
+// But easier: use a map and then scan.
+
+// Given that the total n over test cases <= 200000, we can do.
+
+// Steps for one test case:
+//   int n;
+//   cin >> n;
+//   vector<pair<long long, long long>> points(n);
+//   map<long long, int> freq_x, freq_sum;
+//   for i in range(n):
+//      cin >> x >> y;
+//      points[i] = {x, y};
+//      freq_x[x]++;
+//      freq_sum[x+y]++;
+//   }
+//   long long s = 0, s_plus_t = 0;
+//   for (auto &p : freq_x) {
+//      if (p.second % 2 == 1) {
+//          s = p.first;
+//          break;
+//      }
+//   }
+//   for (auto &p : freq_sum) {
+//      if (p.second % 2 == 1) {
+//          s_plus_t = p.first;
+//          break;
+//      }
+//   }
+//   long long t = s_plus_t - s;
+//   cout << s << " " << t << endl;
+
+// But note: it's possible that the map iteration might not hit the odd one first, but we can break at the first odd, and there is exactly one.
+
+// However, to be safe, we can iterate and collect, but there should be exactly one.
+
+// But what if there are more? The problem guarantee existence, so there should be exactly one.
+
+// Let's code accordingly.
+
+// Use long long for coordinates.
+
+// Note: the constraints say x_i, y_i in [-10^8, 10^8], so x+y in [-2e8, 2e8] -> fits in int? But 2e8 is 200000000, which is within int (2e9) but to be safe, use long long.
+
+// But the total n over test cases is only 200000, so even if we use map, it's fine.

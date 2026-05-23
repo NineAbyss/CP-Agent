@@ -1,0 +1,178 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9+7;
+
+// 计算两个奇数点的公共邻居
+vector<pair<int,int>> get_common_neighbors(pair<int,int> a, pair<int,int> b) {
+    int dx = a.first - b.first;
+    int dy = a.second - b.second;
+    if (abs(dx) == 1 && abs(dy) == 1) {
+        // 对角相邻
+        return {{a.first, b.second}, {b.first, a.second}};
+    } else if (abs(dx) + abs(dy) == 2 && (abs(dx) == 2 || abs(dy) == 2)) {
+        // 直线距离2
+        if (dx == 0) {
+            int y = (a.second + b.second) / 2;
+            return {{a.first, y}};
+        } else if (dy == 0) {
+            int x = (a.first + b.first) / 2;
+            return {{x, a.second}};
+        }
+    }
+    return {};
+}
+
+void solve() {
+    int n, m, k;
+    cin >> n >> m >> k;
+    vector<pair<int,int>> odd(k+1);
+    for (int i = 0; i <= k; i++) {
+        cin >> odd[i].first >> odd[i].second;
+        odd[i].first--; odd[i].second--; // 转为0-index
+    }
+    
+    // 每个间隙的候选格子
+    vector<set<pair<int,int>>> cand(k);
+    map<pair<int,int>, set<int>> grid_to_gap;
+    for (int i = 0; i < k; i++) {
+        auto vec = get_common_neighbors(odd[i], odd[i+1]);
+        if (vec.empty()) {
+            cout << "0\n";
+            return;
+        }
+        for (auto& g : vec) {
+            cand[i].insert(g);
+            grid_to_gap[g].insert(i);
+        }
+    }
+    
+    // 唯一候选传播
+    queue<int> q;
+    for (int i = 0; i < k; i++) {
+        if (cand[i].size() == 1) q.push(i);
+    }
+    set<pair<int,int>> used;
+    while (!q.empty()) {
+        int i = q.front(); q.pop();
+        if (cand[i].empty()) {
+            cout << "0\n";
+            return;
+        }
+        if (cand[i].size() == 1) {
+            auto g = *cand[i].begin();
+            if (used.count(g)) {
+                cout << "0\n";
+                return;
+            }
+            used.insert(g);
+            // 从其他间隙删除 g
+            for (int j : grid_to_gap[g]) {
+                if (j == i) continue;
+                cand[j].erase(g);
+                if (cand[j].empty()) {
+                    cout << "0\n";
+                    return;
+                }
+                if (cand[j].size() == 1) q.push(j);
+            }
+        }
+    }
+    
+    // 构建二分图
+    map<pair<int,int>, int> grid_id;
+    vector<pair<int,int>> id_to_grid;
+    vector<vector<int>> adj_gap(k);
+    vector<vector<int>> adj_grid;
+    int cur_id = 0;
+    for (int i = 0; i < k; i++) {
+        for (auto& g : cand[i]) {
+            if (!grid_id.count(g)) {
+                grid_id[g] = cur_id++;
+                id_to_grid.push_back(g);
+                adj_grid.push_back({});
+            }
+            int gid = grid_id[g];
+            adj_gap[i].push_back(gid);
+            adj_grid[gid].push_back(i);
+        }
+    }
+    int ngrid = cur_id;
+    
+    // 找连通分量并计算匹配方案数
+    vector<bool> vis_gap(k, false);
+    vector<bool> vis_grid(ngrid, false);
+    long long ans = 1;
+    
+    for (int start = 0; start < k; start++) {
+        if (vis_gap[start]) continue;
+        // BFS找分量
+        queue<int> qq;
+        qq.push(start);
+        vis_gap[start] = true;
+        vector<int> gaps_in_comp;
+        vector<int> grids_in_comp;
+        while (!qq.empty()) {
+            int u = qq.front(); qq.pop();
+            gaps_in_comp.push_back(u);
+            for (int gid : adj_gap[u]) {
+                if (!vis_grid[gid]) {
+                    vis_grid[gid] = true;
+                    grids_in_comp.push_back(gid);
+                    for (int v : adj_grid[gid]) {
+                        if (!vis_gap[v]) {
+                            vis_gap[v] = true;
+                            qq.push(v);
+                        }
+                    }
+                }
+            }
+        }
+        
+        int L = gaps_in_comp.size();
+        int R = grids_in_comp.size();
+        // 映射局部id
+        map<int,int> global_gap_to_local;
+        map<int,int> global_grid_to_local;
+        for (int j = 0; j < L; j++) global_gap_to_local[gaps_in_comp[j]] = j;
+        for (int j = 0; j < R; j++) global_grid_to_local[grids_in_comp[j]] = j;
+        vector<vector<int>> local_adj(L);
+        for (int j = 0; j < L; j++) {
+            int gid = gaps_in_comp[j];
+            for (int gg : adj_gap[gid]) {
+                local_adj[j].push_back(global_grid_to_local[gg]);
+            }
+        }
+        
+        // 暴力枚举匹配
+        int comp_ways = 0;
+        vector<int> match_grid(R, -1);
+        function<void(int)> dfs_match = [&](int idx) {
+            if (idx == L) {
+                comp_ways++;
+                return;
+            }
+            for (int g : local_adj[idx]) {
+                if (match_grid[g] != -1) continue;
+                match_grid[g] = idx;
+                dfs_match(idx+1);
+                match_grid[g] = -1;
+            }
+        };
+        dfs_match(0);
+        ans = ans * comp_ways % MOD;
+    }
+    
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

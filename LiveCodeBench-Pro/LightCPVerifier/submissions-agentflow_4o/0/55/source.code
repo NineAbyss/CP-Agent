@@ -1,0 +1,44 @@
+#include <iostream>
+using namespace std;
+
+// Check if the ball trajectory lands in any pocket
+bool is_potted(int d_x, int d_y, int x, int y, int s) {
+    if (d_x == 1 && d_y == 1) {
+        return s - x == s - y;
+    } 
+    if (d_x == 1 && d_y == -1) {
+        return s - x == y;
+    }
+    if (d_x == -1 && d_y == 1) {
+        return x == s - y;
+    }
+    if (d_x == -1 && d_y == -1) {
+        return x == y;
+    }
+    return false;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, s;
+        cin >> n >> s;
+
+        int potted_count = 0;
+        for (int i = 0; i < n; ++i) {
+            int d_x, d_y, x, y;
+            cin >> d_x >> d_y >> x >> y;
+            
+            // Determine if the current ball is potted
+            if (is_potted(d_x, d_y, x, y, s)) {
+                ++potted_count;
+            }
+        }
+        
+        // Output the number of potted balls for each test case
+        cout << potted_count << "\n";
+    }
+
+    return 0;
+}

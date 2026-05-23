@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        string s;
+        cin >> s;
+        
+        multiset<char> avail(s.begin(), s.end());
+        string res = "";
+        
+        for (int pos = 0; pos < 10; pos++) {
+            int required = 10 - (pos + 1); // digit must be >= this
+            char min_digit = '0' + required;
+            
+            bool found = false;
+            for (char c = min_digit; c <= '9'; c++) {
+                if (avail.find(c) == avail.end()) continue;
+                
+                // Try using digit c at current position
+                avail.erase(avail.find(c));
+                
+                // Simulate filling the rest with smallest valid choices
+                multiset<char> temp = avail;
+                bool can_finish = true;
+                for (int p = pos + 1; p < 10; p++) {
+                    int r = 10 - (p + 1);
+                    char need = '0' + r;
+                    auto it = temp.lower_bound(need);
+                    if (it == temp.end()) {
+                        can_finish = false;
+                        break;
+                    }
+                    temp.erase(it);
+                }
+                
+                if (can_finish) {
+                    res += c;
+                    found = true;
+                    break; // we pick the smallest valid c
+                } else {
+                    // backtrack: put c back
+                    avail.insert(c);
+                }
+            }
+            
+            // If no digit worked, something wrong — but guaranteed solvable
+            if (!found) {
+                // Fallback: pick any (should not happen)
+                auto it = avail.lower_bound(min_digit);
+                char c = *it;
+                avail.erase(it);
+                res += c;
+            }
+        }
+        
+        cout << res << '\n';
+    }
+    
+    return 0;
+}

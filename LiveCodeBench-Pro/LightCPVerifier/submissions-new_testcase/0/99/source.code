@@ -1,0 +1,93 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Fenwick {
+    int n;
+    vector<int> bit;
+    Fenwick(int n_ = 0) : n(n_), bit(n_ + 1, 0) {}
+    void reset(int n_) {
+        n = n_;
+        bit.assign(n + 1, 0);
+    }
+    void update(int idx, int delta) {
+        for (; idx <= n; idx += idx & -idx)
+            bit[idx] += delta;
+    }
+    int query(int idx) {
+        int res = 0;
+        for (; idx > 0; idx -= idx & -idx)
+            res += bit[idx];
+        return res;
+    }
+};
+
+Fenwick ft;
+
+bool parity(const vector<int>& arr, int n) {
+    ft.reset(n);
+    long long inv = 0;
+    for (int i = (int)arr.size() - 1; i >= 0; i--) {
+        inv += ft.query(arr[i] - 1);
+        ft.update(arr[i], 1);
+    }
+    return (inv % 2 == 0);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        vector<int> odd, even;
+        for (int i = 0; i < n; i++) {
+            if (i % 2 == 0) odd.push_back(a[i]);
+            else even.push_back(a[i]);
+        }
+        bool p_odd = parity(odd, n);
+        bool p_even = parity(even, n);
+        bool d = (p_odd != p_even);
+        vector<int> odd_sorted = odd;
+        vector<int> even_sorted = even;
+        sort(odd_sorted.begin(), odd_sorted.end());
+        sort(even_sorted.begin(), even_sorted.end());
+        vector<int> ans(n);
+        if (!d) {
+            int idx_o = 0, idx_e = 0;
+            for (int i = 0; i < n; i++) {
+                if (i % 2 == 0) ans[i] = odd_sorted[idx_o++];
+                else ans[i] = even_sorted[idx_e++];
+            }
+        } else {
+            vector<int> odd1 = odd_sorted;
+            if (odd1.size() >= 2) swap(odd1.back(), odd1[odd1.size()-2]);
+            vector<int> even1 = even_sorted;
+            vector<int> odd2 = odd_sorted;
+            vector<int> even2 = even_sorted;
+            if (even2.size() >= 2) swap(even2.back(), even2[even2.size()-2]);
+            vector<int> cand1(n), cand2(n);
+            int idx_o = 0, idx_e = 0;
+            for (int i = 0; i < n; i++) {
+                if (i % 2 == 0) cand1[i] = odd1[idx_o++];
+                else cand1[i] = even1[idx_e++];
+            }
+            idx_o = 0; idx_e = 0;
+            for (int i = 0; i < n; i++) {
+                if (i % 2 == 0) cand2[i] = odd2[idx_o++];
+                else cand2[i] = even2[idx_e++];
+            }
+            if (cand1 < cand2) ans = cand1;
+            else ans = cand2;
+        }
+        for (int i = 0; i < n; i++) {
+            if (i > 0) cout << ' ';
+            cout << ans[i];
+        }
+        cout << '\n';
+    }
+    return 0;
+}

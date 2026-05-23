@@ -1,0 +1,43 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Cell {
+    int x, y, distance_max, distance_sum;
+};
+
+// Comparator function to use both Chebyshev and Manhattan distances correctly
+bool comparator(const Cell &a, const Cell &b) {
+    if (a.distance_max != b.distance_max)
+        return a.distance_max < b.distance_max;
+    return a.distance_sum < b.distance_sum;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        
+        vector<Cell> cells;
+        int center_x = n / 2 + 1;
+        int center_y = m / 2 + 1;
+
+        for (int i = 1; i <= n; ++i) {
+            for (int j = 1; j <= m; ++j) {
+                int dist_max = max(abs(center_x - i), abs(center_y - j));
+                int dist_sum = abs(center_x - i) + abs(center_y - j);
+                cells.push_back({i, j, dist_max, dist_sum});
+            }
+        }
+
+        sort(cells.begin(), cells.end(), comparator);
+
+        for (const auto& cell : cells) {
+            cout << cell.x << " " << cell.y << endl;
+        }
+    }
+    return 0;
+}

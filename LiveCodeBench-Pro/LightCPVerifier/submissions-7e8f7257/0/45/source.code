@@ -1,0 +1,58 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        // 通用策略
+        cout << "digit" << endl; cout.flush(); string r; cin >> r;
+        cout << "digit" << endl; cout.flush(); cin >> r;
+        // 查询1: div 2
+        cout << "div 2" << endl; cout.flush(); cin >> r;
+        int r1 = (r == "1");
+        int d;
+        if (r1) {
+            cout << "div 4" << endl; cout.flush(); cin >> r;
+            int r2 = (r == "1");
+            if (r2) {
+                cout << "div 8" << endl; cout.flush(); cin >> r;
+                int r3 = (r == "1");
+                if (r3) d = 8;
+                else d = 4;
+            } else {
+                cout << "div 3" << endl; cout.flush(); cin >> r;
+                int r3 = (r == "1");
+                if (r3) d = 6;
+                else d = 2;
+            }
+        } else {
+            cout << "div 3" << endl; cout.flush(); cin >> r;
+            int r2 = (r == "1");
+            if (r2) {
+                cout << "div 9" << endl; cout.flush(); cin >> r;
+                int r3 = (r == "1");
+                if (r3) d = 9;
+                else d = 3;
+            } else {
+                cout << "div 5" << endl; cout.flush(); cin >> r;
+                int r3 = (r == "1");
+                if (r3) {
+                    d = 5;
+                } else {
+                    cout << "div 7" << endl; cout.flush(); cin >> r;
+                    int r4 = (r == "1");
+                    if (r4) d = 7;
+                    else d = 1;
+                }
+            }
+        }
+        long long y = (long long)n - d;
+        cout << "add " << y << endl; cout.flush(); cin >> r;
+        cout << "!" << endl; cout.flush(); cin >> r;
+    }
+    return 0;
+}

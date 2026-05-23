@@ -1,0 +1,27 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, p, q;
+        cin >> n >> m >> p >> q;
+        int c = n / p;      // 完整周期个数
+        int r = n % p;      // 余数
+
+        if (r == 0) {
+            if (m == c * q) {
+                cout << "YES\n";
+            } else {
+                cout << "NO\n";
+            }
+        } else {
+            cout << "YES\n";
+        }
+    }
+    return 0;
+}

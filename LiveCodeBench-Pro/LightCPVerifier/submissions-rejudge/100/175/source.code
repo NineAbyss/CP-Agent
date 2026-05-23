@@ -1,0 +1,102 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX_A = 100000;
+
+// 预处理每个数的约数
+vector<vector<int>> precompute_divisors() {
+    vector<vector<int>> divisors(MAX_A + 1);
+    for (int d = 2; d <= MAX_A; d++) {
+        for (int multiple = d; multiple <= MAX_A; multiple += d) {
+            divisors[multiple].push_back(d);
+        }
+    }
+    return divisors;
+}
+
+long long solve_query(int k, const vector<int>& a, const vector<vector<int>>& pos_lists, 
+                      const vector<vector<int>>& divisors, int l, int r) {
+    long long ans = 0;
+    int cur_k = k;
+    int cur_pos = l;
+    
+    while (cur_pos <= r && cur_k > 1) {
+        const vector<int>& divs = divisors[cur_k];
+        
+        int next_pos = r + 1;
+        
+        // 遍历当前k的所有约数
+        for (int d : divs) {
+            const vector<int>& positions = pos_lists[d];
+            // 二分查找
+            auto it = lower_bound(positions.begin(), positions.end(), cur_pos);
+            if (it != positions.end() && *it <= r) {
+                if (*it < next_pos) {
+                    next_pos = *it;
+                }
+            }
+        }
+        
+        if (next_pos <= r) {
+            // 位置 cur_pos 到 next_pos-1 的贡献
+            ans += (long long)(next_pos - cur_pos) * cur_k;
+            
+            // 处理位置 next_pos
+            int val = a[next_pos-1];
+            while (cur_k % val == 0) {
+                cur_k /= val;
+            }
+            ans += cur_k;
+            
+            cur_pos = next_pos + 1;
+        } else {
+            // 没有找到能整除 cur_k 的 a[i]
+            ans += (long long)(r - cur_pos + 1) * cur_k;
+            cur_pos = r + 1;
+            break;
+        }
+    }
+    
+    // 如果 cur_k == 1 但还有剩余位置
+    if (cur_pos <= r) {
+        ans += (r - cur_pos + 1);
+    }
+    
+    return ans;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    // 预处理约数
+    auto divisors = precompute_divisors();
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        // 构建位置列表
+        vector<vector<int>> pos_lists(MAX_A + 1);
+        for (int i = 0; i < n; i++) {
+            pos_lists[a[i]].push_back(i + 1);
+        }
+        
+        // 处理查询
+        while (q--) {
+            int k, l, r;
+            cin >> k >> l >> r;
+            cout << solve_query(k, a, pos_lists, divisors, l, r) << '\n';
+        }
+    }
+    
+    return 0;
+}

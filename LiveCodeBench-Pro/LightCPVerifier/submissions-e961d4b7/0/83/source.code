@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> G(n + 1, vector<int>(n + 1));
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= n; j++) {
+                cin >> G[i][j];
+            }
+        }
+        
+        vector<int> p(2 * n + 1, 0); // 1-indexed
+        vector<bool> used(2 * n + 1, false);
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= n; j++) {
+                int k = i + j;
+                if (p[k] == 0) {
+                    p[k] = G[i][j];
+                }
+                // 题目保证合法，不检查相等性
+            }
+        }
+        for (int k = 2; k <= 2 * n; k++) {
+            used[p[k]] = true;
+        }
+        for (int x = 1; x <= 2 * n; x++) {
+            if (!used[x]) {
+                p[1] = x;
+                break;
+            }
+        }
+        for (int k = 1; k <= 2 * n; k++) {
+            cout << p[k] << (k == 2 * n ? '\n' : ' ');
+        }
+    }
+    return 0;
+}

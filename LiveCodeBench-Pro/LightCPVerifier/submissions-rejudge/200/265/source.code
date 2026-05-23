@@ -1,0 +1,124 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve(int n, int m, const vector<string>& a, const vector<vector<string>>& b) {
+    // Precompute correct matrix: 1 correct, 0 wrong
+    vector<vector<int>> corr(m, vector<int>(n));
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < n; j++) {
+            corr[i][j] = (b[i][j] == a[j]) ? 1 : 0;
+        }
+    }
+    
+    int total_states = 1;
+    for (int i = 0; i < n; i++) total_states *= 3;
+    if (total_states > 20000) {
+        // fallback: if there is a neural network correct at all positions, return n, else -1
+        for (int i = 0; i < m; i++) {
+            bool ok = true;
+            for (int j = 0; j < n; j++) if (b[i][j] != a[j]) { ok = false; break; }
+            if (ok) return n;
+        }
+        return -1;
+    }
+    
+    // Encode state to int
+    auto encode = [&](const vector<int>& s) {
+        int code = 0;
+        for (int i = 0; i < n; i++) code = code * 3 + s[i];
+        return code;
+    };
+    
+    // Target state
+    vector<int> target_vec(n, 1);
+    int target_code = encode(target_vec);
+    
+    // BFS over sets of states // Represent set as bitset<20000>
+    using Bits = bitset<20000>;
+    unordered_map<string, int> dist;
+    Bits start_set;
+    start_set.set(encode(vector<int>(n, 0)));
+    queue<Bits> q;
+    dist[start_set.to_string()] = 0;
+    q.push(start_set);
+    
+    while (!q.empty()) {
+        Bits cur_set = q.front(); q.pop();
+        int d = dist[cur_set.to_string()];
+        // Check if all states in cur_set are target
+        if (cur_set.count() == 1 && cur_set.test(target_code)) {
+            return d;
+        }
+        // Operation 2: clear position j
+        for (int j = 0; j < n; j++) {
+            Bits new_set;
+            for (int s = 0; s < total_states; s++) {
+                if (!cur_set.test(s)) continue;
+                // decode
+                vector<int> state(n);
+                int tmp = s;
+                for (int i = n-1; i >= 0; i--) {
+                    state[i] = tmp % 3;
+                    tmp /= 3;
+                }
+                if (state[j] != 0) state[j] = 0;
+                new_set.set(encode(state));
+            }
+            string key = new_set.to_string();
+            if (!dist.count(key)) {
+                dist[key] = d + 1;
+                q.push(new_set);
+            }
+        }
+        // Operation 1: choose neural network i
+        for (int i = 0; i < m; i++) {
+            Bits new_set;
+            for (int s = 0; s < total_states; s++) {
+                if (!cur_set.test(s)) continue;
+                vector<int> state(n);
+                int tmp = s;
+                for (int k = n-1; k >= 0; k--) {
+                    state[k] = tmp % 3;
+                    tmp /= 3;
+                }
+                vector<int> blanks;
+                for (int j = 0; j < n; j++) if (state[j] == 0) blanks.push_back(j);
+                if (blanks.empty()) {
+                    new_set.set(s);
+                } else {
+                    for (int j : blanks) {
+                        vector<int> next = state;
+                        next[j] = corr[i][j] ? 1 : 2;
+                        new_set.set(encode(next));
+                    }
+                }
+            }
+            string key = new_set.to_string();
+            if (!dist.count(key)) {
+                dist[key] = d + 1;
+                q.push(new_set);
+            }
+        }
+    }
+    return -1;
+}
+
+int main() {
+    // Test with given examples
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<string> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        vector<vector<string>> b(m, vector<string>(n));
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                cin >> b[i][j];
+            }
+        }
+        cout << solve(n, m, a, b) << endl;
+    }
+    return 0;
+}

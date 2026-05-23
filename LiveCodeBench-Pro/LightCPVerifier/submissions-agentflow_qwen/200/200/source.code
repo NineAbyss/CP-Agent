@@ -1,0 +1,113 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), c(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> c[i];
+
+        // Step 1: Compute parent for each value using PSE
+        vector<int> parent(n + 1, 0);
+        stack<int> st; // store indices of a
+        for (int i = 0; i < n; i++) {
+            while (!st.empty() && a[st.top()] > a[i]) {
+                st.pop();
+            }
+            if (!st.empty()) {
+                parent[a[i]] = a[st.top()];
+            } else {
+                parent[a[i]] = 0;
+            }
+            st.push(i);
+        }
+
+        // Step 2: Mark fixed values and initialize data structures
+        vector<bool> is_fixed(n + 1, false);
+        vector<int> b = c;
+        vector<bool> placed(n + 1, false);
+        set<int> free_set;
+        for (int i = 0; i < n; i++) {
+            if (c[i] != 0) {
+                is_fixed[c[i]] = true;
+            }
+        }
+        for (int v = 1; v <= n; v++) {
+            if (!is_fixed[v]) {
+                free_set.insert(v);
+            }
+        }
+
+        // Build children lists for activation
+        vector<vector<int>> children(n + 1);
+        for (int v = 1; v <= n; v++) {
+            if (!is_fixed[v] && parent[v] != 0) {
+                children[parent[v]].push_back(v);
+            }
+        }
+
+        // Min-heap for eligible free values
+        priority_queue<int, vector<int>, greater<int>> pq;
+        // Initialize: add free values with no parent constraint
+        for (int v = 1; v <= n; v++) {
+            if (!is_fixed[v] && parent[v] == 0) {
+                pq.push(v);
+            }
+        }
+
+        bool valid = true;
+        // Process positions from left to right
+        for (int i = 0; i < n; i++) {
+            if (c[i] != 0) {
+                int v = c[i];
+                // Check if parent constraint is satisfied
+                if (parent[v] != 0 && !placed[parent[v]]) {
+                    valid = false;
+                    break;
+                }
+                placed[v] = true;
+                // Activate children: now they can be considered
+                for (int u : children[v]) {
+                    pq.push(u);
+                }
+            } else {
+                if (pq.empty()) {
+                    valid = false;
+                    break;
+                }
+                int v = pq.top();
+                pq.pop();
+
+                // Safety check: ensure the value is still available and constraint met
+                if (free_set.find(v) == free_set.end() || (parent[v] != 0 && !placed[parent[v]])) {
+                    valid = false;
+                    break;
+                }
+
+                b[i] = v;
+                placed[v] = true;
+                free_set.erase(v);
+                // Activate its children
+                for (int u : children[v]) {
+                    pq.push(u);
+                }
+            }
+        }
+
+        if (!valid) {
+            cout << -1 << '\n';
+        } else {
+            for (int i = 0; i < n; i++) {
+                cout << b[i] << " \n"[i == n - 1];
+            }
+        }
+    }
+    return 0;
+}

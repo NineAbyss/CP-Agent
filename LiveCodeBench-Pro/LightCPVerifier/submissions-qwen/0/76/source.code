@@ -1,0 +1,70 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+
+        // Compute base cost
+        int base_cost = n; // for pressing
+        if (s[0] == '1') {
+            base_cost++;
+        }
+        for (int i = 1; i < n; i++) {
+            if (s[i] != s[i-1]) {
+                base_cost++;
+            }
+        }
+
+        int best_cost = base_cost;
+
+        // Try every substring [l, r]
+        for (int l = 0; l < n; l++) {
+            for (int r = l; r < n; r++) {
+                int len = r - l + 1;
+                if (len <= 1) continue; // reversing length 0 or 1 does nothing
+
+                int delta = 0;
+
+                // Effect on initial move cost if l == 0
+                if (l == 0) {
+                    // first character becomes s[r]
+                    int new_first_cost = (s[r] == '1') ? 1 : 0;
+                    int old_first_cost = (s[0] == '1') ? 1 : 0;
+                    delta += new_first_cost - old_first_cost;
+                }
+
+                // Effect on left boundary: between l-1 and l
+                if (l > 0) {
+                    bool old_left_trans = (s[l-1] != s[l]);
+                    bool new_left_trans = (s[l-1] != s[r]);
+                    delta += (new_left_trans - old_left_trans);
+                }
+
+                // Effect on right boundary: between r and r+1
+                if (r < n-1) {
+                    bool old_right_trans = (s[r] != s[r+1]);
+                    bool new_right_trans = (s[l] != s[r+1]);
+                    delta += (new_right_trans - old_right_trans);
+                }
+
+                best_cost = min(best_cost, base_cost + delta);
+            }
+        }
+
+        cout << best_cost << '\n';
+    }
+
+    return 0;
+}

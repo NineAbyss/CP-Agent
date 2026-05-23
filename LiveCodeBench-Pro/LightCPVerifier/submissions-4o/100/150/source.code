@@ -1,0 +1,79 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <unordered_set>
+
+const int MOD = 1e9 + 7;
+
+int mex_of_subsegment(const std::vector<int>& subseg) {
+    std::unordered_set<int> numbers(subseg.begin(), subseg.end());
+    int mex = 0;
+    while (numbers.count(mex)) {
+        ++mex;
+    }
+    return mex;
+}
+
+int sum_of_mex(const std::vector<int>& perm) {
+    int n = perm.size();
+    int sum_mex = 0;
+    for (int l = 0; l < n; ++l) {
+        std::vector<int> current_subsegment;
+        for (int r = l; r < n; ++r) {
+            current_subsegment.push_back(perm[r]);
+            sum_mex = (sum_mex + mex_of_subsegment(current_subsegment)) % MOD;
+        }
+    }
+    return sum_mex;
+}
+
+void solve() {
+    int t;
+    std::cin >> t;
+    while (t--) {
+        int n;
+        std::cin >> n;
+        std::vector<int> a(n);
+        std::unordered_set<int> present;
+        std::vector<int> missing_positions;
+        
+        for (int i = 0; i < n; ++i) {
+            std::cin >> a[i];
+            if (a[i] != -1) {
+                present.insert(a[i]);
+            } else {
+                missing_positions.push_back(i);
+            }
+        }
+        
+        std::vector<int> missing_values;
+        for (int i = 0; i < n; ++i) {
+            if (!present.count(i)) {
+                missing_values.push_back(i);
+            }
+        }
+        
+        int result = 0;
+        if (missing_positions.empty()) {
+            // If there are no missing positions, calculate directly.
+            result = sum_of_mex(a);
+        } else {
+            sort(missing_values.begin(), missing_values.end());
+            int num_missing = missing_positions.size();
+            do {
+                std::vector<int> perm = a;
+                for (int i = 0; i < num_missing; ++i) {
+                    perm[missing_positions[i]] = missing_values[i];
+                }
+                result = (result + sum_of_mex(perm)) % MOD;
+            } while (std::next_permutation(missing_values.begin(), missing_values.end()));
+        }
+        
+        std::cout << result << "\n";
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

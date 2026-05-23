@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> p(n+1), d(n+1);
+        for (int i = 1; i <= n; ++i) {
+            cin >> p[i];
+        }
+        for (int i = 1; i <= n; ++i) {
+            cin >> d[i];
+        }
+
+        // Precompute where: where[value] = index in p
+        vector<int> where(n+1);
+        for (int i = 1; i <= n; ++i) {
+            where[p[i]] = i;
+        }
+
+        vector<int> a = p; // current array
+        vector<bool> inS(n+1, false); // whether position i is in must-operate set
+
+        vector<int> ans;
+        int total_in_S = 0; // maintain count of inS nodes
+
+        // We'll process each query
+        for (int q = 1; q <= n; ++q) {
+            int pos = d[q];
+            a[pos] = 0; // set to zero
+
+            if (!inS[pos]) {
+                queue<int> q_local;
+                inS[pos] = true;
+                total_in_S++;
+                q_local.push(pos);
+                while (!q_local.empty()) {
+                    int u = q_local.front(); q_local.pop();
+                    // Value u will be produced at position u
+                    // So any position j that still has value u must be forced to operate
+                    int j = where[u]; // the position that originally had value u
+                    // Check if j is within bounds, still has value u, and not in S
+                    if (j >= 1 && j <= n && a[j] == u && !inS[j]) {
+                        inS[j] = true;
+                        total_in_S++;
+                        q_local.push(j);
+                    }
+                }
+            }
+
+            ans.push_back(total_in_S);
+        }
+        // Output all answers
+        for (int i = 0; i < n; ++i) {
+            if (i > 0) cout << " ";
+            cout << ans[i];
+        }
+        cout << "\n";
+    }
+    return 0;
+}

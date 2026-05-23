@@ -1,0 +1,188 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 150005;
+
+int n;
+vector<int> adj[MAXN];
+bool deleted[MAXN];
+
+// For BFS
+int dist[MAXN];
+int vis[MAXN];
+int cur_vis = 0;
+
+// BFS from start, returns farthest node and distance, and fills dist array
+pair<int, int> bfs(int start, vector<int>& parent) {
+    cur_vis++;
+    queue<int> q;
+    q.push(start);
+    vis[start] = cur_vis;
+    dist[start] = 0;
+    parent[start] = -1;
+    int farthest = start;
+    int max_dist = 0;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int v : adj[u]) {
+            if (deleted[v] || vis[v] == cur_vis) continue;
+            vis[v] = cur_vis;
+            dist[v] = dist[u] + 1;
+            parent[v] = u;
+            q.push(v);
+            if (dist[v] > max_dist) {
+                max_dist = dist[v];
+                farthest = v;
+            }
+        }
+    }
+    return {farthest, max_dist};
+}
+
+// Compute diameter of component containing start, returns (d, u, v)
+tuple<int, int, int> compute_diameter(int start) {
+    vector<int> parent(n+1);
+    // First BFS to find one end
+    int far1 = bfs(start, parent).first;
+    // Second BFS from far1 to find farthest node and distances
+    int far2 = bfs(far1, parent).first;
+    int D = dist[far2]; // distance in edges // Collect all nodes at distance D from far1
+    vector<int> ends;
+    for (int i = 1; i <= n; i++) {
+        if (!deleted[i] && vis[i] == cur_vis && dist[i] == D) {
+            ends.push_back(i);
+        }
+    }
+    // far1 itself is at distance 0, but we already have ends at distance D, so add far1 only if D==0?
+    // Actually, if D==0, then component has single node, ends will be empty, but we need to include far1.
+    if (D == 0) {
+        ends.push_back(far1);
+    }
+    // Find u = max index in ends
+    int u = *max_element(ends.begin(), ends.end());
+    // Now BFS from u to find farthest nodes
+    bfs(u, parent);
+    vector<int> far_ends;
+    for (int i = 1; i <= n; i++) {
+        if (!deleted[i] && vis[i] == cur_vis && dist[i] == D) {
+            far_ends.push_back(i);
+        }
+    }
+    int v = *max_element(far_ends.begin(), far_ends.end());
+    // Ensure u >= v
+    if (u < v) swap(u, v);
+    int diameter_len = D + 1;
+    return {diameter_len, u, v};
+}
+
+// Collect component starting from start
+vector<int> collect_component(int start) {
+    vector<int> comp;
+    cur_vis++;
+    queue<int> q;
+    q.push(start);
+    vis[start] = cur_vis;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        comp.push_back(u);
+        for (int v : adj[u]) {
+            if (deleted[v] || vis[v] == cur_vis) continue;
+            vis[v] = cur_vis;
+            q.push(v);
+        }
+    }
+    return comp;
+}
+
+// Get path from u to v using BFS (since tree is static but deletions may block, but path nodes are not deleted yet)
+vector<int> get_path(int u, int v) {
+    cur_vis++;
+    queue<int> q;
+    q.push(u);
+    vis[u] = cur_vis;
+    vector<int> parent(n+1, -1);
+    while (!q.empty()) {
+        int x = q.front(); q.pop();
+        if (x == v) break;
+        for (int y : adj[x]) {
+            if (deleted[y] || vis[y] == cur_vis) continue;
+            vis[y] = cur_vis;
+            parent[y] = x;
+            q.push(y);
+        }
+    }
+    vector<int> path;
+    int cur = v;
+    while (cur != -1) {
+        path.push_back(cur);
+        cur = parent[cur];
+    }
+    return path;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        cin >> n;
+        for (int i = 1; i <= n; i++) {
+            adj[i].clear();
+            deleted[i] = false;
+        }
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+        // Initial component: whole tree // Find any undeleted node as start
+        int start = 1;
+        while (deleted[start] && start <= n) start++;
+        auto [d, u, v] = compute_diameter(start);
+        // Priority queue
+        using Item = tuple<int, int, int, int>;
+        auto cmp = [](const Item& a, const Item& b) {
+            if (get<0>(a) != get<0>(b)) return get<0>(a) < get<0>(b);
+            if (get<1>(a) != get<1>(b)) return get<1>(a) < get<1>(b);
+            return get<2>(a) < get<2>(b);
+        };
+        priority_queue<Item, vector<Item>, decltype(cmp)> pq(cmp);
+        pq.push({d, u, v, start});
+        vector<int> ans;
+        while (!pq.empty()) {
+            auto [d, u, v, rep] = pq.top(); pq.pop();
+            if (deleted[rep]) continue;
+            // Recompute diameter for this component (starting from rep)
+            auto [nd, nu, nv] = compute_diameter(rep);
+            d = nd; u = nu; v = nv;
+            ans.push_back(d);
+            ans.push_back(u);
+            ans.push_back(v);
+            // Get path from u to v
+            vector<int> path = get_path(u, v);
+            // Delete nodes on path
+            for (int x : path) deleted[x] = true;
+            // For each node on path, process its branches
+            for (int x : path) {
+                for (int y : adj[x]) {
+                    if (!deleted[y]) {
+                        vector<int> subcomp = collect_component(y);
+                        if (!subcomp.empty()) {
+                            auto [sd, su, sv] = compute_diameter(subcomp[0]);
+                            pq.push({sd, su, sv, subcomp[0]});
+                        }
+                    }
+                }
+            }
+        }
+        // Output answer
+        for (size_t i = 0; i < ans.size(); i++) {
+            if (i > 0) cout << ' ';
+            cout << ans[i];
+        }
+        cout << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,79 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+using namespace std;
+
+// Determine if we can form k pairs with x draws
+bool canFormKPairs(int n, int k, vector<int>& l, vector<int>& r, int x) {
+    vector<int> pairs(n);
+    int totalExcess = 0;
+
+    // Calculate possible pairs and excess
+    for (int i = 0; i < n; ++i) {
+        pairs[i] = min(l[i], r[i]);
+        totalExcess += abs(l[i] - r[i]);
+    }
+
+    sort(pairs.rbegin(), pairs.rend());
+
+    int formedPairs = 0;
+    int glovesUsed = 0;
+
+    // Try to form pairs with available gloves
+    for (int i = 0; i < n && formedPairs < k; ++i) {
+        int addPairs = min(pairs[i], k - formedPairs);
+        formedPairs += addPairs;
+        glovesUsed += 2 * addPairs;
+    }
+
+    int neededPairs = max(0, k - formedPairs);
+    if (neededPairs * 2 > totalExcess) {
+        return false; // Can't form the needed pairs
+    }
+
+    glovesUsed += neededPairs * 2;
+    
+    // Check if total gloves used are within x
+    return glovesUsed <= x;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int t; // Number of test cases
+    cin >> t;
+
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+
+        vector<int> l(n), r(n);
+
+        for (int i = 0; i < n; ++i) {
+            cin >> l[i];
+        }
+
+        for (int i = 0; i < n; ++i) {
+            cin >> r[i];
+        }
+
+        int lo = 1, hi = accumulate(l.begin(), l.end(), 0) + accumulate(r.begin(), r.end(), 0);
+        int answer = hi;
+
+        while (lo <= hi) {
+            int mid = lo + (hi - lo) / 2;
+            if (canFormKPairs(n, k, l, r, mid)) {
+                answer = mid;
+                hi = mid - 1;
+            } else {
+                lo = mid + 1;
+            }
+        }
+
+        cout << answer << '\n';
+    }
+
+    return 0;
+}

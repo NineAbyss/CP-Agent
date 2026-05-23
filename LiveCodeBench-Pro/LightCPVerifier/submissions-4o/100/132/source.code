@@ -1,0 +1,38 @@
+#include <iostream>
+#include <set>
+#include <string>
+#include <algorithm>
+
+using namespace std;
+
+// Function to calculate number of distinct strings S(x) for inputs up to n
+int countDistinctStrings(int n) {
+    set<string> uniqueStrings;
+
+    for (int x = 1; x <= n; ++x) {
+        int y = x + 1;
+
+        // Concatenate x and y, then sort digits
+        string combinedString = to_string(x) + to_string(y);
+        sort(combinedString.begin(), combinedString.end());
+
+        // Insert into set to ensure distinctness
+        uniqueStrings.insert(combinedString);
+    }
+
+    return uniqueStrings.size();
+}
+
+int main() {
+    int t;
+    cin >> t; // Number of test cases
+
+    while (t--) {
+        int n;
+        cin >> n; // Read each n for the test case
+
+        cout << countDistinctStrings(n) << endl;
+    }
+
+    return 0;
+}

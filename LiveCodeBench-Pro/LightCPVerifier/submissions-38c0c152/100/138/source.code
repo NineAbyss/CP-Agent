@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+ll exgcd(ll a, ll b, ll &x, ll &y) {
+    if (!b) { x = 1; y = 0; return a; }
+    ll g = exgcd(b, a % b, y, x);
+    y -= a / b * x;
+    return g;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        ll n, x, y, vx, vy;
+        cin >> n >> x >> y >> vx >> vy;
+        
+        // 解 vx*t ≡ -x (mod n), vy*t ≡ -y (mod n)
+        ll g1 = __gcd(vx, n), g2 = __gcd(vy, n);
+        ll m1 = n / g1, m2 = n / g2;
+        
+        ll t1, t2;
+        bool ok1 = false, ok2 = false;
+        for (ll r1 = 0; r1 < g1; r1++) {
+            if ((-x - r1 * m1 * vx) % n == 0) {
+                t1 = r1 * m1;
+                ok1 = true;
+                break;
+            }
+        }
+        for (ll r2 = 0; r2 < g2; r2++) {
+            if ((-y - r2 * m2 * vy) % n == 0) {
+                t2 = r2 * m2;
+                ok2 = true;
+                break;
+            }
+        }
+        if (!ok1 || !ok2) {
+            cout << "-1\n";
+            continue;
+        }
+        
+        // 合并 t ≡ t1 (mod m1), t ≡ t2 (mod m2)
+        ll k1, k2;
+        ll g = exgcd(m1, m2, k1, k2);
+        if ((t2 - t1) % g) {
+            cout << "-1\n";
+            continue;
+        }
+        ll lcm = m1 / g * m2;
+        ll t0 = (t1 + (t2 - t1) / g * k1 % (m2 / g) * m1) % lcm;
+        t0 = (t0 % lcm + lcm) % lcm;
+        
+        // 枚举几个周期
+        ll ans = 9e18;
+        for (int k = 0; k < 10; k++) {
+            ll T = t0 + k * lcm;
+            ll a = (x + vx * T) / n;
+            ll b = (y + vy * T) / n;
+            ll hits = (abs(a) + abs(b) + ((a + b) & 1)) / 2;
+            if (hits < ans) ans = hits;
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

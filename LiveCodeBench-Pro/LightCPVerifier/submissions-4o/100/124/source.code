@@ -1,0 +1,77 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+struct Cell {
+    int x, y;
+    int cost;
+};
+
+int bfsPathCost(int n, int startX, int startY, int endX, int endY, const vector<vector<int>>& grid) {
+    vector<vector<bool>> visited(n, vector<bool>(n, false));
+    queue<Cell> q;
+    q.push({startX, startY, grid[startX][startY]});
+    visited[startX][startY] = true;
+    int directions[4][2] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
+    int minCost = INT_MAX;
+
+    while (!q.empty()) {
+        Cell current = q.front();
+        q.pop();
+        
+        if (current.x == endX && current.y == endY) {
+            minCost = min(minCost, current.cost); // Track the minimum path cost
+        }
+        
+        for (int i = 0; i < 4; ++i) {
+            int nx = current.x + directions[i][0];
+            int ny = current.y + directions[i][1];
+            if (nx >= 0 && nx < n && ny >= 0 && ny < n && !visited[nx][ny]) {
+                visited[nx][ny] = true;
+                q.push({nx, ny, max(current.cost, grid[nx][ny])});
+            }
+        }
+    }
+    return minCost;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, r, k;
+        cin >> n >> r >> k;
+        vector<vector<int>> values(n, vector<int>(n));
+        vector<vector<int>> colors(n, vector<int>(n));
+
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
+                cin >> values[i][j];
+            }
+        }
+
+        for (int i = 0; i < n; ++i) {
+            string colorRow;
+            cin >> colorRow;
+            for (int j = 0; j < n; ++j) {
+                colors[i][j] = colorRow[j] - '0';
+            }
+        }
+
+        int dis_M = bfsPathCost(n, 0, 0, r-1, n-1, values);
+        int dis_F = bfsPathCost(n, n-1, 0, r-1, n-1, values);
+
+        // Now we need to optimize dis_F by increasing the values of black cells without changing dis_M // This part can be complex due to various strategies and bound constraints. A common approach is to
+        // Focus on potential bottlenecks for Fouad and increase them.
+
+        cout << dis_M << " " << dis_F << '\n';
+    }
+    
+    return 0;
+}

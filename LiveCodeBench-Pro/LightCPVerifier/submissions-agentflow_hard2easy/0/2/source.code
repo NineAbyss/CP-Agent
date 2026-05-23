@@ -1,0 +1,170 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const int MAXN = 205;
+const int MAXC = 200;
+const int MAXB = MAXC * MAXC; // 40000
+const ll INF = 1e18;
+
+bool better(ll w1, int c1, ll w2, int c2) {
+    return w1 * c2 > w2 * c1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n, m;
+    cin >> n >> m;
+    
+    vector<int> c(n+1);
+    vector<ll> w(n+1);
+    for (int i = 1; i <= n; i++) {
+        cin >> c[i] >> w[i];
+    }
+    
+    vector<vector<int>> pred(n+1);
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        pred[v].push_back(u);
+    }
+    
+    // dp[i][j] = 从1到i，花费恰好j个硬币的最大威力，-INF表示不可能
+    vector<vector<ll>> dp(n+1, vector<ll>(MAXB+1, -INF));
+    dp[1][0] = 0;
+    
+    vector<pair<int, ll>> best_card(n+1, {0, 0});
+    
+    for (int i = 1; i <= n; i++) {
+        best_card[i] = {c[i], w[i]};
+        
+        // 从所有前驱转移
+        for (int pre : pred[i]) {
+            // 转移性价比最高的卡牌
+            if (best_card[pre].first > 0) {
+                if (best_card[i].first == 0 || 
+                    better(best_card[pre].second, best_card[pre].first,
+                          best_card[i].second, best_card[i].first)) {
+                    best_card[i] = best_card[pre];
+                }
+            }
+            
+            // 转移DP：不购买任何卡牌直接移动
+            for (int j = 0; j <= MAXB; j++) {
+                if (dp[pre][j] > dp[i][j]) {
+                    dp[i][j] = dp[pre][j];
+                }
+            }
+        }
+        
+        // 在当前顶点进行完全背包
+        if (c[i] > 0) {
+            for (int j = c[i]; j <= MAXB; j++) {
+                if (dp[i][j-c[i]] != -INF) {
+                    ll val = dp[i][j-c[i]] + w[i];
+                    if (val > dp[i][j]) {
+                        dp[i][j] = val;
+                    }
+                }
+            }
+        }
+        
+        // 更新性价比最高的卡牌
+        if (best_card[i].first == 0 || 
+            better(w[i], c[i], best_card[i].second, best_card[i].first)) {
+            best_card[i] = {c[i], w[i]};
+        }
+    }
+    
+    // 对于每个顶点，计算前缀最大值
+    vector<vector<ll>> best(n+1, vector<ll>(MAXB+1, 0));
+    for (int i = 1; i <= n; i++) {
+        best[i][0] = max(0LL, dp[i][0]);
+        for (int j = 1; j <= MAXB; j++) {
+            best[i][j] = max(best[i][j-1], max(0LL, dp[i][j]));
+        }
+    }
+    
+    int q;
+    cin >> q;
+    
+    // 预处理查询优化
+    vector<vector<ll>> precomp(MAXN, vector<ll>(MAXC, -INF));
+    for (int p = 1; p <= n; p++) {
+        auto& card = best_card[p];
+        if (card.first > 0) {
+            int C = card.first;
+            ll W = card.second;
+            for (int mod = 0; mod < C; mod++) {
+                ll max_val = -INF;
+                for (int k = mod; k <= MAXB; k += C) {
+                    ll val = best[p][k] - (k / C) * W;
+                    if (val > max_val) max_val = val;
+                }
+                precomp[p][mod] = max_val;
+            }
+        }
+    }
+    
+    while (q--) {
+        int p;
+        ll r;
+        cin >> p >> r;
+        
+        ll ans = 0;
+        
+        if (r <= MAXB) {
+            ans = best[p][r];
+        } else {
+            auto& card = best_card[p];
+            if (card.first == 0) {
+                ans = best[p][MAXB];
+            } else {
+                int C = card.first;
+                ll W = card.second;
+                ll rem = r % C;
+                
+                // 使用预处理的值
+                ll best_val = -INF;
+                for (int mod = 0; mod < C; mod++) {
+                    if (precomp[p][mod] != -INF) {
+                        ll val = precomp[p][mod] - (mod > rem ? W : 0);
+                        if (val > best_val) best_val = val;
+                    }
+                }
+                
+                if (best_val != -INF) {
+                    ans = best_val + (r / C) * W;
+                } else {
+                    ans = best[p][MAXB];
+                }
+                
+                // 为了安全，检查一些边界值
+                int check = min(100, C);
+                for (int mod = 0; mod < check; mod++) {
+                    int k = mod;
+                    if (k <= MAXB) {
+                        ll cnt = (r - k) / C;
+                        ll val = best[p][k] + cnt * W;
+                        if (val > ans) ans = val;
+                    }
+                }
+                
+                for (int mod = max(0, C - check); mod < C; mod++) {
+                    int k = mod;
+                    if (k <= MAXB) {
+                        ll cnt = (r - k) / C;
+                        ll val = best[p][k] + cnt * W;
+                        if (val > ans) ans = val;
+                    }
+                }
+            }
+        }
+        
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

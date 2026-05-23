@@ -1,0 +1,55 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+
+ll max_ops(ll start, ll req, ll drop) {
+    if (start < req) return 0;
+    return (start - req) / drop + 1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        ll k, a, b, x, y;
+        cin >> k >> a >> b >> x >> y;
+
+        ll ans = 0;
+
+        // Only type1
+        ans = max(ans, max_ops(k, a, x));
+        // Only type2
+        ans = max(ans, max_ops(k, b, y));
+
+        // First do type1, then type2 // We want to do m type1 such that after that temp >= b (so we can do at least one type2 potentially)
+        if (k >= b) {
+            // m <= (k - b) / x
+            ll m_upper = (k - b) / x;
+            ll m_max_A = max_ops(k, a, x);
+            ll m = min(m_upper, m_max_A);
+            ll remaining = k - m * x;
+            ll n_B = max_ops(remaining, b, y);
+            ans = max(ans, m + n_B);
+        }
+
+        // First do type2, then type1
+        if (k >= a) {
+            ll n_upper = (k - a) / y;
+            ll n_max_B = max_ops(k, b, y);
+            ll n = min(n_upper, n_max_B);
+            ll remaining = k - n * y;
+            ll m_A = max_ops(remaining, a, x);
+            ans = max(ans, n + m_A);
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

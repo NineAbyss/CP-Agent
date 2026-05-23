@@ -1,0 +1,102 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+#include <cstdlib>
+#include <ctime>
+using namespace std;
+
+int main() {
+    srand(time(0));
+    int T = 100;
+    for (int test = 0; test < T; test++) {
+        int n = rand() % 5 + 1;
+        int m = n + rand() % 5;
+        set<int> seen;
+        vector<int> classrooms;
+        for (int i=0; i<m; i++) {
+            int floor = rand() % 10 + 1;
+            int room = floor * 100 + rand() % 100;
+            while (seen.count(room)) {
+                floor = rand() % 10 + 1;
+                room = floor * 100 + rand() % 100;
+            }
+            seen.insert(room);
+            classrooms.push_back(room);
+        }
+        // Run greedy algorithm
+        vector<pair<int, int>> cf;
+        for (int a : classrooms) cf.push_back({a/100, a});
+        sort(cf.begin(), cf.end());
+        vector<vector<int>> ans(n, vector<int>(6));
+        int l=0, r=m-1;
+        int group_idx=0;
+        while (group_idx < n) {
+            if (l < r) {
+                int class_l = cf[l].second;
+                int class_r = cf[r].second;
+                if (group_idx + 1 < n) {
+                    ans[group_idx][0] = class_r;
+                    ans[group_idx][2] = class_r;
+                    ans[group_idx][4] = class_r;
+                    ans[group_idx][1] = class_l;
+                    ans[group_idx][3] = class_l;
+                    ans[group_idx][5] = class_l;
+                    ans[group_idx+1][0] = class_l;
+                    ans[group_idx+1][2] = class_l;
+                    ans[group_idx+1][4] = class_l;
+                    ans[group_idx+1][1] = class_r;
+                    ans[group_idx+1][3] = class_r;
+                    ans[group_idx+1][5] = class_r;
+                    group_idx += 2;
+                    l++; r--;
+                } else {
+                    ans[group_idx][0] = class_r;
+                    ans[group_idx][2] = class_r;
+                    ans[group_idx][4] = class_r;
+                    ans[group_idx][1] = class_l;
+                    ans[group_idx][3] = class_l;
+                    ans[group_idx][5] = class_l;
+                    group_idx++;
+                    l++; r--;
+                }
+            } else {
+                int class_mid = cf[l].second;
+                for (int t=0; t<6; t++) ans[group_idx][t] = class_mid;
+                group_idx++;
+                l++;
+            }
+        }
+        // Validate
+        bool valid = true;
+        for (int k=0; k<6; k++) {
+            set<int> used;
+            for (int i=0; i<n; i++) {
+                if (used.count(ans[i][k])) {
+                    valid = false;
+                    break;
+                }
+                used.insert(ans[i][k]);
+            }
+            if (!valid) break;
+        }
+        if (!valid) {
+            cout << "Invalid schedule!" << endl;
+            break;
+        }
+        // Compute total movements
+        long long total = 0;
+        for (int i=0; i<n; i++) {
+            int floor_prev = ans[i][0] / 100;
+            for (int t=1; t<6; t++) {
+                int floor_cur = ans[i][t] / 100;
+                total += abs(floor_cur - floor_prev);
+                floor_prev = floor_cur;
+            }
+        }
+        // Just to see, output total
+        // cout << "Test " << test << ": n=" << n << " m=" << m << " total=" << total << endl;
+    }
+    cout << "All " << T << " random tests passed." << endl;
+    return 0;
+}

@@ -1,0 +1,257 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+
+// Function to calculate maximum portions using greedy with two types
+ll solve(ll k, ll a, ll b, ll x, ll y) {
+    // If we can't even start with either type, return 0
+    if (k < a && k < b) return 0;
+    
+    ll ans = 0;
+    
+    // We'll consider two main strategies: // 1. Use as many of the more efficient option as possible
+    // 2. But also try alternating optimally
+    
+    // However, note that this is a classic greedy problem.
+    // Key idea: if one type consumes less temperature per portion and has lower requirement,
+    // it's better to use it when possible.
+    
+    // But direct simulation may be too slow (since values up to 1e9). // Instead, we can use a mathematical approach.
+
+    // Alternate idea: try both pure strategies and a mixed one? // Actually, optimal strategy is often to use the type with lower "cost" when possible.
+    
+    // Let's think: we want to maximize count. // Suppose we cook 'n1' portions of type 1 and 'n2' portions of type 2.
+    // The constraints are:
+    // - Before each cooking, temp >= required
+    // - Temperature drops after each cooking.
+    
+    // But order matters! So we need to decide the sequence.
+    
+    // Observation: It's often optimal to use the dish that preserves temperature longer.
+    // Specifically, if (a <= b) and (x <= y), then type 1 might be better, but not always.
+    
+    // Another known solution for such problems: // - If we can only use one type, compute directly.
+    // - Otherwise, try to use the type that has lower threshold and lower drop more.
+    
+    // Known trick from similar Codeforces problems:
+    // Try both orders: use type1 when possible, else type2; and vice versa.
+    // But since numbers are large, we can't simulate step by step.
+    
+    // Insight: the optimal strategy is usually to use one type until we can't, // then switch to the other, or alternate based on efficiency.
+    
+    // However, there is a known solution: // Compare the "efficiency" in terms of how much temperature is consumed per portion,
+    // but also respecting thresholds.
+    
+    // Alternate approach (commonly used in editorials): // Case 1: Use only type 1
+    ll res1 = 0;
+    if (k >= a) {
+        // After first portion: k - x // We can keep cooking as long as current temp >= a
+        // This forms an arithmetic sequence. // Number of portions: floor((k - a) / x) + 1
+        res1 = (k - a) / x + 1;
+    }
+    
+    // Case 2: Use only type 2
+    ll res2 = 0;
+    if (k >= b) {
+        res2 = (k - b) / y + 1;
+    }
+    
+    // But mixed strategy may be better.
+    
+    // Known solution from similar problems (e.g., Codeforces Round #844): // Try to use the type with smaller threshold and smaller drop.
+    // But here's a better idea: try to use the type that allows more total operations.
+    
+    // Actually, let's consider: // If both types are usable, we can try to use the one that "preserves" the ability to cook
+    // longer. But simulation is hard.
+    
+    // Insight: we can use a while-loop style logic but optimized. // But note: constraints up to 1e9, so we cannot iterate.
+    
+    // Another known solution: // Let’s suppose we fix the number of type1 dishes to n1, then the remaining temperature
+    // after n1 dishes is: k - n1 * x
+    // But during these n1 dishes, we must have had temp >= a before each.
+    // The minimum temp before last type1 dish is k - (n1-1)*x >= a  => n1 <= (k - a)/x + 1 // Similarly, between type1 dishes, we could insert type2 dishes.
+    
+    // Actually, editorial-like solution:
+    // https://codeforces.com/contest/1780/problem/B
+    // Not exactly same.
+    
+    // After checking known problems: this resembles "Grill" problems.
+    
+    // Correct approach:
+    // We can use a greedy rule: if a > b, swap both requirements and drops? But no, because
+    // the types are different.
+    
+    // Alternatively, try both priorities: // Strategy 1: whenever possible, cook type1, otherwise type2
+    // Strategy 2: whenever possible, cook type2, otherwise type1 // And take max.
+    
+    // But again, we can't simulate step-by-step if count is large.
+    
+    // However, note that once you choose a priority, the process becomes periodic.
+    
+    // But there's a simpler solution observed in sample cases:
+    
+    // Example 1: k=10, a=3, b=4, x=2, y=1 // Output: 8
+    // They cook 7 of type2 (temp drops 7*1=7 -> temp=3), then one of type1 (needs 3, has 3, then temp=1) // Total: 8
+    
+    // How to compute this? // Idea: try to use the type with lower temperature drop per requirement?
+    
+    // Actually, known accepted solution for this exact problem:
+    // Compare (a <= b) and (x <= y) — if type1 is better in both, use it as much as possible.
+    // But what if not?
+    
+    // Insight: if we are going to cook many portions, we want to minimize temperature loss. // But we also need to meet the threshold.
+    
+    // There's a known formula: // Answer = max(
+    //   (k >= a ? ((k - a) / x + 1) : 0), //   (k >= b ? ((k - b) / y + 1) : 0)
+    // ) // But example 1:
+    //   type1: (10-3)/2 + 1 = 7/2 + 1 = 3 + 1 = 4 //   type2: (10-4)/1 + 1 = 6 + 1 = 7
+    // Max is 7, but expected is 8 -> so mixed is better.
+    
+    // So we need mixed.
+    
+    // How about this:
+    // Suppose we cook i portions of type1. Then the temperature after these (if done first) is k - i*x.
+    // But we might interleave.
+    
+    // Better idea from known problems: 
+    // https://codeforces.com/contest/1780/problem/A
+    // Not matching.
+    
+    // After research, this problem is similar to Codeforces problems where you alternate.
+    
+    // Actually, let's simulate the optimal strategy without iterating one by one:
+    
+    // Claim: the optimal strategy is to use one type exclusively unless switching allows more.
+    
+    // But example 1 shows mixing is better.
+    
+    // Another idea:  // Let’s assume we cook n1 of type1 and n2 of type2.
+    // The necessary condition is that at any point, temperature >= required.
+    // The worst moment for type1 is just before the last type1: temp >= a
+    // The temperature starts at k and decreases by x for each type1 and y for each type2. // But the order matters.
+    
+    // Optimal order: do all type1 first? Or all type2 first? Or alternate?
+    
+    // Note: doing type2 first in example1 gives more total.
+    
+    // In fact, in example1: do type2 as long as temp >= b, then do type1 as long as temp >= a. // But after 6 type2: temp = 10 - 6*1 = 4 >= b=4 -> ok
+    // 7th type2: temp=4, which is >=4 -> cook, now temp=3 // Now can't cook type2 (3<4), but can cook type1 (3>=3) -> cook, temp=1
+    // Then stop. // Total: 8.
+    
+    // So algorithm: // Option 1: use type2 until temp < b, then use type1 until temp < a.
+    // Option 2: use type1 until temp < a, then use type2 until temp < b. // Take max over these two and possibly more strategies?
+    
+    // But what if we interleave?  // However, it can be proven that doing all of one type first then the other is optimal.
+    // Why? Because the temperature only decreases, so if you are going to do both,  // it's best to do the one with higher threshold first? No, actually in example1 we did lower threshold second.
+    
+    // Actually, we did type2 (threshold 4) first, then type1 (threshold 3). So higher threshold first.
+    
+    // General rule: do the one with higher threshold first? But then why not do type1 first in some cases?
+    
+    // Let's test option1: do type2 first then type1
+    auto cook_sequence = [](ll k, ll a, ll b, ll x, ll y) -> ll {
+        ll temp = k;
+        ll count = 0;
+        
+        // First phase: cook type2 while possible
+        if (b <= temp) {
+            // How many can we cook? At least one. // We can cook n2 such that: temp - (n2-1)*y >= b  => n2 <= (temp - b)/y + 1
+            ll n2 = (temp - b) / y + 1;
+            count += n2;
+            temp -= n2 * y;
+        }
+        
+        // Second phase: cook type1 while possible
+        while (temp >= a) {
+            count++;
+            temp -= x;
+            // Since x and y can be large, but a and b are fixed, we can compute in bulk // But after first phase, temp might be low, so we break soon.
+            // However, worst-case x=1, temp can be large -> but note after first phase temp might be small. // Actually, we can do:
+            //   if (temp >= a), then we can cook at least one, but how many? //   n1 = (temp - a) / x + 1
+            // But careful: we are in the middle of sequence, but temperature is linear. // So we can break out and compute directly.
+            ll n1 = (temp - a) / x + 1;
+            count += n1;
+            temp -= n1 * x;
+            break; // because after this, temp < a
+        }
+        
+        return count;
+    };
+    
+    ll option1 = cook_sequence(k, a, b, x, y); // type2 then type1
+    ll option2 = cook_sequence(k, b, a, y, x); // type1 then type2, but parameters swapped
+    
+    // But wait: in option2, we are computing for (type1 then type2), but the function assumes: //   first cooks the one with threshold `b` (which is actually a), then the one with threshold `a` (which is b)
+    // That doesn't make sense.
+    
+    // Let me redefine:
+    auto cook_two_phase = [](ll k, ll thresh1, ll drop1, ll thresh2, ll drop2) -> ll {
+        ll temp = k;
+        ll count = 0;
+        
+        // Phase 1: cook type with threshold `thresh1`
+        if (temp >= thresh1) {
+            ll n1 = (temp - thresh1) / drop1 + 1;
+            count += n1;
+            temp -= n1 * drop1;
+        }
+        
+        // Phase 2: cook type with threshold `thresh2`
+        if (temp >= thresh2) {
+            ll n2 = (temp - thresh2) / drop2 + 1;
+            count += n2;
+        }
+        
+        return count;
+    };
+    
+    ll ans1 = cook_two_phase(k, b, y, a, x); // do type2 first, then type1
+    ll ans2 = cook_two_phase(k, a, x, b, y); // do type1 first, then type2
+    
+    // Also consider doing only one type
+    ans = max({ans1, ans2, res1, res2});
+    
+    // But wait: example 1: 
+    //   ans1: type2 first: n2 = (10-4)/1+1 = 6+1=7, temp=10-7=3; then type1: (3-3)/2+1 = 0+1=1 -> total=8
+    //   ans2: type1 first: n1 = (10-3)/2+1 = 7/2+1=3+1=4, temp=10-8=2; then type2: 2<4 -> 0 -> total=4 //   res1=4, res2=7
+    //   max = 8 -> correct.
+    
+    // Example 2: k=1, a=10, b=10, x=1, y=1
+    //   ans1: 1<10 -> 0 for first, then 1<10 -> 0 -> 0
+    //   ans2: same -> 0 //   res1=0, res2=0 -> ans=0 -> correct.
+    
+    // Example 3: k=100, a=17, b=5, x=2, y=3 //   ans1: type2 first: thresh=5, drop=3 -> n2=(100-5)/3+1=95/3+1=31+1=32, temp=100-96=4
+    //         then type1: 4<17 -> 0 -> total=32 //   ans2: type1 first: thresh=17, drop=2 -> n1=(100-17)/2+1=83/2+1=41+1=42, temp=100-84=16
+    //         then type2: 16>=5 -> n2=(16-5)/3+1=11/3+1=3+1=4 -> total=46 //   res1=42, res2=32
+    //   max=46 -> correct.
+    
+    // Example 4: k=28, a=14, b=5, x=2, y=4 //   ans1: type2 first: thresh=5, drop=4 -> n2=(28-5)/4+1=23/4+1=5+1=6, temp=28-24=4 -> then type1: 4<14 -> 0 -> total=6
+    //   ans2: type1 first: thresh=14, drop=2 -> n1=(28-14)/2+1=14/2+1=7+1=8, temp=28-16=12 //         then type2: 12>=5 -> n2=(12-5)/4+1=7/4+1=1+1=2 -> total=10
+    //   res1=8, res2=6 -> max=10 -> correct.
+    
+    // Example 5: k=277, a=5, b=14, x=1, y=3 //   ans1: type2 first: thresh=14, drop=3 -> n2=(277-14)/3+1=263/3+1=87+1=88, temp=277-264=13
+    //         then type1: 13>=5 -> n1=(13-5)/1+1=8+1=9 -> total=97 //   ans2: type1 first: thresh=5, drop=1 -> n1=(277-5)/1+1=272+1=273, temp=277-273=4
+    //         then type2: 4<14 -> 0 -> total=273 //   res1=273, res2=88
+    //   max=273 -> correct.
+    
+    return max({ans1, ans2, res1, res2});
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        ll k, a, b, x, y;
+        cin >> k >> a >> b >> x >> y;
+        
+        cout << solve(k, a, b, x, y) << '\n';
+    }
+    
+    return 0;
+}

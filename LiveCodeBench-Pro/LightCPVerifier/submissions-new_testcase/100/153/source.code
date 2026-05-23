@@ -1,0 +1,81 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <set>
+using namespace std;
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    string s;
+    cin >> s;
+    vector<pair<char,char>> ops(q);
+    for (int i=0; i<q; i++) {
+        cin >> ops[i].first >> ops[i].second;
+    }
+    
+    // 计算 target
+    char target[3];
+    target[0] = 'a'; target[1] = 'b'; target[2] = 'c';
+    for (int i=q-1; i>=0; i--) {
+        char x = ops[i].first, y = ops[i].second;
+        int xi = x - 'a', yi = y - 'a';
+        if (target[yi] < target[xi]) target[xi] = target[yi];
+    }
+    
+    // 贪心改
+    string cur = s;
+    vector<bool> used(q, false);
+    set<int> pos[3];
+    for (int i=0; i<n; i++) pos[cur[i]-'a'].insert(i);
+    
+    // 处理每个位置
+    for (int i=0; i<n; i++) {
+        char t = cur[i];
+        char tar = target[t-'a'];
+        if (t == tar) continue;
+        
+        // 尝试直接一步变成 tar
+        bool ok = false;
+        for (int j=0; j<q; j++) {
+            if (!used[j] && ops[j].first == t && ops[j].second == tar) {
+                used[j] = true;
+                pos[t-'a'].erase(i);
+                cur[i] = tar;
+                pos[tar-'a'].insert(i);
+                ok = true;
+                break;
+            }
+        }
+        if (ok) continue;
+        
+        // 尝试两步
+        for (char m='a'; m<='c'; m++) {
+            if (m == t || m == tar) continue;
+            int j1 = -1, j2 = -1;
+            for (int j=0; j<q; j++) if (!used[j] && ops[j].first == t && ops[j].second == m) { j1=j; break; }
+            for (int j=0; j<q; j++) if (!used[j] && ops[j].first == m && ops[j].second == tar) { j2=j; break; }
+            if (j1 != -1 && j2 != -1) {
+                used[j1] = used[j2] = true;
+                pos[t-'a'].erase(i);
+                cur[i] = tar;
+                pos[tar-'a'].insert(i);
+                ok = true;
+                break;
+            }
+        }
+    }
+    
+    cout << cur << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

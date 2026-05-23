@@ -1,0 +1,43 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Cell {
+    int x, y;
+    Cell(int x = 0, int y = 0) : x(x), y(y) {}
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        int cx = (n + 1) / 2, cy = (m + 1) / 2;
+        vector<Cell> cells;
+        cells.reserve(n * m);
+        for (int i = 1; i <= n; ++i) {
+            for (int j = 1; j <= m; ++j) {
+                cells.emplace_back(i, j);
+            }
+        }
+        sort(cells.begin(), cells.end(), [cx, cy](const Cell& a, const Cell& b) {
+            int la = max(abs(a.x - cx), abs(a.y - cy));
+            int lb = max(abs(b.x - cx), abs(b.y - cy));
+            if (la != lb) return la < lb;
+            int ma = abs(a.x - cx) + abs(a.y - cy);
+            int mb = abs(b.x - cx) + abs(b.y - cy);
+            if (ma != mb) return ma < mb;
+            if (a.x != b.x) return a.x < b.x;
+            return a.y < b.y;
+        });
+        for (const Cell& c : cells) {
+            cout << c.x << ' ' << c.y << '\n';
+        }
+    }
+    return 0;
+}

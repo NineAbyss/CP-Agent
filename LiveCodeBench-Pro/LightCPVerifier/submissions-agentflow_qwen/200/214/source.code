@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int l1, b1, l2, b2, l3, b3;
+        cin >> l1 >> b1 >> l2 >> b2 >> l3 >> b3;
+        
+        // Total area
+        long long area = 1LL * l1 * b1 + 1LL * l2 * b2 + 1LL * l3 * b3;
+        int s = sqrt(area);
+        if (1LL * s * s != area) {
+            cout << "NO\n";
+            continue;
+        }
+        
+        // Create vector of rectangles
+        vector<pair<int, int>> rects = {{l1, b1}, {l2, b2}, {l3, b3}};
+        sort(rects.begin(), rects.end());
+        bool found = false;
+        do {
+            int l0 = rects[0].first, b0 = rects[0].second;
+            int l1_val = rects[1].first, b1_val = rects[1].second;  // renamed to avoid conflict
+            int l2_val = rects[2].first, b2_val = rects[2].second;
+            
+            // Case a: all same width (l), stacked vertically
+            if (l0 == s && l1_val == s && l2_val == s && b0 + b1_val + b2_val == s) {
+                found = true;
+                break;
+            }
+            // Case b: all same height (b), stacked horizontally
+            if (b0 == s && b1_val == s && b2_val == s && l0 + l1_val + l2_val == s) {
+                found = true;
+                break;
+            }
+            // Case c: two with same height (b), side by side, third spans full width on top/bottom
+            if (b0 == b1_val && l0 + l1_val == s && l2_val == s && b2_val == s - b0) {
+                found = true;
+                break;
+            }
+            // Case d: two with same width (l), stacked vertically, third spans full height on side
+            if (l0 == l1_val && b0 + b1_val == s && b2_val == s && l2_val == s - l0) {
+                found = true;
+                break;
+            }
+        } while (next_permutation(rects.begin(), rects.end()));
+        
+        if (found) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

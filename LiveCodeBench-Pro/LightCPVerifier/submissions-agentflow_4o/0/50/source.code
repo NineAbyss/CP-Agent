@@ -1,0 +1,28 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while(t--) {
+        int a, x, y;
+        cin >> a >> x >> y;
+        
+        bool canWin = false;
+        
+        // Check if Bob can start at `x`
+        if (abs(x - x) < abs(a - x) && abs(x - y) < abs(a - y)) {
+            canWin = true;
+        }
+        
+        // Check if Bob can start at `y`
+        if (abs(y - y) < abs(a - y) && abs(y - x) < abs(a - x)) {
+            canWin = true;
+        }
+        
+        if (canWin) cout << "YES" << endl;
+        else cout << "NO" << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,61 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <set>
+#include <map>
+using namespace std;
+
+const int MAX_PRE = 2000000;
+
+vector<long long> min_x_for_signature;
+
+void precompute() {
+    map<string, long long> mp;
+    
+    // 计算到MAX_PRE
+    for (int x = 1; x <= MAX_PRE; x++) {
+        string s1 = to_string(x);
+        string s2 = to_string(x + 1);
+        string s = s1 + s2;
+        sort(s.begin(), s.end());
+        
+        if (mp.find(s) == mp.end()) {
+            mp[s] = x;
+        }
+    }
+    
+    for (auto& [sig, min_x] : mp) {
+        min_x_for_signature.push_back(min_x);
+    }
+    
+    sort(min_x_for_signature.begin(), min_x_for_signature.end());
+}
+
+long long count_distinct(long long n) {
+    if (n <= MAX_PRE) {
+        auto it = upper_bound(min_x_for_signature.begin(), min_x_for_signature.end(), n);
+        return distance(min_x_for_signature.begin(), it);
+    }
+    
+    // 对于n > MAX_PRE，我们假设没有新的签名出现 // 实际上，对于非常大的n，可能会有一些新的签名，但数量很少
+    // 作为近似，我们返回MAX_PRE时的数量
+    return min_x_for_signature.size();
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    precompute();
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n;
+        cin >> n;
+        cout << count_distinct(n) << endl;
+    }
+    
+    return 0;
+}

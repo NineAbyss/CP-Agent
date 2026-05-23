@@ -1,0 +1,69 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+using ll = long long;
+
+bool check_gap(ll gap, bool is_boundary, ll tile_len) {
+    if (gap == 0) return true;
+    if (is_boundary) {
+        return gap <= tile_len;
+    } else {
+        return gap % tile_len == 0;
+    }
+}
+
+bool solve() {
+    ll w, h, a, b, x1, y1, x2, y2;
+    cin >> w >> h >> a >> b >> x1 >> y1 >> x2 >> y2;
+    
+    // 计算每个瓷砖在屋顶内的覆盖区间
+    ll L1 = max(0LL, x1);
+    ll R1 = min(w, x1 + a);
+    ll L2 = max(0LL, x2);
+    ll R2 = min(w, x2 + a);
+    
+    if (L1 > L2) {
+        swap(L1, L2);
+        swap(R1, R2);
+    }
+    
+    // x方向三段空隙
+    ll left_gap = L1;
+    ll middle_gap = (R1 >= L2) ? 0 : (L2 - R1);
+    ll right_gap = w - max(R1, R2);
+    
+    if (!check_gap(left_gap, true, a)) return false;
+    if (!check_gap(middle_gap, false, a)) return false;
+    if (!check_gap(right_gap, true, a)) return false;
+    
+    // y方向
+    ll B1 = max(0LL, y1);
+    ll T1 = min(h, y1 + b);
+    ll B2 = max(0LL, y2);
+    ll T2 = min(h, y2 + b);
+    
+    if (B1 > B2) {
+        swap(B1, B2);
+        swap(T1, T2);
+    }
+    
+    ll bottom_gap = B1;
+    ll middle_gap_y = (T1 >= B2) ? 0 : (B2 - T1);
+    ll top_gap = h - max(T1, T2);
+    
+    if (!check_gap(bottom_gap, true, b)) return false;
+    if (!check_gap(middle_gap_y, false, b)) return false;
+    if (!check_gap(top_gap, true, b)) return false;
+    
+    return true;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << (solve() ? "Yes" : "No") << endl;
+    }
+    return 0;
+}

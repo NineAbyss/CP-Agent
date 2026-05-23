@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+long long solve(vector<int>& a) {
+    int n = a.size();
+    // 前缀和 S[0]=0, S[i]=a[0]+...+a[i-1]
+    vector<long long> S(n+1, 0);
+    for (int i = 1; i <= n; i++) {
+        S[i] = S[i-1] + a[i-1];
+    }
+    
+    long long total = S[n];
+    long long best_save = 0;
+    
+    // 对于每个值v在位置p
+    for (int idx = 0; idx < n; idx++) {
+        int v = a[idx];
+        int p = idx + 1;
+        
+        // 计算f[R] for R=1..p
+        vector<long long> f(p+1, 0);
+        for (int R = 1; R <= p; R++) {
+            f[R] = (long long)R * (v + 1) - S[R-1];
+        }
+        
+        // 前缀最大值
+        vector<long long> max_f(p+1, 0);
+        max_f[0] = -LLONG_MAX;
+        for (int R = 1; R <= p; R++) {
+            max_f[R] = max(max_f[R-1], f[R]);
+        }
+        
+        // 对于每个L>=p
+        for (int L = p; L <= n; L++) {
+            int R_max = min(p, L);
+            long long best_f = max_f[R_max];
+            long long constant = S[L] - abs(p - L) - L - (long long)(L+1) * v;
+            long long save = constant + best_f;
+            if (save > best_save) best_save = save;
+        }
+    }
+    
+    return total - best_save;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        cout << solve(a) << '\n';
+    }
+    return 0;
+}

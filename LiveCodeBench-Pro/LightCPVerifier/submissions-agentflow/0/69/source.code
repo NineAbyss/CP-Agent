@@ -1,0 +1,55 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+
+int main() {
+    int t;
+    std::cin >> t;
+    while (t--) {
+        int n;
+        std::cin >> n;
+        std::vector<int> a(n);
+
+        for (int i = 0; i < n; ++i) {
+            std::cin >> a[i];
+        }
+
+        std::sort(a.begin(), a.end());
+
+        // Check if the current min and max is enough
+        int min_elem = a.front();
+        int max_elem = a.back();
+
+        if ((min_elem + max_elem) % 2 == 0) {
+            std::cout << 0 << std::endl;
+            continue;
+        }
+
+        // Attempt single removals
+        bool single_removal_sufficient = false;
+
+        for (int i = 0; i < n; ++i) {
+            int current_element = a[i];
+            int temp_min = INT_MAX;
+            int temp_max = INT_MIN;
+            
+            for (int j = 0; j < n; ++j) {
+                if (j == i) continue; // Skip the current
+                if (a[j] < temp_min) temp_min = a[j];
+                if (a[j] > temp_max) temp_max = a[j];
+            }
+
+            if ((temp_min + temp_max) % 2 == 0) {
+                std::cout << 1 << std::endl;
+                single_removal_sufficient = true;
+                break;
+            }
+        }
+
+        if (!single_removal_sufficient) {
+            std::cout << 2 << std::endl;
+        }
+    }
+    return 0;
+}

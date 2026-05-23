@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        
+        multiset<int> ms;
+        set<int> distinct;
+        int M = 0, S = 0;
+        int ans = 0;
+        
+        for (int i = 0; i < n; ++i) {
+            int x = a[i];
+            ms.insert(x);
+            distinct.insert(x);
+            M = max(M, x);
+            
+            // 严格次大值
+            S = 0;
+            if (distinct.size() > 1) {
+                auto it = distinct.end();
+                --it;
+                if (it != distinct.begin()) {
+                    --it;
+                    S = *it;
+                }
+            }
+            
+            // 检查是否存在数在 (M/2, M)
+            auto it = distinct.upper_bound(M / 2);
+            if (it != distinct.end() && *it < M) {
+                ans = M;
+            } else {
+                int cand = 0;
+                if (S > 0) cand = S + (M % S);
+                // 检查 <= M/2 的最大数
+                auto it2 = distinct.upper_bound(M / 2);
+                if (it2 != distinct.begin()) {
+                    --it2;
+                    int t = *it2;
+                    cand = max(cand, t + (M % t));
+                    if (it2 != distinct.begin()) {
+                        --it2;
+                        int t2 = *it2;
+                        cand = max(cand, t2 + (M % t2));
+                    }
+                }
+                ans = max(ans, cand);
+            }
+            
+            cout << ans << " \n"[i == n-1];
+        }
+    }
+    return 0;
+}

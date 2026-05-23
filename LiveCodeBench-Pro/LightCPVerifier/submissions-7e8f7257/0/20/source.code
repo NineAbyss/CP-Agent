@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        long long a1 = a[0];
+        long long a2 = a[1];
+        long long numerator = 2 * a1 - a2;
+        long long denom = n + 1;
+        if (numerator % denom != 0) {
+            cout << "NO" << '\n';
+            continue;
+        }
+        long long y = numerator / denom;
+        if (y < 0) {
+            cout << "NO" << '\n';
+            continue;
+        }
+        long long x = a1 - y * n;
+        if (x < 0) {
+            cout << "NO" << '\n';
+            continue;
+        }
+        bool ok = true;
+        for (int i = 1; i <= n; i++) {
+            long long expected = x * i + y * (n - i + 1);
+            if (a[i-1] != expected) {
+                ok = false;
+                break;
+            }
+        }
+        cout << (ok ? "YES" : "NO") << '\n';
+    }
+    return 0;
+}

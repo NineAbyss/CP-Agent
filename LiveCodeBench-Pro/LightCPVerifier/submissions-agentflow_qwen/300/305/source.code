@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> p(n+1);
+        for (int i = 1; i <= n; i++) {
+            cin >> p[i];
+        }
+        vector<int> d(n);
+        for (int i = 0; i < n; i++) {
+            cin >> d[i];
+        }
+
+        // Find cycles in the permutation
+        vector<bool> visited(n+1, false);
+        vector<int> cycle_id(n+1, -1);
+        vector<int> cycle_size;
+        int num_cycles = 0;
+
+        for (int i = 1; i <= n; i++) {
+            if (!visited[i]) {
+                // Found a new cycle
+                int cur = i;
+                int size = 0;
+                while (!visited[cur]) {
+                    visited[cur] = true;
+                    cycle_id[cur] = num_cycles;
+                    size++;
+                    cur = p[cur];
+                }
+                cycle_size.push_back(size);
+                num_cycles++;
+            }
+        }
+
+        // Process queries
+        vector<bool> activated(num_cycles, false);
+        long long total_ops = 0;
+        for (int i = 0; i < n; i++) {
+            int pos = d[i];
+            int cid = cycle_id[pos];
+            if (!activated[cid]) {
+                activated[cid] = true;
+                total_ops += cycle_size[cid];
+            }
+            cout << total_ops;
+            if (i < n-1) cout << " ";
+        }
+        cout << "\n";
+    }
+    return 0;
+}

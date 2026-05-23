@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<int> a(n);
+        vector<int> filled;
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+            if (a[i] != 0) {
+                filled.push_back(a[i]);
+            }
+        }
+        
+        // Collect missing numbers
+        vector<int> missing;
+        for (int i = 1; i <= n; ++i) {
+            if (find(filled.begin(), filled.end(), i) == filled.end()) {
+                missing.push_back(i);
+            }
+        }
+        
+        // Sort missing numbers in descending order
+        sort(missing.rbegin(), missing.rend());
+
+        // Fill zeros in a with the remaining numbers
+        int mi = 0;
+        for (int i = 0; i < n; ++i) {
+            if (a[i] == 0) {
+                a[i] = missing[mi++];
+            }
+        }
+        
+        // Calculate beauty
+        long long beauty = 0;
+        for (int i = 0; i < n; ++i) {
+            int min_element = a[i];
+            for (int j = i; j < n; ++j) {
+                min_element = min(min_element, a[j]);
+                beauty += min_element;
+            }
+        }
+        
+        cout << beauty << "\n";
+    }
+    
+    return 0;
+}

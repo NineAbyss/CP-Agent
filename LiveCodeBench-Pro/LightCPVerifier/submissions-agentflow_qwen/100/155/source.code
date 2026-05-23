@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        bool has_empty = false;
+        bool has_complete = false;
+        int total_edges = n * (n - 1) / 2;
+        for (int i = 0; i < k; ++i) {
+            int m;
+            cin >> m;
+            if (m == 0) {
+                has_empty = true;
+            }
+            if (m == total_edges) {
+                has_complete = true;
+            }
+        }
+        if (has_empty && has_complete && n > 1) {
+            cout << "No\n";
+        } else {
+            cout << "Yes\n";
+        }
+    }
+    return 0;
+}

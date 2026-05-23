@@ -1,0 +1,187 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+#include <cmath>
+#include <functional>
+#include <unordered_map>
+using namespace std;
+
+const int MAX_DIM = 150;
+const int MAX_N = 10;
+
+// placement check
+int W, L;
+vector<int> sq;
+int k;
+bool found;
+
+bool overlap(int x1, int y1, int s1, int x2, int y2, int s2) {
+    return !(x1+s1 <= x2 || x2+s2 <= x1 || y1+s1 <= y2 || y2+s2 <= y1);
+}
+
+void dfs_place(int idx, vector<int>& xs, vector<int>& ys) {
+    if (found) return;
+    if (idx == k) {
+        found = true;
+        return;
+    }
+    int s = sq[idx];
+    // try all positions
+    for (int x=0; x+s <= W; x++) {
+        for (int y=0; y+s <= L; y++) {
+            bool ok = true;
+            for (int i=0; i<idx; i++) {
+                if (overlap(x, y, s, xs[i], ys[i], sq[i])) {
+                    ok = false;
+                    break;
+                }
+            }
+            if (ok) {
+                xs[idx] = x;
+                ys[idx] = y;
+                dfs_place(idx+1, xs, ys);
+                if (found) return;
+            }
+        }
+    }
+}
+
+bool can_place(vector<int> widths, int w, int l) {
+    // quick checks
+    if (w < l) swap(w, l);
+    int max_sq = *max_element(widths.begin(), widths.end());
+    if (max_sq > l) return false;
+    long long area_sum = 0;
+    for (int s : widths) area_sum += 1LL * s * s;
+    if (area_sum > 1LL * w * l) return false;
+    if (widths.size() == 1) return true;
+    if (widths.size() == 2) {
+        int a = widths[0], b = widths[1];
+        // try horizontal
+        if (a + b <= w && max(a, b) <= l) return true;
+        // try vertical
+        if (max(a, b) <= w && a + b <= l) return true;
+        return false;
+    }
+    // general case
+    W = w; L = l;
+    sq = widths;
+    k = sq.size();
+    sort(sq.begin(), sq.end(), greater<int>());
+    found = false;
+    vector<int> xs(k), ys(k);
+    dfs_place(0, xs, ys);
+    return found;
+}
+
+// partition generation
+struct Partition {
+    vector<int> widths;
+    int max_h;
+    bool operator<(const Partition& other) const {
+        return max_h < other.max_h;
+    }
+};
+
+vector<vector<Partition>> partitions(MAX_N+1); // index by n
+
+void generate_partitions_for_n(int n) {
+    vector<int> fib(n);
+    fib[0] = 1;
+    if (n>1) fib[1] = 2;
+    for (int i=2; i<n; i++) fib[i] = fib[i-1] + fib[i-2];
+    sort(fib.begin(), fib.end(), greater<int>());
+    
+    vector<vector<int>> groups;
+    vector<int> widths, heights;
+    
+    function<void(int)> dfs = [&](int idx) {
+        if (idx == n) {
+            int max_h = 0;
+            for (int h : heights) max_h = max(max_h, h);
+            partitions[n].push_back({widths, max_h});
+            return;
+        }
+        int val = fib[idx];
+        // existing groups
+        for (int i=0; i<groups.size(); i++) {
+            if (val <= groups[i].back()) {
+                groups[i].push_back(val);
+                heights[i] += val;
+                dfs(idx+1);
+                heights[i] -= val;
+                groups[i].pop_back();
+            }
+        }
+        // new group
+        groups.push_back({val});
+        widths.push_back(val);
+        heights.push_back(val);
+        dfs(idx+1);
+        heights.pop_back();
+        widths.pop_back();
+        groups.pop_back();
+    };
+    
+    dfs(0);
+    sort(partitions[n].begin(), partitions[n].end());
+}
+
+void precompute() {
+    for (int n=2; n<=MAX_N; n++) {
+        generate_partitions_for_n(n);
+    }
+}
+
+bool solve_box(int n, int w, int l, int h) {
+    // three orientations
+    vector<pair<int, pair<int,int>>> choices = {
+        {h, {w, l}},
+        {w, {h, l}},
+        {l, {w, h}}
+    };
+    for (auto& choice : choices) {
+        int height_dim = choice.first;
+        int a = choice.second.first;
+        int b = choice.second.second;
+        auto& parts = partitions[n];
+        // binary search for first partition with max_h > height_dim
+        int lo = 0, hi = parts.size();
+        while (lo < hi) {
+            int mid = (lo+hi)/2;
+            if (parts[mid].max_h > height_dim) hi = mid;
+            else lo = mid+1;
+        }
+        int cnt = lo;
+        // check each partition
+        for (int i=0; i<cnt; i++) {
+            if (can_place(parts[i].widths, a, b)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    precompute();
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        string ans(m, '0');
+        for (int i=0; i<m; i++) {
+            int w, l, h;
+            cin >> w >> l >> h;
+            if (solve_box(n, w, l, h)) {
+                ans[i] = '1';
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

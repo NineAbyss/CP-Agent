@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+
+        vector<long long> pre(n+1);
+        pre[0] = 0;
+        for (int i = 1; i <= n; i++) {
+            pre[i] = pre[i-1] + (s[i-1] == '1' ? 1 : -1);
+        }
+
+        long long len_sum = 0;
+        for (int k = 1; k <= n; k++) {
+            len_sum += 1LL * k * (n - k + 1);
+        }
+
+        sort(pre.begin(), pre.end());
+
+        long long diff_sum = 0;
+        long long prefix_sum = 0;
+        for (int j = 0; j <= n; j++) {
+            diff_sum += 1LL * j * pre[j] - prefix_sum;
+            prefix_sum += pre[j];
+        }
+
+        long long ans = (len_sum + diff_sum) / 2;
+        cout << ans << '\n';
+    }
+    return 0;
+}

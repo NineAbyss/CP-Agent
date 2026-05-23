@@ -1,0 +1,33 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long k, a, b, x, y;
+        cin >> k >> a >> b >> x >> y;
+        
+        int max_count = 0;
+        long long temperature = k;
+
+        // To maximize shashlik, prioritize cooking the type which allows for more counts
+        while (temperature >= min(a, b)) {
+            if (temperature >= a && (temperature < b || x < y)) {
+                // Cook type 1
+                temperature -= x;
+                max_count++;
+            } else if (temperature >= b){
+                // Cook type 2
+                temperature -= y;
+                max_count++;
+            } else {
+                break;
+            }
+        }
+
+        cout << max_count << endl;
+    }
+    return 0;
+}

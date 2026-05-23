@@ -1,0 +1,233 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+using namespace std;
+
+const int MAXN = 70005;
+const int LOG = 17;
+const int K_THRESHOLD = 1000;
+
+vector<int> adj[MAXN];
+int depth[MAXN];
+int parent[MAXN][LOG];
+int n;
+
+void dfs_lca(int u, int p) {
+    parent[u][0] = p;
+    for (int i = 1; i < LOG; i++) {
+        parent[u][i] = parent[parent[u][i-1]][i-1];
+    }
+    for (int v : adj[u]) {
+        if (v == p) continue;
+        depth[v] = depth[u] + 1;
+        dfs_lca(v, u);
+    }
+}
+
+int lca(int u, int v) {
+    if (depth[u] < depth[v]) swap(u, v);
+    int diff = depth[u] - depth[v];
+    for (int i = 0; i < LOG; i++) {
+        if (diff & (1 << i)) {
+            u = parent[u][i];
+        }
+    }
+    if (u == v) return u;
+    for (int i = LOG-1; i >= 0; i--) {
+        if (parent[u][i] != parent[v][i]) {
+            u = parent[u][i];
+            v = parent[v][i];
+        }
+    }
+    return parent[u][0];
+}
+
+int dist(int u, int v) {
+    int w = lca(u, v);
+    return depth[u] + depth[v] - 2 * depth[w];
+}
+
+vector<int> active;
+bool is_active[MAXN];
+int active_idx[MAXN];
+int k;
+
+int max_dist_from[MAXN];
+int global_max_dist;
+
+vector<vector<pair<int,int>>> sorted_neighbors;
+
+void compute_sorted_neighbors() {
+    sorted_neighbors.assign(k, vector<pair<int,int>>());
+    for (int i = 0; i < k; i++) {
+        int u = active[i];
+        for (int j = 0; j < k; j++) {
+            if (i == j) continue;
+            int d = dist(u, active[j]);
+            sorted_neighbors[i].push_back({d, j});
+        }
+        sort(sorted_neighbors[i].begin(), sorted_neighbors[i].end());
+    }
+}
+
+pair<int,int> find_farthest(int start, bool use_active) {
+    vector<int> q = {start};
+    vector<int> dist_arr(n+1, -1);
+    dist_arr[start] = 0;
+    int farthest = start;
+    for (int i = 0; i < (int)q.size(); i++) {
+        int u = q[i];
+        if (use_active && !is_active[u]) continue;
+        for (int v : adj[u]) {
+            if (dist_arr[v] == -1) {
+                dist_arr[v] = dist_arr[u] + 1;
+                q.push_back(v);
+                if (use_active && !is_active[v]) continue;
+                if (dist_arr[v] > dist_arr[farthest]) {
+                    farthest = v;
+                }
+            }
+        }
+    }
+    return {farthest, dist_arr[farthest]};
+}
+
+void compute_max_distances() {
+    if (k == 0) return;
+    int A = active[0];
+    pair<int,int> p1 = find_farthest(A, true);
+    int B = p1.first;
+    pair<int,int> p2 = find_farthest(B, true);
+    int C = p2.first;
+    global_max_dist = 0;
+    for (int i = 0; i < k; i++) {
+        int u = active[i];
+        int d1 = dist(u, B);
+        int d2 = dist(u, C);
+        int mx = max(d1, d2);
+        max_dist_from[i] = mx;
+        if (mx > global_max_dist) global_max_dist = mx;
+    }
+}
+
+int best_so_far;
+bool visited_active[MAXN];
+
+// DFS 使用排序邻居列表
+void dfs_sorted(int cur_idx, int last_w, int depth_cur) {
+    if (depth_cur > best_so_far) best_so_far = depth_cur;
+    if (last_w != -1) {
+        int max_possible = depth_cur + (int)log2(global_max_dist * 1.0 / last_w) + 2;
+        if (max_possible <= best_so_far) return;
+    }
+    auto& neighbors = sorted_neighbors[cur_idx];
+    int start_idx = 0;
+    if (last_w != -1) {
+        start_idx = lower_bound(neighbors.begin(), neighbors.end(), make_pair(2*last_w, 0)) - neighbors.begin();
+    }
+    for (int i = start_idx; i < (int)neighbors.size(); i++) {
+        int d = neighbors[i].first;
+        int next_idx = neighbors[i].second;
+        if (visited_active[next_idx]) continue;
+        if (last_w == -1 || d >= 2 * last_w) {
+            visited_active[next_idx] = true;
+            dfs_sorted(next_idx, d, depth_cur + 1);
+            visited_active[next_idx] = false;
+        }
+    }
+}
+
+// DFS 不使用排序列表，动态计算距离
+void dfs_dynamic(int cur_idx, int last_w, int depth_cur) {
+    if (depth_cur > best_so_far) best_so_far = depth_cur;
+    if (last_w != -1) {
+        int max_possible = depth_cur + (int)log2(global_max_dist * 1.0 / last_w) + 2;
+        if (max_possible <= best_so_far) return;
+    }
+    int cur = active[cur_idx];
+    for (int i = 0; i < k; i++) {
+        if (!visited_active[i]) {
+            int d = dist(cur, active[i]);
+            if (last_w == -1 || d >= 2 * last_w) {
+                visited_active[i] = true;
+                dfs_dynamic(i, d, depth_cur + 1);
+                visited_active[i] = false;
+            }
+        }
+    }
+}
+
+vector<int> solve_case(int n, string s, vector<pair<int,int>> edges) {
+    for (int i = 1; i <= n; i++) adj[i].clear();
+    for (auto& e : edges) {
+        int u = e.first, v = e.second;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    depth[1] = 0;
+    dfs_lca(1, 0);
+    active.clear();
+    memset(is_active, 0, sizeof(is_active));
+    for (int i = 1; i <= n; i++) {
+        if (s[i-1] == '1') {
+            active.push_back(i);
+            is_active[i] = true;
+        }
+    }
+    k = active.size();
+    if (k == 0) {
+        return vector<int>(n, -1);
+    }
+    for (int i = 0; i < k; i++) {
+        active_idx[active[i]] = i;
+    }
+    compute_max_distances();
+    vector<int> ans(n, -1);
+    if (k <= K_THRESHOLD) {
+        // 使用排序邻居列表
+        compute_sorted_neighbors();
+        for (int i = 0; i < k; i++) {
+            int start = active[i];
+            memset(visited_active, 0, sizeof(visited_active));
+            visited_active[i] = true;
+            best_so_far = 1;
+            dfs_sorted(i, -1, 1);
+            ans[start-1] = best_so_far;
+        }
+    } else {
+        // 使用动态距离计算
+        for (int i = 0; i < k; i++) {
+            int start = active[i];
+            memset(visited_active, 0, sizeof(visited_active));
+            visited_active[i] = true;
+            best_so_far = 1;
+            dfs_dynamic(i, -1, 1);
+            ans[start-1] = best_so_far;
+        }
+    }
+    return ans;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    int t;
+    cin >> t;
+    while (t--) {
+        cin >> n;
+        string s;
+        cin >> s;
+        vector<pair<int,int>> edges(n-1);
+        for (int i = 0; i < n-1; i++) {
+            cin >> edges[i].first >> edges[i].second;
+        }
+        vector<int> ans = solve_case(n, s, edges);
+        for (int i = 0; i < n; i++) {
+            cout << ans[i] << (i == n-1 ? '\n' : ' ');
+        }
+    }
+    return 0;
+}

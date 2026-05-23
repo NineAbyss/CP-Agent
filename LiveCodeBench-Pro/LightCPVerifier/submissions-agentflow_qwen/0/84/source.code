@@ -1,0 +1,90 @@
+#include <iostream>
+#include <vector>
+#include <cctype>
+#include <string>
+#include <algorithm>
+#include <utility>
+using namespace std;
+
+// 返回 (x,y) 对应的值（从0开始的坐标）
+long long get_value(int n, long long x, long long y) {
+    if (n == 0) return 0;
+    if (n == 1) {
+        if (x == 0 && y == 0) return 0;
+        if (x == 1 && y == 1) return 1;
+        if (x == 1 && y == 0) return 2;
+        if (x == 0 && y == 1) return 3;
+    }
+    long long half = 1LL << (n - 1);
+    long long block_size = 1LL << (2 * (n - 1)); // 4^(n-1)
+    if (x < half && y < half) {
+        return get_value(n - 1, x, y);
+    } else if (x >= half && y >= half) {
+        return block_size + get_value(n - 1, x - half, y - half);
+    } else if (x >= half && y < half) {
+        return 2 * block_size + get_value(n - 1, x - half, y);
+    } else {
+        return 3 * block_size + get_value(n - 1, x, y - half);
+    }
+}
+
+// 返回值 d（从0开始）对应的坐标
+pair<long long, long long> get_coord(int n, long long d) {
+    if (n == 0) return {0, 0};
+    if (n == 1) {
+        if (d == 0) return {0, 0};
+        if (d == 1) return {1, 1};
+        if (d == 2) return {1, 0};
+        if (d == 3) return {0, 1};
+    }
+    long long block_size = 1LL << (2 * (n - 1));
+    long long half = 1LL << (n - 1);
+    if (d < block_size) {
+        auto [x, y] = get_coord(n - 1, d);
+        return {x, y};
+    } else if (d < 2 * block_size) {
+        auto [x, y] = get_coord(n - 1, d - block_size);
+        return {x + half, y + half};
+    } else if (d < 3 * block_size) {
+        auto [x, y] = get_coord(n - 1, d - 2 * block_size);
+        return {x + half, y};
+    } else {
+        auto [x, y] = get_coord(n - 1, d - 3 * block_size);
+        return {x, y + half};
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        int q;
+        cin >> q;
+
+        string op;
+        while (q--) {
+            cin >> op;
+            if (op == "->") {
+                long long x, y;
+                cin >> x >> y;
+                x--; y--; // 转为从0开始
+                long long val = get_value(n, x, y) + 1; // 值从1开始
+                cout << val << '\n';
+            } else if (op == "<-") {
+                long long d;
+                cin >> d;
+                d--; // 转为从0开始
+                auto [x, y] = get_coord(n, d);
+                cout << x + 1 << " " << y + 1 << '\n'; // 转回1开始
+            }
+        }
+    }
+
+    return 0;
+}

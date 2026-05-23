@@ -1,0 +1,68 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<pair<long long, long long>> points;
+        map<long long, int> count_d;
+        long long sum_x = 0;
+
+        for (int i = 0; i < n; i++) {
+            long long x, y;
+            cin >> x >> y;
+            points.push_back({x, y});
+            long long d = x + y;
+            count_d[d]++;
+            sum_x += x;
+        }
+
+        // Find d* with odd count
+        long long d_star = 0;
+        for (auto &p : count_d) {
+            if (p.second % 2 == 1) {
+                d_star = p.first;
+                break;
+            }
+        }
+
+        // Determine the required parity for s
+        int parity_needed = (sum_x & 1); // 0 or 1
+
+        // Find the maximum x among the points that has the required parity
+        long long candidate_s = LLONG_MIN;
+        bool found = false;
+        for (auto &p : points) {
+            long long x = p.first;
+            if ((x & 1) == parity_needed) {
+                if (!found || x > candidate_s) {
+                    candidate_s = x;
+                    found = true;
+                }
+            }
+        }
+
+        long long s;
+        if (found) {
+            s = candidate_s;
+        } else {
+            // Fallback: use 0 or 1 based on parity
+            s = parity_needed;
+        }
+
+        long long t_val = d_star - s;
+
+        cout << s << " " << t_val << "\n";
+    }
+    return 0;
+}

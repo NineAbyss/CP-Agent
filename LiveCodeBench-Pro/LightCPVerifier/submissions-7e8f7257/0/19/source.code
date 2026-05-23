@@ -1,0 +1,93 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+int popcount(long long x) {
+    return __builtin_popcountll(x);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        vector<long long> a(n);
+        long long sum0 = 0;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            sum0 += popcount(a[i]);
+        }
+        
+        const int LIMIT = 100; // 每个数字最多考虑加的次数
+        const int MAX_GAIN = n * 60;
+        long long max_cost = min(k, (long long)n * LIMIT);
+        vector<long long> dp(max_cost + 1, -1);
+        dp[0] = 0;
+        
+        for (int i = 0; i < n; i++) {
+            int base = popcount(a[i]);
+            vector<pair<int, long long>> items;
+            // 不加
+            items.push_back({0, 0});
+            // 加 t 次
+            long long max_t = min((long long)LIMIT, k);
+            for (long long t = 1; t <= max_t; t++) {
+                int gain = popcount(a[i] + t) - base;
+                if (gain > 0) {
+                    items.push_back({gain, t});
+                }
+            }
+            // 去重：相同 gain 保留最小 cost
+            sort(items.begin(), items.end());
+            vector<pair<int, long long>> uniq;
+            for (auto [gain, cost] : items) {
+                if (uniq.empty() || uniq.back().first != gain) {
+                    uniq.push_back({gain, cost});
+                }
+            }
+            // 分组背包，倒序更新
+            for (long long c = max_cost; c >= 0; c--) {
+                if (dp[c] == -1) continue;
+                for (auto [gain, cost] : uniq) {
+                    if (c + cost <= max_cost) {
+                        dp[c + cost] = max(dp[c + cost], dp[c] + gain);
+                    }
+                }
+            }
+        }
+        
+        long long best_gain1 = 0;
+        for (long long c = 0; c <= max_cost; c++) {
+            if (dp[c] != -1) {
+                best_gain1 = max(best_gain1, dp[c]);
+            }
+        }
+        
+        long long best_gain2 = 0;
+        for (int i = 0; i < n; i++) {
+            int base = popcount(a[i]);
+            int best_pop = popcount(a[i] + k);
+            for (int p = 1; p <= 60; p++) {
+                long long target = (1LL << p) - 1;
+                if (target >= a[i]) {
+                    long long need = target - a[i];
+                    if (need <= k) {
+                        best_pop = max(best_pop, p);
+                    }
+                }
+            }
+            best_gain2 = max(best_gain2, (long long)(best_pop - base));
+        }
+        
+        long long ans = sum0 + max(best_gain1, best_gain2);
+        cout << ans << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool canMatch(const string& p, const string& s) {
+    int i = 0, j = 0;
+    int n = p.size(), m = s.size();
+    while (i < n && j < m) {
+        if (p[i] != s[j]) return false;
+        int remP = n - i;
+        int remS = m - j;
+        // 如果剩余 s 长度足够多，且下一个字符相同，则可以匹配两个
+        if (remS >= remP + 1 && j + 1 < m && s[j + 1] == p[i]) {
+            j += 2;
+        } else {
+            j += 1;
+        }
+        i++;
+    }
+    return i == n && j == m;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        string p, s;
+        cin >> p >> s;
+        cout << (canMatch(p, s) ? "YES" : "NO") << '\n';
+    }
+    return 0;
+}

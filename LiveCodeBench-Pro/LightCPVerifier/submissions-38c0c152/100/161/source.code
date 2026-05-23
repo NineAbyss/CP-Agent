@@ -1,0 +1,173 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+typedef long long ll;
+
+struct Dinic {
+    struct Edge {
+        int to, rev;
+        ll cap;
+    };
+    
+    int n;
+    vector<vector<Edge>> adj;
+    vector<int> level, it;
+    
+    Dinic(int n) : n(n), adj(n), level(n), it(n) {}
+    
+    void add_edge(int u, int v, ll cap) {
+        adj[u].push_back({v, (int)adj[v].size(), cap});
+        adj[v].push_back({u, (int)adj[u].size() - 1, 0});
+    }
+    
+    bool bfs(int s, int t) {
+        fill(level.begin(), level.end(), -1);
+        queue<int> q;
+        level[s] = 0;
+        q.push(s);
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            for (const Edge& e : adj[u]) {
+                if (e.cap > 0 && level[e.to] == -1) {
+                    level[e.to] = level[u] + 1;
+                    q.push(e.to);
+                }
+            }
+        }
+        return level[t] != -1;
+    }
+    
+    ll dfs(int u, int t, ll f) {
+        if (u == t) return f;
+        for (int &i = it[u]; i < (int)adj[u].size(); i++) {
+            Edge& e = adj[u][i];
+            if (e.cap > 0 && level[u] + 1 == level[e.to]) {
+                ll ret = dfs(e.to, t, min(f, e.cap));
+                if (ret > 0) {
+                    e.cap -= ret;
+                    adj[e.to][e.rev].cap += ret;
+                    return ret;
+                }
+            }
+        }
+        return 0;
+    }
+    
+    ll max_flow(int s, int t) {
+        ll flow = 0;
+        ll INF = 1e18;
+        while (bfs(s, t)) {
+            fill(it.begin(), it.end(), 0);
+            while (ll f = dfs(s, t, INF)) {
+                flow += f;
+            }
+        }
+        return flow;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        
+        vector<ll> s(n);
+        for (int i = 0; i < n; i++) {
+            cin >> s[i];
+        }
+        
+        vector<vector<ll>> a(m, vector<ll>(n));
+        vector<vector<ll>> b(m, vector<ll>(n));
+        vector<vector<ll>> c(m, vector<ll>(n));
+        
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                cin >> a[i][j];
+            }
+            for (int j = 0; j < n; j++) {
+                cin >> b[i][j];
+            }
+            for (int j = 0; j < n; j++) {
+                cin >> c[i][j];
+            }
+        }
+        
+        // 对于每个k，计算答案
+        for (int k = 1; k <= m; k++) {
+            // 节点索引： // 0: S, 1: D (发现), 2: T
+            // U[i][j]: 3 + (i-1)*2*n + (j-1)*2 + 0 // W[i][j]: 3 + (i-1)*2*n + (j-1)*2 + 1
+            // i从1到k，j从0到n-1（0-indexed）
+            
+            int total_nodes = 3 + k * 2 * n;
+            Dinic dinic(total_nodes);
+            int S = 0, D = 1, T = 2;
+            
+            auto idx_U = [&](int i, int j) {
+                // i从1开始，j从0开始
+                return 3 + (i-1)*2*n + j*2 + 0;
+            };
+            
+            auto idx_W = [&](int i, int j) {
+                return 3 + (i-1)*2*n + j*2 + 1;
+            };
+            
+            // 第一天：S -> U[1][j]
+            for (int j = 0; j < n; j++) {
+                dinic.add_edge(S, idx_U(1, j), s[j]);
+            }
+            
+            // 对于每一天i
+            for (int i = 1; i <= k; i++) {
+                for (int j = 0; j < n; j++) {
+                    // 计算前一个和后一个机场（0-indexed）
+                    int prev_j = (j - 1 + n) % n;
+                    int next_j = (j + 1) % n;
+                    
+                    // 留在本地的行李：U[i][j] -> W[i][j]
+                    dinic.add_edge(idx_U(i, j), idx_W(i, j), 1e18);
+                    
+                    // 检查：W[i][j] -> D (被发现的行李)
+                    dinic.add_edge(idx_W(i, j), D, 1e18);
+                    
+                    // 检查：W[i][j] -> (如果i<k则U[i+1][j] else T) 容量 b[i-1][j]
+                    if (i < k) {
+                        dinic.add_edge(idx_W(i, j), idx_U(i+1, j), b[i-1][j]);
+                    } else {
+                        dinic.add_edge(idx_W(i, j), T, b[i-1][j]);
+                    }
+                    
+                    // 运输到前一个机场：U[i][j] -> (如果i<k则U[i+1][prev_j] else T)
+                    if (i < k) {
+                        dinic.add_edge(idx_U(i, j), idx_U(i+1, prev_j), a[i-1][j]);
+                    } else {
+                        dinic.add_edge(idx_U(i, j), T, a[i-1][j]);
+                    }
+                    
+                    // 运输到后一个机场：U[i][j] -> (如果i<k则U[i+1][next_j] else T)
+                    if (i < k) {
+                        dinic.add_edge(idx_U(i, j), idx_U(i+1, next_j), c[i-1][j]);
+                    } else {
+                        dinic.add_edge(idx_U(i, j), T, c[i-1][j]);
+                    }
+                }
+            }
+            
+            ll max_flow = dinic.max_flow(S, T);
+            cout << max_flow;
+            if (k < m) cout << " ";
+        }
+        cout << "\n";
+    }
+    
+    return 0;
+}

@@ -1,0 +1,107 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// 预计算 2^i 值
+ll pow2[31];
+
+void init() {
+    pow2[0] = 1;
+    for (int i = 1; i <= 30; i++) {
+        pow2[i] = pow2[i-1] << 1;
+    }
+}
+
+// 坐标 -> 数字
+ll coord_to_num(int n, ll x, ll y) {
+    ll result = 0;
+    
+    for (int i = n-1; i >= 0; i--) {
+        ll half = pow2[i];
+        
+        if (x <= half && y <= half) {
+            // 左上象限，bit = 0
+        }
+        else if (x > half && y > half) {
+            // 右下象限，bit = 1
+            result |= (1LL << (2*i));
+            x -= half;
+            y -= half;
+        }
+        else if (x > half && y <= half) {
+            // 左下象限，bit = 2
+            result |= (2LL << (2*i));
+            x -= half;
+        }
+        else {
+            // 右上象限，bit = 3
+            result |= (3LL << (2*i));
+            y -= half;
+        }
+    }
+    
+    return result + 1;
+}
+
+// 数字 -> 坐标
+pair<ll, ll> num_to_coord(int n, ll d) {
+    d--;  // 转换为0-based
+    ll x = 1, y = 1;
+    
+    for (int i = 0; i < n; i++) {
+        ll bit = (d >> (2*i)) & 3;
+        ll half = pow2[i];
+        
+        if (bit == 1) {
+            // 右下象限
+            x += half;
+            y += half;
+        }
+        else if (bit == 2) {
+            // 左下象限
+            x += half;
+        }
+        else if (bit == 3) {
+            // 右上象限
+            y += half;
+        }
+        // bit == 0: 左上象限，坐标不变
+    }
+    
+    return {x, y};
+}
+
+int main() {
+    init();
+    
+    // 使用C风格IO以提高速度
+    int t;
+    scanf("%d", &t);
+    
+    while (t--) {
+        int n;
+        scanf("%d", &n);
+        
+        int q;
+        scanf("%d", &q);
+        
+        for (int i = 0; i < q; i++) {
+            char type[5];
+            scanf("%s", type);
+            
+            if (type[0] == '-') {  // 查询类型：->
+                ll x, y;
+                scanf("%lld %lld", &x, &y);
+                printf("%lld\n", coord_to_num(n, x, y));
+            }
+            else {  // 查询类型：<-
+                ll d;
+                scanf("%lld", &d);
+                auto [x, y] = num_to_coord(n, d);
+                printf("%lld %lld\n", x, y);
+            }
+        }
+    }
+    
+    return 0;
+}

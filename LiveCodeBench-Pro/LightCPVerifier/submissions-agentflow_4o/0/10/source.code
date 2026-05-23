@@ -1,0 +1,86 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int INF = int(1e9);
+
+struct Edge {
+    int u, v, w;
+};
+
+struct DisjointSetUnion {
+    vector<int> parent, rank;
+    
+    DisjointSetUnion(int n) : parent(n), rank(n, 1) {
+        for (int i = 0; i < n; ++i) {
+            parent[i] = i;
+        }
+    }
+    
+    int find(int a) {
+        if (parent[a] != a) {
+            parent[a] = find(parent[a]);
+        }
+        return parent[a];
+    }
+    
+    void unite(int a, int b) {
+        a = find(a);
+        b = find(b);
+        if (a != b) {
+            if (rank[a] < rank[b]) swap(a, b);
+            parent[b] = a;
+            if (rank[a] == rank[b]) ++rank[a];
+        }
+    }
+};
+
+bool isConnected(int n, const vector<Edge>& edges, int minWeight, int maxWeight) {
+    DisjointSetUnion dsu(n);
+    for (const auto& edge : edges) {
+        if (edge.w >= minWeight && edge.w <= maxWeight) {
+            dsu.unite(edge.u - 1, edge.v - 1);
+        }
+    }
+    return dsu.find(0) == dsu.find(n - 1);
+}
+
+int minCostPath(int n, vector<Edge> &edges) {
+    sort(edges.begin(), edges.end(), [](const Edge &a, const Edge &b) { return a.w < b.w; });
+    
+    int answer = INF;
+    
+    for (int i = 0; i < edges.size(); ++i) {
+        int minWeight = edges[i].w;
+        int low = i, high = edges.size() - 1;
+        
+        while (low <= high) {
+            int mid = (low + high) / 2;
+            if (isConnected(n, edges, minWeight, edges[mid].w)) {
+                answer = min(answer, minWeight + edges[mid].w);
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+    }
+    
+    return answer;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<Edge> edges(m);
+        for (int i = 0; i < m; ++i)
+            cin >> edges[i].u >> edges[i].v >> edges[i].w;
+        
+        cout << minCostPath(n, edges) << '\n';
+    }
+    return 0;
+}

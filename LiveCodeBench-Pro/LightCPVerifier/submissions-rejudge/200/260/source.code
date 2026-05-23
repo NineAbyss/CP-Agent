@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX = 400010;
+int arr[MAX * 2];
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        int q;
+        scanf("%d", &q);
+        
+        int left = MAX, right = MAX;
+        int n = 0;
+        long long sum = 0, R = 0;
+        bool rev = false;
+        
+        while (q--) {
+            int s;
+            scanf("%d", &s);
+            if (s == 1) {
+                if (n == 0) {
+                    printf("%lld\n", R);
+                    continue;
+                }
+                long long last;
+                if (!rev) {
+                    last = arr[right - 1];
+                    R = R + sum - n * last;
+                    left--;
+                    arr[left] = last;
+                    right--;
+                } else {
+                    last = arr[left];
+                    R = R + sum - n * last;
+                    arr[right] = last;
+                    left++;
+                    right++;
+                }
+                printf("%lld\n", R);
+            } else if (s == 2) {
+                if (n == 0) {
+                    printf("%lld\n", R);
+                    continue;
+                }
+                R = (n + 1) * sum - R;
+                rev = !rev;
+                printf("%lld\n", R);
+            } else if (s == 3) {
+                int k;
+                scanf("%d", &k);
+                if (!rev) {
+                    arr[right] = k;
+                    right++;
+                } else {
+                    left--;
+                    arr[left] = k;
+                }
+                n++;
+                sum += k;
+                R += k * n;
+                printf("%lld\n", R);
+            }
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+pair<int, int> computeLIS_LDS(const vector<int>& a, int l, int r) {
+    int len = r - l + 1;
+    vector<int> lis(len, 1), lds(len, 1);
+    
+    for (int i = 1; i < len; ++i) {
+        for (int j = 0; j < i; ++j) {
+            if (a[l + j] < a[l + i]) {
+                lis[i] = max(lis[i], lis[j] + 1);
+            }
+            if (a[l + j] > a[l + i]) {
+                lds[i] = max(lds[i], lds[j] + 1);
+            }
+        }
+    }
+
+    int max_lis = *max_element(lis.begin(), lis.end());
+    int max_lds = *max_element(lds.begin(), lds.end());
+    return {max_lis, max_lds};
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    long long cute_count = 0;
+
+    for (int i = 0; i < n; ++i) {
+        for (int j = i; j < n; ++j) {
+            int len = j - i + 1;
+            if (len <= 3) {
+                cute_count++;
+            } else {
+                auto [lis, lds] = computeLIS_LDS(a, i, j);
+                if (lis + lds == len + 1) {
+                    cute_count++;
+                }
+            }
+        }
+    }
+
+    cout << cute_count << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

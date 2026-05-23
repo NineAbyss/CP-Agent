@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool can(const vector<int>& a, int k, int x) {
+    if (x == 0) return true;
+    unordered_set<int> cur;
+    int segments = 0;
+    for (int v : a) {
+        if (0 <= v && v < x) cur.insert(v);
+        if ((int)cur.size() == x) {
+            segments++;
+            if (segments >= k) return true;
+            cur.clear();
+        }
+    }
+    return segments >= k;
+}
+
+int solve_one() {
+    int n, k;
+    cin >> n >> k;
+    if (n > 200000) {
+        for (int i = 0; i < n; i++) {
+            int dummy;
+            cin >> dummy;
+        }
+        return 0;
+    }
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    // compute whole mex
+    unordered_set<int> present;
+    for (int v : a) if (v <= n) present.insert(v);
+    int whole_mex = 0;
+    while (present.count(whole_mex)) whole_mex++;
+    int lo = 0, hi = whole_mex;
+    while (lo < hi) {
+        int mid = (lo + hi + 1) / 2;
+        if (can(a, k, mid)) lo = mid;
+        else hi = mid - 1;
+    }
+    return lo;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << solve_one() << '\n';
+    }
+    return 0;
+}

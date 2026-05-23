@@ -1,0 +1,69 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+// Function to generate zebra-like numbers
+vector<long long> generateZebraLikes() {
+    vector<long long> zebraLikes;
+    long long number = 1;
+    for (int pos = 0; pos < 64; pos += 2) {
+        zebraLikes.push_back(number);
+        number = (number << 2) | 1;
+    }
+    return zebraLikes;
+}
+
+// Function to compute how many numbers have zebra value k
+void solve(int t, vector<tuple<long long, long long, long long>>& test_cases) {
+    // Generate zebra-like numbers
+    vector<long long> zebraLikes = generateZebraLikes();
+    
+    for (int i = 0; i < t; ++i) {
+        long long l, r, k;
+        tie(l, r, k) = test_cases[i];
+
+        // We need to find the numbers with exactly 'k' zebra-like numbers in range [l, r]
+        long long count = 0;
+
+        // Check each number in range [l, r]
+        for (long long x = l; x <= r; ++x) {
+            // Simple DP to determine if 'x' can be represented as sum of exactly 'k' zebra-likes
+            vector<int> dp(x + 1, INT_MAX);
+            dp[0] = 0; // Base case: 0 zebra-like number to make 0
+
+            // This is similar to the knapsack problem
+            for (long long zl : zebraLikes) {
+                for (long long num = zl; num <= x; ++num) {
+                    if (dp[num - zl] != INT_MAX) {
+                        dp[num] = min(dp[num], dp[num - zl] + 1);
+                    }
+                }
+            }
+
+            // Now check if dp[x] == k
+            if (dp[x] == k) {
+                count++;
+            }
+        }
+
+        // Output the count
+        cout << count << endl;
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+    vector<tuple<long long, long long, long long>> test_cases(t);
+    for (int i = 0; i < t; ++i) {
+        long long l, r, k;
+        cin >> l >> r >> k;
+        test_cases[i] = make_tuple(l, r, k);
+    }
+
+    solve(t, test_cases);
+
+    return 0;
+}

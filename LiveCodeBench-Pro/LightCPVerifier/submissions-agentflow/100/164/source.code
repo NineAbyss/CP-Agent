@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve_one(int n, int s, vector<int>& x) {
+    const int MAXP = 101;
+    const int INF = 1e9;
+    vector<vector<int>> dist(1<<n, vector<int>(MAXP+1, INF));
+    
+    int start_mask = 0;
+    for (int i = 0; i < n; i++) {
+        if (x[i] == s) start_mask |= (1<<i);
+    }
+    
+    dist[start_mask][s] = 0;
+    queue<pair<int, int>> q;
+    q.push({start_mask, s});
+    
+    int full = (1<<n)-1;
+    
+    while (!q.empty()) {
+        auto [mask, pos] = q.front(); q.pop();
+        int d = dist[mask][pos];
+        if (mask == full) {
+            return d;
+        }
+        
+        // move left
+        if (pos > 1) {
+            int np = pos - 1;
+            int nmask = mask;
+            for (int i = 0; i < n; i++) {
+                if (x[i] == np) nmask |= (1<<i);
+            }
+            if (dist[nmask][np] > d + 1) {
+                dist[nmask][np] = d + 1;
+                q.push({nmask, np});
+            }
+        }
+        // move right
+        if (pos < 100) {
+            int np = pos + 1;
+            int nmask = mask;
+            for (int i = 0; i < n; i++) {
+                if (x[i] == np) nmask |= (1<<i);
+            }
+            if (dist[nmask][np] > d + 1) {
+                dist[nmask][np] = d + 1;
+                q.push({nmask, np});
+            }
+        }
+    }
+    return -1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, s;
+        cin >> n >> s;
+        vector<int> x(n);
+        for (int i = 0; i < n; i++) cin >> x[i];
+        cout << solve_one(n, s, x) << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+// Function to calculate the floor of a given classroom index
+int getFloor(int classroom) {
+    return classroom / 100;
+}
+
+// Main solve function to determine the classroom arrangement
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> classrooms(m);
+
+    for (int i = 0; i < m; ++i) {
+        cin >> classrooms[i];
+    }
+
+    // Sort classrooms based on floor number
+    sort(classrooms.begin(), classrooms.end(), [](int a, int b) {
+        return getFloor(a) < getFloor(b);
+    });
+
+    vector<vector<int>> schedule(n, vector<int>(6));
+
+    // Alternating allocation through low and high
+    for (int k = 0; k < 6; ++k) {
+        int classrooms_per_group = m / n;
+        int extra_classrooms = m % n;
+        int group_count = (m + classrooms_per_group * 6 > n * 6) ? n : m / 6;
+        int idx = 0;
+
+        for (int i = 0; i < group_count; ++i) {
+            for (int j = 0; j < 6; ++j) {
+                if (j % 2 == 0) { // Even: from low
+                    schedule[i][j] = classrooms[idx++];
+                } else { // Odd: from high
+                    schedule[i][j] = classrooms[m - (idx++)];
+                }
+            }
+        }
+    }
+
+    for (const auto& group_schedule : schedule) {
+        for (int i = 0; i < 6; ++i) {
+            cout << group_schedule[i] << (i == 5 ? "\n" : " ");
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

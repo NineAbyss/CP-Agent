@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> p(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> p[i];
+    }
+    vector<int> d(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> d[i];
+        --d[i]; // 转换为0索引
+    }
+    // 循环分解
+    vector<int> cycle_id(n, -1);
+    vector<int> cycle_len;
+    int cur_id = 0;
+    for (int i = 0; i < n; ++i) {
+        if (cycle_id[i] != -1) continue;
+        int len = 0;
+        int j = i;
+        while (cycle_id[j] == -1) {
+            cycle_id[j] = cur_id;
+            ++len;
+            j = p[j] - 1; // p是1索引，转换为0索引
+        }
+        cycle_len.push_back(len);
+        ++cur_id;
+    }
+    vector<bool> activated(cur_id, false);
+    vector<long long> ans(n);
+    long long sum = 0;
+    for (int i = 0; i < n; ++i) {
+        int pos = d[i];
+        int cid = cycle_id[pos];
+        if (!activated[cid]) {
+            activated[cid] = true;
+            sum += cycle_len[cid];
+        }
+        ans[i] = sum;
+    }
+    for (int i = 0; i < n; ++i) {
+        cout << ans[i] << " \n"[i == n-1];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

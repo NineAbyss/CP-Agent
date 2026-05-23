@@ -1,0 +1,71 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int compute_B(const string& s) {
+    int n = s.size();
+    vector<int> pos;
+    for (int i = 0; i < n; i++) if (s[i] == 'B') pos.push_back(i);
+    int m = pos.size();
+    vector<int> d(m);
+    for (int j = 0; j < m; j++) d[j] = pos[j] - j;
+    int sum_ceil = 0;
+    for (int x : d) sum_ceil += (x + 1) / 2;
+    // consecutive B segments
+    vector<int> pos_idx;
+    for (int i = 0; i < n; i++) if (s[i] == 'B') pos_idx.push_back(i);
+    int save = 0;
+    for (int i = 0; i < m; ) {
+        int j = i;
+        while (j+1 < m && pos_idx[j+1] == pos_idx[j] + 1) j++;
+        int odd = 0;
+        for (int k = i; k <= j; k++) if (d[k] % 2 == 1) odd++;
+        save += odd / 2;
+        i = j + 1;
+    }
+    return sum_ceil - save;
+}
+
+int compute_P(const string& s) {
+    int n = s.size();
+    int cntB = count(s.begin(), s.end(), 'B');
+    vector<int> pos;
+    for (int i = 0; i < n; i++) if (s[i] == 'P') pos.push_back(i);
+    int m = pos.size();
+    vector<int> e(m);
+    for (int k = 0; k < m; k++) e[k] = (cntB + k + 1) - (pos[k] + 1);
+    int sum_ceil = 0;
+    for (int x : e) sum_ceil += (x + 1) / 2;
+    // consecutive P segments
+    vector<int> pos_idx;
+    for (int i = 0; i < n; i++) if (s[i] == 'P') pos_idx.push_back(i);
+    int save = 0;
+    for (int i = 0; i < m; ) {
+        int j = i;
+        while (j+1 < m && pos_idx[j+1] == pos_idx[j] + 1) j++;
+        int odd = 0;
+        for (int k = i; k <= j; k++) if (e[k] % 2 == 1) odd++;
+        save += odd / 2;
+        i = j + 1;
+    }
+    return sum_ceil - save;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+        int ansB = compute_B(s);
+        int ansP = compute_P(s);
+        cout << min(ansB, ansP) << '\n';
+    }
+    return 0;
+}

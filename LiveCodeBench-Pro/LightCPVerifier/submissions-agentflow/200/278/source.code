@@ -1,0 +1,306 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const long long INF = 1e18;
+const int dx[4] = {1, -1, 0, 0};
+const int dy[4] = {0, 0, 1, -1};
+
+// 优化的Dinic最大流算法
+struct Dinic {
+    struct Edge {
+        int to, rev;
+        long long cap;
+    };
+    
+    int n;
+    vector<vector<Edge>> g;
+    vector<int> level, iter;
+    
+    Dinic(int n) : n(n), g(n), level(n), iter(n) {}
+    
+    void add_edge(int from, int to, long long cap) {
+        g[from].push_back({to, (int)g[to].size(), cap});
+        g[to].push_back({from, (int)g[from].size() - 1, 0});
+    }
+    
+    void bfs(int s) {
+        fill(level.begin(), level.end(), -1);
+        queue<int> q;
+        level[s] = 0;
+        q.push(s);
+        while (!q.empty()) {
+            int v = q.front();
+            q.pop();
+            for (auto &e : g[v]) {
+                if (e.cap > 0 && level[e.to] < 0) {
+                    level[e.to] = level[v] + 1;
+                    q.push(e.to);
+                }
+            }
+        }
+    }
+    
+    long long dfs(int v, int t, long long f) {
+        if (v == t) return f;
+        for (int &i = iter[v]; i < (int)g[v].size(); i++) {
+            Edge &e = g[v][i];
+            if (e.cap > 0 && level[v] < level[e.to]) {
+                long long d = dfs(e.to, t, min(f, e.cap));
+                if (d > 0) {
+                    e.cap -= d;
+                    g[e.to][e.rev].cap += d;
+                    return d;
+                }
+            }
+        }
+        return 0;
+    }
+    
+    long long max_flow(int s, int t) {
+        long long flow = 0;
+        while (true) {
+            bfs(s);
+            if (level[t] < 0) return flow;
+            fill(iter.begin(), iter.end(), 0);
+            long long f;
+            while ((f = dfs(s, t, INF)) > 0) {
+                flow += f;
+            }
+        }
+    }
+};
+
+// 检查是否存在从起点到终点的路径，所有值 ≤ limit
+bool canReach(int n, const vector<vector<int>>& a, int start_x, int start_y, 
+              int end_x, int end_y, int limit, vector<vector<bool>>& visited) {
+    if (a[start_x][start_y] > limit) return false;
+    
+    for (int i = 0; i < n; i++) fill(visited[i].begin(), visited[i].end(), false);
+    
+    queue<pair<int, int>> q;
+    q.push({start_x, start_y});
+    visited[start_x][start_y] = true;
+    
+    while (!q.empty()) {
+        auto [x, y] = q.front();
+        q.pop();
+        
+        if (x == end_x && y == end_y) return true;
+        
+        for (int d = 0; d < 4; d++) {
+            int nx = x + dx[d];
+            int ny = y + dy[d];
+            
+            if (nx >= 0 && nx < n && ny >= 0 && ny < n && !visited[nx][ny] && a[nx][ny] <= limit) {
+                visited[nx][ny] = true;
+                q.push({nx, ny});
+            }
+        }
+    }
+    
+    return false;
+}
+
+// 计算最小最大值路径
+int minMaxPath(int n, const vector<vector<int>>& a, int start_x, int start_y, 
+               int end_x, int end_y, vector<vector<bool>>& visited) {
+    int left = 1, right = 1e6, ans = right;
+    
+    while (left <= right) {
+        int mid = (left + right) / 2;
+        if (canReach(n, a, start_x, start_y, end_x, end_y, mid, visited)) {
+            ans = mid;
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    
+    return ans;
+}
+
+// 预处理：找到所有在每条Mouf最优路径上的单元格（不能增加的单元格）
+vector<vector<bool>> preprocessCriticalCells(int n, const vector<vector<int>>& a, int dis_M,
+                                            int start_x, int start_y, int end_x, int end_y,
+                                            vector<vector<bool>>& visited) {
+    vector<vector<bool>> critical(n, vector<bool>(n, false));
+    
+    // 对于每个值 ≤ dis_M的单元格，检查它是否在所有最优路径上
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (a[i][j] <= dis_M) {
+                // 临时将单元格值设为很大的值，检查是否还能找到路径
+                vector<vector<int>> b = a;
+                b[i][j] = 1e9;
+                
+                bool canStillReach = canReach(n, b, start_x, start_y, end_x, end_y, dis_M, visited);
+                
+                // 如果不能到达，说明这个单元格在所有最优路径上都是必需的
+                critical[i][j] = !canStillReach;
+            }
+        }
+    }
+    
+    return critical;
+}
+
+// 检查是否可以通过最多k次操作，使得Fouad无法找到成本 ≤ target的路径
+bool canForceFouadCostAbove(int n, const vector<vector<int>>& a, const vector<string>& c, 
+                          const vector<vector<bool>>& criticalCells, int k, int target,
+                          int fouad_start_x, int fouad_start_y, int fouad_end_x, int fouad_end_y,
+                          vector<vector<bool>>& visited) {
+    
+    // 找到Fouad在原始网格中成本 ≤ target的所有可达单元格
+    vector<vector<bool>> fouad_reachable(n, vector<bool>(n, false));
+    if (a[fouad_start_x][fouad_start_y] <= target) {
+        queue<pair<int, int>> q;
+        q.push({fouad_start_x, fouad_start_y});
+        fouad_reachable[fouad_start_x][fouad_start_y] = true;
+        
+        while (!q.empty()) {
+            auto [x, y] = q.front();
+            q.pop();
+            
+            for (int d = 0; d < 4; d++) {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+                
+                if (nx >= 0 && nx < n && ny >= 0 && ny < n && !fouad_reachable[nx][ny] && a[nx][ny] <= target) {
+                    fouad_reachable[nx][ny] = true;
+                    q.push({nx, ny});
+                }
+            }
+        }
+    }
+    
+    // 如果终点不可达，那么已经满足条件
+    if (!fouad_reachable[fouad_end_x][fouad_end_y]) return true;
+    
+    // 构建流网络 // 每个单元格(i,j)对应两个节点：in节点和out节点
+    int nodes = 2 * n * n + 2;
+    int source = 2 * n * n;
+    int sink = 2 * n * n + 1;
+    
+    Dinic dinic(nodes);
+    
+    // 构建网络
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (!fouad_reachable[i][j]) continue;
+            
+            int in_node = i * n + j;
+            int out_node = n * n + i * n + j;
+            
+            // in节点到out节点的边，容量为阻塞该节点的成本
+            long long cap = INF;
+            
+            if (c[i][j] == '1' && a[i][j] <= target) {
+                // 检查是否是关键单元格（不能增加）
+                if (!criticalCells[i][j]) {
+                    // 可以阻塞，成本是增加到target+1所需的操作次数
+                    cap = target + 1LL - a[i][j];
+                    if (cap < 0) cap = 0;
+                }
+            }
+            
+            dinic.add_edge(in_node, out_node, cap);
+            
+            // 相邻单元格之间的边（out节点到in节点）
+            for (int d = 0; d < 4; d++) {
+                int ni = i + dx[d];
+                int nj = j + dy[d];
+                
+                if (ni >= 0 && ni < n && nj >= 0 && nj < n && fouad_reachable[ni][nj]) {
+                    int neighbor_in = ni * n + nj;
+                    dinic.add_edge(out_node, neighbor_in, INF);
+                }
+            }
+        }
+    }
+    
+    // 源点到起点
+    int start_in = fouad_start_x * n + fouad_start_y;
+    dinic.add_edge(source, start_in, INF);
+    
+    // 终点到汇点
+    int end_out = n * n + fouad_end_x * n + fouad_end_y;
+    dinic.add_edge(end_out, sink, INF);
+    
+    // 计算最小割
+    long long min_cut = dinic.max_flow(source, sink);
+    
+    return min_cut <= k;
+}
+
+// 计算dis_F：在保持dis_M不变的前提下，Fouad的最大可能成本
+int compute_dis_F(int n, const vector<vector<int>>& a, const vector<string>& c, 
+                 const vector<vector<bool>>& criticalCells, int k, int fouad_initial,
+                 int fouad_start_x, int fouad_start_y, int fouad_end_x, int fouad_end_y,
+                 vector<vector<bool>>& visited) {
+    
+    // 二分查找最大可能的dis_F
+    int left = fouad_initial, right = 1e6 + 1e6;  // 最大可能值：原始值 + k
+    int ans = fouad_initial;
+    
+    while (left <= right) {
+        int mid = (left + right) / 2;
+        if (canForceFouadCostAbove(n, a, c, criticalCells, k, mid,
+                                  fouad_start_x, fouad_start_y, fouad_end_x, fouad_end_y, visited)) {
+            ans = mid + 1;  // 可以迫使成本 > mid，所以dis_F至少是mid+1
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    
+    return ans;
+}
+
+void solve() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, r, k;
+        cin >> n >> r >> k;
+        r--;  // 转换为0-based
+        
+        vector<vector<int>> a(n, vector<int>(n));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                cin >> a[i][j];
+            }
+        }
+        
+        vector<string> c(n);
+        for (int i = 0; i < n; i++) {
+            cin >> c[i];
+        }
+        
+        // 重用visited数组以减少内存分配
+        vector<vector<bool>> visited(n, vector<bool>(n));
+        
+        // 计算dis_M
+        int dis_M = minMaxPath(n, a, 0, 0, r, n-1, visited);
+        
+        // 预处理关键单元格（不能增加的单元格）
+        auto criticalCells = preprocessCriticalCells(n, a, dis_M, 0, 0, r, n-1, visited);
+        
+        // 计算Fouad的初始成本
+        int fouad_initial = minMaxPath(n, a, n-1, 0, r, n-1, visited);
+        
+        // 计算dis_F
+        int dis_F = compute_dis_F(n, a, c, criticalCells, k, fouad_initial,
+                                 n-1, 0, r, n-1, visited);
+        
+        cout << dis_M << " " << dis_F << "\n";
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

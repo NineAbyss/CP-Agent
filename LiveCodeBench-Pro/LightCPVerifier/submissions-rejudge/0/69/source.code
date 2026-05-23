@@ -1,0 +1,21 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int a, x, y;
+        cin >> a >> x >> y;
+        
+        // 检查 a 是否在 x 和 y 之间
+        if ((x < a && a < y) || (y < a && a < x)) {
+            cout << "NO" << endl;
+        } else {
+            cout << "YES" << endl;
+        }
+    }
+    
+    return 0;
+}

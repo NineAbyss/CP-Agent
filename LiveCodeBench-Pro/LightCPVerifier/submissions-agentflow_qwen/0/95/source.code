@@ -1,0 +1,118 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+
+        map<pair<int, int>, vector<int>> groups;
+        for (int i = 0; i < n; i++) {
+            groups[{a[i], b[i]}].push_back(i);
+        }
+
+        vector<int> target(n, -1);
+        int l = 0, r = n - 1;
+        bool bad = false;
+
+        auto get_one = [&](int x, int y) -> int {
+            auto& v = groups[{x, y}];
+            if (v.empty()) return -1;
+            int res = v.back();
+            v.pop_back();
+            return res;
+        };
+
+        while (l < r) {
+            int found = -1;
+            // Try non-self complementary pairs
+            for (auto it = groups.begin(); it != groups.end() && found == -1; ++it) {
+                auto [x, y] = it->first;
+                if (x == y) continue;
+                if (it->second.empty()) continue;
+                if (!groups[{y, x}].empty()) {
+                    int i1 = get_one(x, y);
+                    int i2 = get_one(y, x);
+                    target[l++] = i1;
+                    target[r--] = i2;
+                    found = 1;
+                }
+            }
+            if (found != -1) continue;
+
+            // Try two self-pairs of same value
+            for (auto it = groups.begin(); it != groups.end() && found == -1; ++it) {
+                auto [x, y] = it->first;
+                if (x != y) continue;
+                if (it->second.size() >= 2) {
+                    int i1 = get_one(x, y);
+                    int i2 = get_one(x, y);
+                    target[l++] = i1;
+                    target[r--] = i2;
+                    found = 1;
+                }
+            }
+
+            if (found == -1) {
+                bad = true;
+                break;
+            }
+        }
+
+        if (!bad && (n & 1)) {
+            int mid = n / 2;
+            int found = -1;
+            for (auto &[k, v] : groups) {
+                if (k.first == k.second && !v.empty()) {
+                    target[mid] = get_one(k.first, k.second);
+                    found = 1;
+                    break;
+                }
+            }
+            if (found == -1) bad = true;
+        }
+
+        if (bad) {
+            cout << "-1\n";
+            continue;
+        }
+
+        // Check no leftover
+        for (auto &[k, v] : groups) {
+            if (!v.empty()) {
+                bad = true;
+                break;
+            }
+        }
+        if (bad) {
+            cout << "-1\n";
+            continue;
+        }
+
+        // Generate swaps to achieve target permutation
+        vector<int> cur(n);
+        iota(cur.begin(), cur.end(), 0);
+        vector<pair<int, int>> ops;
+
+        for (int i = 0; i < n; i++) {
+            if (cur[i] == target[i]) continue;
+            int j = find(cur.begin(), cur.end(), target[i]) - cur.begin();
+            ops.emplace_back(i, j);
+            swap(cur[i], cur[j]);
+        }
+
+        cout << ops.size() << "\n";
+        for (auto [i, j] : ops) {
+            cout << i+1 << " " << j+1 << "\n";
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,76 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int MOD = 3;
+
+// Function to find all cycles in the functional graph and return the number of unique components.
+void findCycles(int n, vector<int> &g, vector<int> &comp, vector<int> &comp_size) {
+    vector<int> visited(n + 1, 0);
+    vector<int> stack, in_stack(n + 1, 0);
+
+    for (int i = 1; i <= n; ++i) {
+        if (visited[i]) continue;
+
+        int cur = i;
+        while (!visited[cur]) {
+            visited[cur] = true;
+            stack.push_back(cur);
+            in_stack[cur] = stack.size();
+            cur = g[cur];
+        }
+
+        if (in_stack[cur] != 0) {  // Cycle detected
+            int cycle_start_idx = in_stack[cur] - 1;
+            int cycle_size = stack.size() - cycle_start_idx;
+            for (int j = cycle_start_idx; j < stack.size(); ++j) {
+                int node = stack[j];
+                comp[node] = cur;
+            }
+            comp_size[cur] = cycle_size;
+        }
+
+        for (int node : stack) {
+            in_stack[node] = 0;
+        }
+        stack.clear();
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n, q;
+    cin >> n >> q;
+
+    vector<int> g(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> g[i];
+    }
+
+    while (q--) {
+        int x, y, k;
+        cin >> x >> y >> k;
+
+        g[x] = y;  // Update the graph edge
+
+        vector<int> comp(n + 1, 0), comp_size(n + 1, 0);
+
+        // Find cycles and calculate cycle sizes
+        findCycles(n, g, comp, comp_size);
+
+        long long result = 1;
+        for (int i = 1; i <= n; ++i) {
+            if (comp[i] == i) {
+                result = (result * k) % MOD;  // Each unique cycle can independently contribute to valid colorings
+            }
+        }
+
+        cout << result % MOD << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> p(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> p[i];
+    }
+    vector<int> d(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> d[i];
+        d[i]--; // to 0-indexed
+    }
+    // cycle decomposition
+    vector<int> cycle_id(n, -1);
+    vector<int> cycle_size;
+    vector<bool> vis(n, false);
+    int cid = 0;
+    for (int i = 0; i < n; ++i) {
+        if (!vis[i]) {
+            int cur = i;
+            int sz = 0;
+            while (!vis[cur]) {
+                vis[cur] = true;
+                cycle_id[cur] = cid;
+                cur = p[cur] - 1; // p is 1-indexed in input, convert to 0-indexed
+                sz++;
+            }
+            cycle_size.push_back(sz);
+            cid++;
+        }
+    }
+    vector<int> alive_cnt(cid);
+    for (int i = 0; i < cid; ++i) {
+        alive_cnt[i] = cycle_size[i];
+    }
+    int sum_full = n; // all cycles are full initially
+    vector<int> ans(n);
+    for (int i = 0; i < n; ++i) {
+        int pos = d[i];
+        int node = pos;
+        int cid = cycle_id[node];
+        if (alive_cnt[cid] == cycle_size[cid]) {
+            sum_full -= cycle_size[cid];
+        }
+        alive_cnt[cid]--;
+        ans[i] = n - sum_full;
+    }
+    for (int i = 0; i < n; ++i) {
+        cout << ans[i] << " \n"[i == n-1];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

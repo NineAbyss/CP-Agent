@@ -1,0 +1,40 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+// Function to find the number of potential houses Sasha can buy
+int countPotentialMedialHouses(const vector<int> &bars, int n, int k) {
+    vector<int> sorted_bars = bars;
+    sort(sorted_bars.begin(), sorted_bars.end());
+
+    // Potential medians can be among the central part of sorted bars
+    int low = k;
+    int high = n - k - 1;
+
+    // Calculate the number of houses that are potential medians
+    return high - low + 1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+
+        vector<int> bars(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> bars[i];
+        }
+
+        int result = countPotentialMedialHouses(bars, n, k);
+        cout << result << "\n";
+    }
+
+    return 0;
+}

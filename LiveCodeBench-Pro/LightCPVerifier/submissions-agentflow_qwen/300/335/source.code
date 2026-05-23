@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        int n;
+        scanf("%d", &n);
+        vector<long long> a(n+1);
+        for (int i = 1; i <= n; i++) {
+            scanf("%lld", &a[i]);
+        }
+
+        long long m = a[1];
+        for (int i = 2; i <= n; i++) {
+            if (a[i] < m) m = a[i];
+        }
+        vector<int> cand;
+        for (int i = 1; i <= n; i++) {
+            if (a[i] == m) {
+                cand.push_back(i);
+            }
+        }
+
+        vector<long long> pref(n+1, 0);
+        for (int i = 1; i <= n; i++) {
+            pref[i] = pref[i-1] + a[i];
+        }
+        long long total = pref[n];
+
+        long long best = 1e18;
+
+        for (int k = 0; k <= n; k++) {
+            long long cost;
+            if (k == 0) {
+                cost = total;
+            } else {
+                long long sum_tail = total - pref[k];
+                long long move_to_k = 1e18;
+                for (int pos : cand) {
+                    long long diff = abs(pos - k);
+                    if (diff < move_to_k) move_to_k = diff;
+                }
+                long long move_consecutive = k - 1;
+                long long pass_cost = k * m;
+                cost = sum_tail + move_to_k + move_consecutive + pass_cost;
+            }
+            if (cost < best) best = cost;
+        }
+        printf("%lld\n", best);
+    }
+    return 0;
+}

@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr);
+    int T; cin >> T;
+    while (T--) {
+        int n; cin >> n;
+        vector<int> a(n), c(n);
+        for (int& x : a) cin >> x;
+        for (int& x : c) cin >> x;
+        vector<int> p(n+1);
+        for (int i=0; i<n; i++) p[a[i]] = i;
+        vector<int> used(n+1,0), b(n);
+        vector<int> have;
+        for (int i=0; i<n; i++) {
+            if (c[i]) used[c[i]]=1;
+            else have.push_back(i);
+        }
+        vector<int> unused;
+        for (int i=1; i<=n; i++) if (!used[i]) unused.push_back(i);
+        sort(unused.begin(), unused.end(), [&](int x, int y) { return p[x] < p[y]; });
+        for (int i=0; i<(int)have.size(); i++) b[have[i]] = unused[i];
+        for (int i=0; i<n; i++) if (c[i]) b[i]=c[i];
+
+        vector<int> q(n+1);
+        for (int i=0; i<n; i++) q[b[i]]=i;
+
+        bool ok=1;
+        for (int i=1; i<=n; i++) for (int j=i+1; j<=n; j++)
+            if (p[i]<p[j] && q[i]>q[j]) ok=0;
+        if (!ok) { cout << "-1\n"; continue; }
+        for (int i=0; i<n; i++) cout << b[i] << " \n"[i==n-1];
+    }
+}

@@ -1,0 +1,109 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<long long> p(n);
+        for (int i = 0; i < n; i++) cin >> p[i];
+        vector<int> d(n);
+        for (int i = 0; i < n; i++) cin >> d[i];
+        // neighbors
+        vector<int> left(n, -1), right(n, -1);
+        for (int i = 0; i < n; i++) {
+            if (i > 0) left[i] = i-1;
+            if (i < n-1) right[i] = i+1;
+        }
+        // total states: for each i, dir (0 left,1 right), r (0..k-1)
+        int total_states = 2 * n * k;
+        vector<int> nxt(total_states, -2); // -2 uncomputed, -1 leave // compute transitions
+        for (int i = 0; i < n; i++) {
+            for (int dir = 0; dir < 2; dir++) { // 0: left, 1: right
+                for (int r = 0; r < k; r++) {
+                    int id = (i * 2 * k) + (dir * k) + r;
+                    // current direction as integer: +1 for right, -1 for left
+                    int cur_dir = (dir == 1) ? 1 : -1;
+                    // check red
+                    int ndir = cur_dir;
+                    if (r == d[i]) ndir = -cur_dir;
+                    long long pos = p[i] + ndir;
+                    int next_i = -1;
+                    if (ndir == 1) {
+                        next_i = right[i];
+                    } else {
+                        next_i = left[i];
+                    }
+                    if (next_i == -1) {
+                        nxt[id] = -1; // leave
+                        continue;
+                    }
+                    long long dist = abs(p[next_i] - pos);
+                    int new_r = (r + 1 + dist) % k;
+                    int new_dir = (ndir == 1) ? 1 : 0;
+                    int nid = (next_i * 2 * k) + (new_dir * k) + new_r;
+                    nxt[id] = nid;
+                }
+            }
+        }
+        // memoization: 0 unknown, 1 leave, 2 no leave
+        vector<int> memo(total_states, 0);
+        for (int id = 0; id < total_states; id++) {
+            if (memo[id] != 0) continue;
+            // iterative dfs
+            vector<int> path;
+            int cur = id;
+            while (true) {
+                if (memo[cur] != 0) {
+                    // already resolved
+                    int val = memo[cur];
+                    for (int x : path) memo[x] = val;
+                    break;
+                }
+                path.push_back(cur);
+                int to = nxt[cur];
+                if (to == -1) {
+                    // leave
+                    for (int x : path) memo[x] = 1;
+                    break;
+                }
+                // check if to is in path (cycle)
+                auto it = find(path.begin(), path.end(), to);
+                if (it != path.end()) {
+                    // cycle detected // all nodes in cycle are no leave
+                    for (int x : path) memo[x] = 2;
+                    break;
+                }
+                cur = to;
+            }
+        }
+        int q;
+        cin >> q;
+        while (q--) {
+            long long a;
+            cin >> a;
+            // find initial state
+            if (a > p[n-1]) {
+                cout << "YES\n";
+                continue;
+            }
+            int idx = lower_bound(p.begin(), p.end(), a) - p.begin();
+            int i = idx;
+            int r;
+            if (p[i] == a) {
+                r = 0;
+            } else {
+                long long dist0 = p[i] - a;
+                r = dist0 % k;
+            }
+            int dir = 1; // right
+            int id = (i * 2 * k) + (1 * k) + r; // dir=1 for right
+            cout << (memo[id] == 1 ? "YES" : "NO") << "\n";
+        }
+    }
+    return 0;
+}

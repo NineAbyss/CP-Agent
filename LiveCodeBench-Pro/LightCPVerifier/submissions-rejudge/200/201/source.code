@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const long long INF = 1e18;
+
+int popcount(long long x) {
+    return __builtin_popcountll(x);
+}
+
+// 生成cost数组
+pair<vector<long long>, int> get_cost_array(long long x, long long k_limit) {
+    vector<long long> cost(61, INF);
+    cost[0] = 0;
+    
+    if (x == 0) {
+        for (int g = 1; g <= 60; g++) {
+            long long val = (1LL << g) - 1;
+            if (val > k_limit) break;
+            cost[g] = val;
+        }
+        return {cost, 60};
+    }
+    
+    long long cur = x;
+    int base_pop = popcount(x);
+    int max_gain = 0;
+    
+    while (true) {
+        long long d = 1;
+        while (popcount(cur + d) <= popcount(cur)) {
+            d++;
+            if (d > 100000) { // 增加限制
+                d = -1;
+                break;
+            }
+        }
+        if (d == -1) break;
+        
+        long long next = cur + d;
+        if (next < cur) break;
+        int gain = popcount(next) - base_pop;
+        if (gain > 60) break;
+        long long c = next - x;
+        if (c > k_limit) break;
+        if (c < cost[gain]) {
+            cost[gain] = c;
+            max_gain = max(max_gain, gain);
+        }
+        cur = next;
+    }
+    
+    return {cost, max_gain};
+}
+
+long long solve_case(int n, long long k, vector<long long>& a) {
+    int base = 0;
+    for (long long x : a) base += popcount(x);
+    
+    vector<vector<long long>> cost_arrays(n);
+    vector<int> max_gains(n);
+    long long total_max_gain = 0;
+    
+    for (int i = 0; i < n; i++) {
+        auto [cost_arr, mg] = get_cost_array(a[i], k);
+        cost_arrays[i] = cost_arr;
+        max_gains[i] = mg;
+        total_max_gain += mg;
+    }
+    
+    const int MAX_TOTAL_GAIN = 300000;
+    if (total_max_gain > MAX_TOTAL_GAIN) total_max_gain = MAX_TOTAL_GAIN;
+    int total_gain_int = (int)total_max_gain;
+    
+    vector<long long> dp(total_gain_int + 1, INF);
+    dp[0] = 0;
+    
+    for (int i = 0; i < n; i++) {
+        auto &cost_arr = cost_arrays[i];
+        int mg = max_gains[i];
+        vector<long long> new_dp = dp;
+        
+        for (int g_i = 1; g_i <= mg; g_i++) {
+            long long c = cost_arr[g_i];
+            if (c > k) continue;
+            if (c >= INF) continue;
+            for (int g = total_gain_int; g >= g_i; g--) {
+                if (dp[g - g_i] + c < new_dp[g]) {
+                    new_dp[g] = dp[g - g_i] + c;
+                }
+            }
+        }
+        dp = move(new_dp);
+    }
+    
+    int best_gain = 0;
+    for (int g = 0; g <= total_gain_int; g++) {
+        if (dp[g] <= k) {
+            best_gain = g;
+        }
+    }
+    return base + best_gain;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        cout << solve_case(n, k, a) << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,96 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Fenwick {
+    int n;
+    vector<int> bit;
+    Fenwick(int n) : n(n), bit(n+1, 0) {}
+    void update(int idx, int val) {
+        while (idx <= n) {
+            bit[idx] = max(bit[idx], val);
+            idx += idx & -idx;
+        }
+    }
+    int query(int idx) {
+        int res = 0;
+        while (idx > 0) {
+            res = max(res, bit[idx]);
+            idx -= idx & -idx;
+        }
+        return res;
+    }
+};
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i=0; i<n; i++) cin >> a[i];
+    vector<int> c(n);
+    for (int i=0; i<n; i++) cin >> c[i];
+    
+    vector<int> pos_a(n+1);
+    for (int i=0; i<n; i++) pos_a[a[i]] = i+1;
+    
+    vector<int> fix_pos(n+1, 0);
+    for (int i=0; i<n; i++) {
+        if (c[i] != 0) {
+            fix_pos[c[i]] = i+1;
+        }
+    }
+    
+    set<int> available;
+    for (int i=1; i<=n; i++) available.insert(i);
+    for (int v=1; v<=n; v++) {
+        if (fix_pos[v] != 0) {
+            available.erase(fix_pos[v]);
+        }
+    }
+    
+    Fenwick ft(n);
+    vector<int> b(n);
+    for (int v=1; v<=n; v++) {
+        int p = pos_a[v];
+        int mx = ft.query(p-1);
+        int earliest = mx + 1;
+        int pos;
+        if (fix_pos[v] != 0) {
+            pos = fix_pos[v];
+            if (pos < earliest) {
+                cout << -1 << '\n';
+                return;
+            }
+            // pos should be reserved, so not in available
+            if (available.find(pos) != available.end()) {
+                cout << -1 << '\n';
+                return;
+            }
+            b[pos-1] = v;
+        } else {
+            auto it = available.lower_bound(earliest);
+            if (it == available.end()) {
+                cout << -1 << '\n';
+                return;
+            }
+            pos = *it;
+            available.erase(it);
+            b[pos-1] = v;
+        }
+        ft.update(p, pos);
+    }
+    
+    for (int i=0; i<n; i++) {
+        cout << b[i] << " \n"[i==n-1];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

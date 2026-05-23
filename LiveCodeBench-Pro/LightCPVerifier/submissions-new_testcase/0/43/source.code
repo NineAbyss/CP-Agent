@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve(int l, int r) {
+    string sl = to_string(l);
+    string sr = to_string(r);
+    int n = sl.size();
+    const int INF = 1e9;
+    // dp[i][low][high]
+    vector<vector<vector<int>>> dp(n+1, vector<vector<int>>(2, vector<int>(2, INF)));
+    dp[0][1][1] = 0;
+    for (int i = 0; i < n; ++i) {
+        int li = sl[i] - '0';
+        int ri = sr[i] - '0';
+        for (int low = 0; low < 2; ++low) {
+            for (int high = 0; high < 2; ++high) {
+                int cur = dp[i][low][high];
+                if (cur == INF) continue;
+                int min_d = 0, max_d = 9;
+                if (low) min_d = li;
+                if (high) max_d = ri;
+                for (int d = min_d; d <= max_d; ++d) {
+                    int nlow = low && (d == li);
+                    int nhigh = high && (d == ri);
+                    int add = (d == li) + (d == ri);
+                    dp[i+1][nlow][nhigh] = min(dp[i+1][nlow][nhigh], cur + add);
+                }
+            }
+        }
+    }
+    int ans = INF;
+    for (int low = 0; low < 2; ++low) {
+        for (int high = 0; high < 2; ++high) {
+            ans = min(ans, dp[n][low][high]);
+        }
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int l, r;
+        cin >> l >> r;
+        cout << solve(l, r) << '\n';
+    }
+    return 0;
+}

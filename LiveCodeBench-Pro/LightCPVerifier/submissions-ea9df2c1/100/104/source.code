@@ -1,0 +1,89 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int i = 0; i < n; i++) cin >> b[i];
+    
+    // compute answer
+    map<int, int> cnt;
+    for (int i = 0; i < n; i++) {
+        cnt[a[i]]++;
+        cnt[b[i]]++;
+    }
+    int ans = 0;
+    for (auto& p : cnt) ans += min(2, p.second);
+    
+    // construct arrays
+    set<int> A, B;
+    vector<int> ra(n), rb(n);
+    
+    // first pass
+    for (int i = 0; i < n; i++) {
+        bool a_in_A = A.count(a[i]);
+        bool b_in_B = B.count(b[i]);
+        if (!a_in_A && !b_in_B) {
+            ra[i] = a[i];
+            rb[i] = b[i];
+            A.insert(a[i]);
+            B.insert(b[i]);
+        } else if (!A.count(b[i]) && !B.count(a[i])) {
+            ra[i] = b[i];
+            rb[i] = a[i];
+            A.insert(b[i]);
+            B.insert(a[i]);
+        } else {
+            int keep_new = 0;
+            if (!A.count(a[i])) keep_new++;
+            if (!B.count(b[i])) keep_new++;
+            int swap_new = 0;
+            if (!A.count(b[i])) swap_new++;
+            if (!B.count(a[i])) swap_new++;
+            if (keep_new >= swap_new) {
+                ra[i] = a[i];
+                rb[i] = b[i];
+                A.insert(a[i]);
+                B.insert(b[i]);
+            } else {
+                ra[i] = b[i];
+                rb[i] = a[i];
+                A.insert(b[i]);
+                B.insert(a[i]);
+            }
+        }
+    }
+    
+    // second pass improvement
+    for (int i = 0; i < n; i++) {
+        set<int> A2 = A, B2 = B;
+        A2.erase(ra[i]); B2.erase(rb[i]);
+        if (!A2.count(rb[i])) A2.insert(rb[i]);
+        if (!B2.count(ra[i])) B2.insert(ra[i]);
+        if (A2.size() + B2.size() > A.size() + B.size()) {
+            swap(ra[i], rb[i]);
+            A = A2;
+            B = B2;
+        }
+    }
+    
+    // output
+    cout << ans << '\n';
+    for (int i = 0; i < n; i++) cout << ra[i] << " \n"[i == n-1];
+    for (int i = 0; i < n; i++) cout << rb[i] << " \n"[i == n-1];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

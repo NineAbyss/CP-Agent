@@ -1,0 +1,89 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+bool solve_query(long long a, const vector<long long>& p, const vector<long long>& d, long long k) {
+    int n = p.size();
+    // 找到第一个灯和余数
+    int idx;
+    long long r;
+    if (a < p[0]) {
+        idx = 0;
+        long long dist = p[0] - a;
+        r = dist % k;
+    } else if (a > p[n-1]) {
+        return true;
+    } else {
+        auto it = lower_bound(p.begin(), p.end(), a);
+        if (*it == a) {
+            idx = it - p.begin();
+            r = 0;
+        } else {
+            idx = it - p.begin();
+            long long dist = p[idx] - a;
+            r = dist % k;
+        }
+    }
+    int dir = 1; // 进入方向向右
+    map<pair<int, long long>, bool> visited; // 键为 (编码, r)，编码 = idx*2 + (dir==1?0:1)
+    int steps = 0;
+    int limit = 4 * n + 5;
+    while (steps < limit) {
+        int code = idx * 2 + (dir == 1 ? 0 : 1);
+        auto state = make_pair(code, r);
+        if (visited.count(state)) {
+            return false; // 循环
+        }
+        visited[state] = true;
+        // 检查红灯
+        if (r == d[idx]) {
+            dir = -dir;
+        }
+        // 移动
+        int next_idx;
+        if (dir == 1) {
+            next_idx = idx + 1;
+        } else {
+            next_idx = idx - 1;
+        }
+        if (next_idx < 0 || next_idx >= n) {
+            return true; // 离开
+        }
+        long long delta;
+        if (dir == 1) {
+            delta = p[next_idx] - p[idx];
+        } else {
+            delta = p[idx] - p[next_idx];
+        }
+        r = (r + delta) % k;
+        idx = next_idx;
+        steps++;
+    }
+    return false; // 超过限制，假设循环
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n, k;
+        cin >> n >> k;
+        vector<long long> p(n);
+        for (int i = 0; i < n; i++) cin >> p[i];
+        vector<long long> d(n);
+        for (int i = 0; i < n; i++) cin >> d[i];
+        long long q;
+        cin >> q;
+        vector<long long> queries(q);
+        for (int i = 0; i < q; i++) cin >> queries[i];
+        for (auto a : queries) {
+            bool ans = solve_query(a, p, d, k);
+            cout << (ans ? "YES" : "NO") << '\n';
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,43 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Function to count the number of cute subarrays
+int countCuteSubarrays(int n, vector<int>& a) {
+    int totalCute = 0;
+    if (n == 1) return 1;  // A single element is always cute
+
+    // Start and iterate through the permutation
+    int start = 0;
+    for (int i = 1; i <= n; ++i) {
+        // Check if reached end or there's a change in monotonicity
+        if (i == n || (a[i] > a[i - 1] != a[i - 1] > a[i - 2])) {
+            // Length of monotonic segment
+            int len = i - start;
+            // Calculate subarrays in this segment
+            totalCute += len * (len + 1) / 2;
+            start = i;  // Update the start for next segment
+        }
+    }
+    return totalCute;
+}
+
+int main() {
+    int t;  // number of test cases
+    cin >> t;
+
+    while (t--) {
+        int n;  // length of permutation
+        cin >> n;
+        vector<int> a(n);
+
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        // Output the number of cute subarrays for this test case
+        cout << countCuteSubarrays(n, a) << endl;
+    }
+
+    return 0;
+}

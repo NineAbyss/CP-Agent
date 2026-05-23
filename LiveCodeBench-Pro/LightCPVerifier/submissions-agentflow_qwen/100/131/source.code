@@ -1,0 +1,115 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<pair<int, int>> edges;
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            edges.push_back({u, v});
+        }
+
+        vector<long long> f(n+1);
+        vector<int> val(n+1);
+
+        // Query0: sum of f(i) for all nodes
+        cout << "? 1 " << n;
+        for (int i = 1; i <= n; i++) {
+            cout << " " << i;
+        }
+        cout << endl;
+        cout.flush();
+        long long A;
+        cin >> A;
+
+        // Flip node 1
+        cout << "? 2 1" << endl;
+        cout.flush();
+
+        // Query1: sum after flip
+        cout << "? 1 " << n;
+        for (int i = 1; i <= n; i++) {
+            cout << " " << i;
+        }
+        cout << endl;
+        cout.flush();
+        long long B;
+        cin >> B;
+
+        // Restore node 1
+        cout << "? 2 1" << endl;
+        cout.flush();
+
+        long long diff1 = abs(B - A);
+        int root = 1;
+
+        // If |Δ| == 2*(n-1), then root is not 1
+        if (diff1 == 2 * (n - 1)) {
+            root = -1;
+            for (int u = 2; u <= n && root == -1; u++) {
+                // Flip candidate u
+                cout << "? 2 " << u << endl;
+                cout.flush();
+
+                cout << "? 1 " << n;
+                for (int i = 1; i <= n; i++) {
+                    cout << " " << i;
+                }
+                cout << endl;
+                cout.flush();
+                long long C;
+                cin >> C;
+
+                long long diffu = abs(C - A);
+                if (diffu == 2 * n) {
+                    root = u;
+                }
+
+                // Restore u
+                cout << "? 2 " << u << endl;
+                cout.flush();
+            }
+            if (root == -1) root = 2; // fallback
+        }
+
+        // Query individual f(i)
+        for (int i = 1; i <= n; i++) {
+            cout << "? 1 1 " << i << endl;
+            cout.flush();
+            cin >> f[i];
+        }
+
+        // Recover values
+        if (root == 1) {
+            val[1] = f[1];
+            for (int i = 2; i <= n; i++) {
+                val[i] = f[i] - f[1];
+            }
+        } else {
+            val[root] = f[root];
+            val[1] = f[1] - f[root];
+            for (int i = 1; i <= n; i++) {
+                if (i != 1 && i != root) {
+                    val[i] = f[i] - val[root] - val[1];
+                }
+            }
+        }
+
+        // Output answer
+        cout << "! ";
+        for (int i = 1; i <= n; i++) {
+            cout << val[i];
+            if (i < n) cout << " ";
+        }
+        cout << endl;
+        cout.flush();
+    }
+    return 0;
+}

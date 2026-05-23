@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+
+        // Count the number of '>' in s
+        int count_greater = 0;
+        for (char c : s) {
+            if (c == '>') count_greater++;
+        }
+
+        vector<int> ans;
+        int a0 = n - count_greater;
+        ans.push_back(a0);
+
+        // Create a set of available numbers
+        set<int> avail;
+        for (int i = 1; i <= n; i++) {
+            if (i != a0) {
+                avail.insert(i);
+            }
+        }
+
+        int cur_min = a0, cur_max = a0;
+
+        for (int i = 0; i < n-1; i++) {
+            if (s[i] == '<') {
+                // Find the largest number < cur_min
+                auto it = avail.lower_bound(cur_min);
+                // Since there must be at least one number < cur_min (we have reserved small numbers), we can safely decrement
+                --it;
+                ans.push_back(*it);
+                cur_min = *it;
+                avail.erase(it);
+            } else { // s[i] == '>' // Find the smallest number > cur_max
+                auto it = avail.upper_bound(cur_max);
+                // There must be at least one number > cur_max
+                ans.push_back(*it);
+                cur_max = *it;
+                avail.erase(it);
+            }
+        }
+
+        // Output the answer
+        for (int i = 0; i < n; i++) {
+            cout << ans[i];
+            if (i < n-1) cout << " ";
+            else cout << "\n";
+        }
+    }
+    return 0;
+}

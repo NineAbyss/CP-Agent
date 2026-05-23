@@ -1,0 +1,112 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> adj(n+1);
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+        // DFS to compute parent, depth, subtree size
+        vector<int> parent(n+1,0), depth(n+1,0), sub(n+1,0);
+        stack<pair<int,int>> stk;
+        stk.push({1,0});
+        while (!stk.empty()) {
+            auto [x, p] = stk.top();
+            stk.pop();
+            if (x < 0) {
+                x = -x;
+                // post-order
+                sub[x] = 1;
+                for (int y : adj[x]) {
+                    if (y == p) continue;
+                    sub[x] += sub[y];
+                }
+                continue;
+            }
+            parent[x] = p;
+            stk.push({-x, p}); // mark for post-order
+            for (int y : adj[x]) {
+                if (y == p) continue;
+                depth[y] = depth[x] + 1;
+                stk.push({y, x});
+            }
+        }
+        int total = n-1;
+        int half = total/2;
+        // which edges have subtree size > half
+        vector<bool> big(n+1, false);
+        for (int i = 2; i <= n; i++) {
+            if (sub[i] > half) big[i] = true;
+        }
+        // cnt[v]: number of big edges on path from root to v
+        vector<int> cnt(n+1,0);
+        for (int i = 2; i <= n; i++) {
+            cnt[i] = cnt[parent[i]] + (big[i] ? 1 : 0);
+        }
+        // find best v maximizing 2*cnt[v] - depth[v]
+        int bestVal = -1e9, bestV = -1;
+        for (int v = 2; v <= n; v++) {
+            int val = 2*cnt[v] - depth[v];
+            if (val > bestVal) {
+                bestVal = val;
+                bestV = v;
+            }
+        }
+        int u = parent[bestV];
+        // output edge with u < v
+        int output_u = u, output_v = bestV;
+        if (output_u > output_v) swap(output_u, output_v);
+        // build new tree after removing bestV
+        vector<vector<int>> new_adj(n+1);
+        for (int i = 1; i <= n; i++) {
+            if (i == bestV) continue;
+            for (int j : adj[i]) {
+                if (j == bestV) continue;
+                new_adj[i].push_back(j);
+            }
+        }
+        for (int w : adj[bestV]) {
+            if (w != u) {
+                new_adj[u].push_back(w);
+                new_adj[w].push_back(u);
+            }
+        }
+        // DFS order on new tree
+        vector<int> order;
+        stack<pair<int,int>> stk2;
+        stk2.push({u,0});
+        while (!stk2.empty()) {
+            auto [x, p] = stk2.top();
+            stk2.pop();
+            order.push_back(x);
+            for (int y : new_adj[x]) {
+                if (y == p) continue;
+                stk2.push({y, x});
+            }
+        }
+        // assign colors
+        vector<int> color(n+1, 0);
+        color[bestV] = 0;
+        int k = total / 2;
+        for (int i = 0; i < k; i++) {
+            color[order[i]] = i+1;
+            color[order[i+k]] = i+1;
+        }
+        // output
+        cout << output_u << " " << output_v << "\n";
+        for (int i = 1; i <= n; i++) {
+            cout << color[i] << " \n"[i==n];
+        }
+    }
+    return 0;
+}

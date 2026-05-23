@@ -1,0 +1,18 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int a, x, y;
+        cin >> a >> x >> y;
+        // Check if a is strictly between x and y
+        if ((x < a && a < y) || (y < a && a < x)) {
+            cout << "NO" << endl;
+        } else {
+            cout << "YES" << endl;
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int get_max_gold(vector<string>& mine, int n, int m, int k) {
+    int total_max_gold = 0;
+    
+    while (true) {
+        int max_gold = 0;
+        int best_i = -1, best_j = -1;
+
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                if (mine[i][j] == '.') {
+                    int current_gold = 0;
+                    set<pair<int, int>> new_empty;
+
+                    // Check boundary of the explosion square
+                    for (int dx = -k; dx <= k; ++dx) {
+                        for (int dy = -k; dy <= k; ++dy) {
+                            int x = i + dx, y = j + dy;
+                            if (x < 0 || x >= n || y < 0 || y >= m) continue;
+
+                            if (mine[x][y] == 'g') {
+                                if (abs(dx) == k || abs(dy) == k) { // Only count boundary gold
+                                    current_gold++;
+                                    new_empty.insert({x, y});
+                                }
+                            } else if (mine[x][y] == '.') {
+                                new_empty.insert({x, y});
+                            }
+                        }
+                    }
+
+                    if (current_gold > max_gold) {
+                        max_gold = current_gold;
+                        best_i = i;
+                        best_j = j;
+
+                        // Apply explosion impact
+                        for (const auto& p : new_empty) {
+                            mine[p.first][p.second] = '.';
+                        }
+                    }
+                }
+            }
+        }
+
+        if (max_gold == 0) break;
+        total_max_gold += max_gold;
+    }
+    return total_max_gold;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<string> mine(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> mine[i];
+        }
+        cout << get_max_gold(mine, n, m, k) << '\n';
+    }
+    return 0;
+}

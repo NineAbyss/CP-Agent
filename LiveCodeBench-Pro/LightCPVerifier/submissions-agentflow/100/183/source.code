@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        int g = a[0];
+        for (int i = 1; i < n; i++) {
+            g = __gcd(g, a[i]);
+        }
+        
+        int m = 0;
+        for (int x : a) {
+            if (x == g) m++;
+        }
+        
+        if (m > 0) {
+            cout << n - m << '\n';
+            continue;
+        }
+        
+        bool pair_g = false;
+        for (int i = 0; i < n && !pair_g; i++) {
+            for (int j = i + 1; j < n && !pair_g; j++) {
+                if (__gcd(a[i], a[j]) == g) {
+                    pair_g = true;
+                }
+            }
+        }
+        
+        if (pair_g) {
+            cout << n << '\n';
+        } else {
+            cout << n + 1 << '\n';
+        }
+    }
+    
+    return 0;
+}

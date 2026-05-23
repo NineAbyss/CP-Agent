@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+vector<int> to_base4(ll n) {
+    vector<int> res;
+    if (n == 0) {
+        res.push_back(0);
+        return res;
+    }
+    while (n) {
+        res.push_back(n % 4);
+        n /= 4;
+    }
+    reverse(res.begin(), res.end());
+    return res;
+}
+
+ll count_up_to(ll n, int r, int low_d, int high_d) {
+    if (n < 0) return 0;
+    auto digits = to_base4(n);
+    int len = digits.size();
+    vector<vector<vector<ll>>> dp(len + 1, vector<vector<ll>>(2, vector<ll>(4, 0)));
+    dp[0][1][0] = 1;
+
+    for (int i = 0; i < len; i++) {
+        for (int tight = 0; tight < 2; tight++) {
+            for (int maxd = 0; maxd < 4; maxd++) {
+                if (dp[i][tight][maxd] == 0) continue;
+                int upper = tight ? digits[i] : 3;
+                for (int d = 0; d <= upper; d++) {
+                    int new_tight = tight && (d == upper);
+                    int new_maxd = max(maxd, d);
+                    if (i == len - 1) {
+                        if (d != r) continue;
+                    }
+                    dp[i+1][new_tight][new_maxd] += dp[i][tight][maxd];
+                }
+            }
+        }
+    }
+
+    ll total = 0;
+    for (int tight = 0; tight < 2; tight++) {
+        for (int md = low_d; md <= high_d; md++) {
+            if (md < 4) {
+                total += dp[len][tight][md];
+            }
+        }
+    }
+    return total;
+}
+
+ll count_in_range(ll l, ll r, int k) {
+    if (k > 6) return 0;
+    int L = max(1, k - 3);
+    int R = min(3, k);
+    if (L > R) return 0;
+    int target_r = k % 4;
+    return count_up_to(r, target_r, L, R) - count_up_to(l - 1, target_r, L, R);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        ll l, r, k;
+        cin >> l >> r >> k;
+        cout << count_in_range(l, r, k) << '\n';
+    }
+    return 0;
+}

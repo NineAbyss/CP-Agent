@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        
+        set<int> s;
+        long long ans = 0;
+        vector<long long> res;
+        res.reserve(n);
+        const int K = 300;
+        
+        for (int i = 0; i < n; ++i) {
+            long long x = a[i];
+            long long candidate = 0;
+            
+            // 检查是否存在 y 满足 y <= x < 2y 且 y != x
+            auto it = s.lower_bound((x+1)/2);
+            if (it != s.end()) {
+                long long y = *it;
+                if (y <= x && x < 2*y && y != x) candidate = x;
+            }
+            
+            // 如果 candidate 已经是 x，可以跳过枚举
+            if (candidate != x) {
+                auto rit = s.rbegin();
+                int cnt = 0;
+                while (rit != s.rend() && cnt < K) {
+                    long long y = *rit;
+                    if (y != x) {
+                        long long fval = (x % y) + (y % x);
+                        if (fval > candidate) candidate = fval;
+                        if (candidate == x) break;
+                    }
+                    ++rit;
+                    ++cnt;
+                }
+            }
+            
+            s.insert(x);
+            if (candidate > ans) ans = candidate;
+            res.push_back(ans);
+        }
+        
+        for (int i = 0; i < n; ++i) {
+            cout << res[i] << " \n"[i==n-1];
+        }
+    }
+    return 0;
+}

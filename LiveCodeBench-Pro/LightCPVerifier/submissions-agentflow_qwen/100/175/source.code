@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+const int MAXN = 505;
+
+long long C[MAXN][MAXN];
+long long dp[MAXN][MAXN];
+
+int main() {
+    // Precompute combination table
+    for (int i = 0; i < MAXN; ++i) {
+        C[i][0] = 1;
+        for (int j = 1; j <= i; ++j) {
+            C[i][j] = (C[i-1][j] + C[i-1][j-1]) % MOD;
+        }
+    }
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        string s;
+        cin >> n >> k >> s;
+
+        memset(dp, 0, sizeof(dp));
+        dp[0][0] = 1;
+
+        for (int i = 0; i < n; ++i) {
+            int bit = s[i] - '0';
+            for (int j = 0; j <= k; ++j) {
+                for (int pre = 0; pre <= j; ++pre) {
+                    int cur = j - pre;
+                    if ((cur & 1) == bit) {
+                        dp[i+1][j] = (dp[i+1][j] + dp[i][pre] * C[j][pre]) % MOD;
+                    }
+                }
+            }
+        }
+
+        cout << dp[n][k] << '\n';
+    }
+    return 0;
+}

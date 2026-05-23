@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Define the modulo value as per the problem statement
+const int MOD = 998244353;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    vector<int> power_of_two(100010); // pre-allocate size
+    for (int i = 0; i < 100010; ++i) {
+        power_of_two[i] = (1LL << i) % MOD;
+    }
+
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> p(n), q(n);
+        for (int i = 0; i < n; ++i) cin >> p[i];
+        for (int i = 0; i < n; ++i) cin >> q[i];
+
+        vector<int> r(n);
+        for (int i = 0; i < n; ++i) {
+            int max_value = 0;
+            for (int j = 0; j <= i; ++j) {
+                int current = (power_of_two[p[j]] + power_of_two[q[i-j]]) % MOD;
+                max_value = max(max_value, current);
+            }
+            r[i] = max_value;
+        }
+
+        for (int i = 0; i < n; ++i) {
+            cout << r[i];
+            if (i < n - 1) cout << " ";
+        }
+        cout << endl;
+    }
+    return 0;
+}

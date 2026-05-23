@@ -1,0 +1,124 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        if (n == 1) {
+            int x, y;
+            cin >> x >> y;
+            cout << 1 << '\n';
+            continue;
+        }
+        vector<pair<int, int>> points(n);
+        vector<int> xs(n), ys(n);
+        for (int i = 0; i < n; i++) {
+            cin >> points[i].first >> points[i].second;
+            xs[i] = points[i].first;
+            ys[i] = points[i].second;
+        }
+        sort(xs.begin(), xs.end());
+        sort(ys.begin(), ys.end());
+        
+        // 预处理前缀后缀最小最大
+        vector<int> pre_min_x(n), pre_max_x(n), suf_min_x(n), suf_max_x(n);
+        vector<int> pre_min_y(n), pre_max_y(n), suf_min_y(n), suf_max_y(n);
+        
+        pre_min_x[0] = pre_max_x[0] = xs[0];
+        for (int i = 1; i < n; i++) {
+            pre_min_x[i] = min(pre_min_x[i-1], xs[i]);
+            pre_max_x[i] = max(pre_max_x[i-1], xs[i]);
+        }
+        suf_min_x[n-1] = suf_max_x[n-1] = xs[n-1];
+        for (int i = n-2; i >= 0; i--) {
+            suf_min_x[i] = min(suf_min_x[i+1], xs[i]);
+            suf_max_x[i] = max(suf_max_x[i+1], xs[i]);
+        }
+        
+        pre_min_y[0] = pre_max_y[0] = ys[0];
+        for (int i = 1; i < n; i++) {
+            pre_min_y[i] = min(pre_min_y[i-1], ys[i]);
+            pre_max_y[i] = max(pre_max_y[i-1], ys[i]);
+        }
+        suf_min_y[n-1] = suf_max_y[n-1] = ys[n-1];
+        for (int i = n-2; i >= 0; i--) {
+            suf_min_y[i] = min(suf_min_y[i+1], ys[i]);
+            suf_max_y[i] = max(suf_max_y[i+1], ys[i]);
+        }
+        
+        long long ans = LLONG_MAX;
+        
+        // 枚举删除的点
+        for (int i = 0; i < n; i++) {
+            int x = points[i].first, y = points[i].second;
+            int px = lower_bound(xs.begin(), xs.end(), x) - xs.begin();
+            int py = lower_bound(ys.begin(), ys.end(), y) - ys.begin();
+            
+            // 剩余点的 x 边界
+            int min_x = INT_MAX, max_x = INT_MIN;
+            if (px > 0) {
+                min_x = pre_min_x[px-1];
+                max_x = pre_max_x[px-1];
+            }
+            if (px < n-1) {
+                if (min_x == INT_MAX) {
+                    min_x = suf_min_x[px+1];
+                    max_x = suf_max_x[px+1];
+                } else {
+                    min_x = min(min_x, suf_min_x[px+1]);
+                    max_x = max(max_x, suf_max_x[px+1]);
+                }
+            }
+            // 剩余点的 y 边界
+            int min_y = INT_MAX, max_y = INT_MIN;
+            if (py > 0) {
+                min_y = pre_min_y[py-1];
+                max_y = pre_max_y[py-1];
+            }
+            if (py < n-1) {
+                if (min_y == INT_MAX) {
+                    min_y = suf_min_y[py+1];
+                    max_y = suf_max_y[py+1];
+                } else {
+                    min_y = min(min_y, suf_min_y[py+1]);
+                    max_y = max(max_y, suf_max_y[py+1]);
+                }
+            }
+            
+            long long width = max_x - min_x + 1;
+            long long height = max_y - min_y + 1;
+            long long area = width * height;
+            
+            // 检查矩形内是否有空位
+            if (area > n-1) {
+                ans = min(ans, area);
+            } else {
+                // 扩大策略：增加宽度增加 height 个格子，增加高度增加 width 个格子 // 选择增加量小的方向
+                long long area1 = (width + 1) * height; // 增加宽度
+                long long area2 = width * (height + 1); // 增加高度
+                ans = min(ans, min(area1, area2));
+            }
+        }
+        
+        // 不移动任何点的情况
+        long long orig_width = xs[n-1] - xs[0] + 1;
+        long long orig_height = ys[n-1] - ys[0] + 1;
+        long long orig_area = orig_width * orig_height;
+        if (orig_area > n) {
+            ans = min(ans, orig_area);
+        } else {
+            long long area1 = (orig_width + 1) * orig_height;
+            long long area2 = orig_width * (orig_height + 1);
+            ans = min(ans, min(area1, area2));
+        }
+        
+        cout << ans << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int MOD = 1000000007;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<vector<int>> graph(n + 1);
+    for (int i = 1; i < n; ++i) {
+        int u, v;
+        cin >> u >> v;
+        graph[u].push_back(v);
+        graph[v].push_back(u);
+    }
+
+    vector<int> sz(n + 1);
+    function<void(int, int)> dfs = [&](int u, int parent) {
+        sz[u] = 1;
+        for (int v : graph[u]) {
+            if (v != parent) {
+                dfs(v, u);
+                sz[u] += sz[v];
+            }
+        }
+    };
+    dfs(1, 0);
+
+    map<int, int> count;
+    for (int i = 1; i <= n; ++i) {
+        count[sz[i]]++;
+    }
+
+    long long result = 1;
+    for (const auto& [size, freq] : count) {
+        if (freq >= 3) {
+            result = 0;
+            break;
+        }
+    }
+
+    if (result != 0) {
+        for (const auto& [size, freq] : count) {
+            if (freq == 2) {
+                result = (result * 2) % MOD;
+            }
+        }
+    }
+
+    cout << result << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

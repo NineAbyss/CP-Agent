@@ -1,0 +1,53 @@
+#include <iostream>
+#include <map>
+#include <tuple>
+#include <limits>
+
+using namespace std;
+
+bool is_vertex(int x, int y, int n) {
+    return (x == 0 && y == 0) || (x == 0 && y == n) || (x == n && y == 0);
+}
+
+int calculate_escape(int n, int x, int y, int vx, int vy) {
+    map<tuple<int, int, int, int>, bool> visited;
+    int reflections = 0;
+
+    while (!is_vertex(x, y, n)) {
+        if (visited[make_tuple(x, y, vx, vy)]) return -1;  // cycle break
+        visited[make_tuple(x, y, vx, vy)] = true;
+
+        int INF = numeric_limits<int>::max();
+        int t1 = vx != 0 ? ((vx > 0) ? (n-x) / vx : x / -vx) : INF;
+        int t2 = vy != 0 ? ((vy > 0) ? (n-y) / vy : y / -vy) : INF;
+        int t3 = (vx + vy != 0) ? ((vx + vy > 0) ? (n-x-y) / (vx+vy) : (x+y) / -(vx+vy)) : INF;
+
+        int min_time = min(min(t1, t2), t3);
+        
+        if (min_time == INF) return -1; // no valid reflection or exit
+        x += vx * min_time;
+        y += vy * min_time;
+
+        // Reflect conditions
+        if (min_time == t1) vx = -vx; 
+        else if (min_time == t2) vy = -vy;
+        else {
+            int temp = vx; vx = vy; vy = temp;  // Swap reflects diagonal
+        }
+
+        reflections++;
+    }
+    return reflections;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, x, y, vx, vy;
+        cin >> n >> x >> y >> vx >> vy;
+        int result = calculate_escape(n, x, y, vx, vy);
+        cout << result << endl;
+    }
+    return 0;
+}

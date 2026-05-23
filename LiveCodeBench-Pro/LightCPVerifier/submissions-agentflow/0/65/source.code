@@ -1,0 +1,39 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t; // Number of test cases
+    while (t--) {
+        int n;
+        cin >> n; // Number of monsters
+        
+        vector<int> xs(n), ys(n);
+        for (int i = 0; i < n; i++) {
+            cin >> xs[i] >> ys[i];
+        }
+        
+        sort(xs.begin(), xs.end());
+        sort(ys.begin(), ys.end());
+        
+        // Calculate initial rectangle area
+        long long min_area = static_cast<long long>(xs[n-1] - xs[0] + 1) * (ys[n-1] - ys[0] + 1);
+
+        if (n > 1) {
+            // Consider inward movements // Move a boundary inward and calculate new area
+            min_area = min(min_area, static_cast<long long>(xs[n-1] - xs[1] + 1) * (ys[n-1] - ys[0] + 1));
+            min_area = min(min_area, static_cast<long long>(xs[n-2] - xs[0] + 1) * (ys[n-1] - ys[0] + 1));
+            min_area = min(min_area, static_cast<long long>(xs[n-1] - xs[0] + 1) * (ys[n-1] - ys[1] + 1));
+            min_area = min(min_area, static_cast<long long>(xs[n-1] - xs[0] + 1) * (ys[n-2] - ys[0] + 1));
+        }
+        
+        cout << min_area << "\n";
+    }
+
+    return 0;
+}

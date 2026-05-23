@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+ll solve(int n, ll s, int x, vector<int>& a) {
+    // 找到所有大于x的位置
+    vector<int> greater_pos;
+    greater_pos.push_back(-1);
+    for (int i = 0; i < n; i++) {
+        if (a[i] > x) greater_pos.push_back(i);
+    }
+    greater_pos.push_back(n);
+    
+    ll total = 0;
+    
+    // 处理每个块
+    for (int seg = 0; seg < (int)greater_pos.size() - 1; seg++) {
+        int L = greater_pos[seg] + 1;
+        int R = greater_pos[seg + 1] - 1;
+        if (L > R) continue;
+        
+        // 计算前缀和（相对于块起点）
+        vector<ll> pref(R - L + 2);
+        pref[0] = 0;
+        for (int i = L; i <= R; i++) {
+            pref[i - L + 1] = pref[i - L] + a[i];
+        }
+        
+        // 统计包含至少一个x的子段
+        unordered_map<ll, int> global_count;  // 整个块的前缀和计数
+        unordered_map<ll, int> no_x_count;    // 当前不含x的区域的前缀和计数
+        
+        global_count[0] = 1;
+        no_x_count[0] = 1;
+        
+        for (int i = L; i <= R; i++) {
+            ll current_pref = pref[i - L + 1];
+            ll target = current_pref - s;
+            
+            // 整个块的贡献
+            if (global_count.count(target)) {
+                total += global_count[target];
+            }
+            
+            // 减去不含x的区域的贡献（如果当前元素不是x）
+            if (a[i] != x) {
+                if (no_x_count.count(target)) {
+                    total -= no_x_count[target];
+                }
+            }
+            
+            // 更新计数
+            global_count[current_pref]++;
+            
+            if (a[i] == x) {
+                // 遇到x，重置不含x的区域
+                no_x_count.clear();
+                no_x_count[current_pref] = 1;
+            } else {
+                no_x_count[current_pref]++;
+            }
+        }
+    }
+    
+    return total;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        ll s;
+        int x;
+        cin >> n >> s >> x;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        cout << solve(n, s, x, a) << '\n';
+    }
+    
+    return 0;
+}

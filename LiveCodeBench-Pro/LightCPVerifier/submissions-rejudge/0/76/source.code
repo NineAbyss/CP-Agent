@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    string s;
+    cin >> n >> s;
+    
+    vector<int> first(26, -1), last(26, -1);
+    for (int i = 0; i < n; i++) {
+        int ch = s[i] - 'a';
+        if (first[ch] == -1) first[ch] = i;
+        last[ch] = i;
+    }
+    
+    for (int i = 1; i <= n-2; i++) {
+        int ch = s[i] - 'a';
+        if (first[ch] < i || last[ch] > i) {
+            cout << "Yes\n";
+            return;
+        }
+    }
+    
+    cout << "No\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

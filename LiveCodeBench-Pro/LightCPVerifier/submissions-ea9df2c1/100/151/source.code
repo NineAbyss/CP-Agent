@@ -1,0 +1,107 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// 计算给定序列的 f(c)，使用记忆化递归，但仅用于小长度
+map<vector<int>, int> f_memo;
+
+int f_game(vector<int> c, bool turtle_turn) {
+    if (c.size() == 1) return c[0];
+    int res;
+    if (turtle_turn) {
+        res = -1e9;
+        for (int i = 0; i < (int)c.size() - 1; i++) {
+            vector<int> next = c;
+            next[i] = min(next[i], next[i+1]);
+            next.erase(next.begin() + i + 1);
+            int val = f_game(next, false);
+            if (val > res) res = val;
+        }
+    } else {
+        res = 1e9;
+        for (int i = 0; i < (int)c.size() - 1; i++) {
+            vector<int> next = c;
+            next[i] = max(next[i], next[i+1]);
+            next.erase(next.begin() + i + 1);
+            int val = f_game(next, true);
+            if (val < res) res = val;
+        }
+    }
+    return res;
+}
+
+int f(const vector<int>& c) {
+    return f_game(c, true);
+}
+
+int beauty(const vector<int>& p) {
+    int n = p.size();
+    int total = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = i; j < n; j++) {
+            vector<int> sub(p.begin()+i, p.begin()+j+1);
+            total += f(sub);
+        }
+    }
+    return total;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        vector<bool> used(n+1, false);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            if (a[i] != 0) used[a[i]] = true;
+        }
+        vector<int> missing;
+        for (int i = 1; i <= n; i++) {
+            if (!used[i]) missing.push_back(i);
+        }
+        int m = missing.size();
+        // 如果缺失数字数量较少，枚举所有排列
+        if (m <= 8) {
+            vector<int> positions;
+            for (int i = 0; i < n; i++) {
+                if (a[i] == 0) positions.push_back(i);
+            }
+            int max_beauty = 0;
+            // 枚举缺失数字的所有排列
+            do {
+                vector<int> b = a;
+                for (int i = 0; i < m; i++) {
+                    b[positions[i]] = missing[i];
+                }
+                int bty = beauty(b);
+                if (bty > max_beauty) max_beauty = bty;
+            } while (next_permutation(missing.begin(), missing.end()));
+            cout << max_beauty << '\n';
+        } else {
+            // 否则，尝试递增填充和递减填充，取最大值 // 递增填充
+            vector<int> inc = a;
+            vector<int> inc_missing = missing;
+            sort(inc_missing.begin(), inc_missing.end());
+            int idx = 0;
+            for (int i = 0; i < n; i++) {
+                if (inc[i] == 0) inc[i] = inc_missing[idx++];
+            }
+            int beauty_inc = beauty(inc);
+            // 递减填充
+            vector<int> dec = a;
+            vector<int> dec_missing = missing;
+            sort(dec_missing.rbegin(), dec_missing.rend());
+            idx = 0;
+            for (int i = 0; i < n; i++) {
+                if (dec[i] == 0) dec[i] = dec_missing[idx++];
+            }
+            int beauty_dec = beauty(dec);
+            cout << max(beauty_inc, beauty_dec) << '\n';
+        }
+    }
+    return 0;
+}

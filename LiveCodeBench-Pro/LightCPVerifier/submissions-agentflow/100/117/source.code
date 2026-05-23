@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+#include <numeric>
+
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, k;
+        long long x;
+        cin >> n >> k >> x;
+        
+        vector<long long> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        long long sum_a = accumulate(a.begin(), a.end(), 0LL);
+        vector<long long> prefix_sum(n + 1, 0);
+        for (int i = 0; i < n; ++i) {
+            prefix_sum[i + 1] = prefix_sum[i] + a[i];
+        }
+
+        long long count = 0;
+        
+        for (int start = 0; start < n; ++start) {
+            long long current_sum = prefix_sum[n] - prefix_sum[start];
+            
+            if (current_sum >= x) {
+                count += n * k - start;
+                continue;
+            }
+            
+            if (sum_a > 0) {
+                long long needed = x - current_sum;
+                long long full_cycles = (needed + sum_a - 1) / sum_a;
+                
+                if (full_cycles <= k) {
+                    count += n * (k - full_cycles) - start;
+                }
+            }
+        }
+        
+        cout << count << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    solve();
+    return 0;
+}

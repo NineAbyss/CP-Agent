@@ -1,0 +1,65 @@
+#include <iostream>
+#include <bitset>
+using namespace std;
+
+int popcount(int x) {
+    return __builtin_popcount(x);
+}
+
+long long solve_case(int n, int x) {
+    if (x == 0) {
+        if (n % 2 == 0) {
+            return n;
+        } else {
+            if (n >= 3) return n + 3;
+            else return -1;
+        }
+    }
+    int p = popcount(x);
+    int parity = n % 2;
+    int min_s = (parity == 1) ? 1 : 2;
+    if (min_s > n) {
+        return -1;
+    }
+    int s_opt = -1;
+    if (p % 2 == parity && p <= n && p >= min_s) {
+        s_opt = p;
+    } else {
+        for (int d = 1; d <= 30; ++d) {
+            for (int sign : {-1, 1}) {
+                int s = p + sign * d;
+                if (s >= min_s && s <= n && s % 2 == parity) {
+                    s_opt = s;
+                    break;
+                }
+            }
+            if (s_opt != -1) break;
+        }
+    }
+    if (s_opt == -1) {
+        return -1;
+    }
+    long long base = x - p;
+    int delta = abs(s_opt - p);
+    int extra = 0;
+    if (delta == 1) {
+        if ((x == 0 && s_opt % 2 == 1) || (x == 1 && s_opt % 2 == 0)) {
+            extra = 2;
+        }
+    }
+    long long g = base + delta + extra;
+    return n + g;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, x;
+        cin >> n >> x;
+        cout << solve_case(n, x) << '\n';
+    }
+    return 0;
+}

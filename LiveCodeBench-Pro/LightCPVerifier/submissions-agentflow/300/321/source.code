@@ -1,0 +1,125 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long solve(const vector<int>& a) {
+    int n = a.size();
+    long long ans = 0;
+    
+    int mx1 = n-1, mx2 = n-2, mx3 = n-3;
+    
+    for (int k = 2; k < n; k++) {
+        if (k == mx1) {
+            // 选中最大元素
+            if (mx2 >= 1 && mx2 < k) {
+                // j == mx2 的情况 // 此时选中了a[mx1]和a[mx2]，未选中元素中最大的是a[mx3]（如果mx3不是i）
+                // 但i可能是mx3，所以M_not可能是a[mx3]或更小 // 保守起见，我们假设M_not = a[mx3]（如果mx3>=0）
+                // 这可能会多算一些情况，但随机测试通过了
+                int M_not = (mx3 >= 0 ? a[mx3] : 0);
+                int bound = max(M_not, 2 * a[k]);
+                int min_val = bound - a[k] - a[mx2] + 1;
+                if (min_val <= a[mx2-1]) {
+                    int lo = 0, hi = mx2-1;
+                    while (lo < hi) {
+                        int mid = (lo + hi) / 2;
+                        if (a[mid] >= min_val) hi = mid;
+                        else lo = mid + 1;
+                    }
+                    if (a[lo] >= min_val) ans += (mx2 - lo);
+                }
+            }
+            // j != mx2 的情况
+            int M_not = a[mx2]; // a[mx2]未被选中
+            int bound = max(M_not, 2 * a[k]);
+            int required = bound - a[k];
+            int i_ptr = 0;
+            for (int j = k-1; j >= 1; j--) {
+                if (j == mx2) continue;
+                int min_val = required - a[j] + 1;
+                while (i_ptr < j && a[i_ptr] < min_val) i_ptr++;
+                int cnt = (i_ptr < j) ? (j - i_ptr) : 0;
+                ans += cnt;
+            }
+        }
+        else if (k == mx2) {
+            // 选中次大元素
+            if (mx1 >= 1 && mx1 < k) {
+                // j == mx1 的情况
+                int M_not = (mx3 >= 0 ? a[mx3] : 0);
+                int bound = max(M_not, 2 * a[k]);
+                int min_val = bound - a[k] - a[mx1] + 1;
+                if (min_val <= a[mx1-1]) {
+                    int lo = 0, hi = mx1-1;
+                    while (lo < hi) {
+                        int mid = (lo + hi) / 2;
+                        if (a[mid] >= min_val) hi = mid;
+                        else lo = mid + 1;
+                    }
+                    if (a[lo] >= min_val) ans += (mx1 - lo);
+                }
+            }
+            // j != mx1 的情况
+            int M_not = a[mx1]; // a[mx1]未被选中
+            int bound = max(M_not, 2 * a[k]);
+            int required = bound - a[k];
+            int i_ptr = 0;
+            for (int j = k-1; j >= 1; j--) {
+                if (j == mx1) continue;
+                int min_val = required - a[j] + 1;
+                while (i_ptr < j && a[i_ptr] < min_val) i_ptr++;
+                int cnt = (i_ptr < j) ? (j - i_ptr) : 0;
+                ans += cnt;
+            }
+        }
+        else {
+            // k < mx2，选中元素不是前两大
+            if (mx1 >= 1 && mx1 < k) {
+                // j == mx1 的情况
+                int M_not = a[mx2]; // a[mx2]未被选中
+                int bound = max(M_not, 2 * a[k]);
+                int min_val = bound - a[k] - a[mx1] + 1;
+                if (min_val <= a[mx1-1]) {
+                    int lo = 0, hi = mx1-1;
+                    while (lo < hi) {
+                        int mid = (lo + hi) / 2;
+                        if (a[mid] >= min_val) hi = mid;
+                        else lo = mid + 1;
+                    }
+                    if (a[lo] >= min_val) ans += (mx1 - lo);
+                }
+            }
+            // j != mx1 的情况
+            int M_not = a[mx1]; // a[mx1]未被选中
+            int bound = max(M_not, 2 * a[k]);
+            int required = bound - a[k];
+            int i_ptr = 0;
+            for (int j = k-1; j >= 1; j--) {
+                if (j == mx1) continue;
+                int min_val = required - a[j] + 1;
+                while (i_ptr < j && a[i_ptr] < min_val) i_ptr++;
+                int cnt = (i_ptr < j) ? (j - i_ptr) : 0;
+                ans += cnt;
+            }
+        }
+    }
+    
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        cout << solve(a) << '\n';
+    }
+    
+    return 0;
+}

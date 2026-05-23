@@ -1,0 +1,546 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const ll INF = 1e18;
+const ll NEG_INF = -INF;
+
+// Function to compute maximum subarray sum (Kadane's algorithm)
+ll max_subarray_sum(const vector<ll>& a) {
+    ll max_ending_here = a[0];
+    ll max_so_far = a[0];
+    for (int i = 1; i < a.size(); ++i) {
+        max_ending_here = max(a[i], max_ending_here + a[i]);
+        max_so_far = max(max_so_far, max_ending_here);
+    }
+    return max_so_far;
+}
+
+// Check if we can achieve exactly k as max subarray sum
+void solve() {
+    int n;
+    ll k;
+    cin >> n >> k;
+    string s;
+    cin >> s;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    // Step 1: Check current known values and see if constraints are violated // We'll first try to fill missing values in a way that doesn't exceed k unnecessarily
+
+    // First, check if any fixed positive value > k -> impossible
+    for (int i = 0; i < n; ++i) {
+        if (s[i] == '1' && a[i] > k) {
+            cout << "No\n";
+            return;
+        }
+    }
+
+    // Try to assign values to unknown positions
+    vector<int> unknown;
+    for (int i = 0; i < n; ++i) {
+        if (s[i] == '0') {
+            unknown.push_back(i);
+        }
+    }
+
+    // If there are no unknowns, just check current max subarray sum
+    if (unknown.empty()) {
+        if (max_subarray_sum(a) == k) {
+            cout << "Yes\n";
+            for (int i = 0; i < n; ++i) {
+                cout << a[i] << " \n"[i == n-1];
+            }
+        } else {
+            cout << "No\n";
+        }
+        return;
+    }
+
+    // We'll try to construct a solution // Strategy:
+    // - First, set all unknowns to very small negative number (like -1e17) to make sure they don't contribute // - Then check the current max subarray sum
+    // - If it's already > k -> impossible // - If it's < k, then we need to increase some unknown to make total sum = k
+    // - But we must be careful not to create a subarray with sum > k
+
+    vector<ll> candidate = a;
+    ll NEG_HUGE = -100000000000000000LL; // -1e17
+
+    for (int i : unknown) {
+        candidate[i] = NEG_HUGE;
+    }
+
+    ll cur_max = max_subarray_sum(candidate);
+
+    if (cur_max > k) {
+        cout << "No\n";
+        return;
+    }
+
+    // Now we need to boost one of the unknowns to make max subarray sum exactly k // We can only increase one position from NEG_HUGE to something useful
+
+    // Try to find a position where we can place a value such that some subarray sums to k // and no subarray exceeds k
+
+    // Special case: if k == 0, then all elements must be <= 0 and at least one zero? // But k >= 1 per input, so we don't need to worry
+
+    // We'll try to form a contiguous segment that sums to k
+    // Best idea: pick one unknown index and set it to k, but only if surrounding values won't make sum exceed k
+
+    // Alternative approach: // Since we can use large numbers, we can try to isolate one element to be k
+    // Set one unknown to k, and all others to very negative so they can't be part of any good subarray
+
+    // But what if k is already achieved by existing elements? Then we cannot add k again unless isolated
+
+    // Let's try this: // For each unknown position i, try to set candidate[i] = k, and others to NEG_HUGE
+    // Then check if max subarray sum becomes k
+
+    bool found = false;
+    vector<ll> result;
+
+    // Special handling: if k is 0, but k>=1 so skip
+    // Another idea: if there exists a subarray (with known values) that already sums to k, and we can prevent any larger sum?
+
+    // Actually, simpler strategy:
+    // Case 1: if cur_max == k, then we're done
+    if (cur_max == k) {
+        cout << "Yes\n";
+        for (int i = 0; i < n; ++i) {
+            cout << candidate[i] << " \n"[i == n-1];
+        }
+        return;
+    }
+
+    // Case 2: cur_max < k // We need to introduce a subarray that sums to k
+    // Best bet: use a single element or small segment
+
+    // Try every unknown position as center
+    for (int idx : unknown) {
+        // Temporarily set this unknown to a value that could help reach k
+        // We want to form a segment around idx that sums to k
+
+        // First, try setting only this position to k, others remain NEG_HUGE
+        for (int j : unknown) {
+            candidate[j] = NEG_HUGE;
+        }
+        candidate[idx] = k;
+
+        ll test_max = max_subarray_sum(candidate);
+        if (test_max == k) {
+            cout << "Yes\n";
+            for (int i = 0; i < n; ++i) {
+                cout << candidate[i] << " \n"[i == n-1];
+            }
+            return;
+        }
+
+        // If that doesn't work, maybe we need to compensate negative surroundings?
+        // Example: if neighbors are negative, we may need to set higher than k
+        // But then max subarray might become too big
+
+        // Try to compute what value we need at idx so that the best segment through idx is exactly k // Consider all segments passing through idx
+        // We can compute left and right extensions
+
+        // Compute max sum ending at idx-1 (from left)
+        ll left_max = 0;
+        ll temp = 0;
+        for (int i = idx - 1; i >= 0; --i) {
+            temp += a[i]; // use original known values, since unknowns will be set to NEG_HUGE except this one
+            left_max = max(left_max, temp);
+        }
+
+        // Compute max sum starting at idx+1 (from right)
+        ll right_max = 0;
+        temp = 0;
+        for (int i = idx + 1; i < n; ++i) {
+            temp += a[i];
+            right_max = max(right_max, temp);
+        }
+
+        // The best segment through idx would be: left_max + x + right_max // We want this to be <= k, and ideally we want some segment to be exactly k
+        // Also, we want global max to be k
+
+        // But other segments not involving idx are already <= cur_max < k
+        // So if we can make the best segment through idx equal to k, we are good
+
+        ll needed = k - left_max - right_max;
+        // However, we also have option of just taking [idx] alone: value x // Or left part + idx: left_max + x
+        // Or idx + right: x + right_max // So the contribution through idx is max(needed_segment, x, left_max+x, x+right_max)
+
+        // We want the overall max to be k // Currently without this, max was cur_max < k
+
+        // Try setting x = needed
+        if (needed <= k && needed >= -INF && needed <= INF) {
+            for (int j : unknown) {
+                candidate[j] = NEG_HUGE;
+            }
+            candidate[idx] = needed;
+
+            ll new_max = max_subarray_sum(candidate);
+            if (new_max == k) {
+                cout << "Yes\n";
+                for (int i = 0; i < n; ++i) {
+                    cout << candidate[i] << " \n"[i == n-1];
+                }
+                return;
+            }
+        }
+
+        // Try just using the single element
+        if (k >= 1) { // k is positive
+            for (int j : unknown) {
+                candidate[j] = NEG_HUGE;
+            }
+            candidate[idx] = k;
+
+            ll new_max = max_subarray_sum(candidate);
+            if (new_max == k) {
+                cout << "Yes\n";
+                for (int i = 0; i < n; ++i) {
+                    cout << candidate[i] << " \n"[i == n-1];
+                }
+                return;
+            }
+        }
+    }
+
+    // Another idea: maybe we can use two unknowns? // But note: we can set other unknowns to very negative, so effectively isolate a segment
+
+    // Try to find any contiguous segment that can be made to sum to k // by filling unknowns appropriately
+
+    // Since total n across test cases is only 2e5, we can try O(n^2) in total // But worst-case one test case with n=2e5 -> O(n^2) too slow
+
+    // Alternative insight from examples: // In example 3: [0,0,-4,-5] -> [2,2,-4,-5], max subarray sum = 4
+    // Here they filled two unknowns with 2 each
+
+    // How about this:
+    // We know that if we can achieve max subarray sum < k with all unknowns set to very negative,
+    // and we can create one segment that sums to k without exceeding k anywhere, we are good.
+
+    // Let's try a different construction: // Set all unknowns to a safe value like -1 initially, compute max_sum
+    // But that might overshoot
+
+    // Known trick: if no single element can be used, try making an isolated positive segment
+
+    // After reading known solutions to similar problems, standard approach:
+    // 1. First check if any fixed element > k -> impossible
+    // 2. Check if current array (with unknowns set to 0) has max subarray sum > k -> impossible? //    But wait: we can set unknowns to negative values
+
+    // Better idea from editorial-style: // - First, assume we can only use values in [-1e18, 1e18]
+    // - We can always set unused unknowns to very negative values (-1e18) to disable them // - Then the problem reduces to: can we assign values to some subset of unknowns such that max subarray sum is k?
+
+    // We try every possible contiguous subarray as candidate for achieving sum k
+    for (int i = 0; i < n; ++i) {
+        for (int j = i; j < n; ++j) {
+            // Try to make segment [i,j] have sum k, and all other segments <= k // And within [i,j], we may need to assign values to unknowns
+
+            // First, check if any fixed element in [i,j] > k -> invalid
+            bool valid = true;
+            ll fixed_sum = 0;
+            int unknown_count = 0;
+            for (int p = i; p <= j; ++p) {
+                if (s[p] == '1') {
+                    if (a[p] > k) {
+                        valid = false;
+                        break;
+                    }
+                    fixed_sum += a[p];
+                } else {
+                    unknown_count++;
+                }
+            }
+            if (!valid || unknown_count == 0 && fixed_sum != k) continue;
+
+            // We can assign values to unknowns in [i,j] // We want sum = k, so total variable sum = k - fixed_sum
+            // We can distribute arbitrarily
+
+            // But we must ensure that no subarray outside has sum > k, and no subarray inside exceeds k
+
+            // Set all unknowns outside [i,j] to -1e18 // Inside [i,j], we need to assign values to unknowns such that their sum is k - fixed_sum
+            // And no subsegment of [i,j] has sum > k
+
+            // Simplest: put all extra on one unknown, others set to very negative? // But then that one might be > k -> bad
+
+            // Instead, distribute evenly? Or put everything on one and hope
+
+            // Actually, we can put all on one unknown only if k - fixed_sum <= k -> always true // but we need that value <= k -> so k - fixed_sum <= k => fixed_sum >= 0, not guaranteed
+
+            // So we need k - fixed_sum <= k -> always true, but the value itself must be <= k // So we require k - fixed_sum <= k -> true, but also we don't want the single element to exceed k
+            // So we need k - fixed_sum <= k -> true, but if k - fixed_sum > k, impossible -> never happens
+
+            // Wait: we are adding to unknowns, the value assigned must be <= k // So we require that the amount we assign to any single unknown <= k
+            // But we can split across multiple unknowns
+
+            // Since we can use up to 1e18, we can always split as long as we have at least one unknown
+            // For example, if we have two unknowns, we can do (x, y) such that x+y = needed
+            // and |x|,|y| <= 1e18 as long as |needed| <= 2e18, which it is because k<=1e12
+
+            // But we also must ensure that no subsegment exceeds k
+
+            // Hard to check all possibilities
+
+            // Simpler construction: if the segment [i,j] contains at least one unknown, try: // - Set all unknowns outside [i,j] to -1e18
+            // - Set all unknowns inside [i,j] to a very small value (like -1e9), except one // - Put the entire needed sum on one unknown
+
+            if (unknown_count == 0) continue;
+
+            ll needed_total = k - fixed_sum;
+            // We'll put the whole needed_total on the last unknown in [i,j]
+            vector<ll> temp_ans = a;
+            ll PUT_HUGE_NEG = -100000000000000000LL; // -1e17
+            ll SMALL_NEG = -1000000000LL; // -1e9
+
+            for (int p = 0; p < n; ++p) {
+                if (s[p] == '0') {
+                    if (p >= i && p <= j) {
+                        temp_ans[p] = SMALL_NEG;
+                    } else {
+                        temp_ans[p] = PUT_HUGE_NEG;
+                    }
+                }
+            }
+
+            // Find the last unknown in [i,j]
+            int last_unknown = -1;
+            for (int p = j; p >= i; --p) {
+                if (s[p] == '0') {
+                    last_unknown = p;
+                    break;
+                }
+            }
+            if (last_unknown == -1) continue;
+
+            // Adjust: we have currently added SMALL_NEG for each unknown in [i,j]
+            ll current_inside_sum = 0;
+            for (int p = i; p <= j; ++p) {
+                if (s[p] == '1') {
+                    current_inside_sum += a[p];
+                } else {
+                    current_inside_sum += SMALL_NEG;
+                }
+            }
+            ll deficit = k - current_inside_sum;
+            temp_ans[last_unknown] += deficit; // was SMALL_NEG, now becomes SMALL_NEG + deficit
+
+            // Check if assignment is within bounds
+            if (abs(temp_ans[last_unknown]) > 1e18) {
+                continue;
+            }
+
+            // Also check that no fixed element > k (already checked) // Now check the actual max subarray sum
+            ll final_max = max_subarray_sum(temp_ans);
+            if (final_max == k) {
+                cout << "Yes\n";
+                for (int p = 0; p < n; ++p) {
+                    cout << temp_ans[p] << " \n"[p == n-1];
+                }
+                return;
+            }
+        }
+    }
+
+    // One more idea: if k is achievable by a single element, and we have an unknown, just set one unknown to k and others to very negative
+    for (int idx : unknown) {
+        vector<ll> temp = a;
+        for (int j : unknown) {
+            temp[j] = NEG_HUGE;
+        }
+        temp[idx] = k;
+        if (max_subarray_sum(temp) == k) {
+            cout << "Yes\n";
+            for (int i = 0; i < n; ++i) {
+                cout << temp[i] << " \n"[i == n-1];
+            }
+            return;
+        }
+    }
+
+    // Try setting one unknown to k and others to very negative, even if not perfect
+    if (!unknown.empty()) {
+        vector<ll> temp = a;
+        int first_unknown = unknown[0];
+        for (int j : unknown) {
+            temp[j] = NEG_HUGE;
+        }
+        temp[first_unknown] = k;
+        if (max_subarray_sum(temp) == k) {
+            cout << "Yes\n";
+            for (int i = 0; i < n; ++i) {
+                cout << temp[i] << " \n"[i == n-1];
+            }
+            return;
+        }
+    }
+
+    // Final fallback: try the example-like strategies
+    // From example 5: all zeros -> output [5,1,9,2,2] for k=19? No, that was different
+
+    // Looking at provided examples, let's try a greedy repair:
+
+    // Actually, let's go back to a more systematic solution
+
+    // Insight: we can always solve it if there is at least one unknown, unless the existing elements already force max > k // But example 4 says "No"
+
+    // Re-examine example 4: n=6, k=12, s="110111", a=[1,2,0,5,-1,9] // Only a[2] is unknown (0-indexed index 2)
+    // Known values: [1,2,x,5,-1,9]
+    // What is max subarray sum if x=0? [1,2,0,5,-1,9] -> sum=1+2+0+5-1+9=16>12
+    // Can we set x negative enough to bring down the sum? // The entire array sum is 1+2+x+5-1+9 = 16+x
+    // But the max subarray might be just [5,-1,9]=13, or [9]=9, or [1,2,x,5]=8+x // To make max<=12, we need:
+    // - 16+x <=12 -> x<=-4
+    // - 8+x <=12 -> x<=4 (always true if x<=-4)
+    // - [5,-1,9]=13>12 -> this is independent of x!  // So no matter what we set x to, the subarray [3,5] (0-indexed indices 3..5) has sum 5-1+9=13>12
+    // Hence impossible.
+
+    // Therefore, necessary condition: every subarray composed entirely of known elements must have sum <= k
+    // And if such a subarray has sum == k, then we must not create any larger sum
+
+    // Algorithm: // Step 1: Check all contiguous subarrays that contain only known elements (s[i]=='1')
+    //         If any has sum > k, return "No" // Step 2: If there is a subarray of known elements with sum == k, then we must ensure that we cannot create a sum > k
+    //         So set all unknowns to very negative values -> then check if max subarray sum is still k // Step 3: If no known subarray has sum == k, then we need to create one using at least one unknown
+
+    // Let's implement this clean approach
+
+    // Reset candidate
+    candidate = a;
+    for (int i : unknown) {
+        candidate[i] = NEG_HUGE;
+    }
+
+    // Check all subarrays that are fully known
+    for (int i = 0; i < n; ++i) {
+        if (s[i] != '1') continue;
+        ll sum = 0;
+        for (int j = i; j < n; ++j) {
+            if (s[j] != '1') break;
+            sum += a[j];
+            if (sum > k) {
+                cout << "No\n";
+                return;
+            }
+        }
+    }
+
+    // Now check if with unknowns set to NEG_HUGE, the max subarray sum is already k
+    ll base_max = max_subarray_sum(candidate);
+    if (base_max == k) {
+        cout << "Yes\n";
+        for (int i = 0; i < n; ++i) {
+            cout << candidate[i] << " \n"[i == n-1];
+        }
+        return;
+    }
+
+    // If base_max > k -> should have been caught above, but double-check
+    if (base_max > k) {
+        cout << "No\n";
+        return;
+    }
+
+    // Now base_max < k, and no known-only subarray exceeds k // We need to create a subarray that sums to k using at least one unknown
+
+    // Try every subarray that contains at least one unknown
+    for (int i = 0; i < n; ++i) {
+        ll sum = 0;
+        bool has_unknown = false;
+        for (int j = i; j < n; ++j) {
+            if (s[j] == '0') {
+                has_unknown = true;
+            }
+            sum += a[j];
+
+            // If this segment has only known elements, we already know sum<=k
+            // But if it has unknown, we can adjust
+            if (has_unknown) {
+                // We can potentially adjust the unknowns in [i,j] to make total sum = k // The amount we need to add: k - (current sum of knowns in [i,j])
+                // But currently sum includes a[j]=0 for unknowns, so sum is exactly the sum of knowns
+
+                ll needed = k - sum;
+                // We have to distribute 'needed' among the unknowns in [i,j] // Number of unknowns in [i,j]:
+                int cnt = 0;
+                for (int p = i; p <= j; ++p) {
+                    if (s[p] == '0') cnt++;
+                }
+
+                // We can always do it if we can assign values to these unknowns summing to 'needed' // And we can, as long as we don't violate individual bounds (which we won't because needed<=1e12, and we can use 1e18)
+
+                // But we must ensure that no subarray exceeds k
+
+                // Construction: // - Set all unknowns outside [i,j] to NEG_HUGE
+                // - Set all unknowns inside [i,j] to a small value (like -1e9), except one // - Put the bulk on one unknown
+
+                vector<ll> temp_sol = a;
+                const ll SMALL = -1000000000LL;
+                for (int p = 0; p < n; ++p) {
+                    if (s[p] == '0') {
+                        if (p >= i && p <= j) {
+                            temp_sol[p] = SMALL;
+                        } else {
+                            temp_sol[p] = NEG_HUGE;
+                        }
+                    }
+                }
+
+                // Adjust: the current sum of [i,j] is 'sum' + (cnt * SMALL)
+                ll current_seg_sum = sum + cnt * SMALL;
+                ll deficit = k - current_seg_sum;
+                // Add this deficit to one unknown in [i,j]
+                int last_unk = -1;
+                for (int p = j; p >= i; --p) {
+                    if (s[p] == '0') {
+                        last_unk = p;
+                        break;
+                    }
+                }
+                if (last_unk == -1) continue;
+                temp_sol[last_unk] += deficit;
+
+                // Bounds check
+                if (abs(temp_sol[last_unk]) > 1e18) {
+                    continue;
+                }
+
+                // Must also ensure that no element exceeds k in absolute value? No, only sum matters // But we have to ensure no subarray has sum > k
+                // Check max subarray sum
+                if (max_subarray_sum(temp_sol) == k) {
+                    cout << "Yes\n";
+                    for (int p = 0; p < n; ++p) {
+                        cout << temp_sol[p] << " \n"[p == n-1];
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
+    // One special case: create a single-element subarray of value k
+    for (int i : unknown) {
+        vector<ll> temp_sol = a;
+        for (int j : unknown) {
+            temp_sol[j] = NEG_HUGE;
+        }
+        temp_sol[i] = k;
+        if (max_subarray_sum(temp_sol) == k) {
+            cout << "Yes\n";
+            for (int j = 0; j < n; ++j) {
+                cout << temp_sol[j] << " \n"[j == n-1];
+            }
+            return;
+        }
+    }
+
+    // If all fails
+    cout << "No\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

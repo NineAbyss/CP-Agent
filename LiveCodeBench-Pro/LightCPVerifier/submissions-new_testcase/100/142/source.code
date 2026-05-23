@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+const int MAX_M = 500000;
+const int INF = 1e9;
+
+vector<int> f(MAX_M+1, INF);
+
+void precompute() {
+    f[1] = 1; // single vertex
+    for (int x = 3; x <= MAX_M; x += 2) {
+        // Option 1: root has one child with dp = x-2
+        f[x] = 1 + f[x-2]; // always valid since f[x-2] is computed
+        // Option 2: factor x into two parts
+        for (int d = 3; d * d <= x; d += 2) {
+            if (x % d == 0) {
+                int rest = x / d;
+                // Use d as one factor
+                if (f[d-2] < INF && f[rest] < INF) {
+                    f[x] = min(f[x], f[rest] + f[d-2]);
+                }
+                // Use rest as one factor (if different)
+                if (rest != d) {
+                    if (f[rest-2] < INF && f[d] < INF) {
+                        f[x] = min(f[x], f[d] + f[rest-2]);
+                    }
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    precompute();
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int m;
+        cin >> m;
+        if (m % 2 == 0) {
+            cout << -1 << '\n';
+        } else {
+            // m is odd
+            // f[m] is always finite for odd m
+            cout << f[m] << '\n';
+        }
+    }
+    return 0;
+}

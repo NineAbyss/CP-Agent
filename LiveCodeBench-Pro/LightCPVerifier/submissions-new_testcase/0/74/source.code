@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int gcd(int a, int b) {
+    while (b) {
+        int t = b;
+        b = a % b;
+        a = t;
+    }
+    return a;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        
+        int G = a[0];
+        for (int i = 1; i < n; i++) G = gcd(G, a[i]);
+        
+        int cntG = 0;
+        for (int x : a) if (x == G) cntG++;
+        
+        if (cntG > 0) {
+            cout << n - cntG << '\n';
+            continue;
+        }
+        
+        // Check if there exists pair with gcd == G
+        bool exists = false;
+        for (int i = 0; i < n && !exists; i++) {
+            for (int j = i + 1; j < n && !exists; j++) {
+                if (gcd(a[i], a[j]) == G) {
+                    exists = true;
+                    break;
+                }
+            }
+        }
+        
+        if (exists) {
+            cout << n << '\n';
+        } else {
+            cout << n + 1 << '\n';
+        }
+    }
+    return 0;
+}

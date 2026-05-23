@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, q;
+    scanf("%d %d", &n, &q);
+    
+    vector<int> b(n);
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &b[i]);
+    }
+    
+    vector<int> x(q), y(q), z(q);
+    for (int i = 0; i < q; i++) {
+        scanf("%d %d %d", &x[i], &y[i], &z[i]);
+        x[i]--; y[i]--; z[i]--;
+    }
+    
+    vector<int> a = b;
+    
+    // 从后向前处理操作，传播约束
+    for (int i = q-1; i >= 0; i--) {
+        int need = b[z[i]];
+        if (a[x[i]] < need) a[x[i]] = need;
+        if (a[y[i]] < need) a[y[i]] = need;
+    }
+    
+    // 验证
+    vector<int> c = a;
+    for (int i = 0; i < q; i++) {
+        c[z[i]] = min(c[x[i]], c[y[i]]);
+    }
+    
+    // 检查所有位置
+    for (int i = 0; i < n; i++) {
+        if (c[i] != b[i]) {
+            puts("-1");
+            return;
+        }
+    }
+    
+    // 输出
+    for (int i = 0; i < n; i++) {
+        printf("%d%c", a[i], " \n"[i == n-1]);
+    }
+}
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

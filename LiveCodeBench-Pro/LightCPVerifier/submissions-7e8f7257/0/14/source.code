@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<vector<int>> a(n, vector<int>(m));
+        int global_max = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                cin >> a[i][j];
+                global_max = max(global_max, a[i][j]);
+            }
+        }
+        
+        vector<int> col_count(m, 0);
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (a[i][j] == global_max) {
+                    col_count[j]++;
+                }
+            }
+        }
+        
+        int K = 0;
+        for (int j = 0; j < m; j++) {
+            if (col_count[j] > 0) K++;
+        }
+        
+        vector<int> row_single_count(n, 0);
+        for (int i = 0; i < n; i++) {
+            int cnt = 0;
+            for (int j = 0; j < m; j++) {
+                if (a[i][j] == global_max && col_count[j] == 1) {
+                    cnt++;
+                }
+            }
+            row_single_count[i] = cnt;
+        }
+        
+        bool possible = false;
+        for (int i = 0; i < n; i++) {
+            if (K - row_single_count[i] <= 1) {
+                possible = true;
+                break;
+            }
+        }
+        
+        int ans = global_max - (possible ? 1 : 0);
+        cout << ans << '\n';
+    }
+    return 0;
+}

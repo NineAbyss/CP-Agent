@@ -1,0 +1,60 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <unordered_map>
+
+using namespace std;
+
+int countValidSubsegments(const vector<int>& a, int s, int x) {
+    int n = a.size();
+    int count = 0;
+    long long currentSum = 0;
+    int currentMax = INT_MIN;
+    int left = 0;
+    unordered_map<long long, int> prefixSumCount;
+    prefixSumCount[0] = 1; // Handle the zero prefix sum initially
+    
+    for (int right = 0; right < n; ++right) {
+        currentSum += a[right];
+        currentMax = max(currentMax, a[right]);
+        
+        // Adjust the left pointer if the current max is greater than x 
+        // or if current max will not match at any possible subsegment ending at 'right' position
+        while (left <= right && currentMax > x) {
+            currentSum -= a[left];
+            left++;
+            currentMax = *max_element(a.begin() + left, a.begin() + right + 1);
+        }
+        
+        if (currentMax == x) {
+            if (prefixSumCount.find(currentSum - s) != prefixSumCount.end()) {
+                count += prefixSumCount[currentSum - s];
+            }
+        }
+        prefixSumCount[currentSum]++;
+    }
+    return count;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long s;
+        int x;
+        cin >> n >> s >> x;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        
+        cout << countValidSubsegments(a, s, x) << "\n";
+    }
+    
+    return 0;
+}

@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+ll gcd(ll a, ll b) {
+    return b == 0 ? a : gcd(b, a % b);
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    ll m = *min_element(a.begin(), a.end());
+    vector<ll> B;
+    int count_m_in_B = 0;
+    for (ll x : a) {
+        if (x % m == 0) {
+            B.push_back(x);
+            if (x == m) count_m_in_B++;
+        }
+    }
+
+    // Compute gcd of full B
+    ll g_all = B[0];
+    for (int i = 1; i < B.size(); i++) {
+        g_all = gcd(g_all, B[i]);
+    }
+
+    if (g_all != m) {
+        cout << "No\n";
+        return;
+    }
+
+    // Create B': remove one occurrence of m from B
+    vector<ll> B_prime;
+    bool removed = false;
+    for (ll x : B) {
+        if (!removed && x == m) {
+            removed = true; // skip first m
+            continue;
+        }
+        B_prime.push_back(x);
+    }
+
+    // If B_prime is empty? (n=1 case but n>=2, so after remove at least one element, but B could be size 1) // If B had only one element and it was m, then B_prime is empty
+    if (B_prime.empty()) {
+        // Cannot have empty suffix
+        cout << "No\n";
+        return;
+    }
+
+    ll g_prime = B_prime[0];
+    for (int i = 1; i < B_prime.size(); i++) {
+        g_prime = gcd(g_prime, B_prime[i]);
+    }
+
+    if (g_prime == m) {
+        cout << "Yes\n";
+    } else {
+        cout << "No\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

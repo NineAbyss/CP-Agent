@@ -1,0 +1,133 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Node {
+    int prio, size;
+    set<int> elements; // 这个集合的所有元素
+    bool rev;
+    Node *l, *r;
+    Node() : prio(rand()), size(1), rev(false), l(nullptr), r(nullptr) {}
+};
+
+int getSize(Node* t) { return t ? t->size : 0; }
+
+void push(Node* t) {
+    if (t && t->rev) {
+        t->rev = false;
+        swap(t->l, t->r);
+        if (t->l) t->l->rev ^= 1;
+        if (t->r) t->r->rev ^= 1;
+    }
+}
+
+void upd(Node* t) {
+    if (t) t->size = 1 + getSize(t->l) + getSize(t->r);
+}
+
+pair<Node*, Node*> split(Node* t, int k) {
+    if (!t) return {nullptr, nullptr};
+    push(t);
+    int leftSize = getSize(t->l);
+    if (k <= leftSize) {
+        auto [L, R] = split(t->l, k);
+        t->l = R;
+        upd(t);
+        return {L, t};
+    } else {
+        auto [L, R] = split(t->r, k - leftSize - 1);
+        t->r = L;
+        upd(t);
+        return {t, R};
+    }
+}
+
+Node* merge(Node* a, Node* b) {
+    if (!a) return b;
+    if (!b) return a;
+    push(a); push(b);
+    if (a->prio > b->prio) {
+        a->r = merge(a->r, b);
+        upd(a);
+        return a;
+    } else {
+        b->l = merge(a, b->l);
+        upd(b);
+        return b;
+    }
+}
+
+void traverse(Node* t, function<void(Node*)> f) {
+    if (!t) return;
+    push(t);
+    traverse(t->l, f);
+    f(t);
+    traverse(t->r, f);
+}
+
+Node* findKth(Node* t, int k) {
+    if (!t) return nullptr;
+    push(t);
+    int leftSize = getSize(t->l);
+    if (k == leftSize + 1) return t;
+    if (k <= leftSize) return findKth(t->l, k);
+    else return findKth(t->r, k - leftSize - 1);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n, q;
+    cin >> n >> q;
+    
+    Node* root = nullptr;
+    vector<Node*> nodes(n+1);
+    for (int i = 1; i <= n; i++) {
+        nodes[i] = new Node();
+        root = merge(root, nodes[i]);
+    }
+    
+    // 每个值对应的节点集合
+    vector<set<Node*>> value_to_nodes(q+2);
+    
+    int last_ans = 0;
+    
+    for (int i = 1; i <= q; i++) {
+        int a, b, c;
+        cin >> a >> b >> c;
+        
+        if (a == 1 || a == 2) {
+            int r = (b + last_ans - 1) % n + 1;
+            if (a == 1) {
+                auto [left, right] = split(root, r);
+                traverse(left, [&](Node* node) {
+                    node->elements.insert(i);
+                    value_to_nodes[i].insert(node);
+                });
+                root = merge(left, right);
+            } else {
+                auto [left, right] = split(root, r);
+                if (left) left->rev ^= 1;
+                root = merge(left, right);
+            }
+        } else {
+            int x = (b + last_ans - 1) % q + 1;
+            auto& st = value_to_nodes[x];
+            for (Node* node : st) {
+                node->elements.erase(x);
+            }
+            st.clear();
+        }
+        
+        int p = (c + last_ans - 1) % n + 1;
+        Node* node = findKth(root, p);
+        if (node->elements.empty()) {
+            last_ans = 0;
+        } else {
+            last_ans = *node->elements.begin();
+        }
+        cout << last_ans << '\n';
+    }
+    
+    return 0;
+}

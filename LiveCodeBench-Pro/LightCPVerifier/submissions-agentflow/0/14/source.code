@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int collectGold(int x, int y, int k, const vector<string>& mine, int n, int m) {
+    int goldCount = 0;
+    for (int i = x - k; i <= x + k; ++i) {
+        for (int j = y - k; j <= y + k; ++j) {
+            if (i >= 0 && i < n && j >= 0 && j < m) {
+                if (mine[i][j] == 'g' && (i == x - k || i == x + k || j == y - k || j == y + k)) {
+                    goldCount++;
+                }
+            }
+        }
+    }
+    return goldCount;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<string> mine(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> mine[i];
+        }
+
+        int maxGold = 0;
+        for (int x = 0; x < n; ++x) {
+            for (int y = 0; y < m; ++y) {
+                if (mine[x][y] == '.') {
+                    int collectedGold = collectGold(x, y, k, mine, n, m);
+                    maxGold = max(maxGold, collectedGold);
+                }
+            }
+        }
+
+        cout << maxGold << "\n";
+    }
+
+    return 0;
+}

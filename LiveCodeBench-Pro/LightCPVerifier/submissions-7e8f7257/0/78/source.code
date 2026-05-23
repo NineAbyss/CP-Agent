@@ -1,0 +1,40 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    const int BITS = 30;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        vector<int> cnt1(BITS, 0);
+        for (int x : a) {
+            for (int b = 0; b < BITS; b++) {
+                if (x >> b & 1) cnt1[b]++;
+            }
+        }
+        long long max_sum = 0;
+        for (int k = 0; k < n; k++) {
+            long long sum = 0;
+            for (int b = 0; b < BITS; b++) {
+                if (a[k] >> b & 1) {
+                    sum += (long long)(n - cnt1[b]) * (1LL << b);
+                } else {
+                    sum += (long long)cnt1[b] * (1LL << b);
+                }
+            }
+            if (sum > max_sum) max_sum = sum;
+        }
+        cout << max_sum << '\n';
+    }
+    return 0;
+}

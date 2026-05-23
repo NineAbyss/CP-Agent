@@ -1,0 +1,27 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t; 
+    cin >> t;
+    
+    while (t-- > 0) {
+        int n; 
+        cin >> n;
+        
+        // Read the permutation (though we do not need to process it further)
+        for (int i = 0; i < n; ++i) {
+            int temp;
+            cin >> temp;
+        }
+
+        // Every subarray is cute, so calculate the number of non-empty subarrays
+        long long numberOfCuteSubarrays = (long long)n * (n + 1) / 2;
+        cout << numberOfCuteSubarrays << '\n';
+    }
+    
+    return 0;
+}

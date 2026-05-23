@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool isBeautiful(const vector<vector<int>>& h, int n) {
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n - 1; ++j) {
+            if (h[i][j] == h[i][j + 1]) return false;
+        }
+    }
+    for (int j = 0; j < n; ++j) {
+        for (int i = 0; i < n - 1; ++i) {
+            if (h[i][j] == h[i + 1][j]) return false;
+        }
+    }
+    return true;
+}
+
+int calculateMinCost(vector<vector<int>>& h, vector<int>& a, vector<int>& b, int n) {
+    if (isBeautiful(h, n)) return 0;
+
+    int min_cost = INT_MAX;
+
+    // Explore all row combinations
+    for (int row_mask = 0; row_mask < (1 << n); ++row_mask) {
+        vector<vector<int>> h_copy = h;
+        int current_cost = 0;
+
+        // Modify rows based on row_mask
+        for (int i = 0; i < n; ++i) {
+            if (row_mask & (1 << i)) {
+                current_cost += a[i];
+                for (int j = 0; j < n; ++j) {
+                    h_copy[i][j]++;
+                }
+            }
+        }
+
+        // Check columns needed and apply corresponding column adjustments
+        vector<bool> requires_col_adjustment(n, false);
+        int col_cost = 0;
+        for (int j = 0; j < n; ++j) {
+            for (int i = 0; i < n - 1; ++i) {
+                if (h_copy[i][j] == h_copy[i + 1][j]) {
+                    col_cost += b[j];
+                    requires_col_adjustment[j] = true;
+                    break;
+                }
+            }
+        }
+
+        // Apply column adjustments
+        for (int j = 0; j < n; ++j) {
+            if (requires_col_adjustment[j]) {
+                for (int i = 0; i < n; ++i) {
+                    h_copy[i][j]++;
+                }
+            }
+        }
+        
+        current_cost += col_cost;
+        if (isBeautiful(h_copy, n)) {
+            min_cost = min(min_cost, current_cost);
+        }
+    }
+
+    return min_cost == INT_MAX ? -1 : min_cost;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> h(n, vector<int>(n));
+        vector<int> a(n), b(n);
+        
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
+                cin >> h[i][j];
+            }
+        }
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> b[i];
+        }
+        
+        int result = calculateMinCost(h, a, b, n);
+        cout << result << endl;
+    }
+    
+    return 0;
+}

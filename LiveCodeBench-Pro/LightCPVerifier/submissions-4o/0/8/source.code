@@ -1,0 +1,31 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, s;
+        cin >> n >> s;
+        
+        vector<int> positions(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> positions[i];
+        }
+        
+        // To find the minimum and maximum positions from the given list
+        int min_position = positions[0];
+        int max_position = positions[n - 1];
+        
+        // The minimum number of steps required is the distance from the starting position `s` to the first visit `min_position` // plus the distance from `min_position` to `max_position`.
+        int min_steps = abs(s - min_position) + (max_position - min_position);
+        
+        cout << min_steps << endl;
+    }
+    
+    return 0;
+}

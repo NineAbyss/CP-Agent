@@ -1,0 +1,89 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <map>
+using namespace std;
+
+const int MAXA = 100000;
+
+int spf[MAXA+1];
+
+void sieve() {
+    for (int i = 1; i <= MAXA; i++) spf[i] = i;
+    for (int i = 2; i * i <= MAXA; i++) {
+        if (spf[i] == i) {
+            for (int j = i * i; j <= MAXA; j += i) {
+                if (spf[j] == j) spf[j] = i;
+            }
+        }
+    }
+}
+
+vector<int> get_prime_factors(int x) {
+    vector<int> res;
+    while (x > 1) {
+        int p = spf[x];
+        res.push_back(p);
+        while (x % p == 0) x /= p;
+    }
+    return res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    sieve();
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        vector<int> a(n + 1);
+        for (int i = 1; i <= n; i++) {
+            cin >> a[i];
+        }
+        map<int, vector<int>> posMap;
+        for (int i = 1; i <= n; i++) {
+            int x = a[i];
+            while (x > 1) {
+                int p = spf[x];
+                posMap[p].push_back(i);
+                while (x % p == 0) x /= p;
+            }
+        }
+        while (q--) {
+            int k, l, r;
+            cin >> k >> l >> r;
+            long long ans = 0;
+            int pos = l;
+            while (pos <= r) {
+                if (k == 1) {
+                    ans += (r - pos + 1);
+                    break;
+                }
+                vector<int> pf = get_prime_factors(k);
+                int next_pos = r + 1;
+                for (int p : pf) {
+                    auto it = posMap.find(p);
+                    if (it == posMap.end()) continue;
+                    const vector<int>& vec = it->second;
+                    auto it2 = lower_bound(vec.begin(), vec.end(), pos);
+                    if (it2 != vec.end() && *it2 <= r) {
+                        next_pos = min(next_pos, *it2);
+                    }
+                }
+                ans += (long long)k * (next_pos - pos);
+                pos = next_pos;
+                if (pos <= r) {
+                    while (k % a[pos] == 0) {
+                        k /= a[pos];
+                    }
+                    ans += k;
+                    pos++;
+                }
+            }
+            cout << ans << '\n';
+        }
+    }
+    return 0;
+}

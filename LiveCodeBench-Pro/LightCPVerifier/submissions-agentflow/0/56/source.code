@@ -1,0 +1,31 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Function to calculate the minimum number of actions required
+int calculate_actions(int x) {
+    int actions = 0;
+    while (x > 0) {
+        if (x % 2 == 0) {  // Even case
+            x /= 2;
+        } else {           // Odd case
+            x = (x - 1) / 2;
+        }
+        actions++;
+    }
+    return actions * 2 + 1;
+}
+
+int main() {
+    int t;  // Number of test cases
+    cin >> t;
+    vector<int> results(t);
+    for (int i = 0; i < t; ++i) {
+        int x;
+        cin >> x;
+        results[i] = calculate_actions(x);
+    }
+    for (const auto &result : results)
+        cout << result << endl;
+    return 0;
+}

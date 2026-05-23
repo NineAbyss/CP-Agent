@@ -1,0 +1,35 @@
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+bool can_match(const string& p, const string& s) {
+    int n = s.size(), m = p.size();
+    vector<int> dp(n + 1, -1);
+    dp[0] = 0;
+    for (int i = 1; i <= n; i++) {
+        // match 1 char
+        if (dp[i - 1] != -1 && dp[i - 1] < m && s[i - 1] == p[dp[i - 1]]) {
+            dp[i] = max(dp[i], dp[i - 1] + 1);
+        }
+        // match 2 chars
+        if (i >= 2 && dp[i - 2] != -1 && dp[i - 2] < m && s[i - 2] == p[dp[i - 2]] && s[i - 1] == p[dp[i - 2]]) {
+            dp[i] = max(dp[i], dp[i - 2] + 1);
+        }
+    }
+    return dp[n] == m;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        string p, s;
+        cin >> p >> s;
+        cout << (can_match(p, s) ? "YES" : "NO") << '\n';
+    }
+    return 0;
+}

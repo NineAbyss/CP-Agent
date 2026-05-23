@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const long long INF = 1e18;
+
+long long solve(vector<int>& a) {
+    int n = a.size();
+    vector<long long> dp(n+2, INF);
+    dp[n+1] = 0;
+    
+    for (int i = n; i >= 1; i--) {
+        // Option 1: move directly, pay a[i-1]
+        dp[i] = min(dp[i], a[i-1] + dp[i+1]);
+        
+        // Option 2: swap with some j > i, pay (j-i) + a[j-1]
+        for (int j = i+1; j <= n; j++) {
+            long long cost = (j - i) + a[j-1] + dp[i+1];
+            dp[i] = min(dp[i], cost);
+        }
+    }
+    
+    return dp[1];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        cout << solve(a) << '\n';
+    }
+    return 0;
+}

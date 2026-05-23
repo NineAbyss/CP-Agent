@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    int t;
+    std::cin >> t;
+
+    while (t--) {
+        int n;
+        std::cin >> n;
+        std::vector<std::vector<int>> grid(n, std::vector<int>(n));
+        
+        for (int i = 0; i < n; ++i)
+            for (int j = 0; j < n; ++j)
+                std::cin >> grid[i][j];
+
+        std::vector<int> permutation(2 * n + 1, 0);
+        std::unordered_set<int> used_elements;  // Set to track used elements
+
+        // Fill the permutation based on diagonal sums
+        for (int sum = 2; sum <= 2 * n; ++sum) {
+            for (int i = 0; i < n; ++i) {
+                int j = sum - i - 1;
+                if (j >= 0 && j < n) {
+                    int val = grid[i][j];
+                    if (used_elements.insert(val).second) { // If successfully inserted (not used before)
+                        permutation[sum] = val;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Produce the output in the required format
+        for (int i = 2; i <= 2 * n; ++i) {
+            std::cout << permutation[i];
+            if (i < 2 * n) std::cout << " ";
+        }
+        std::cout << "\n";
+    }
+
+    return 0;
+}

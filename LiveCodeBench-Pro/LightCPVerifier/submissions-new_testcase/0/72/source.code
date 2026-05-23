@@ -1,0 +1,47 @@
+#include <cstdio>
+#include <cstring>
+
+char buf[1000000];
+int pos;
+
+void writeInt(int x) {
+    char temp[10];
+    int len = 0;
+    if (x == 0) {
+        temp[len++] = '0';
+    } else {
+        while (x > 0) {
+            temp[len++] = '0' + (x % 10);
+            x /= 10;
+        }
+    }
+    for (int i = len-1; i >= 0; i--) {
+        buf[pos++] = temp[i];
+    }
+}
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        int n;
+        scanf("%d", &n);
+        pos = 0;
+        if (n == 3) {
+            buf[pos++] = '1'; buf[pos++] = ' '; buf[pos++] = '3'; buf[pos++] = ' '; buf[pos++] = '2'; buf[pos++] = '\n';
+        } else {
+            writeInt(2); buf[pos++] = ' ';
+            writeInt(3); buf[pos++] = ' ';
+            writeInt(n);
+            for (int i = 4; i <= n-1; i++) {
+                buf[pos++] = ' ';
+                writeInt(i);
+            }
+            buf[pos++] = ' ';
+            writeInt(1);
+            buf[pos++] = '\n';
+        }
+        fwrite(buf, 1, pos, stdout);
+    }
+    return 0;
+}

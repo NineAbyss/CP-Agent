@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// The key observation: // The allowed operation swaps (a[i], a[i+2]) and (a[i+1], a[i+3]) simultaneously.
+// This means we can think of the array as two interleaved sequences: // - Even-indexed elements (0-indexed): indices 0, 2, 4, ...
+// - Odd-indexed elements (0-indexed): indices 1, 3, 5, ... //
+// But note: the operation affects both even and odd positions together. // However, careful analysis shows that:
+// - Elements at even indices can be rearranged among even indices. // - Elements at odd indices can be rearranged among odd indices.
+// // Why? Because the operation swaps a[i] with a[i+2] (both even or both odd depending on i)
+// and a[i+1] with a[i+3] (same parity). So effectively, the operation allows us to perform // adjacent swaps in the even-positioned subsequence and odd-positioned subsequence independently.
+// // Actually, more precisely:
+// If we look at the effect on even indices:  //   When i is even: we swap a[i] (even) with a[i+2] (even)
+//   When i is odd: we swap a[i] (odd) with a[i+2] (odd) // So we can generate any permutation within the even-indexed elements and within the odd-indexed elements,
+// because we can simulate adjacent swaps using multiple operations. //
+// Therefore, we can independently sort the elements at even positions and odd positions. //
+// However, wait: let's test with the examples. // Example 1: [3,4,1,2] -> can become [1,2,3,4]
+//   even indices (0,2): [3,1] -> can be sorted to [1,3] //   odd indices (1,3): [4,2] -> can be sorted to [2,4]
+//   result: [1,2,3,4] -> matches. //
+// Example 2: [5,4,3,1,2] -> [2,1,3,4,5] //   even indices (0,2,4): [5,3,2] -> sorted: [2,3,5]
+//   odd indices (1,3): [4,1] -> sorted: [1,4] //   result: [2,1,3,4,5] -> matches.
+// // Example 3: [10,9,8,7,6,5,4,3,2,1] -> [2,1,4,3,6,5,8,7,10,9]
+//   even indices (0,2,4,6,8): [10,8,6,4,2] -> sorted: [2,4,6,8,10] //   odd indices (1,3,5,7,9): [9,7,5,3,1] -> sorted: [1,3,5,7,9]
+//   result: [2,1,4,3,6,5,8,7,10,9] -> matches expected output. //
+// So algorithm: // 1. Extract elements at even indices and sort them.
+// 2. Extract elements at odd indices and sort them. // 3. Merge them back: even_sorted[0], odd_sorted[0], even_sorted[1], odd_sorted[1], ...
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    vector<int> even, odd;
+    for (int i = 0; i < n; i++) {
+        if (i % 2 == 0) {
+            even.push_back(a[i]);
+        } else {
+            odd.push_back(a[i]);
+        }
+    }
+    
+    sort(even.begin(), even.end());
+    sort(odd.begin(), odd.end());
+    
+    vector<int> result;
+    int ei = 0, oi = 0;
+    for (int i = 0; i < n; i++) {
+        if (i % 2 == 0) {
+            result.push_back(even[ei++]);
+        } else {
+            result.push_back(odd[oi++]);
+        }
+    }
+    
+    for (int i = 0; i < n; i++) {
+        cout << result[i];
+        if (i < n - 1) cout << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+map<tuple<int, int, int, int>, bool> memoPack; // key: (n, mask, w, l)
+
+bool dfsPack(vector<pair<int, int>>& rects, const vector<int>& squares, int idx) {
+    if (idx == squares.size()) return true;
+    int sz = squares[idx];
+    // prune by area
+    long long remaining_area = 0;
+    for (int i = idx; i < squares.size(); i++) 
+        remaining_area += (long long)squares[i] * squares[i];
+    long long available_area = 0;
+    for (auto& r : rects) 
+        available_area += (long long)r.first * r.second;
+    if (remaining_area > available_area) return false;
+    
+    for (int i = 0; i < rects.size(); i++) {
+        int w = rects[i].first, h = rects[i].second;
+        if (w >= sz && h >= sz) {
+            vector<pair<int, int>> new_rects;
+            for (int j = 0; j < rects.size(); j++) 
+                if (j != i) new_rects.push_back(rects[j]);
+            if (w - sz > 0 && h > 0) new_rects.push_back({w - sz, h});
+            if (sz > 0 && h - sz > 0) new_rects.push_back({sz, h - sz});
+            if (dfsPack(new_rects, squares, idx + 1)) return true;
+        }
+    }
+    return false;
+}
+
+bool canPackMemo(int n, int mask, const vector<int>& cubes, int w, int l) {
+    auto key = make_tuple(n, mask, w, l);
+    if (memoPack.find(key) != memoPack.end()) return memoPack[key];
+    vector<int> squares;
+    for (int i = 0; i < n; i++) 
+        if (mask >> i & 1) squares.push_back(cubes[i]);
+    sort(squares.rbegin(), squares.rend());
+    // try both orientations
+    vector<pair<int, int>> rects1 = {{w, l}};
+    bool ok = dfsPack(rects1, squares, 0);
+    if (!ok) {
+        vector<pair<int, int>> rects2 = {{l, w}};
+        ok = dfsPack(rects2, squares, 0);
+    }
+    memoPack[key] = ok;
+    return ok;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        // compute fibonacci
+        vector<long long> f(n + 1);
+        f[1] = 1;
+        if (n >= 2) f[2] = 2;
+        for (int i = 3; i <= n; i++) f[i] = f[i - 1] + f[i - 2];
+        // cubes in decreasing order
+        vector<int> cubes(n);
+        for (int i = 0; i < n; i++) cubes[i] = f[n - i];
+        
+        // enumerate all partitions
+        int totalMasks = 1 << n;
+        const int INF = 1e9;
+        vector<int> minMaxH(totalMasks, INF);
+        
+        vector<vector<int>> groups;
+        function<void(int)> gen = [&](int idx) {
+            if (idx == n) {
+                // process this partition
+                int mask = 0;
+                int maxHeight = 0;
+                for (auto& g : groups) {
+                    int largest = cubes[g[0]];
+                    int second = 0;
+                    if (g.size() >= 2) second = cubes[g[1]];
+                    int height = largest + second;
+                    if (height > maxHeight) maxHeight = height;
+                    mask |= (1 << g[0]);
+                }
+                if (maxHeight < minMaxH[mask]) minMaxH[mask] = maxHeight;
+                return;
+            }
+            // add to existing group
+            for (int g = 0; g < groups.size(); g++) {
+                groups[g].push_back(idx);
+                gen(idx + 1);
+                groups[g].pop_back();
+            }
+            // new group
+            groups.push_back({idx});
+            gen(idx + 1);
+            groups.pop_back();
+        };
+        gen(0);
+        
+        string ans;
+        for (int i = 0; i < m; i++) {
+            int w, l, h;
+            cin >> w >> l >> h;
+            bool ok = false;
+            for (int mask = 0; mask < totalMasks; mask++) {
+                if (minMaxH[mask] <= h) {
+                    if (canPackMemo(n, mask, cubes, w, l)) {
+                        ok = true;
+                        break;
+                    }
+                }
+            }
+            ans.push_back(ok ? '1' : '0');
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

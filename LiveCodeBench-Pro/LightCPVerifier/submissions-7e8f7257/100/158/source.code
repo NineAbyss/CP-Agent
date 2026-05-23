@@ -1,0 +1,111 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int ceil_div(int a, int b) {
+    return (a + b - 1) / b;
+}
+
+struct DSU {
+    vector<int> parent, mn, mx;
+    DSU(int n) {
+        parent.resize(n);
+        mn.resize(n);
+        mx.resize(n);
+        for (int i = 0; i < n; i++) {
+            parent[i] = i;
+            mn[i] = mx[i] = i; // 注意：这里存储的是位置，但我们需要在外部映射
+        }
+    }
+    int find(int x) {
+        if (parent[x] != x) parent[x] = find(parent[x]);
+        return parent[x];
+    }
+    void unite(int x, int y, int d, long long& total_intervals, vector<int>& pos_to_idx) {
+        // x, y 是并查集编号
+        int rx = find(x), ry = find(y);
+        if (rx == ry) return;
+        // 减去旧贡献
+        total_intervals -= ceil_div(mx[rx] - mn[rx] + 1, d);
+        total_intervals -= ceil_div(mx[ry] - mn[ry] + 1, d);
+        // 合并
+        parent[ry] = rx;
+        mn[rx] = min(mn[rx], mn[ry]);
+        mx[rx] = max(mx[rx], mx[ry]);
+        // 加上新贡献
+        total_intervals += ceil_div(mx[rx] - mn[rx] + 1, d);
+    }
+};
+
+void solve() {
+    int n, d;
+    cin >> n >> d;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    
+    // 按值分组
+    map<int, vector<int>> val_pos;
+    for (int i = 0; i < n; i++) {
+        val_pos[a[i]].push_back(i);
+    }
+    
+    // distinct 值降序
+    vector<int> distinct_vals;
+    for (auto& p : val_pos) distinct_vals.push_back(p.first);
+    sort(distinct_vals.begin(), distinct_vals.end(), greater<int>());
+    
+    // 并查集，每个点一个编号
+    DSU dsu(n);
+    // 但并查集内部需要知道点的位置，我们直接用位置作为编号，但需要映射到激活的点 // 实际上，我们只激活部分点，所以需要记录哪些点激活了
+    vector<bool> activated(n, false);
+    // 存储激活的点（位置）
+    set<int> points;
+    // 位置到并查集编号的映射（就是位置本身）
+    long long total_intervals = 0;
+    long long ans = 0;
+    
+    for (int idx = 0; idx < distinct_vals.size(); idx++) {
+        int v = distinct_vals[idx];
+        int next_v = (idx + 1 < distinct_vals.size()) ? distinct_vals[idx + 1] : 0;
+        
+        // 加入值为 v 的所有点
+        for (int pos : val_pos[v]) {
+            activated[pos] = true;
+            points.insert(pos);
+            // 初始贡献：一个点，段长度1
+            total_intervals += ceil_div(1, d);
+            // 检查左邻居
+            auto it = points.find(pos);
+            if (it != points.begin()) {
+                auto left_it = prev(it);
+                int left_pos = *left_it;
+                if (pos - left_pos <= d - 1) {
+                    dsu.unite(pos, left_pos, d, total_intervals, a);
+                }
+            }
+            // 检查右邻居
+            auto right_it = next(it);
+            if (right_it != points.end()) {
+                int right_pos = *right_it;
+                if (right_pos - pos <= d - 1) {
+                    dsu.unite(pos, right_pos, d, total_intervals, a);
+                }
+            }
+        }
+        
+        ans += total_intervals * (v - next_v);
+    }
+    
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,339 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to check if we can make a1 the median
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    // The target value(s) for index 0 (a1) are a[0] and -a[0]
+    int val1 = a[0], val2 = -a[0];
+
+    // We'll try both possibilities: making a[0] become val1 or val2 as the median
+    auto canMakeMedian = [&](int target) -> bool {
+        vector<int> b;
+        // We can flip signs arbitrarily, so for each element we can choose either |a_i| or -|a_i|
+        // But note: for index 0, we must have exactly 'target' (either a[0] or -a[0])
+        // So we fix index 0 to target, and for others we have two choices
+
+        b.push_back(target); // index 0 is fixed
+
+        for (int i = 1; i < n; i++) {
+            // For other indices, we can choose either a[i] or -a[i] // We want to construct an array where median is target
+            // So we should choose signs to help achieve that
+
+            // We will greedily choose the sign that helps place target in the median position
+            // But instead of simulating all combinations, think differently:
+
+            // Since we can choose any sign for indices 1..n-1, we can effectively choose any value from {-|a[i]|, |a[i]|}
+            // So for each i >= 1, we have two candidates: abs(a[i]) and -abs(a[i])
+
+            // We want to know: can we assign signs to indices 1..n-1 such that when we sort the whole array, // the ceil(n/2)-th smallest element is 'target'
+
+            // Let's collect possible values for other elements
+            // Actually, we can simulate: we can choose for each i>=1 the value that makes it easier
+            // to have target as median.
+
+            // Alternate approach:
+            // We can choose signs freely for i>=1. So we can decide how many numbers are <= target.
+            // We need at least ceil(n/2) numbers <= target (because median is the ceil(n/2)-th smallest)
+
+            // Similarly, we need at least n - ceil(n/2) + 1 = floor((n+1)/2) numbers >= target?
+            // Actually: for target to be the k-th smallest (k = ceil(n/2)), there must be at least k numbers <= target,
+            // and at least n-k+1 numbers >= target.
+
+            // But since all absolute values are distinct, and target is either a[0] or -a[0], // we can count how many of the other elements can be made <= target, and how many can be made >= target.
+
+            // However, we can't assign independently because one choice affects both counts. // Instead, let's try to build the best scenario.
+
+            // We will not do this inside the lambda yet — we’ll do outside.
+        }
+
+        // Instead, let's use a different idea:
+        // For a fixed target (val1 or val2), we want to know if we can assign signs to indices 1..n-1
+        // such that in the sorted array, the k-th element is target, where k = (n+1)/2 (ceiling of n/2)
+
+        // How? // We can control the signs of a[1..n-1]. For each such element x = a[i], we can choose either |x| or -|x|.
+        // We want to maximize the chance that target becomes the k-th smallest.
+
+        // Strategy: // Count how many numbers we can make strictly less than target, equal to target, and strictly greater than target.
+
+        // But note: only one occurrence of target is guaranteed (from index 0). Others cannot be equal to target // because all |a[i]| are distinct, and target is either a[0] or -a[0], so no other element can have the same absolute value.
+
+        // Therefore, no other element can be equal to target.
+
+        // So we have: // - One element is target (fixed)
+        // - For each other element x (i>=1), we can choose between |x| and -|x|
+
+        // We need at least k numbers <= target (including the target itself). // So we need at least k-1 other numbers that we can make <= target.
+
+        // Similarly, we need at least n - k + 1 numbers >= target (for target to be the k-th smallest), // so we need at least n - k other numbers that we can make >= target.
+
+        // But note: we can assign each element independently to either positive or negative.
+
+        // Let’s define:
+        int k = (n + 1) / 2; // k-th smallest is the median
+
+        // Count how many of the other elements (i>=1) can be made <= target
+        int canBeLessEqual = 0;
+        int canBeGreaterEqual = 0;
+
+        for (int i = 1; i < n; i++) {
+            int pos = abs(a[i]);
+            int neg = -abs(a[i]);
+
+            if (pos <= target) canBeLessEqual++;
+            if (neg <= target) canBeLessEqual++;
+
+            if (pos >= target) canBeGreaterEqual++;
+            if (neg >= target) canBeGreaterEqual++;
+        }
+
+        // We already have one number (target) that is <= target and >= target. // So total numbers <= target can be up to 1 + canBeLessEqual
+        // But we don't need the maximum, we need at least k numbers <= target. // But actually, we can choose the signs optimally.
+
+        // Actually, we can choose for each element which value to take. // We want to know: can we assign signs to the other n-1 elements such that:
+        //   - At least k numbers in total are <= target //   - At least n - k + 1 numbers in total are >= target
+
+        // Since we have one target, we need: //   - At least k - 1 elements among the rest that are <= target
+        //   - At least n - k elements among the rest that are >= target
+
+        // But note: we cannot assign one element to satisfy both conditions simultaneously unless it's both <= and >= (i.e., equal), but equality only happens for target, which is unique.
+
+        // So for each element i>=1, we pick one value: either pos or neg.
+
+        // We can model this as: can we pick values for the other elements such that: //   count of chosen values <= target >= k - 1
+        //   count of chosen values >= target >= n - k
+
+        // But note: total elements is n, and we are free to assign.
+
+        // Alternate constructive idea: // We can try to greedily assign:
+        // To maximize the number of elements <= target, we would pick for each i>=1 the smaller possible value that is still <= target? 
+        // But better: for maximizing count <= target, we pick for each i the value (pos or neg) that is <= target if possible, else the other.
+
+        // Actually, for each element, we have two choices. We can compute: // Option 1: assign to minimize the value -> always pick neg
+        // Option 2: assign to maximize the value -> always pick pos // But we want to satisfy both constraints.
+
+        // Known trick: we can simulate the best assignment for having at least k-1 numbers <= target:
+        // For each i>=1, we can choose a value. To maximize the count of numbers <= target, we choose the smaller of {pos, neg} that is <= target, but if both are <= target, we can count both? No, we pick one.
+
+        // Actually, for each element, we can get a value <= target if at least one of {pos, neg} is <= target.
+        // But we might not want to always choose the one <= target if we also care about the other constraint.
+
+        // However, note: we are allowed to choose arbitrarily. So the maximum number of elements (among i>=1) that we can make <= target is:
+        int maxLE = 0;
+        int minGE = n - 1; // worst case, but we want minimum number of >= target we can force?
+
+        // Actually, we want to know: what is the maximum number of elements (from i>=1) we can make <= target?
+        // For each i, if at least one of {pos, neg} <= target, then we can make it <= target.
+        // But wait: we can only pick one. So for each i, we can make it <= target if min(pos, neg) <= target? 
+        // Since neg <= pos, we can make it <= target if neg <= target.
+        // Because if neg <= target, we can choose neg and get <= target. // If neg > target, then pos > target too, so we cannot make it <= target.
+
+        // Similarly, we can make it >= target if pos >= target (because pos >= neg, so if pos >= target, we can choose pos).
+
+        // Therefore:
+        // - We can make element i (i>=1) <= target iff -|a[i]| <= target  (i.e., neg <= target)
+        // - We can make element i (i>=1) >= target iff |a[i]| >= target   (i.e., pos >= target)
+
+        // Now, we want to assign signs to the n-1 elements such that: //   number of elements (among i>=1) that are <= target >= k - 1
+        //   number of elements (among i>=1) that are >= target >= n - k
+
+        // But note: we can assign each element independently. However, one assignment affects both.
+
+        // But observe: the condition for being able to make an element <= target depends only on whether -|a[i]| <= target.
+        // Similarly for >=.
+
+        // However, we cannot exceed the maximum possible for each.
+
+        // But here's the key: we are free to assign, so: // Let A = number of i>=1 such that -|a[i]| <= target  --> we can make it <= target
+        // Let B = number of i>=1 such that |a[i]| >= target   --> we can make it >= target
+
+        // But we need to assign one value per element. We want to know if there exists an assignment such that: //   (# of assigned values <= target) >= k-1
+        //   (# of assigned values >= target) >= n-k
+
+        // This is equivalent to a bipartite constraint.
+
+        // However, note: every assignment gives one value per element. The total is fixed.
+
+        // We can use a greedy argument:  // We can achieve any number of elements <= target between [L, R] where:
+        //   L = number of i such that only neg <= target (and pos > target) //   R = number of i such that neg <= target (i.e., at least one option <= target)
+
+        // But there's a simpler way: known solution in problems like this is to try both targets and for each,  // count:
+        //   low = number of i>=1 such that we can make a[i] <= target (i.e., -|a[i]| <= target) //   high = number of i>=1 such that we can make a[i] >= target (i.e., |a[i]| >= target)
+
+        // Then we need: //   low >= k - 1   and   high >= n - k
+
+        // But is that sufficient? 
+
+        // Consider: we need at least k-1 elements (from i>=1) to be <= target. The maximum we can make <= target is 'low'.  // So we require low >= k-1.
+
+        // Similarly, we require high >= n-k.
+
+        // But is it possible that even if low >= k-1 and high >= n-k, we cannot find an assignment that satisfies both? // Example: n=3, k=2, target=0, and two other elements: [1, 2]
+        //   For element 1: |1|=1 -> can be -1 or 1.  //      -1 <= 0 -> true, so contributes to low
+        //       1 >= 0 -> true, so contributes to high
+        //   Same for 2: -2<=0 -> true, 2>=0 -> true
+        //   So low=2, high=2, k-1=1, n-k=1 -> conditions satisfied. //   Can we assign? We need at least 1 element <=0 and at least 1 element >=0.
+        //   We can assign: -1 and 2 -> array = [0,-1,2] -> sorted: [-1,0,2] -> median=0 -> works. //   Or assign: 1 and -2 -> [0,1,-2] -> sorted: [-2,0,1] -> median=0 -> works.
+
+        // What if we have conflict?  // Suppose we have one element that can only be <= target (but not >=) and one that can only be >= target (but not <=), and we need one of each.
+        // But if low >= k-1 and high >= n-k, then we can assign: //   - For elements that can be both, we can use them to fill gaps.
+        //   - The only problem would be if the sets are disjoint and we don't have enough flexibility.
+
+        // Actually, we can always achieve any number of "small" assignments between [must_small, can_small] where:
+        //   must_small = number of i that have neg<=target but pos>target (so forced to choose neg to be <=target, but then they are not >=target)
+        //   can_small = number of i that have neg<=target
+        //   similarly, must_large = number of i that have pos>=target but neg<target (so forced to choose pos to be >=target, but then not <=target)
+        //   can_large = number of i that have pos>=target
+
+        // Then the number of elements we can make <= target can range from must_small to can_small. // And the number we can make >= target can range from must_large to can_large.
+
+        // But we need: //   x >= k-1  and y >= n-k, with x+y >= ???
+
+        // However, note that for each element, if it can be both, then whichever we choose, it will contribute to one of the counts. // But we cannot have it contribute to both unless the value is exactly target, which is impossible.
+
+        // Actually, every element contributes to exactly one of the two counts? No: if we assign a value v, then:
+        //   if v <= target, it contributes to the first count
+        //   if v >= target, it contributes to the second count
+        //   and if v == target, it contributes to both — but v cannot be target for i>=1.
+
+        // So since v != target for i>=1, then v < target or v > target. // So each element contributes to exactly one of the two counts.
+
+        // Therefore, if we let x = number of elements (i>=1) that are <= target (i.e., < target, since not equal),  // and y = number of elements that are >= target (i.e., > target), then x + y = n-1.
+
+        // But wait: if an element is assigned a value v, then:
+        //   if v < target -> counted in x
+        //   if v > target -> counted in y //   no overlap.
+
+        // So x + y = n-1.
+
+        // We require: //   x >= k-1
+        //   y >= n-k  => x <= n-1 - (n-k) = k-1
+
+        // Therefore, we require x >= k-1 and x <= k-1 => x = k-1.
+
+        // So we need exactly k-1 elements (from i>=1) to be < target, and the remaining (n-1 - (k-1)) = n-k elements to be > target.
+
+        // Is that correct?
+
+        // Total numbers <= target: 1 (the target itself) + x // We want this to be at least k -> 1+x >= k -> x >= k-1.
+
+        // Total numbers >= target: 1 (the target) + y = 1 + (n-1-x) = n - x // We want this to be at least n-k+1 -> n-x >= n-k+1 -> x <= k-1.
+
+        // Therefore, we require x >= k-1 and x <= k-1 -> x = k-1.
+
+        // So we need exactly k-1 of the other elements to be < target, and the rest > target.
+
+        // But we can choose the signs arbitrarily, so we need to know: can we assign signs to the n-1 elements such that exactly k-1 of them are < target?
+
+        // However, we don't need exactly, we need at least k-1 <= target and at least n-k+1 >= target, and the above derivation shows that forces x = k-1.
+
+        // But note: if we have more than k-1 elements <= target, say k, then total <= target is 1+k, which is > k, so the k-th smallest could still be target? 
+        // Only if the k-th smallest is target. But if there are more than k-1 elements < target, then the first k-1 are < target, the next one might be target, then the rest.
+        // But we have only one target. So the sorted order would be: //   [ (k-1 elements < target), target, ... ]
+        // So the k-th element is target -> median is target. That works.
+
+        // Similarly, if we have fewer than k-1 elements < target, say k-2, then the number of elements <= target is 1 + (k-2) = k-1, so the k-th element is not target -> fails.
+
+        // But what about the upper side?  // We need at least n-k+1 elements >= target.
+        // We have 1 (target) + y, where y = number of other elements > target. // We require 1+y >= n-k+1 -> y >= n-k.
+
+        // And since x + y = n-1, we have y = n-1 - x. // So: n-1-x >= n-k  => x <= k-1.
+
+        // Therefore, combining: //   x >= k-1  (from lower bound on <= target)
+        //   x <= k-1  (from lower bound on >= target) //   => x = k-1.
+
+        // So we must have exactly k-1 of the other elements < target.
+
+        // But wait: what if an element is exactly target? It cannot be, because |a[i]| are distinct and only a[0] has |a[0]|.
+
+        // Therefore, the condition is: we need to be able to assign signs to the n-1 elements such that exactly k-1 of them are < target.
+
+        // But we don't need exactly, we need at least k-1 < target and at least n-k > target? 
+        // But the above algebra shows that both constraints together force x = k-1.
+
+        // So we require: //   There exists an assignment of signs to indices 1..n-1 such that exactly k-1 of them yield a value < target.
+
+        // How to check that?
+
+        // We can choose for each element i>=1 one of two values: v_i1 = -|a[i]|, v_i2 = |a[i]|.
+
+        // We want the number of i for which the chosen value < target to be exactly k-1.
+
+        // But note: we might not need exactly, but the constraints force it.
+
+        // Alternatively, we can think: what is the minimum and maximum number of elements (from i>=1) that we can make < target?
+
+        // For element i, we can make it < target if at least one of the two options is < target.
+        // But we can avoid making it < target if at least one option is >= target.
+
+        // Specifically:
+        //   - If both options are < target, then we are forced to have it < target.
+        //   - If both options are >= target, then we are forced to have it >= target (so not < target). //   - If one is < target and the other >= target, then we can choose.
+
+        // So:
+        int forced_less = 0;
+        int forced_greater = 0;
+        int flexible = 0;
+
+        for (int i = 1; i < n; i++) {
+            int pos = abs(a[i]);
+            int neg = -pos;
+            bool can_less = (neg < target) || (pos < target);
+            bool can_geq = (neg >= target) || (pos >= target);
+
+            // But note: since neg < pos, we have:
+            if (pos < target) {
+                // then neg < pos < target, so both < target -> forced to be < target
+                forced_less++;
+            } else if (neg >= target) {
+                // then neg >= target and pos > neg, so both >= target -> forced to be >= target
+                forced_greater++;
+            } else {
+                // neg < target <= pos  -> we can choose: if we pick neg -> < target, if we pick pos -> >= target
+                flexible++;
+            }
+        }
+
+        // The number of elements < target from i>=1 will be: forced_less + x, where x is the number of flexible ones we choose to make < target (by picking the negative version). // x can be any integer between 0 and flexible.
+
+        // We need: forced_less + x = k - 1  => x = k-1 - forced_less.
+
+        // So we need: 0 <= k-1 - forced_less <= flexible.
+
+        return (k - 1 - forced_less >= 0) && (k - 1 - forced_less <= flexible);
+    };
+
+    int k = (n + 1) / 2;
+
+    // Special case: if n==1, then k=1, and we need 0 elements from others to be < a[0] -> forced_less=0, flexible=0 -> x=0, so 0<=0<=0 -> true. // But let's test: n=1, a=[1]: target can be 1 or -1.
+    //   If target=1: forced_less=0, flexible=0, need x=0 -> valid.
+    //   If target=-1: forced_less: for no other elements -> 0, need x = k-1 = 0 -> valid.
+    // So either works? But we can flip a[0] to -1, then array=[-1], median=-1 -> so yes.
+
+    // But note: we only need one of the two targets to work.
+
+    if (canMakeMedian(val1) || canMakeMedian(val2)) {
+        cout << "YES\n";
+    } else {
+        cout << "NO\n";
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

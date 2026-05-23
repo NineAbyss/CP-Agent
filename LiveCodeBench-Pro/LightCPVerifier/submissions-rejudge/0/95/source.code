@@ -1,0 +1,25 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        long long ans = LLONG_MAX;
+        for (int i = 0; i < n; ) {
+            int j = i;
+            int v = a[i];
+            while (j < n && a[j] == v) j++;
+            int L = i+1, R = j; // 1-indexed
+            long long cost = 1LL * (L-1) * v + 1LL * (n - R) * v;
+            ans = min(ans, cost);
+            i = j;
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

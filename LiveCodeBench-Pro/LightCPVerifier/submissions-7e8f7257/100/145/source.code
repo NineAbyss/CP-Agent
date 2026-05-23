@@ -1,0 +1,44 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        int cnt[2][2] = {{0,0},{0,0}};
+        for (int i = 0; i < n; i++) {
+            long long x, y;
+            cin >> x >> y;
+            int px = ((x % 2) + 2) % 2;
+            int py = ((y % 2) + 2) % 2;
+            cnt[px][py]++;
+        }
+        int par[2][2];
+        for (int i=0;i<2;i++) for(int j=0;j<2;j++) par[i][j] = cnt[i][j] % 2;
+        // 找到奇偶性不同的类别
+        int s, t;
+        // 检查是否有一个奇数，三个偶数
+        if (par[0][0] == 1 && par[0][1] == 0 && par[1][0] == 0 && par[1][1] == 0) {
+            s = 0; t = 0;
+        } else if (par[0][0] == 0 && par[0][1] == 1 && par[1][0] == 0 && par[1][1] == 0) {
+            s = 0; t = 1;
+        } else if (par[0][0] == 0 && par[0][1] == 0 && par[1][0] == 1 && par[1][1] == 0) {
+            s = 1; t = 0;
+        } else if (par[0][0] == 0 && par[0][1] == 0 && par[1][0] == 0 && par[1][1] == 1) {
+            s = 1; t = 1;
+        } else {
+            // 否则，有一个偶数，三个奇数
+            if (par[0][0] == 0) { s = 0; t = 0; }
+            else if (par[0][1] == 0) { s = 0; t = 1; }
+            else if (par[1][0] == 0) { s = 1; t = 0; }
+            else { s = 1; t = 1; }
+        }
+        cout << s << " " << t << '\n';
+    }
+    return 0;
+}

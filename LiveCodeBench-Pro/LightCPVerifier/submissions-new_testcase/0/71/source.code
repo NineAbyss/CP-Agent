@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int popcount(long long x) {
+    int res = 0;
+    while (x) {
+        res += (x & 1);
+        x >>= 1;
+    }
+    return res;
+}
+
+long long solve() {
+    int n;
+    long long k;
+    cin >> n >> k;
+    vector<long long> a(n);
+    long long init_beauty = 0;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        init_beauty += popcount(a[i]);
+    }
+    
+    vector<long long> costs;
+    for (long long x : a) {
+        long long cur = x;
+        while (true) {
+            // 找到 cur 的最低 0 位的位置 b
+            long long b = 0;
+            long long temp = cur;
+            while (temp & 1) {
+                temp >>= 1;
+                b++;
+            }
+            // 如果 cur 全为 1，则 temp 最终为 0，b 等于连续 1 的个数，即二进制长度
+            long long cost = 1LL << b;
+            if (cost > k) break; // 超过 k，不再生成
+            costs.push_back(cost);
+            cur += cost;
+            // 防止无限循环，如果 cur 太大，停止
+            if (cur > (1LL << 60)) break;
+        }
+    }
+    
+    sort(costs.begin(), costs.end());
+    long long total_cost = 0;
+    long long gain = 0;
+    for (long long c : costs) {
+        if (total_cost + c <= k) {
+            total_cost += c;
+            gain++;
+        } else {
+            break;
+        }
+    }
+    
+    return init_beauty + gain;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << solve() << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,21 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n = 6, x = 24;
+    int best = 1000000;
+    // 暴力搜索所有6个数，数字1到30
+    for (int a=1; a<=30; a++)
+    for (int b=1; b<=30; b++)
+    for (int c=1; c<=30; c++)
+    for (int d=1; d<=30; d++)
+    for (int e=1; e<=30; e++)
+    for (int f=1; f<=30; f++) {
+        if ((a^b^c^d^e^f) == x) {
+            int sum = a+b+c+d+e+f;
+            if (sum < best) best = sum;
+        }
+    }
+    cout << "Min sum for n=6, x=24: " << best << endl;
+    return 0;
+}

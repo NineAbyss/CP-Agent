@@ -1,0 +1,70 @@
+#include <cstdio>
+#include <algorithm>
+using namespace std;
+
+const int MAXN = 200005;
+int p[MAXN];
+int pos[MAXN];
+int ans[MAXN];
+
+void solve() {
+    int n, q;
+    scanf("%d %d", &n, &q);
+    for (int i = 1; i <= n; i++) {
+        scanf("%d", &p[i]);
+        pos[p[i]] = i;
+    }
+    int ans_sz = 0;
+    for (int iq = 0; iq < q; iq++) {
+        int l, r, k;
+        scanf("%d %d %d", &l, &r, &k);
+        int pk = pos[k];
+        if (pk < l || pk > r) {
+            ans[ans_sz++] = -1;
+            continue;
+        }
+        int L = l, R = r;
+        int R_less = 0, R_greater = 0;
+        int path_less = 0, path_greater = 0;
+        while (L <= R) {
+            int m = (L + R) >> 1;
+            if (m == pk) break;
+            int val = p[m];
+            if (val < k) path_less++;
+            else if (val > k) path_greater++;
+            if (pk > m) {
+                if (val >= k) R_less++;
+            } else {
+                if (val <= k) R_greater++;
+            }
+            if (pk > m) L = m + 1;
+            else R = m - 1;
+        }
+        int total_less = k - 1;
+        int total_greater = n - k;
+        int nonpath_less = total_less - path_less;
+        int nonpath_greater = total_greater - path_greater;
+        int need_less = R_less > R_greater ? R_less - R_greater : 0;
+        int need_greater = R_greater > R_less ? R_greater - R_less : 0;
+        if (need_less > nonpath_less || need_greater > nonpath_greater) {
+            ans[ans_sz++] = -1;
+        } else {
+            int d = R_less + R_greater + need_less + need_greater;
+            ans[ans_sz++] = d;
+        }
+    }
+    for (int i = 0; i < ans_sz; i++) {
+        if (i) putchar(' ');
+        printf("%d", ans[i]);
+    }
+    putchar('\n');
+}
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

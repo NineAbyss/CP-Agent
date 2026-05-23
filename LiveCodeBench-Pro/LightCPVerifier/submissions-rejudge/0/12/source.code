@@ -1,0 +1,114 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<vector<bitset<300>>> adj(k, vector<bitset<300>>(n));
+        for (int i = 0; i < k; i++) {
+            int m;
+            cin >> m;
+            for (int j = 0; j < m; j++) {
+                int u, v;
+                cin >> u >> v;
+                u--; v--;
+                adj[i][u][v] = adj[i][v][u] = 1;
+            }
+        }
+        
+        // 检查每对顶点是否在某些图中有边，某些图中无边
+        vector<vector<bool>> mixed(n, vector<bool>(n, false));
+        for (int a = 0; a < n; a++) {
+            for (int b = a+1; b < n; b++) {
+                bool has_edge = false, has_noedge = false;
+                for (int i = 0; i < k; i++) {
+                    if (adj[i][a][b]) has_edge = true;
+                    else has_noedge = true;
+                }
+                if (has_edge && has_noedge) {
+                    mixed[a][b] = mixed[b][a] = true;
+                }
+            }
+        }
+        
+        // 枚举每个顶点的类型: 0=I,1=C,2=1
+        vector<int> type(n);
+        function<bool(int)> dfs = [&](int v) {
+            if (v == n) {
+                // 检查 mixed 对
+                for (int a = 0; a < n; a++) {
+                    for (int b = a+1; b < n; b++) {
+                        if (mixed[a][b]) {
+                            if (type[a] == 0 && type[b] == 0) {
+                                if (type[a] != 2 || type[b] != 2) return false;
+                            }
+                            if (type[a] == 1 && type[b] == 1) {
+                                if (type[a] != 2 || type[b] != 2) return false;
+                            }
+                        }
+                    }
+                }
+                // 检查每个图
+                for (int i = 0; i < k; i++) {
+                    // 检查边条件
+                    for (int a = 0; a < n; a++) {
+                        for (int b = a+1; b < n; b++) {
+                            if (adj[i][a][b]) {
+                                // 有边
+                                if (type[a] == 0 && type[b] == 0) {
+                                    // 两个 I 有边，必须都是 1
+                                    if (type[a] != 2 || type[b] != 2) return false;
+                                }
+                            } else {
+                                // 无边
+                                if (type[a] == 1 && type[b] == 1) {
+                                    // 两个 C 无边，必须都是 1
+                                    if (type[a] != 2 || type[b] != 2) return false;
+                                }
+                            }
+                        }
+                    }
+                    // 检查最小性
+                    for (int a = 0; a < n; a++) {
+                        for (int b = a+1; b < n; b++) {
+                            if (type[a] != type[b]) continue;
+                            // 检查邻接相同（除了彼此）
+                            bool same_adj = true;
+                            for (int c = 0; c < n; c++) {
+                                if (c == a || c == b) continue;
+                                if (adj[i][a][c] != adj[i][b][c]) {
+                                    same_adj = false;
+                                    break;
+                                }
+                            }
+                            if (!same_adj) continue;
+                            // 类型相同且邻接相同
+                            if (type[a] == 0) { // I
+                                if (!adj[i][a][b]) return false; // 无边，可合并
+                            } else if (type[a] == 1) { // C
+                                if (adj[i][a][b]) return false; // 有边，可合并
+                            } else { // type=2 (size=1)
+                                // 两个大小1的块，如果邻接相同，总是可以合并
+                                return false;
+                            }
+                        }
+                    }
+                }
+                return true;
+            }
+            for (int t = 0; t < 3; t++) {
+                type[v] = t;
+                if (dfs(v+1)) return true;
+            }
+            return false;
+        };
+        
+        cout << (dfs(0) ? "Yes" : "No") << '\n';
+    }
+    return 0;
+}

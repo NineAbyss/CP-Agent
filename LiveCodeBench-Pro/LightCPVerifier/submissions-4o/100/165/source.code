@@ -1,0 +1,69 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+const int MOD = 998244353;
+
+// Helper function to calculate power with mod
+int modpow(int base, int exp, int mod) {
+    int res = 1;
+    while (exp > 0) {
+        if (exp % 2 == 1)
+            res = (1LL * res * base) % mod;
+        base = (1LL * base * base) % mod;
+        exp /= 2;
+    }
+    return res;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<pair<int, int>> intervals(n);
+        vector<int> rangeMask(n, 0);
+        int max_range = (1 << m);
+        
+        // Read the intervals and precompute range masks
+        for (int i = 0; i < n; ++i) {
+            int l, r;
+            cin >> l >> r;
+            intervals[i] = {l, r};
+            for (int j = 0; j < max_range; ++j) {
+                if (j >= l && j <= r) {
+                    rangeMask[i] |= (1 << j);
+                }
+            }
+        }
+
+        vector<int> f(max_range, 0);
+
+        // Calculate f_x for every x from 0 to (2^m - 1) // Using dynamic programming with bit manipulation
+        for (int x = 0; x < max_range; ++x) {
+            int count = 1;
+            for (int i = 0; i < n; ++i) {
+                count = (1LL * count * ((rangeMask[i] >> x) & 1)) % MOD;
+            }
+            f[x] = count;
+        } 
+
+        // Calculate g_x and perform XOR
+        int h = 0;
+        for (int x = 0; x < max_range; ++x) {
+            int g_x = (1LL * f[x] * modpow(2, x, MOD)) % MOD;
+            h ^= g_x;
+        }
+
+        // Output the result
+        cout << h << endl;
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

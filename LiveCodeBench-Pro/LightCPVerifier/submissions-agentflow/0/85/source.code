@@ -1,0 +1,25 @@
+#include <iostream>
+#include <algorithm> // For swap
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t; // Number of test cases
+    while (t--) {
+        long long a, b, c;
+        cin >> a >> b >> c; // Input cards in each deck
+        
+        // Sort the decks to ensure a <= b <= c
+        if (a > b) swap(a, b);
+        if (b > c) swap(b, c);
+        if (a > b) swap(a, b);
+
+        // Conditions for redistribution possibility
+        if ((a + b + c) % 3 == 0 && a + b >= c) {
+            cout << "YES" << endl;  // Redistribution is feasible
+        } else {
+            cout << "NO" << endl;   // Redistribution is not feasible
+        }
+    }
+    return 0;
+}

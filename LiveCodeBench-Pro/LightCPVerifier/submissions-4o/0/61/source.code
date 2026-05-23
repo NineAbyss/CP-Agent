@@ -1,0 +1,29 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        if (n >= 4) {
+            // Yes, because we can cover all possible scenarios with 4 students
+            cout << "Yes" << endl;
+        } else {
+            // No, because we can't cover all 4 scenarios with less than 4 bets
+            cout << "No" << endl;
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,57 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+// Calculate the initial cost of typing the string without any reversals
+int calculateInitialCost(const string& s) {
+    int cost = s.size(); // Base: pressing each character
+    for (int i = 1; i < s.size(); ++i) {
+        if (s[i] != s[i - 1]) {
+            cost += 2; // Add cost for each transition
+        }
+    }
+    return cost;
+}
+
+// Calculate the maximum transition savings by reversing one segment
+int calculateMaxReduction(const string& s) {
+    int maxReduction = 0;
+    int insideTransitionCount = 0;
+
+    for (int i = 1; i < s.size(); ++i) {
+        if (s[i] != s[i - 1]) {
+            // We're inside a transition
+            ++insideTransitionCount;
+        } else {
+            // We exited a transition segment
+            if (insideTransitionCount > 0) {
+                maxReduction = max(maxReduction, 2); // A segment reversal can save up to 2
+            }
+            insideTransitionCount = 0;
+        }
+    }
+    // For trailing segment
+    if (insideTransitionCount > 0) {
+        maxReduction = max(maxReduction, 2);
+    }
+    return maxReduction;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t; // Number of test cases
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+
+        int initialCost = calculateInitialCost(s);
+        int maxReduction = calculateMaxReduction(s);
+
+        cout << initialCost - maxReduction << '\n'; // Output minimum achievable cost
+    }
+    return 0;
+}

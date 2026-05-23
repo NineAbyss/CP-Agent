@@ -1,0 +1,92 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        // 读取边，但不需要使用，因为树是星形的
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+        }
+        vector<int> s(n+1);
+        // 查询每个节点的 f(i)
+        for (int i = 1; i <= n; i++) {
+            cout << "? 1 1 " << i << endl;
+            cout.flush();
+            cin >> s[i];
+        }
+        // 计算 S
+        int S = 0;
+        for (int i = 1; i <= n; i++) S += s[i];
+        // 切换节点 1
+        cout << "? 2 1" << endl;
+        cout.flush();
+        // 查询所有节点的和
+        cout << "? 1 " << n;
+        for (int i = 1; i <= n; i++) cout << " " << i;
+        cout << endl;
+        cout.flush();
+        int S_prime;
+        cin >> S_prime;
+        int delta_total = S_prime - S;
+        int cnt = abs(delta_total) / 2; // 注意：delta_total 是 2 的倍数
+        int a1_old;
+        if (cnt == n) {
+            // 根节点是 1
+            a1_old = -delta_total / (2 * n);
+            vector<int> val(n+1);
+            val[1] = -a1_old;
+            for (int i = 2; i <= n; i++) {
+                val[i] = s[i] - a1_old;
+            }
+            cout << "!";
+            for (int i = 1; i <= n; i++) cout << " " << val[i];
+            cout << endl;
+            cout.flush();
+        } else {
+            // 根节点不是 1，cnt == n-1
+            a1_old = -delta_total / (2 * (n-1));
+            // 二分搜索寻找根节点
+            int L = 2, R = n;
+            while (L < R) {
+                int mid = (L + R) / 2;
+                // 构建集合 C = [L, mid]
+                int k = mid - L + 1;
+                cout << "? 1 " << k;
+                for (int i = L; i <= mid; i++) cout << " " << i;
+                cout << endl;
+                cout.flush();
+                int sum_C_after;
+                cin >> sum_C_after;
+                // 计算切换前的和
+                int sum_C_before = 0;
+                for (int i = L; i <= mid; i++) sum_C_before += s[i];
+                int delta_C = sum_C_after - sum_C_before;
+                int exp_in = -2 * a1_old * (k - 1);
+                if (delta_C == exp_in) {
+                    // 根节点在 C 中
+                    R = mid;
+                } else {
+                    L = mid + 1;
+                }
+            }
+            int r = L;
+            vector<int> val(n+1);
+            val[1] = -a1_old;
+            val[r] = s[r];
+            for (int i = 2; i <= n; i++) {
+                if (i == r) continue;
+                val[i] = s[i] - s[r] - a1_old;
+            }
+            cout << "!";
+            for (int i = 1; i <= n; i++) cout << " " << val[i];
+            cout << endl;
+            cout.flush();
+        }
+    }
+    return 0;
+}

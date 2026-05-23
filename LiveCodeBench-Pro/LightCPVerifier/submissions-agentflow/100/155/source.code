@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        // 检查是否已经美丽
+        bool beautiful = false;
+        for (int i = 0; i < n-1; i++) {
+            if (abs(a[i] - a[i+1]) <= 1) {
+                beautiful = true;
+                break;
+            }
+        }
+        if (beautiful) {
+            cout << 0 << '\n';
+            continue;
+        }
+        if (n == 2) {
+            cout << -1 << '\n';
+            continue;
+        }
+        
+        // 检查一次操作
+        bool oneOp = false;
+        for (int i = 0; i < n-1; i++) {
+            int L = min(a[i], a[i+1]);
+            int R = max(a[i], a[i+1]);
+            // 检查左边
+            if (i > 0) {
+                if (max(L, a[i-1]-1) <= min(R, a[i-1]+1)) {
+                    oneOp = true;
+                    break;
+                }
+            }
+            // 检查右边
+            if (i+2 < n) {
+                if (max(L, a[i+2]-1) <= min(R, a[i+2]+1)) {
+                    oneOp = true;
+                    break;
+                }
+            }
+            // 特殊情况：操作后数组长度变为2
+            if (n == 3) {
+                if (i == 0) {
+                    if (max(L, a[2]-1) <= min(R, a[2]+1)) {
+                        oneOp = true;
+                        break;
+                    }
+                } else { // i == 1
+                    if (max(L, a[0]-1) <= min(R, a[0]+1)) {
+                        oneOp = true;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (oneOp) {
+            cout << 1 << '\n';
+        } else {
+            cout << -1 << '\n';
+        }
+    }
+    return 0;
+}
+
+int main() {
+    solve();
+    return 0;
+}

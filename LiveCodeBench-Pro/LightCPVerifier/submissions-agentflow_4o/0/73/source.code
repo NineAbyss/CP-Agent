@@ -1,0 +1,55 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+vector<int> generateFibonacci() {
+    vector<int> fibonacci(10);
+    fibonacci[0] = 1;
+    fibonacci[1] = 2;
+    for (int i = 2; i < 10; i++) {
+        fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
+    }
+    return fibonacci;
+}
+
+int main() {
+    int t;  // Number of test cases
+    cin >> t;
+    
+    vector<int> fibonacci = generateFibonacci();  // Precompute Fibonacci numbers
+
+    while (t--) {
+        int n, m;
+        cin >> n >> m;  // Number of cubes and boxes
+        
+        string result;
+        for (int i = 0; i < m; i++) {
+            vector<int> box(3);
+            cin >> box[0] >> box[1] >> box[2];
+            sort(box.begin(), box.end());  // Sort dimensions of the box
+            
+            bool canFit = true;
+            int requiredHeight = 0;
+
+            // Verify each cube fits within the box's footprint
+            for (int j = 0; j < n; j++) {
+                if (fibonacci[j] > box[0] || fibonacci[j] > box[1]) {
+                    canFit = false;
+                    break;
+                }
+                requiredHeight += fibonacci[j];
+            }
+
+            // Ensure the accumulated height fits within the box height
+            if (requiredHeight > box[2]) {
+                canFit = false;
+            }
+
+            result += (canFit ? '1' : '0');
+        }
+
+        cout << result << "\n";
+    }
+    return 0;
+}

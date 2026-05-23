@@ -1,0 +1,683 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// For each traffic light, we can determine the state (red/green) at any time t.
+// At time t, traffic light i is red if (t mod k == d_i), else green.
+
+// The key observation: since k <= 500 and total n+q <= 500 over test cases, // we can simulate up to a bounded number of steps until either:
+// - we leave the strip (position > 1e15 or position < 1) // - or we detect a cycle (same (pos, dir, time mod k) state repeats)
+
+// But note: the total sum of n and q across test cases <= 500, so we can afford // simulating each query independently with cycle detection.
+
+// However, positions can be huge (up to 1e15), but we only care about positions // where traffic lights are. So we can compress states.
+
+// Actually, note: we move one step per second, and behavior depends on time mod k. // Also, the turning happens only at traffic light positions.
+
+// Insight: the system state can be represented by (pos, dir, t_mod_k). // But pos can be huge. However, we only care about positions that are near traffic lights?
+// But we might be between them.
+
+// Alternate idea: since k is small, and the pattern repeats every k seconds, we can
+// consider simulation for at most O(k * (number of relevant positions)) steps.
+
+// But note: the constraint says "the total sum of n and q across all test cases" <= 500.
+// That means: sum_{test cases} (n + q) <= 500.
+
+// So we have at most 500 total queries and total n <= 500? Actually, it's the sum of n and q.
+// Example: if there are 2 test cases, then (n1+q1) + (n2+q2) <= 500.
+
+// Therefore, we can do heavy simulation per query.
+
+// How many steps to simulate? We need to avoid infinite loops.
+
+// We can use state = (pos, dir, tm % k). But pos can be huge. However, note: // - The traffic lights are only at given positions.
+// - Between traffic lights, we just move in a fixed direction until we hit one.
+
+// So we don't need to simulate every single step. We can jump between traffic lights.
+
+// But when do we turn? Only when we are at a traffic light and the light is red at that time.
+
+// Let’s define: //   We start at position `a`, facing right (dir=1), time=0.
+//   At each second: //     1. If current cell has a traffic light and (time mod k == d_i), then turn around.
+//     2. Move one step in current direction.
+
+// We want to know if we eventually leave the strip (pos > 1e15 or pos < 1).
+
+// Since the total sum of n and q is small (<=500), but each simulation could be long,
+// we must avoid simulating too many steps.
+
+// However, note: the state (relative position to traffic lights, direction, time mod k) 
+// has limited possibilities. Specifically, we only care about being at or near traffic lights?
+// But actually, we can be anywhere.
+
+// But observe: the behavior is periodic in time with period k. And our movement is deterministic.
+
+// Claim: if we ever revisit the same (position, direction, time mod k), then we are in a cycle and will never exit.
+
+// However, position can be huge. But note: we only turn at traffic light positions.  // Between traffic lights, we move straight. So we can simulate from one traffic light interaction to the next.
+
+// But we might not hit a traffic light? Then we just go straight and exit.
+
+// So algorithm for one query:
+
+//   Let pos = a, dir = 1 (right), time = 0. //   Use a set of visited states: (pos, dir, time % k). But pos can be huge -> not good.
+
+// Alternative: instead of storing pos, store which segment we are in and relative offset?
+
+// But note: the total number of traffic lights is small (n <= 500 per test case, but total n over test cases <= 500?  // Actually, the condition is: "the sum of n and q over all test cases does not exceed 500".
+
+// This means: across all test cases, the total number of traffic lights and queries is <= 500.
+
+// So maximum t (number of test cases) is at most 500, but the sum of all n and all q is <= 500.
+
+// Therefore, we can have at most 500 / 2 = 250 test cases? Actually, worst-case: one test case with n+q=500.
+
+// But n>=1, q>=1, so maximum test cases is 500 (if each test case has n=1,q=0? but q>=1) -> minimum n+q=2 per test case -> max 250 test cases.
+
+// But anyway, per query we can simulate safely if we limit steps.
+
+// How to bound simulation? The state (dir, time%k) has only 2*k states. But what about position?
+
+// However, note: we only change direction at traffic light positions. So the only interesting positions are the traffic light positions.
+
+// But we might pass through a traffic light without stopping? No, every second we check the current cell.
+
+// So every time we are at a traffic light position at a time when (time mod k == d_i), we turn.
+
+// Now, if we are moving and we are going to pass a traffic light, we will spend exactly one second at that position.
+
+// So we can simulate second by second, but we can break early if: //   - pos > 1e15 or pos < 1 -> YES
+//   - we have seen state (pos, dir, time%k) before -> cycle -> NO
+
+// But pos can be huge? But note: we only turn at traffic light positions. So if we are far away from all traffic lights,  // we will just keep moving in one direction and eventually exit.
+
+// So we can break early if |pos| is very large? But we start at a>=1, and move step by step.
+
+// However, worst-case we might oscillate between two traffic lights forever.
+
+// But how many distinct states can we have? The position must be one of the traffic light positions, because: //   - We start at a (which may not be a traffic light) -> but then we move until we hit a traffic light or exit.
+//   - When we are at a non-traffic-light cell, we don't turn, so we just keep moving in the same direction until we hit a traffic light or exit.
+
+// So the only positions where we can change direction are the traffic light positions.
+
+// Therefore, we can precompute the next traffic light in each direction.
+
+// But we also need to account for the starting position: if we start at a non-traffic-light, we move until we hit the first traffic light (or exit).
+
+// So simulation:
+
+//   while (true):
+//      if pos > 1e15 || pos < 1: return YES
+//      if we are at a traffic light position p_i:
+//          if (time % k == d_i): turn around (dir *= -1)
+//      // But note: the problem says: first check red light (and turn if red), then move. //      // So after possibly turning, we move.
+
+//      move: pos += dir //      time++
+
+//      But wait: we do the check at the beginning of the second, then move.
+
+//   So at time t, we are at position pos, then:
+//      if pos is a traffic light and (t % k == d_i) -> turn
+//      then move to pos + dir
+
+//   So the next state is at time t+1, position pos+dir.
+
+// But we need to remember: at time t, we are at pos.
+
+// However, if we start at a non-traffic-light, we don't turn, then move.
+
+// How to optimize? We can jump multiple steps if we are moving toward a traffic light without interference.
+
+// But note: during the movement, we might encounter other traffic lights? Yes, but we process one second at a time.
+
+// However, we can jump: if we are at position x, moving in direction d, and the next traffic light in that direction is at y, 
+// then we can jump forward (|y - x|) seconds, unless we exit earlier.
+
+// But during that jump, we don't interact with any traffic light until we reach y.
+
+// However, we must check at each second? But the rule says: at each second, check current cell.
+
+// So when we are at a cell, we check if it has a traffic light and if the time mod k equals its delay.
+
+// So if we are moving from x to y (without any traffic lights in between), then we don't turn during the journey.
+
+// Therefore, we can simulate the entire segment at once.
+
+// Steps:
+
+//   Let current_pos = a, current_dir = 1, current_time = 0.
+
+//   We'll maintain a visited set: states are (pos, dir, time % k) but only when pos is a traffic light?  //   But note: we can be at a non-traffic-light and still be in a cycle?
+//   However, if we are at a non-traffic-light, we will keep moving in the same direction until we hit a traffic light or exit.
+
+//   So the only positions where we can have branching (turning) are the traffic light positions.
+
+//   Therefore, we can consider state only when we are at a traffic light at the beginning of a second.
+
+//   But what if we start at a non-traffic-light? Then we move until we hit a traffic light or exit.
+
+//   So algorithm:
+
+//     while (current_pos >= 1 && current_pos <= 1000000000000000LL) {
+//         if (current_pos is a traffic light) {
+//             int idx = index of the traffic light;
+//             if (current_time % k == d[idx]) {
+//                 current_dir *= -1;
+//             }
+//             // Now, record state: (current_pos, current_dir, current_time % k) //             // Why record here? Because this is where decision happens.
+//             auto state = make_tuple(current_pos, current_dir, current_time % k);
+//             if (visited.count(state)) {
+//                 return "NO"; // cycle detected
+//             }
+//             visited.insert(state);
+//         }
+
+//         // Now, we are going to move. But we can jump to the next event.
+
+//         // What's the next event? Either we exit, or we hit a traffic light.
+
+//         // Find the next traffic light in the current direction.
+//         long long next_light = -1;
+//         if (current_dir == 1) { //             // find first traffic light > current_pos
+//             auto it = upper_bound(positions.begin(), positions.end(), current_pos);
+//             if (it != positions.end()) {
+//                 next_light = *it;
+//             } else {
+//                 // no traffic light ahead -> we will exit to the right
+//                 return "YES";
+//             }
+//         } else {
+//             // current_dir == -1 //             // find last traffic light < current_pos
+//             auto it = lower_bound(positions.begin(), positions.end(), current_pos);
+//             if (it != positions.begin()) {
+//                 --it;
+//                 next_light = *it;
+//             } else { //                 // no traffic light behind -> we will exit to the left
+//                 return "YES";
+//             }
+//         }
+
+//         // How many steps to reach next_light?
+//         long long steps = abs(next_light - current_pos);
+//         current_pos = next_light;
+//         current_time += steps;
+
+//         // But note: during these steps, we were moving, and at each intermediate cell we didn't turn (because no traffic light), //         // so we arrive at next_light at time = current_time, and then at the beginning of that second we check the light.
+//         // So we do not process the arrival until the next iteration.
+
+//         // However, we did not account for the fact that we might have exited during the jump?
+//         // But we checked: if no next_light in direction, we return YES.
+
+//         // But what if during the jump we would have exited? 
+//         // For example, if we are moving right and the next_light is at 1e15+1, but the strip ends at 1e15 -> we exit before reaching it.
+
+//         // Actually, we move one step at a time. So if current_pos + steps > 1e15 (when moving right), then we exit.
+
+//         // But in our jump, we are setting current_pos = next_light, which might be beyond 1e15?
+
+//         // We should check: if moving right and next_light > 1000000000000000LL, then we will exit before reaching it.
+
+//         // Similarly, if moving left and next_light < 1, then we exit.
+
+//         // But note: next_light is one of the given positions, and they are between 1 and 1e15, so next_light is always in [1, 1e15].
+
+//         // So we don't jump beyond the strip? But we might exit during the jump if the distance to exit is less than steps.
+
+//         // Example: current_pos = 1e15, dir=1 -> next_light might be none -> we already handled that.
+
+//         // But if there is a next_light, it is within [1,1e15], so we can reach it without exiting.
+
+//         // However, wait: what if we are at 1e15 and moving right? Then we exit immediately in the next move?  //         // But in our simulation, we haven't moved yet.
+
+//         // Let me reexamine:
+
+//         // In the loop, we are at current_pos at the beginning of second `current_time`.
+//         // Then we check if it's a traffic light and possibly turn.
+//         // Then we are going to move. But in our optimized version, we are not moving step-by-step.
+
+//         // Actually, in the above code, after processing the current cell (if traffic light), we then plan a jump to the next traffic light.
+
+//         // But the move hasn't happened yet. The problem says: after checking, move one cell.
+
+//         // So we must move at least one step.
+
+//         // Therefore, we cannot jump multiple steps without moving.
+
+//         // Correction: the process is per second:
+
+//         //   Second t: //         //      at position pos_t
+//         //      if (pos_t has traffic light and t % k == d_i) -> turn
+//         //      then move: pos_{t+1} = pos_t + dir
+
+//         // So we must simulate at least the next move.
+
+//         // Therefore, we cannot jump multiple steps in one iteration.
+
+//         // But we can simulate one step at a time, and since the total number of states (in terms of traffic light interactions) is bounded.
+
+//         // How many times can we visit a traffic light? Each state (pos, dir, time%k) can be visited at most once.
+
+//         // There are n traffic lights, 2 directions, k time mods -> at most 2*n*k states.
+
+//         // Since n<=500, k<=500, then 2*500*500 = 500000 states per query.
+
+//         // But total q over test cases <= 500, so worst-case total states over all queries: 500 * 500000 = 250e6, which might be borderline in C++.
+
+//         // However, note: the constraint says "the sum of n and q over all test cases does not exceed 500".
+
+//         // This means: if we let T = total number of test cases, then sum_{i=1}^{T} (n_i + q_i) <= 500.
+
+//         // So the total number of queries (sum of q_i) is at most 500, and total n_i is at most 500.
+
+//         // But worst-case, one test case: n=250, q=250 -> then we have 250 queries.
+
+//         // For each query, we might simulate up to 2*n*k = 2*250*500 = 250000 steps.
+
+//         // Total operations: 250 * 250000 = 62.5e6, which is acceptable.
+
+//         // But worst-case n=500, q=1 -> 1 * 2*500*500 = 500000 steps -> fine.
+
+//         // So we can do step-by-step simulation with state caching.
+
+//     }
+
+//   But if we exit the strip, return YES.
+
+//   If we see a repeated state (at a traffic light: same pos, dir, time%k), then we are in a cycle -> NO.
+
+//   However, what if we are at a non-traffic-light? Then we don't record state? But we might be in a cycle that doesn't involve traffic lights?
+
+//   But if we are at a non-traffic-light, we move in a fixed direction. So the only way to have a cycle is to come back to the same non-traffic-light with same direction and same time%k.
+
+//   But if we are moving in a fixed direction and time increases, then time%k cycles every k steps, but position changes linearly.
+
+//   So unless we turn, we won't cycle.
+
+//   And we only turn at traffic lights.
+
+//   Therefore, the only possible cycles involve traffic lights.
+
+//   So we can record state only when we are at a traffic light.
+
+//   But caution: we might be at a non-traffic-light and then later come back to it with the same direction and same time%k, but having turned somewhere in between.
+
+//   However, if we are not at a traffic light, we don't change direction, so we just pass through.
+
+//   So the state at non-traffic-lights is transient.
+
+//   Therefore, we can simulate as follows:
+
+//     while (current_pos >= 1 && current_pos <= 1000000000000000LL) {
+//         bool is_light = false;
+//         int light_idx = -1;
+//         for (int i = 0; i < n; i++) {
+//             if (positions[i] == current_pos) {
+//                 is_light = true;
+//                 light_idx = i;
+//                 break;
+//             }
+//         }
+
+//         if (is_light) {
+//             if (current_time % k == delays[light_idx]) {
+//                 current_dir *= -1;
+//             }
+//             auto state = make_tuple(current_pos, current_dir, current_time % k);
+//             if (visited.count(state)) {
+//                 return "NO";
+//             }
+//             visited.insert(state);
+//         }
+
+//         // Move one step
+//         current_pos += current_dir;
+//         current_time++;
+
+//         // Note: we do not check the new position until the next iteration.
+//     }
+
+//   return "YES";
+
+// But worst-case, we might simulate many steps (like going back and forth between two traffic lights) but the state space is bounded by 2*n*k.
+
+// Since n and k are at most 500, then 2*n*k <= 500000, so we break within 500000 steps.
+
+// However, note: the total sum of n and q over test cases is <= 500, so worst-case one test case with n=500, q=1, then we do one query with up to 500000 steps -> acceptable.
+
+// But worst-case total work: sum over queries of (number of steps per query).
+
+// The number of steps per query is at most 2*n*k (due to cycle detection) = 2*500*500 = 500000.
+
+// And total q over test cases <= 500, so worst-case total steps: 500 * 500000 = 250e6, which is acceptable in C++.
+
+// But note: the constraint says "the sum of n and q over all test cases" <= 500.
+
+// This means: if we have multiple test cases, the sum of all n_i and all q_i is <= 500.
+
+// For example, if we have 10 test cases, then (n1+q1) + (n2+q2) + ... + (n10+q10) <= 500.
+
+// So the maximum q in one test case is at most 500, but the total q over test cases is at most 500.
+
+// Similarly, total n over test cases <= 500.
+
+// Therefore, the worst-case is one test case with n=250, q=250 -> then we have 250 queries.
+
+// For each query, the simulation runs at most 2*n*k = 2*250*500 = 250000 steps.
+
+// Total steps: 250 * 250000 = 62.5e6, which is acceptable.
+
+// But worst-case k=500, n=500, but then q must be 0? because n+q<=500 -> so if n=500, then q=0 -> no queries.
+
+// Actually, the constraint is on the sum over test cases: sum_{test cases} (n + q) <= 500.
+
+// So if one test case has n=300, then q can be at most 200, but then no more test cases.
+
+// Actually, the sum of n across test cases plus the sum of q across test cases <= 500.
+
+// So maximum n in one test case: 500, then q=0 -> but q>=1, so impossible.
+
+// Minimum q per test case is 1, minimum n per test case is 1, so maximum number of test cases is 250.
+
+// But the worst-case for simulation is when n is large and q is large in one test case? But n+q<=500 per test case? No, the sum over test cases.
+
+// Example: two test cases: first n1=1, q1=499, second n2=0, q2=0 -> but n>=1, so n2>=1 -> then n1+n2>=2, q1+q2=499 -> total 501 -> invalid.
+
+// Actually, the constraint is: the sum of n and q over all test cases does not exceed 500.
+
+// Meaning: (n1 + q1) + (n2 + q2) + ... + (nt + qt) <= 500.
+
+// So if we have one test case: n1+q1<=500 -> n1<=499, q1<=499.
+
+// Then worst-case for one test case: n=499, q=1 -> then one query, simulation up to 2*499*k <= 2*499*500 ~ 500000 steps -> fine.
+
+// Or n=250, q=250 -> 250 queries, each up to 2*250*500 = 250000 steps -> total 62.5e6 steps.
+
+// But 62.5e6 iterations in C++ is acceptable.
+
+// However, worst-case total steps might be 500 (total q) * 500000 = 250e6, but that would require total q=500 and each query with n=500 and k=500, but then n+q per test case would be at least 500+1=501, and we can have only one test case? but 501>500 -> impossible.
+
+// Actually, the maximum n in a test case is limited by the total sum.
+
+// Let N_total = sum of all n_i over test cases <= 500. // Let Q_total = sum of all q_i over test cases <= 500.
+
+// But note: the constraint is sum (n_i + q_i) <= 500.
+
+// So N_total + Q_total <= 500.
+
+// Therefore, the maximum n_i in any test case is at most 500, but if one test case has n_i=500, then q_i=0 -> but q_i>=1 -> contradiction.
+
+// So maximum n_i <= 499, and then q_i>=1, so n_i+q_i>=500 -> then only one test case allowed, with n_i+q_i=500.
+
+// But q_i>=1, so n_i<=499.
+
+// Actually, n_i can be 500 only if q_i=0, but q_i>=1 -> so n_i cannot be 500.
+
+// Therefore, maximum n_i is 499.
+
+// Then maximum steps per query: 2 * 499 * 500 = 499000.
+
+// And total queries Q_total <= 500 - N_total <= 500 - 1 = 499.
+
+// But worst-case total steps: sum_{each query} (steps in that query) <= (number of queries) * (max steps per query) <= 499 * 499000 ~ 249e6, which is acceptable in C++ in 2 seconds.
+
+// But worst-case might be tight.
+
+// We can try to optimize by using a map for traffic light positions.
+
+// Implementation:
+
+//   Precompute for each test case: a set or map from position to delay index.
+
+//   For each query:
+//       long long pos = a;
+//       int dir = 1;
+//       long long time = 0;
+//       set<tuple<long long, int, int>> visited; // (pos, dir, time%k) - but only record when at a traffic light
+
+//       while (pos >= 1 && pos <= 1000000000000000LL) {
+//           // Check if current pos is a traffic light
+//           auto it = pos_to_delay.find(pos);
+//           if (it != pos_to_delay.end()) {
+//               int d_val = it->second;
+//               if (time % k == d_val) {
+//                   dir *= -1;
+//               }
+//               auto state = make_tuple(pos, dir, (int)(time % k));
+//               if (visited.find(state) != visited.end()) {
+//                   cout << "NO\n";
+//                   goto next_query;
+//               }
+//               visited.insert(state);
+//           }
+
+//           pos += dir;
+//           time++;
+//       }
+
+//       cout << "YES\n";
+
+//   But note: time can be very large? But we only use time % k, so we can keep time_mod = time % k, and update: time_mod = (time_mod + 1) % k, but careful: we need the actual time for modulo, but we can do:
+
+//       Instead, we can maintain time_mod = time % k, and when we increment time, time_mod = (time_mod + 1) % k.
+
+//   But we also need to know time % k at the current step.
+
+//   So we can do:
+
+//       int time_mod = 0; // at time 0 //       ...
+//       while (...) {
+//           if (at traffic light) {
+//               if (time_mod == d_val) { ... }
+//               state = (pos, dir, time_mod);
+//               ...
+//           }
+//           pos += dir;
+//           time_mod = (time_mod + 1) % k;
+//       }
+
+//   But note: at the next iteration, time_mod represents the time at the beginning of that second.
+
+//   Yes: initially time=0, time_mod=0. //   After one step: time=1, time_mod=1.
+
+//   So it's correct.
+
+//   However, we must be cautious: when we start, we are at time 0.
+
+//   Then we check the light at time 0, then move, so next state is at time 1.
+
+//   So the update is correct.
+
+//   But what if k==1? then time_mod is always 0.
+
+//   That's fine.
+
+//   Also, we break when we leave the strip.
+
+//   But note: the strip is from 1 to 10^15 inclusive.
+
+//   So if pos becomes 0 or 10^15+1, we break and output YES.
+
+//   However, we break at the beginning of the loop: if pos is not in [1, 10^15], we break.
+
+//   But at the beginning of the loop, we are at the start of a second, so if we are outside, we have already left.
+
+//   So it's correct.
+
+//   But note: we might leave during the move: we move from a valid position to an invalid one.
+
+//   Then in the next iteration, we break.
+
+//   So we do one extra iteration? But we break immediately.
+
+//   Example: at time t, we are at pos = 10^15, moving right. //      We check: pos is in [1,10^15] -> enter loop.
+//      Check if it's a traffic light -> possibly turn. //      Then we move: pos = 10^15+1.
+//      Then time_mod = (time_mod+1)%k. //      Then next iteration: check pos=10^15+1 -> not in [1,10^15] -> break -> output YES.
+
+//   Correct.
+
+//   But what if we start at a position > 10^15 or < 1?  //   The input says: 1<=a_i<=10^15, so we don't have to worry.
+
+//   So code structure:
+
+//     int t; cin >> t;
+//     while (t--) {
+//         int n, k; cin >> n >> k;
+//         vector<long long> positions(n);
+//         for (int i=0; i<n; i++) cin >> positions[i];
+//         vector<int> delays(n);
+//         for (int i=0; i<n; i++) cin >> delays[i];
+//         int q; cin >> q;
+//         vector<long long> queries(q);
+//         for (int i=0; i&q; i++) cin >> queries[i];
+
+//         // Build map: position -> delay
+//         map<long long, int> pos_to_delay;
+//         for (int i=0; i<n; i++) {
+//             pos_to_delay[positions[i]] = delays[i];
+//         }
+
+//         for (long long start : queries) {
+//             long long pos = start;
+//             int dir = 1;
+//             int time_mod = 0;
+//             set<tuple<long long, int, int>> visited;
+
+//             bool exited = false;
+//             while (pos >= 1 && pos <= 1000000000000000LL) {
+//                 auto it = pos_to_delay.find(pos);
+//                 if (it != pos_to_delay.end()) {
+//                     int d_val = it->second;
+//                     if (time_mod == d_val) {
+//                         dir *= -1;
+//                     }
+//                     tuple<long long, int, int> state = {pos, dir, time_mod};
+//                     if (visited.count(state)) {
+//                         cout << "NO\n";
+//                         goto next_query; // or break to next query
+//                     }
+//                     visited.insert(state);
+//                 }
+
+//                 pos += dir;
+//                 time_mod = (time_mod + 1) % k;
+//             }
+
+//             cout << "YES\n";
+//             next_query:;
+//         }
+//     }
+
+// But note: the inner loop might run many iterations, but bounded by 2*n*k.
+
+// However, worst-case 2*n*k might be 2*500*500=500000, and total queries over test cases is at most 500, but the sum of (n+q) over test cases is <=500, so worst-case total queries is 500, but then n must be 0? no, n>=1.
+
+// Actually, the total sum of (n_i + q_i) over test cases <= 500.
+
+// So the total number of queries (sum of q_i) is at most 500, and the total n_i is at most 500.
+
+// But the simulation per query uses n from its test case.
+
+// However, worst-case total work: for each query, we do at most 2 * n_testcase * k steps.
+
+// And the sum over queries: sum_{query} (2 * n_testcase * k) = 2 * k * (n_testcase * q_testcase) for each test case.
+
+// But we have multiple test cases.
+
+// Let F = sum_{test case} [ q_testcase * (2 * n_testcase * k) ]
+
+// But k is per test case, and n_testcase is per test case.
+
+// And we know: for each test case, n_testcase + q_testcase is part of the total sum <=500.
+
+// But worst-case: one test case with n=250, q=250, k=500 -> then F = 250 * (2 * 250 * 500) = 250 * 250000 = 62.5e6.
+
+// Another test case: n=200, q=50, k=500 -> 50 * (2*200*500)=50*200000=10e6.
+
+// But the total sum of (n+q) is 250+250+200+50 = 750 > 500 -> invalid.
+
+// So the worst-case is one test case: n+q=500, say n=250, q=250, k=500 -> 62.5e6 operations.
+
+// 62.5e6 iterations in C++ should run in under a second.
+
+// But worst-case k=500, n=499, q=1 -> 1 * (2*499*500) = 499000 -> negligible.
+
+// So overall worst-case total operations is about 62.5e6, which is acceptable.
+
+// Let me test with the examples.
+
+// Example 1: n=2, k=2, positions=[1,4], delays=[1,0], queries=[1,2,3]
+
+// Query 1: start=1 //   time0: pos=1 -> traffic light, d=1, time_mod=0 -> 0!=1 -> no turn. state=(1,1,0) -> record.
+//   move: pos=2, time_mod=1 //   time1: pos=2 -> not traffic light -> move: pos=3, time_mod=0
+//   time2: pos=3 -> not traffic light -> move: pos=4, time_mod=1 //   time3: pos=4 -> traffic light, d=0, time_mod=1 -> 1!=0 -> no turn. state=(4,1,1) -> record.
+//   move: pos=5, time_mod=0 //   time4: pos=5 -> not in [1,1e15]? 5<=1e15 -> continue.
+//   ... but eventually we will keep moving right and exit -> YES.
+
+// But expected: YES -> matches.
+
+// However, the example output says: YES, NO, YES.
+
+// Query 2: start=2 //   time0: pos=2 -> not traffic light -> move to 3, time_mod=1
+//   time1: pos=3 -> not traffic light -> move to 4, time_mod=0 //   time2: pos=4 -> traffic light, d=0, time_mod=0 -> 0==0 -> turn: dir=-1.
+//          state=(4,-1,0) -> record. //   move: pos=3, time_mod=1
+//   time3: pos=3 -> not traffic light -> move to 2, time_mod=0 //   time4: pos=2 -> not traffic light -> move to 1, time_mod=1
+//   time5: pos=1 -> traffic light, d=1, time_mod=1 -> 1==1 -> turn: dir=1. //          state=(1,1,1) -> record.
+//   move: pos=2, time_mod=0 //   time6: pos=2 -> not traffic light -> move to 3, time_mod=1
+//   time7: pos=3 -> not traffic light -> move to 4, time_mod=0 //   time8: pos=4 -> traffic light, d=0, time_mod=0 -> turn: dir=-1.
+//          state=(4,-1,0) -> already visited! -> cycle -> NO.
+
+// So output NO -> matches.
+
+// Query 3: start=3 //   time0: pos=3 -> not traffic light -> move to 4, time_mod=1
+//   time1: pos=4 -> traffic light, d=0, time_mod=1 -> 1!=0 -> no turn. state=(4,1,1) -> record. //   move: pos=5, time_mod=0
+//   then continues to move right -> eventually exits -> YES.
+
+// So outputs: YES, NO, YES -> matches.
+
+// Example 2: n=9, k=4, positions=[1..9], delays=[3,2,1,0,1,3,3,1,1], queries=[2,5,6,7,8]
+
+// We'll do query=2 (start=2) to see if it's YES.
+
+// But expected: YES, YES, YES, NO, NO
+
+// Query: start=2 //   time0: pos=2 -> traffic light, d=2, time_mod=0 -> 0!=2 -> no turn. state=(2,1,0)
+//   move: pos=3, time_mod=1 //   time1: pos=3 -> traffic light, d=1, time_mod=1 -> 1==1 -> turn: dir=-1. state=(3,-1,1)
+//   move: pos=2, time_mod=2 //   time2: pos=2 -> traffic light, d=2, time_mod=2 -> 2==2 -> turn: dir=1. state=(2,1,2)
+//   move: pos=3, time_mod=3 //   time3: pos=3 -> traffic light, d=1, time_mod=3 -> 3!=1 -> no turn. state=(3,1,3)
+//   move: pos=4, time_mod=0 //   time4: pos=4 -> traffic light, d=0, time_mod=0 -> 0==0 -> turn: dir=-1. state=(4,-1,0)
+//   move: pos=3, time_mod=1 //   time5: pos=3 -> traffic light, d=1, time_mod=1 -> 1==1 -> turn: dir=1. state=(3,1,1) -> already had (3,-1,1) and (3,1,3) but not (3,1,1) -> new.
+//   move: pos=4, time_mod=2 //   time6: pos=4 -> traffic light, d=0, time_mod=2 -> 2!=0 -> no turn. state=(4,1,2)
+//   move: pos=5, time_mod=3 //   time7: pos=5 -> traffic light, d=1, time_mod=3 -> 3!=1 -> no turn. state=(5,1,3)
+//   move: pos=6, time_mod=0 //   time8: pos=6 -> traffic light, d=3, time_mod=0 -> 0!=3 -> no turn. state=(6,1,0)
+//   move: pos=7, time_mod=1 //   time9: pos=7 -> traffic light, d=3, time_mod=1 -> 1!=3 -> no turn. state=(7,1,1)
+//   move: pos=8, time_mod=2 //   time10: pos=8 -> traffic light, d=1, time_mod=2 -> 2!=1 -> no turn. state=(8,1,2)
+//   move: pos=9, time_mod=3 //   time11: pos=9 -> traffic light, d=1, time_mod=3 -> 3!=1 -> no turn. state=(9,1,3)
+//   move: pos=10 -> now pos>1e15? no, 10<1e15 -> continue. //   Then we keep moving right -> eventually exit -> YES.
+
+// But expected first is YES -> matches.
+
+// However, the example output says: YES, YES, YES, NO, NO
+
+// So query=7 and 8 are NO.
+
+// Let me do query=7 (start=7) //   time0: pos=7 -> traffic light, d=3, time_mod=0 -> 0!=3 -> no turn. state=(7,1,0)
+//   move: pos=8, time_mod=1 //   time1: pos=8 -> traffic light, d=1, time_mod=1 -> 1==1 -> turn: dir=-1. state=(8,-1,1)
+//   move: pos=7, time_mod=2 //   time2: pos=7 -> traffic light, d=3, time_mod=2 -> 2!=3 -> no turn. state=(7,-1,2)
+//   move: pos=6, time_mod=3 //   time3: pos=6 -> traffic light, d=3, time_mod=3 -> 3==3 -> turn: dir=1. state=(6,1,3)
+//   move: pos=7, time_mod=0 //   time4: pos=7 -> traffic light, d=3, time_mod=0 -> 0!=3 -> no turn. state=(7,1,0) -> already had (7,1,0) -> cycle?
+//          But state=(7,1,0) was visited at time0 -> now again -> cycle -> NO.
+
+// So output NO -> matches.
+
+// Therefore, the simulation is correct.
+
+// Code:
+
+// Note: use long long for positions.
+
+// Important: the strip boundary is 10^15, which is 1000000000000000.
+
+// Let's write the code accordingly.
+
+// Also, note: k can be 1, then time_mod is always 0.
+
+// We'll do:

@@ -1,0 +1,93 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+int popcount(long long x) {
+    return __builtin_popcountll(x);
+}
+
+// 计算最小成本使得popcount至少为p，如果成本超过limit，返回limit+1
+long long compute_cost(long long a, int p, long long limit) {
+    if (popcount(a) >= p) return 0;
+    // 特判 a == 0
+    if (a == 0) {
+        if (p >= 60) return limit + 1;
+        long long cost = (1LL << p) - 1;
+        if (cost > limit) return limit + 1;
+        return cost;
+    }
+    long long v = a;
+    long long cost = 0;
+    int iter = 0;
+    while (popcount(v) < p) {
+        iter++;
+        if (iter > 10000) {
+            // 迭代太多，成本可能很大，估计超过limit
+            return limit + 1;
+        }
+        int i = 0;
+        while ((v >> i) & 1) i++;
+        long long add = (1LL << i) - (v & ((1LL << i) - 1));
+        v += add;
+        cost += add;
+        if (cost > limit) break;
+    }
+    return cost;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        vector<long long> a(n);
+        long long total_beauty = 0;
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+            total_beauty += popcount(a[i]);
+        }
+        // 对于每个数，计算升级序列（delta_cost）
+        vector<vector<long long>> upgrades(n);
+        for (int i = 0; i < n; ++i) {
+            int cnt0 = popcount(a[i]);
+            long long prev_cost = 0;
+            for (int p = cnt0 + 1; p <= 60; ++p) {
+                long long cost = compute_cost(a[i], p, k);
+                if (cost > k) break;
+                upgrades[i].push_back(cost - prev_cost);
+                prev_cost = cost;
+            }
+        }
+        // 贪心选择最小成本升级
+        priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+        vector<int> ptr(n, 0);
+        for (int i = 0; i < n; ++i) {
+            if (!upgrades[i].empty()) {
+                pq.push({upgrades[i][0], i});
+            }
+        }
+        long long used = 0;
+        while (!pq.empty()) {
+            auto [cost, idx] = pq.top();
+            pq.pop();
+            if (used + cost <= k) {
+                used += cost;
+                total_beauty += 1;
+                ptr[idx]++;
+                if (ptr[idx] < (int)upgrades[idx].size()) {
+                    pq.push({upgrades[idx][ptr[idx]], idx});
+                }
+            } else {
+                break;
+            }
+        }
+        cout << total_beauty << '\n';
+    }
+    return 0;
+}

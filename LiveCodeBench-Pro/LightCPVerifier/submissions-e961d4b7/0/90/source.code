@@ -1,0 +1,87 @@
+#include <iostream>
+#include <string>
+#include <utility>
+using namespace std;
+using ll = long long;
+
+ll pow4(int k) {
+    if (k == 0) return 1;
+    return 1LL << (2 * k); // 4^k = 2^(2k)
+}
+
+ll coord_to_val(int n, int x, int y) {
+    ll base = 1;
+    int k = n;
+    while (k > 0) {
+        ll half = 1LL << (k - 1);
+        ll block = pow4(k - 1);
+        if (x <= half && y <= half) {
+            // top-left
+        } else if (x > half && y > half) {
+            // bottom-right
+            base += block;
+        } else if (x > half && y <= half) {
+            // bottom-left
+            base += 2 * block;
+        } else { // x <= half && y > half // top-right
+            base += 3 * block;
+        }
+        if (x > half) x -= half;
+        if (y > half) y -= half;
+        k--;
+    }
+    return base;
+}
+
+pair<int, int> val_to_coord(int n, ll d) {
+    int x = 1, y = 1;
+    int k = n;
+    ll cur = 1;
+    while (k > 0) {
+        ll half = 1LL << (k - 1);
+        ll block = pow4(k - 1);
+        ll offset = d - cur; // 0-based
+        int idx = offset / block; // 0,1,2,3
+        if (idx == 1) {
+            // bottom-right
+            x += half;
+            y += half;
+        } else if (idx == 2) {
+            // bottom-left
+            x += half;
+        } else if (idx == 3) {
+            // top-right
+            y += half;
+        }
+        // idx == 0: top-left, no change
+        cur += idx * block;
+        k--;
+    }
+    return {x, y};
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        while (q--) {
+            string op;
+            cin >> op;
+            if (op == "->") {
+                int x, y;
+                cin >> x >> y;
+                cout << coord_to_val(n, x, y) << '\n';
+            } else { // "<-"
+                ll d;
+                cin >> d;
+                auto [x, y] = val_to_coord(n, d);
+                cout << x << ' ' << y << '\n';
+            }
+        }
+    }
+    return 0;
+}

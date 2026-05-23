@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+static vector<long long> P_prefix;
+static bool precomputed = false;
+const int MAX_K = 400000;
+
+void precompute_primes() {
+    if (precomputed) return;
+    const int N = 6000000;
+    vector<bool> is_prime(N+1, true);
+    is_prime[0] = is_prime[1] = false;
+    for (int i = 2; i * i <= N; i++) {
+        if (is_prime[i]) {
+            for (int j = i * i; j <= N; j += i) {
+                is_prime[j] = false;
+            }
+        }
+    }
+    vector<int> primes;
+    for (int i = 2; i <= N; i++) {
+        if (is_prime[i]) {
+            primes.push_back(i);
+        }
+    }
+    P_prefix.resize(MAX_K + 1);
+    P_prefix[0] = 0;
+    for (int i = 1; i <= MAX_K; i++) {
+        P_prefix[i] = P_prefix[i-1] + primes[i-1];
+    }
+    precomputed = true;
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    if (n == 0) {
+        cout << 0 << '\n';
+        return;
+    }
+
+    sort(a.rbegin(), a.rend());
+    long long sum = 0;
+    int max_k = 0;
+    for (int k = 1; k <= n; k++) {
+        sum += a[k-1];
+        if (sum >= P_prefix[k]) {
+            max_k = k;
+        }
+    }
+    cout << n - max_k << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    precompute_primes();
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

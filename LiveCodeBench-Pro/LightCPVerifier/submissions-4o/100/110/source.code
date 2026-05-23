@@ -1,0 +1,82 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+// Function to check if there's a path from 1 to n with all weights between low and high
+bool isPathExist(int n, const vector<vector<pair<int, int>>> &adj, int low, int high) {
+    vector<bool> visited(n + 1, false);
+    queue<int> q;
+    
+    q.push(1); // Start BFS from node 1
+    visited[1] = true;
+    
+    while (!q.empty()) {
+        int node = q.front();
+        q.pop();
+        
+        if (node == n) {
+            return true; // Reached node n
+        }
+        
+        for (auto &edge : adj[node]) {
+            int nextNode = edge.first;
+            int weight = edge.second;
+            
+            // If edge's weight within bounds and not visited
+            if (!visited[nextNode] && weight >= low && weight <= high) {
+                visited[nextNode] = true;
+                q.push(nextNode);
+            }
+        }
+    }
+    
+    return false; // Not able to reach node n from node 1
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        
+        vector<vector<pair<int, int>>> adj(n + 1);
+        vector<int> edgeWeights(m);
+        
+        for (int i = 0; i < m; ++i) {
+            int u, v, w;
+            cin >> u >> v >> w;
+            adj[u].emplace_back(v, w);
+            adj[v].emplace_back(u, w);
+            edgeWeights[i] = w;
+        }
+        
+        sort(edgeWeights.begin(), edgeWeights.end());
+        
+        int left = 0, right = edgeWeights.size() - 1;
+        int answer = INT_MAX;
+        
+        while (left <= right) {
+            int low = edgeWeights[left];
+            int high = edgeWeights[right];
+            
+            if (isPathExist(n, adj, low, high)) {
+                answer = min(answer, low + high);
+                --right;
+            } else {
+                ++left;
+            }
+        }
+        
+        cout << answer << "\n";
+    }
+
+    return 0;
+}

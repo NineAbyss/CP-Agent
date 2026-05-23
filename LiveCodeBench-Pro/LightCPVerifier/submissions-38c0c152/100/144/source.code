@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int nor(int x, int y, int k) {
+    return ((1 << k) - 1) & (~(x | y));
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        vector<int> ans(n, 0);
+        const int LIMIT = 200; // 可以根据需要调整
+        for (int i = 0; i < n; i++) {
+            int best = a[i];
+            // 枚举左端点
+            for (int l = max(0, i - LIMIT); l <= i; l++) {
+                int cur = a[l];
+                if (l == i) {
+                    if (cur > best) best = cur;
+                }
+                for (int r = l+1; r < n && r <= l + LIMIT; r++) {
+                    cur = nor(cur, a[r], k);
+                    if (l <= i && i <= r) {
+                        if (cur > best) best = cur;
+                    }
+                }
+            }
+            ans[i] = best;
+        }
+        for (int i = 0; i < n; i++) {
+            cout << ans[i] << " \n"[i==n-1];
+        }
+    }
+    return 0;
+}

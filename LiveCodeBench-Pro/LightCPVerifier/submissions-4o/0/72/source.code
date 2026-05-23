@@ -1,0 +1,49 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+
+int calculateCost(const std::string &s) {
+    int cost = 1 + (s[0] != '0');
+    
+    for (size_t i = 1; i < s.size(); i++) {
+        if (s[i] != s[i-1]) {
+            cost += 2;
+        }
+    }
+    
+    return cost;
+}
+
+int possibleReduction(const std::string &s) {
+    int maxReduction = 0;
+    
+    for (size_t i = 1; i < s.size(); i++) {
+        // Identify and maximize potential for merging segments
+        if (s[i] != s[i-1]) {
+            // Reduction of 2
+            maxReduction = std::max(maxReduction, 2);
+        }
+    }
+    
+    return maxReduction;
+}
+
+int main() {
+    int t;
+    std::cin >> t;
+    while (t--) {
+        int n;
+        std::cin >> n;
+        std::string s;
+        std::cin >> s;
+        
+        int initialCost = calculateCost(s);
+        int reduction = possibleReduction(s);
+        
+        int minCost = initialCost - reduction;
+        
+        std::cout << minCost << '\n';
+    }
+    
+    return 0;
+}

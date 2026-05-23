@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <set>
+using namespace std;
+
+bool try_first(int n, const string& s, int first, vector<int>& ans) {
+    multiset<int> remaining;
+    for (int i = 1; i <= n; i++) remaining.insert(i);
+    ans.clear();
+    ans.push_back(first);
+    remaining.erase(remaining.find(first));
+    int min_pref = first, max_pref = first;
+    for (int i = 0; i < n-1; i++) {
+        if (s[i] == '<') {
+            auto it = remaining.lower_bound(min_pref);
+            if (it == remaining.begin()) return false;
+            --it;
+            int candidate = *it;
+            ans.push_back(candidate);
+            remaining.erase(it);
+            if (candidate < min_pref) min_pref = candidate;
+            if (candidate > max_pref) max_pref = candidate;
+        } else {
+            auto it = remaining.upper_bound(max_pref);
+            if (it == remaining.end()) return false;
+            int candidate = *it;
+            ans.push_back(candidate);
+            remaining.erase(it);
+            if (candidate < min_pref) min_pref = candidate;
+            if (candidate > max_pref) max_pref = candidate;
+        }
+    }
+    return true;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        vector<int> ans;
+        for (int first = 1; first <= n; first++) {
+            if (try_first(n, s, first, ans)) {
+                break;
+            }
+        }
+        for (int i = 0; i < n; i++) {
+            cout << ans[i] << " \n"[i == n-1];
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

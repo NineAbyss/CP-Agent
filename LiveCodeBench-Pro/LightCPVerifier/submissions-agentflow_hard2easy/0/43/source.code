@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool canBeMedian(long long x, const vector<long long>& a, int n) {
+    int k = (n + 1) / 2;  // ceil(n/2)
+    
+    int L = 0, G = 0, F = 0;
+    
+    for (int i = 1; i < n; i++) {
+        long long v1 = a[i];
+        long long v2 = -a[i];
+        long long mn = min(v1, v2);
+        long long mx = max(v1, v2);
+        
+        if (x < mn) {
+            G++;  // 必然大于 x
+        } else if (x > mx) {
+            L++;  // 必然小于 x
+        } else {
+            F++;  // 灵活元素，可以小于或大于 x
+        }
+    }
+    
+    // 检查是否能分配灵活元素使得： // 恰好有 k-1 个元素小于 x
+    // 恰好有 n-k 个元素大于 x
+    
+    // 条件：L <= k-1 <= L+F 且 G <= n-k <= G+F
+    return (L <= k-1 && k-1 <= L+F) && (G <= n-k && n-k <= G+F);
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        bool possible = canBeMedian(a[0], a, n) || canBeMedian(-a[0], a, n);
+        
+        cout << (possible ? "YES" : "NO") << "\n";
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    solve();
+    return 0;
+}

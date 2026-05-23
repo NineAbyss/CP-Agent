@@ -1,0 +1,46 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+using ll = long long;
+
+bool solve() {
+    ll w, h, a, b, x1, y1, x2, y2;
+    cin >> w >> h >> a >> b >> x1 >> y1 >> x2 >> y2;
+    
+    ll dx = abs(x2 - x1);
+    ll dy = abs(y2 - y1);
+    
+    if (dx % a == 0 && dy % b == 0) return true;
+    
+    if (dx % a == 0) {
+        ll y_max = max(y1, y2);
+        ll y_min = min(y1, y2);
+        ll need = y_max + b - y_min;
+        if (need > h) return false;
+        ll rem = h - need;
+        return rem >= 0 && rem % b == 0;
+    }
+    
+    if (dy % b == 0) {
+        ll x_max = max(x1, x2);
+        ll x_min = min(x1, x2);
+        ll need = x_max + a - x_min;
+        if (need > w) return false;
+        ll rem = w - need;
+        return rem >= 0 && rem % a == 0;
+    }
+    
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << (solve() ? "Yes" : "No") << endl;
+    }
+    return 0;
+}

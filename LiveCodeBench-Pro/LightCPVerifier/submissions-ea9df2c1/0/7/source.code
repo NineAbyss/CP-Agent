@@ -1,0 +1,116 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+int find_root(int n, long long m) {
+    if (m < n) return -1;
+    if (m == n) return 1;
+    long long D = (2LL*n+1)*(2LL*n+1) - 8*m;
+    if (D < 0) return -1;
+    long long sqrtD = sqrtl(D);
+    while ((sqrtD+1)*(sqrtD+1) <= D) sqrtD++;
+    while (sqrtD*sqrtD > D) sqrtD--;
+    
+    long long r_low = (2LL*n+1 - sqrtD) / 2;
+    long long r_high = (2LL*n+1 + sqrtD) / 2;
+    if (r_low < 1) r_low = 1;
+    if (r_high > n) r_high = n;
+    
+    long long limit = m - n + 1;
+    long long r = min(r_high, limit);
+    if (r < r_low) r = r_low;
+    if (r > limit) return -1;
+    if (r < 1 || r > n) return -1;
+    if (r*r - (2LL*n+1)*r + 2*m > 0) return -1;
+    return r;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long m;
+        cin >> n >> m;
+        
+        if (m < n) {
+            cout << "-1\n";
+            continue;
+        }
+        
+        if (m == n) {
+            cout << "1\n";
+            for (int i = 2; i <= n; i++) {
+                cout << "1 " << i << '\n';
+            }
+            continue;
+        }
+        
+        int r = find_root(n, m);
+        if (r == -1) {
+            cout << "-1\n";
+            continue;
+        }
+        
+        vector<int> parent(n+1);
+        parent[1] = r;
+        for (int v = 2; v <= n; v++) {
+            if (v == r) continue;
+            parent[v] = 1;
+        }
+        
+        long long S0 = n + r - 1;
+        long long delta = m - S0;
+        
+        int big_val = r - 1;
+        long long big_count = n - r;
+        long long sum_small = 0;
+        if (r > 2) {
+            sum_small = (r-2) * 1LL * (r-1) / 2;
+        }
+        
+        long long use_big = 0;
+        if (big_val > 0) {
+            use_big = min(big_count, delta / big_val);
+            while (use_big <= big_count) {
+                long long remaining = delta - use_big * big_val;
+                if (remaining <= sum_small && remaining >= 0) break;
+                use_big++;
+            }
+        }
+        
+        long long remaining = delta - use_big * big_val;
+        vector<bool> use_small(r-1, false);
+        for (int v = r-1; v >= 2; v--) {
+            int val = v-1;
+            if (remaining >= val) {
+                use_small[v-2] = true;
+                remaining -= val;
+            }
+        }
+        
+        for (int v = 2; v < r; v++) {
+            if (use_small[v-2]) parent[v] = r;
+        }
+        long long big_used = 0;
+        for (int v = r+1; v <= n; v++) {
+            if (big_used < use_big) {
+                parent[v] = r;
+                big_used++;
+            }
+        }
+        
+        cout << r << '\n';
+        for (int v = 1; v <= n; v++) {
+            if (v == r) continue;
+            cout << parent[v] << ' ' << v << '\n';
+        }
+    }
+    
+    return 0;
+}

@@ -1,0 +1,29 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+void construct_sequence(int n, int m, int k) {
+    vector<int> a(n);
+    
+    // The strategy is to fill the array with repeated cycles: [0, 1, ..., k-1]
+    for (int i = 0; i < n; ++i) {
+        a[i] = i % k;
+    }
+    
+    // Print the constructed sequence
+    for (int i = 0; i < n; ++i) {
+        cout << a[i] << " ";
+    }
+    cout << endl;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        construct_sequence(n, m, k);
+    }
+    return 0;
+}

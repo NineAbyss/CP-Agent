@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    map<int, int> cnt;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        int l = a[i] + 1; // left endpoint of the edge (l, l+1)
+        cnt[l]++;
+    }
+    // Condition 1: a single edge appears at least 4 times
+    for (auto& p : cnt) {
+        if (p.second >= 4) {
+            cout << "Yes\n";
+            return;
+        }
+    }
+    // Group consecutive left endpoints
+    vector<int> keys;
+    for (auto& p : cnt) keys.push_back(p.first);
+    sort(keys.begin(), keys.end());
+    int m = keys.size();
+    for (int i = 0; i < m; ) {
+        int j = i;
+        long long total = 0;
+        int cnt_ge2 = 0;
+        while (j < m && (j == i || keys[j] == keys[j-1] + 1)) {
+            int c = cnt[keys[j]];
+            total += c;
+            if (c >= 2) cnt_ge2++;
+            j++;
+        }
+        if (total >= 4 && cnt_ge2 >= 2) {
+            cout << "Yes\n";
+            return;
+        }
+        i = j;
+    }
+    cout << "No\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

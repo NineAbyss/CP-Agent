@@ -1,0 +1,65 @@
+#include <iostream>
+#include <deque>
+#include <vector>
+
+using namespace std;
+
+void processTestCase() {
+    int q;
+    cin >> q;
+    deque<int> arr;
+    bool reversed = false;
+    long long rizziness = 0;
+    int size = q; // Start out with size q for tracking positions
+    
+    for (int i = 0; i < q; ++i) {
+        int s;
+        cin >> s;
+        if (s == 3) { // Append
+            int k;
+            cin >> k;
+            if (reversed) {
+                arr.push_front(k); // Prepend.
+            } else {
+                arr.push_back(k); // Append.
+            }
+            if (!arr.empty()) {
+                rizziness += k * arr.size();
+            } else {
+                rizziness = k;
+            }
+        }
+        else if (s == 1 && !arr.empty()) { // Cyclic Shift
+            if (reversed) {
+                int front = arr.front();
+                rizziness += front - front * arr.size();
+                arr.pop_front();
+                arr.push_back(front);
+            } else {
+                int back = arr.back();
+                rizziness += back * arr.size() - back;
+                arr.pop_back();
+                arr.push_front(back);
+            }
+        }
+        else if (s == 2) { // Reverse
+            reversed = !reversed;
+            // Since reversing, the weights invert
+            rizziness = 0; // Reset for recalculation.
+            for (size_t j = 0; j < arr.size(); ++j) {
+                rizziness += reversed ? arr[j] * (arr.size() - j) : arr[j] * (j + 1);
+            }
+        }
+
+        cout << rizziness << "\n";
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        processTestCase();
+    }
+    return 0;
+}

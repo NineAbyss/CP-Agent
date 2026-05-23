@@ -1,0 +1,86 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+typedef long long ll;
+const ll INF = 1e18;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<ll> s(n);
+    for (int i = 0; i < n; i++) cin >> s[i];
+    vector<vector<ll>> a(m, vector<ll>(n));
+    vector<vector<ll>> b(m, vector<ll>(n));
+    vector<vector<ll>> c(m, vector<ll>(n));
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < n; j++) cin >> a[i][j];
+        for (int j = 0; j < n; j++) cin >> b[i][j];
+        for (int j = 0; j < n; j++) cin >> c[i][j];
+    }
+    
+    int states = 1 << n;
+    // 预处理超集列表
+    vector<vector<int>> supersets(states);
+    for (int mask = 0; mask < states; mask++) {
+        int sup = mask;
+        do {
+            supersets[mask].push_back(sup);
+            sup = (sup + 1) | mask;
+        } while (sup < states);
+    }
+    
+    // dp[i][mask]: 前i天之后，A_{i+1}侧为mask的最小割容量（即最大保留行李数）
+    vector<vector<ll>> dp(m+1, vector<ll>(states, INF));
+    // 初始化：第0天之后，A1的侧为mask，割容量为 sum_{j in mask} s_j
+    for (int mask = 0; mask < states; mask++) {
+        ll cap = 0;
+        for (int j = 0; j < n; j++) {
+            if (mask >> j & 1) cap += s[j];
+        }
+        dp[0][mask] = cap;
+    }
+    
+    // 每天转移
+    for (int i = 1; i <= m; i++) {
+        // 初始化dp[i]为INF
+        fill(dp[i].begin(), dp[i].end(), INF);
+        for (int prev_mask = 0; prev_mask < states; prev_mask++) {
+            if (dp[i-1][prev_mask] >= INF) continue;
+            // 枚举超集
+            for (int cur_mask : supersets[prev_mask]) {
+                ll cost = 0;
+                for (int j = 0; j < n; j++) {
+                    if (prev_mask >> j & 1) continue;
+                    int prev_j = (j - 1 + n) % n;
+                    int next_j = (j + 1) % n;
+                    if (cur_mask >> prev_j & 1) cost += a[i-1][j];
+                    if (cur_mask >> next_j & 1) cost += c[i-1][j];
+                    if (cur_mask >> j & 1) cost += b[i-1][j];
+                }
+                ll new_val = dp[i-1][prev_mask] + cost;
+                if (new_val < dp[i][cur_mask]) {
+                    dp[i][cur_mask] = new_val;
+                }
+            }
+        }
+    }
+    
+    // 输出每个前缀k的答案
+    for (int k = 1; k <= m; k++) {
+        cout << dp[k][states-1] << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

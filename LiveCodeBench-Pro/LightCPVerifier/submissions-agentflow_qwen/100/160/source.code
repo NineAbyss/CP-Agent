@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int calc_score(vector<int> a, const vector<int>& b) {
+    int i = 0;
+    int score = 0;
+    for (int j = 0; j < b.size(); j++) {
+        if (i < a.size() && a[i] > b[j]) {
+            score++;
+            i++;
+        }
+    }
+    return score;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+
+        int best = calc_score(a, b);
+
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                vector<int> a_swapped = a;
+                swap(a_swapped[i], a_swapped[j]);
+                best = max(best, calc_score(a_swapped, b));
+            }
+        }
+
+        cout << best << '\n';
+    }
+    return 0;
+}

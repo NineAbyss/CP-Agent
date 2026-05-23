@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        sort(a.begin(), a.end());
+        
+        int m = n - k; // 保留的酒吧数
+        
+        if (m % 2 == 1) { // 奇数个保留点
+            set<int> candidates;
+            for (int l = 0; l <= n - m; l++) {
+                int mid = l + (m - 1) / 2;
+                candidates.insert(a[mid]);
+            }
+            cout << candidates.size() << '\n';
+        } else { // 偶数个保留点
+            vector<pair<int, int>> intervals;
+            for (int l = 0; l <= n - m; l++) {
+                int left = l + m/2 - 1;
+                int right = l + m/2;
+                intervals.push_back({a[left], a[right]});
+            }
+            // 合并区间
+            sort(intervals.begin(), intervals.end());
+            long long total = 0;
+            int curL = intervals[0].first, curR = intervals[0].second;
+            for (int i = 1; i < (int)intervals.size(); i++) {
+                if (intervals[i].first <= curR) {
+                    curR = max(curR, intervals[i].second);
+                } else {
+                    total += (curR - curL + 1);
+                    curL = intervals[i].first;
+                    curR = intervals[i].second;
+                }
+            }
+            total += (curR - curL + 1);
+            cout << total << '\n';
+        }
+    }
+    return 0;
+}

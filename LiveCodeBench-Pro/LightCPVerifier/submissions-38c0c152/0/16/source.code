@@ -1,0 +1,81 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+using ll = long long;
+
+// floor division for b>0
+ll floor_div(ll a, ll b) {
+    if (a >= 0) return a / b;
+    else return (a - b + 1) / b;
+}
+
+// ceil division for b>0
+ll ceil_div(ll a, ll b) {
+    return (a + b - 1) / b;
+}
+
+// check if it is possible to cook n portions in order A then B
+bool check(ll k, ll ra, ll da, ll rb, ll db, ll n) {
+    // p: number of type A, q = n - p: number of type B
+    // condition for type A: k - (p-1)*da >= ra  => p <= (k - ra)/da + 1
+    ll p_max = 0;
+    if (k >= ra) {
+        p_max = (k - ra) / da + 1;
+    }
+    ll p_high = min(n, p_max);
+    if (p_high < 0) return false;
+    
+    // condition for type B: after cooking p A, temperature T = k - p*da // then cooking q B: T - (q-1)*db >= rb
+    // i.e., k - p*da - (n-p-1)*db >= rb // rearrange: k - n*db + db - rb >= p*(da - db)
+    ll lhs = k - n*db + db - rb;
+    if (da == db) {
+        if (lhs < 0) return false;
+        return true;
+    } else if (da > db) {
+        // p <= floor(lhs / (da - db))
+        ll divisor = da - db; // positive
+        ll bound = floor_div(lhs, divisor);
+        p_high = min(p_high, bound);
+        return 0 <= p_high;
+    } else {
+        // da < db // p >= ceil(lhs / (da - db)), but divisor negative, convert to positive
+        // equivalent to p >= ceil( (n*db - k - db + rb) / (db - da) )
+        ll rhs = n*db - k - db + rb;
+        ll diff = db - da; // positive
+        ll p_low = ceil_div(rhs, diff);
+        ll p_low2 = max(0LL, p_low);
+        return p_low2 <= p_high;
+    }
+}
+
+// compute maximum total portions in order A then B
+ll solve_order(ll k, ll ra, ll da, ll rb, ll db) {
+    ll lo = 0, hi = k; // total portions cannot exceed initial temperature
+    while (lo < hi) {
+        ll mid = lo + (hi - lo + 1) / 2;
+        if (check(k, ra, da, rb, db, mid)) {
+            lo = mid;
+        } else {
+            hi = mid - 1;
+        }
+    }
+    return lo;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        ll k, a, b, x, y;
+        cin >> k >> a >> b >> x >> y;
+        // two orders: type1 then type2, or type2 then type1
+        ll ans1 = solve_order(k, a, x, b, y);
+        ll ans2 = solve_order(k, b, y, a, x);
+        cout << max(ans1, ans2) << '\n';
+    }
+    return 0;
+}

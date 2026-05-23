@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+void solve() {
+    int t; // Number of test cases
+    cin >> t;
+    while (t--) {
+        int n; // Number of obstacles
+        cin >> n;
+        
+        vector<int> d(n); // Flight program
+        for (int i = 0; i < n; ++i) {
+            cin >> d[i];
+        }
+        
+        vector<pair<int, int>> obstacles(n); // Obstacles
+        for (int i = 0; i < n; ++i) {
+            cin >> obstacles[i].first >> obstacles[i].second;
+        }
+        
+        vector<int> h(n + 1, 0); // Heights, h_0 = 0
+        bool possible = true;
+
+        for (int i = 0; i < n; ++i) {
+            if (d[i] == -1) {
+                // Try to increase height only if it stays within range
+                if (h[i] + 1 <= obstacles[i].second) {
+                    d[i] = 1;
+                    h[i+1] = h[i] + 1;
+                } else {
+                    d[i] = 0;
+                    h[i+1] = h[i];
+                }
+            } else {
+                h[i+1] = h[i] + d[i];
+            }
+            
+            // Check if the current height is within the obstacle's range
+            if (h[i+1] < obstacles[i].first || h[i+1] > obstacles[i].second) {
+                possible = false;
+                break;
+            }
+        }
+        
+        if (possible) {
+            for (int i = 0; i < n; ++i) {
+                cout << d[i] << " ";
+            }
+            cout << "\n";
+        } else {
+            cout << "-1\n";
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    solve();
+    return 0;
+}

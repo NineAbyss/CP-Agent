@@ -1,0 +1,67 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // Check if already beautiful
+        bool beautiful = false;
+        for (int i = 0; i < n - 1; i++) {
+            if (abs(a[i] - a[i+1]) <= 1) {
+                beautiful = true;
+                break;
+            }
+        }
+        if (beautiful) {
+            cout << 0 << '\n';
+            continue;
+        }
+
+        // If only two elements and not beautiful -> impossible
+        if (n == 2) {
+            cout << -1 << '\n';
+            continue;
+        }
+
+        // Try each possible first merge
+        bool canMakeBeautiful = false;
+        for (int i = 0; i < n - 1; i++) {
+            int L = min(a[i], a[i+1]);
+            int R = max(a[i], a[i+1]);
+
+            // Check left neighbor (i-1)
+            if (i > 0) {
+                int target_low = a[i-1] - 1;
+                int target_high = a[i-1] + 1;
+                // Check if [L,R] overlaps with [target_low, target_high]
+                if (!(R < target_low || L > target_high)) {
+                    canMakeBeautiful = true;
+                    break;
+                }
+            }
+
+            // Check right neighbor (i+2)
+            if (i+2 < n) {
+                int target_low = a[i+2] - 1;
+                int target_high = a[i+2] + 1;
+                if (!(R < target_low || L > target_high)) {
+                    canMakeBeautiful = true;
+                    break;
+                }
+            }
+        }
+
+        cout << (canMakeBeautiful ? 1 : -1) << '\n';
+    }
+    return 0;
+}

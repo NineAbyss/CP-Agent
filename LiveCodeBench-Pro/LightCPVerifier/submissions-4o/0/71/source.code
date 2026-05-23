@@ -1,0 +1,69 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> b[i];
+        }
+        
+        int consistent_x = -1;
+        bool consistent = true;
+        for (int i = 0; i < n && consistent; ++i) {
+            if (b[i] != -1) {
+                int current_x = a[i] + b[i];
+                if (consistent_x == -1) {
+                    consistent_x = current_x;
+                } else if (consistent_x != current_x) {
+                    consistent = false;
+                }
+            }
+        }
+        
+        if (!consistent) {
+            cout << "0\n";
+            continue;
+        }
+        
+        int count_x = 0;
+        for (int x = 0; x <= 2 * k; ++x) {
+            bool valid_x = true;
+            for (int i = 0; i < n; ++i) {
+                if (b[i] == -1) {
+                    int calculated_b_i = x - a[i];
+                    if (calculated_b_i < 0 || calculated_b_i > k) {
+                        valid_x = false;
+                        break;
+                    }
+                } else {
+                    if (a[i] + b[i] != x) {
+                        valid_x = false;
+                        break;
+                    }
+                }
+            }
+            if (valid_x) {
+                ++count_x;
+            }
+        }
+        
+        cout << count_x << "\n";
+    }
+    
+    return 0;
+}

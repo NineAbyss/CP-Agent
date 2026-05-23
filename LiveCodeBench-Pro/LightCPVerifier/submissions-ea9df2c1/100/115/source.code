@@ -1,0 +1,51 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+using namespace std;
+
+bool find_rectangle(int p, int s, long long &w, long long &h) {
+    long long target = 4LL * s * s;
+    for (long long a = 1; a * a <= target; ++a) {
+        if (target % a != 0) continue;
+        long long b = target / a;
+        for (int iter = 0; iter < 2; ++iter) {
+            if (iter == 1) swap(a, b);
+            if ((a + 2*s) % p != 0) continue;
+            long long ww = (a + 2*s) / p;
+            if (ww <= 0) continue;
+            if ((b + 2*s) % p != 0) continue;
+            long long hh = (b + 2*s) / p;
+            if (hh <= 0) continue;
+            if (ww * hh > 50000) continue;
+            w = ww; h = hh;
+            return true;
+        }
+    }
+    return false;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int p, s;
+        cin >> p >> s;
+        if (p > 4*s) {
+            cout << -1 << endl;
+            continue;
+        }
+        long long w, h;
+        if (find_rectangle(p, s, w, h)) {
+            long long k = w * h;
+            cout << k << endl;
+            for (long long x = 0; x < w; ++x) {
+                for (long long y = 0; y < h; ++y) {
+                    cout << x << " " << y << endl;
+                }
+            }
+        } else {
+            cout << -1 << endl;
+        }
+    }
+    return 0;
+}

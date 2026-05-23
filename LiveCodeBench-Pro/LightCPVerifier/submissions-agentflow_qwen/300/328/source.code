@@ -1,0 +1,29 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n;
+        cin >> n;
+        
+        cout << "mul 111111111" << endl;
+        string response;
+        cin >> response;
+        
+        cout << "digit" << endl;
+        cin >> response;
+        
+        cout << "digit" << endl;
+        cin >> response;
+        
+        cout << "add " << (n - 9) << endl;
+        cin >> response;
+        
+        cout << "!" << endl;
+        cin >> response;
+    }
+    return 0;
+}

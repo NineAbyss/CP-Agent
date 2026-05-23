@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        long long count = 0;
+
+        // Iterate over all triples (i, j, k)
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                for (int k = j + 1; k < n; k++) {
+                    int s = a[i] + a[j] + a[k];
+                    int max_in = a[k];  // since sorted
+
+                    // Check condition: s > 2 * max_in
+                    if (s <= 2 * max_in) {
+                        continue;
+                    }
+
+                    // Find max_out: largest element not in {i, j, k}
+                    int max_out = 0;
+                    for (int p = n - 1; p >= 0; p--) {
+                        if (p != i && p != j && p != k) {
+                            max_out = a[p];
+                            break;
+                        }
+                    }
+
+                    // Check condition: s > max_out
+                    if (s > max_out) {
+                        count++;
+                    }
+                }
+            }
+        }
+
+        cout << count << '\n';
+    }
+    return 0;
+}

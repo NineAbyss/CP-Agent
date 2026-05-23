@@ -1,0 +1,65 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+int solve_one(int n, string s) {
+    vector<vector<int>> g(n, vector<int>(n));
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (i == j) {
+                g[i][j] = 1 - (s[j] - '0');
+            } else {
+                g[i][j] = s[j] - '0';
+            }
+        }
+    }
+    
+    vector<vector<bool>> vis(n, vector<bool>(n, false));
+    int max_size = 0;
+    
+    int dx[4] = {1, -1, 0, 0};
+    int dy[4] = {0, 0, 1, -1};
+    
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (g[i][j] == 0 && !vis[i][j]) {
+                queue<pair<int,int>> q;
+                q.push({i, j});
+                vis[i][j] = true;
+                int size = 0;
+                while (!q.empty()) {
+                    auto [x, y] = q.front(); q.pop();
+                    size++;
+                    for (int d = 0; d < 4; d++) {
+                        int nx = x + dx[d];
+                        int ny = y + dy[d];
+                        if (nx >= 0 && nx < n && ny >= 0 && ny < n && g[nx][ny] == 0 && !vis[nx][ny]) {
+                            vis[nx][ny] = true;
+                            q.push({nx, ny});
+                        }
+                    }
+                }
+                if (size > max_size) max_size = size;
+            }
+        }
+    }
+    return max_size;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        cout << solve_one(n, s) << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,49 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+const int MOD = 998244353;
+
+int main() {
+    // Read number of test cases
+    int t;
+    std::cin >> t;
+    while (t--) {
+        // Read n and k
+        int n, k;
+        std::cin >> n >> k;
+        std::string s;
+        std::cin >> s;
+        
+        // Determine positions of zeros in the string
+        std::vector<int> zero_positions;
+        for (int i = 0; i < n; ++i) {
+            if (s[i] == '0') zero_positions.push_back(i);
+        }
+        
+        int zero_count = zero_positions.size();
+        
+        // If not enough zeros to perform k operations, result is 0
+        if (zero_count < k) {
+            std::cout << "0\n";
+            continue;
+        }
+        
+        // Set up a DP table
+        std::vector<std::vector<int>> dp(zero_count + 1, std::vector<int>(k + 1, 0));
+        dp[0][0] = 1;  // Base case: one way to do zero operations
+        
+        // Fill the DP table
+        for (int i = 1; i <= zero_count; ++i) {
+            dp[i][0] = 1;  // One way to use zero operations from any zero
+            for (int j = 1; j <= k; ++j) {
+                dp[i][j] = (dp[i - 1][j] + dp[i - 1][j - 1]) % MOD;
+            }
+        }
+        
+        // Output the result, modulo 998244353
+        std::cout << dp[zero_count][k] << "\n";
+    }
+
+    return 0;
+}

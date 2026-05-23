@@ -1,0 +1,144 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<pair<int, int>> odd(k+1);
+        for (int i = 0; i <= k; i++) {
+            cin >> odd[i].first >> odd[i].second;
+        }
+        
+        bool ok = true;
+        vector<int> typ(k);
+        vector<pair<int, int>> c1(k), c2(k);
+        
+        for (int i = 0; i < k; i++) {
+            int x1 = odd[i].first, y1 = odd[i].second;
+            int x2 = odd[i+1].first, y2 = odd[i+1].second;
+            int dx = abs(x1 - x2), dy = abs(y1 - y2);
+            if (dx + dy != 2) {
+                ok = false;
+                break;
+            }
+            if (dx == 2 || dy == 2) {
+                typ[i] = 0;
+                c1[i] = {(x1 + x2) / 2, (y1 + y2) / 2};
+            } else {
+                typ[i] = 1;
+                c1[i] = {x1, y2};
+                c2[i] = {x2, y1};
+            }
+        }
+        
+        if (!ok) {
+            cout << "0\n";
+            continue;
+        }
+        
+        // 检查唯一中间点是否重复
+        set<pair<int, int>> used;
+        for (int i = 0; i < k; i++) {
+            if (typ[i] == 0) {
+                if (used.count(c1[i])) {
+                    ok = false;
+                    break;
+                }
+                used.insert(c1[i]);
+            }
+        }
+        if (!ok) {
+            cout << "0\n";
+            continue;
+        }
+        
+        // 对于对角间隙，如果某个候选已被占用，则只能选另一个
+        vector<vector<int>> adj(k);
+        map<pair<int, int>, int> mp;
+        for (int i = 0; i < k; i++) {
+            if (typ[i] == 1) {
+                vector<pair<int, int>> av;
+                if (!used.count(c1[i])) av.push_back(c1[i]);
+                if (!used.count(c2[i])) av.push_back(c2[i]);
+                if (av.empty()) {
+                    ok = false;
+                    break;
+                }
+                if (av.size() == 1) {
+                    used.insert(av[0]);
+                } else {
+                    for (auto &p : av) {
+                        if (mp.count(p)) {
+                            int j = mp[p];
+                            adj[i].push_back(j);
+                            adj[j].push_back(i);
+                        } else {
+                            mp[p] = i;
+                        }
+                    }
+                }
+            }
+        }
+        if (!ok) {
+            cout << "0\n";
+            continue;
+        }
+        
+        // 去除重复边
+        for (int i = 0; i < k; i++) {
+            sort(adj[i].begin(), adj[i].end());
+            adj[i].erase(unique(adj[i].begin(), adj[i].end()), adj[i].end());
+        }
+        
+        // 计算连通分量
+        vector<bool> vis(k, false);
+        long long ans = 1;
+        for (int i = 0; i < k; i++) {
+            if (typ[i] == 0 || vis[i]) continue;
+            vector<int> comp;
+            queue<int> q;
+            q.push(i);
+            vis[i] = true;
+            while (!q.empty()) {
+                int u = q.front(); q.pop();
+                comp.push_back(u);
+                for (int v : adj[u]) {
+                    if (!vis[v]) {
+                        vis[v] = true;
+                        q.push(v);
+                    }
+                }
+            }
+            int sz = comp.size();
+            int edges = 0;
+            for (int u : comp) edges += adj[u].size();
+            edges /= 2;
+            
+            if (edges == sz - 1) {
+                // 树
+                ans = ans * 2 % MOD;
+            } else if (edges == sz) {
+                // 环
+                if (sz % 2 == 1) {
+                    ans = 0;
+                    break;
+                }
+                ans = ans * 2 % MOD;
+            } else {
+                ans = 0;
+                break;
+            }
+        }
+        
+        cout << ans << "\n";
+    }
+    return 0;
+}

@@ -1,0 +1,94 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+ll triangular(ll x) {
+    return x * (x + 1) / 2;
+}
+
+void solve() {
+    ll n, k;
+    cin >> n >> k;
+    vector<ll> a(n);
+    ll S = 0;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        S += a[i];
+    }
+
+    // Binary search on lambda
+    ll lo = 0, hi = S;
+    ll best_lambda = 0;
+    
+    auto compute_total = [&](ll lambda) -> ll {
+        ll total_b = 0;
+        for (ll ai : a) {
+            if (lambda < ai) {
+                total_b += min(ai, lambda + k);
+            } else {
+                total_b += lambda;
+            }
+        }
+        return total_b;
+    };
+
+    while (lo <= hi) {
+        ll mid = (lo + hi) / 2;
+        if (compute_total(mid) <= S) {
+            best_lambda = mid;
+            lo = mid + 1;
+        } else {
+            hi = mid - 1;
+        }
+    }
+
+    // Compute base b_i
+    vector<ll> b(n);
+    ll total_b = 0;
+    for (int i = 0; i < n; i++) {
+        if (best_lambda < a[i]) {
+            b[i] = min(a[i], best_lambda + k);
+        } else {
+            b[i] = best_lambda;
+        }
+        total_b += b[i];
+    }
+
+    ll rem = S - total_b;
+
+    // Marginal cost for adding one more car
+    vector<pair<ll, int>> marg;
+    for (int i = 0; i < n; i++) {
+        ll next_pos = b[i] + 1;
+        ll mc = (next_pos <= a[i]) ? (next_pos - k) : next_pos;
+        marg.push_back({mc, i});
+    }
+    sort(marg.begin(), marg.end());
+
+    for (int i = 0; i < rem; i++) {
+        b[marg[i].second]++;
+    }
+
+    // Calculate total angriness
+    ll total_anger = 0;
+    for (int i = 0; i < n; i++) {
+        total_anger += triangular(b[i]);
+        if (a[i] > b[i]) {
+            total_anger += k * (a[i] - b[i]);
+        }
+    }
+
+    cout << total_anger << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

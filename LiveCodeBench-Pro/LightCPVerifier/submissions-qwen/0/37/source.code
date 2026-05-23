@@ -1,0 +1,303 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    // We want to maximize the number of arrays.
+    // The rule: an element starts a new array if the previous kept element + 1 < current element.
+    // So we can simulate a greedy process: // Let's maintain the last element of the last array we're building.
+    // We traverse the array and decide whether to keep each element.
+
+    // Actually, we can use greedy: we want as many arrays as possible. // Observation: Each time we start a new array, it's because the gap is > 1.
+    // But we can remove elements to create more gaps.
+
+    // Alternate idea: simulate the process greedily.
+    // We want to form as many arrays as possible. We can think greedily:
+    // Let’s maintain the last value placed in the current sequence of arrays. // However, note that after removals, the algorithm runs deterministically:
+    //   - Start with first kept element in first array.
+    //   - For each next kept element x: if last_placed + 1 < x → new array; else append to last array.
+
+    // We want to maximize the number of arrays. How? // We can use greedy: try to make a new array whenever possible.
+    // But we also need to consider that keeping small values might help chain more?
+
+    // Insight: We can simulate a greedy selection: // Let’s say we are going to simulate the final sequence after removals.
+    // We want to maximize the number of times we start a new array.
+
+    // We can use DP or greedy: // Let’s define:
+    //   We traverse from left to right, and we decide whether to keep or remove each element. // But constraints: total n <= 200,000 across test cases.
+
+    // Another insight:
+    // The process creates a new array at position i (if kept) if:
+    //   a_i > last_kept_element + 1 // So we want to maximize the number of such events.
+
+    // Greedy strategy: // Let’s maintain the last element we have kept (call it last).
+    // Initially, we must keep the first element? Not necessarily — but if we skip all, answer is 0. // But we can always keep the first element to start.
+
+    // However, maybe skipping the first helps? Probably not — we need at least one element to start.
+
+    // Strategy: //   Keep the first element -> count = 1, last = a[0]
+    //   Then for each next element: //      If a[i] > last + 1, then we can choose to keep it to start a new array (which increases count)
+    //      Otherwise, if we keep it, it gets appended to the last array (so no new array, but last becomes a[i]) //      But updating last to a larger value may prevent future jumps?
+
+    // Example: [1, 2, 4] //   Option 1: keep all -> arrays: [1,2], [4] -> 2 arrays
+    //   Option 2: remove 2 -> [1,4]: 1+1=2 < 4 -> new array -> 2 arrays //   Same result.
+
+    // But what if: [1, 2, 3, 5] //   Keep all: [1,2,3], [5] -> 2 arrays
+    //   Remove 2: [1,3,5]:  //       1 -> [1]
+    //       3: 1+1=2 < 3? yes -> new array [3] //       5: 3+1=4 < 5? yes -> new array [5] -> 3 arrays!
+    //   So better.
+
+    // So sometimes removing an element that would be chained allows more arrays later.
+
+    // How to solve? // We want to select a subsequence such that the number of times a[i] > prev + 1 is maximized.
+
+    // Let dp[i] = maximum number of arrays we can form using a subsequence ending at index i. // But we care about the last value too.
+
+    // Alternatively, let’s do: //   Let f(i, last) = max arrays from prefix i with last kept value = last — too heavy.
+
+    // Another idea: greedy with simulation. // We can simulate: we want to keep elements only when they can start a new array OR when they don't block future opportunities.
+
+    // Insight: We can use a greedy algorithm that always tries to minimize the last kept value to allow more jumps.
+
+    // Specifically: //   We must keep at least one element. Let's say we keep some elements: b[0], b[1], ..., b[k-1]
+    //   The number of arrays is 1 + (# of indices j where b[j] > b[j-1] + 1)
+
+    // So we want to maximize: 1 + count of jumps over gap > 1.
+
+    // Now, how to select the subsequence? // We can use greedy: traverse left to right, and maintain the last kept value.
+    // But should we keep an element only if it creates a jump?
+
+    // No — sometimes we keep an element that doesn’t create a jump to set up a smaller base.
+
+    // Actually, we want to minimize the last kept value whenever possible to allow more jumps.
+
+    // Strategy: //   Let last = -infinity, count = 0.
+    //   But we must start with one element.
+
+    // Better: //   We know the first element we keep will start the first array -> count = 1, last = a[i].
+    //   Then for subsequent elements: //     If a[i] > last + 1, then we can get a new array by keeping it. Should we?
+    //        Yes, because it increases count.
+    //     But what if we skip it? Maybe we get two jumps later? Unlikely.
+
+    // However, consider: [1, 2, 4, 5] //   Option 1: keep 1, then 2 (no jump), then 4: 2+1=3<4 -> jump -> count=2, then 5: 4+1=5 not <5 -> no jump.
+    //      total arrays = 2 //   Option 2: keep 1, skip 2, keep 4: 1+1=2<4 -> jump -> count=2, then 5: 4+1=5 not <5 -> no jump -> still 2
+    //   Option 3: keep 1, skip 2, skip 4, keep 5: 1+1=2<5 -> jump -> count=2
+
+    // But wait: what if: [1, 2, 4, 6] //   Option: keep 1, skip 2, keep 4: count=2 (arrays: [1],[4]), then 6: 4+1=5<6 -> jump -> count=3.
+    //   So we get 3.
+
+    // So the rule: when we see an element that can create a jump (a[i] > last+1), we should take it?
+    // But what if we skip it and get two jumps later? 
+
+    // Example: [1, 3, 4, 6] //   Start: keep 1 -> last=1, count=1
+    //   a[1]=3: 1+1=2 < 3 -> jump opportunity. If we keep: count=2, last=3 //      then 4: 3+1=4 not <4 -> no jump
+    //      then 6: 4+1=5<6 -> jump -> count=3 //      total=3
+    //   If we skip 3: then at 4: 1+1=2<4 -> jump -> count=2, last=4 //      then 6: 4+1=5<6 -> jump -> count=3
+    //      same.
+    //   But if we skip both 3 and 4: then 6: 1+1=2<6 -> jump -> count=2 -> worse.
+
+    // So taking a jump opportunity never hurts? But what about setting a lower last?
+
+    // Consider: [1, 3, 4, 5, 7] //   Option A: take 3 -> count=2, last=3
+    //      4: no jump -> last=4 //      5: no jump -> last=5
+    //      7: 5+1=6<7 -> jump -> count=3 //   Option B: skip 3, take 4 -> count=2, last=4
+    //      5: no jump -> last=5 //      7: jump -> count=3
+    //   Option C: skip 3,4, take 5 -> count=2, last=5 -> then 7: jump -> count=3 //   Option D: skip 3,4,5, take 7 -> count=2
+    //   So best is 3.
+
+    // But what if: [1, 3, 4, 6, 7] //   Take 3: count=2, last=3
+    //     4: no jump -> last=4 //     6: 4+1=5<6 -> jump -> count=3, last=6
+    //     7: no jump -> count=3 //   Skip 3, take 4: count=2, last=4
+    //     6: 4+1=5<6 -> jump -> count=3, last=6 //     7: no jump -> count=3
+    //   Skip 3, skip 4, take 6: count=2, last=6 -> then 7: no jump -> count=2 //   So better to take earlier jump.
+
+    // But now consider: [1, 3, 5, 6, 8] //   Take 3: count=2, last=3
+    //     5: 3+1=4<5 -> jump -> count=3, last=5 //     6: no jump -> last=6
+    //     8: 6+1=7<8 -> jump -> count=4 //   Skip 3, take 5: count=2, last=5
+    //     6: no jump -> last=6 //     8: jump -> count=3
+    //   So taking 3 leads to 4 arrays.
+
+    // So it seems beneficial to take every chance to create a jump?
+
+    // But wait: what if taking a jump sets last to a high value that blocks multiple future jumps?
+
+    // Example: [1, 3, 4, 5, 100] //   Take 3: count=2, last=3
+    //     4: no jump -> last=4 //     5: no jump -> last=5
+    //     100: 5+1=6<100 -> jump -> count=3 //   Skip 3, skip 4, skip 5, take 100: count=2
+    //   Or skip 3, take 4: count=2, last=4 -> then 5: no jump, 100: jump -> count=3 //   So same.
+
+    // But what if: [1, 3, 4, 5, 7, 8, 10] //   Take 3: count=2, last=3
+    //     4: no jump -> last=4 //     5: no jump -> last=5
+    //     7: 5+1=6<7 -> jump -> count=3, last=7 //     8: no jump -> last=8
+    //     10: 8+1=9<10 -> jump -> count=4 //   Total: 4
+    //   What if we skip 3?  //     Then we can take 4: 1+1=2<4 -> jump -> count=2, last=4
+    //       5: no jump -> last=5 //       7: 5+1=6<7 -> jump -> count=3, last=7
+    //       8: no jump -> last=8 //       10: jump -> count=4
+    //   Same.
+
+    // It seems that once we have a jump, the exact value we jump to doesn't matter much as long as we can continue.
+
+    // However, here's a key insight:  //   We want to minimize the last kept value whenever we are not creating a jump, so that future jumps are easier.
+    //   But when we can create a jump, we should do it to increase the count.
+
+    // But note: if we have a choice between two elements that both can create a jump, we should pick the smallest one? //   Because then the next required gap is smaller.
+
+    // However, since the array is sorted, we encounter smaller ones first.
+
+    // Proposed greedy: //   Let count = 0, last = -10**9 (a very small number)
+    //   For each element in order: //      If a[i] > last + 1:
+    //          Then we can start a new array by including this element. //          So we do: count++, last = a[i]
+    //      Else: //          We can include it without starting a new array, but that would update last to a[i] (which is >= last, but could be larger)
+    //          But if we skip it, last remains.
+    //          However, if we include it, we set last to a[i] which might be larger than before, potentially blocking future jumps?
+    //          But since a[i] <= a[i+1], and we are going in increasing order, having a larger last might prevent a jump at the next element? //
+    // Example: [1, 2, 4] //   i=0: a[0]=1, 1 > -inf+1 -> true -> count=1, last=1
+    //   i=1: a[1]=2, 2 > 1+1? 2>2? false -> we are in else. //         Should we include it? If we include: last=2
+    //         Then i=2: 4>2+1? 4>3 -> true -> count=2 //         If we skip: last=1, then 4>1+1=2 -> true -> count=2
+    //         Same. //
+    // But what if: [1, 2, 3, 5] //   i0: 1 > -inf -> count=1, last=1
+    //   i1: 2>1+1=2? no -> else //        Option: skip -> last=1
+    //   i2: 3>1+1=2? yes -> count=2, last=3 //   i3: 5>3+1=4? yes -> count=3, last=5
+    //   So we get 3.
+    //   If we had taken 2: last=2, then 3: 3>2+1=3? no -> skip or take? if take: last=3 -> same as above.
+    //   But if we take 2 and then 3: last=3 -> same. //
+    // So in the else branch, does it matter whether we take or skip? //   Taking updates last to a[i] (which is >= last), skipping leaves last unchanged.
+    //   Since a[i] >= last (because sorted), and we are going forward, we want last to be as small as possible to allow more jumps.
+    //   Therefore, in the else branch, we should skip the element to keep last small.
+    //
+    // Why? Because if we take it, we set last to a[i] which is bigger than the current last, making it harder for the next element to satisfy a[j] > last+1.
+    // // Example: [1, 2, 4, 5]
+    //   Without skipping in else: //      i0: 1 -> count=1, last=1
+    //      i1: 2>1+1=2? no -> else -> if we take: last=2 //      i2: 4>2+1=3? yes -> count=2, last=4
+    //      i3: 5>4+1=5? no -> skip -> count=2
+    //   With skipping in else:
+    //      i0: count=1, last=1 #      i1: 2>2? no -> skip -> last=1
+    #      i2: 4>1+1=2? yes -> count=2, last=4
+    #      i3: 5>4+1=5? no -> skip -> count=2
+    #   Same.
+    #
+    # But consider: [1, 2, 3, 4, 6]
+    #   Without skip in else (i.e., always take in else):
+    #      1: count=1, last=1
+    #      2: no -> take -> last=2
+    #      3: no -> take -> last=3
+    #      4: no -> take -> last=4
+    #      6: 6>4+1=5? yes -> count=2
+    #   With skip in else:
+    #      1: count=1, last=1
+    #      2: skip -> last=1
+    #      3: 3>1+1=2? yes -> count=2, last=3
+    #      4: 4>3+1=4? no -> skip -> last=3
+    #      6: 6>3+1=4? yes -> count=3
+    #   So we get 3 vs 2 -> big difference!
+    #
+    # Therefore, in the else branch, we should skip the element to keep last as small as possible.
+    #
+    # Algorithm:
+    #   count = 0
+    #   last = -1 (but we haven't started)
+    #   But we must start with one element? Actually, the first element we keep will be the first array.
+    #
+    #   However, we can choose any subsequence. We want to maximize the number of jumps (which equals count of arrays minus 1, plus the first array).
+    #
+    #   We can reframe: the number of arrays is the number of times we have a "jump" (including the first element as a jump from nothing).
+    #
+    #   So let:
+    #       count = 0
+    #       last = -10**9   (a very small number)
+    #   For each a[i]:
+    #       if a[i] > last + 1:
+    #           count += 1
+    #           last = a[i]   // we take this element to start a new array
+    #       else:
+    #           // a[i] <= last + 1 #           // we skip it to keep last small
+    #           // do nothing #
+    #   But wait: what if we never take any element? Then count=0. But we can always take at least one?
+    #
+    #   However, the first element: a[0] > -10**9+1 -> true -> we take it -> count=1, last=a[0]
+    #
+    #   This matches.
+    #
+    #   Let's test with examples:
+    #
+    #   Example 1: [1,2,3,4,5,6]
+    #       i0: 1 > -10**9+1 -> true -> count=1, last=1
+    #       i1: 2 > 1+1=2? 2>2? false -> skip
+    #       i2: 3 > 1+1=2? true -> count=2, last=3
+    #       i3: 4 > 3+1=4? false -> skip
+    #       i4: 5 > 3+1=4? true -> count=3, last=5
+    #       i5: 6 > 5+1=6? false -> skip
+    #       count=3 -> matches expected output.
+    #
+    #   Example 2: [1,2,3]
+    #       i0: 1 -> count=1, last=1
+    #       i1: 2>2? false -> skip
+    #       i2: 3>1+1=2? true -> count=2, last=3
+    #       count=2 -> matches.
+    #
+    #   Example 3: [1,2,2,4]
+    #       i0: 1 -> count=1, last=1
+    #       i1: 2>1+1=2? false -> skip
+    #       i2: 2>1+1=2? false -> skip
+    #       i3: 4>1+1=2? true -> count=2, last=4
+    #       count=2 -> matches.
+    #
+    #   Example 4: [2] 
+    #       i0: 2 > -10**9+1 -> true -> count=1 -> matches.
+    #
+    #   Example 5: [1,4,8]
+    #       i0: 1 -> count=1, last=1
+    #       i1: 4>1+1=2? true -> count=2, last=4
+    #       i2: 8>4+1=5? true -> count=3 -> matches.
+    #
+    #   Example 6: [1,1]
+    #       i0: 1 -> count=1, last=1
+    #       i1: 1>1+1=2? false -> skip
+    #       count=1 -> matches.
+    #
+    #   Perfect!
+    #
+    #   Therefore, the solution is:
+    #       Initialize count = 0, last = a very small number (like -2e6, since a[i]>=1)
+    #       For each element in the array:
+    #           if a[i] > last + 1:
+    #               count += 1
+    #               last = a[i]
+    #       Output count.
+    #
+    #   Note: The total n across test cases is <= 200,000, so O(n) per test case is acceptable.
+
+    int count = 0;
+    int last = -2000000;  // smaller than any a[i] (which are >=1)
+
+    for (int i = 0; i < n; i++) {
+        if (a[i] > last + 1) {
+            count++;
+            last = a[i];
+        }
+    }
+
+    return count;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        cout << solve() << '\n';
+    }
+
+    return 0;
+}

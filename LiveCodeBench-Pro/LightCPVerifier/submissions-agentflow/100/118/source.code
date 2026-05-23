@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+
+int main() {
+    int t;
+    std::cin >> t;
+
+    while (t--) {
+        int n;
+        std::cin >> n;
+        
+        std::vector<int> p(n), d(n), index(n);
+        
+        // Record the index position for each permutation element
+        for (int i = 0; i < n; ++i) {
+            std::cin >> p[i];
+            index[p[i] - 1] = i;
+        }
+        
+        // Convert queries positions to zeroed indices
+        for (int i = 0; i < n; ++i) {
+            std::cin >> d[i];
+            d[i] = index[d[i] - 1];
+        }
+
+        std::unordered_set<int> zeroed_indices;
+        int max_filled_index = 0;
+        
+        for (int i = 0; i < n; ++i) {
+            zeroed_indices.insert(d[i]);
+
+            // Move the max filled index as long as indices are zeroed continuously
+            while (zeroed_indices.count(max_filled_index)) {
+                ++max_filled_index;
+            }
+
+            // Calculate and print the operations needed
+            int operations_needed = n - max_filled_index;
+            std::cout << operations_needed << " ";
+        }
+        std::cout << "\n";
+    }
+
+    return 0;
+}

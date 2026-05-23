@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        ll n, k;
+        cin >> n >> k;
+        vector<ll> p(n), d(n);
+        for (int i = 0; i < n; i++) cin >> p[i];
+        for (int i = 0; i < n; i++) cin >> d[i];
+        
+        // 预处理每个区间是否为 trap 区间
+        vector<bool> trap(n - 1, false);
+        for (int i = 0; i < n - 1; i++) {
+            ll L = p[i + 1] - p[i];
+            if ((d[i] + d[i + 1] + L) % k == 0) {
+                trap[i] = true;
+            }
+        }
+        
+        // 对于每个灯，预处理向左和向右的 trap 条件
+        vector<bool> left_trap(n, false), right_trap(n, false);
+        for (int i = 0; i < n; i++) {
+            if (i > 0) {
+                ll L = p[i] - p[i - 1];
+                if (trap[i - 1] && L % k == d[i - 1]) {
+                    left_trap[i] = true;
+                }
+            }
+            if (i < n - 1) {
+                ll L = p[i + 1] - p[i];
+                if (trap[i] && L % k == d[i + 1]) {
+                    right_trap[i] = true;
+                }
+            }
+        }
+        
+        int q;
+        cin >> q;
+        while (q--) {
+            ll x;
+            cin >> x;
+            
+            auto it = lower_bound(p.begin(), p.end(), x);
+            bool on_light = (it != p.end() && *it == x);
+            bool ans = true;
+            
+            if (on_light) {
+                int idx = it - p.begin();
+                // 初始方向
+                bool red_start = (0 % k == d[idx]);
+                if (red_start) {
+                    // 初始向左
+                    if (left_trap[idx]) ans = false;
+                } else {
+                    // 初始向右
+                    if (right_trap[idx]) ans = false;
+                }
+            } else {
+                auto it_up = upper_bound(p.begin(), p.end(), x);
+                int idx = it_up - p.begin(); // 右边灯索引
+                if (idx > 0 && idx < n) {
+                    int inter = idx - 1;
+                    if (trap[inter] && (p[idx] - x) % k == d[idx]) {
+                        ans = false;
+                    }
+                }
+            }
+            
+            cout << (ans ? "YES" : "NO") << '\n';
+        }
+    }
+    return 0;
+}

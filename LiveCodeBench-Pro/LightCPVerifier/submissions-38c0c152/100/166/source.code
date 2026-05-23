@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <set>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int count_reachable(const string& s) {
+    set<string> visited;
+    queue<string> q;
+    q.push(s);
+    visited.insert(s);
+    while (!q.empty()) {
+        string cur = q.front(); q.pop();
+        int m = cur.size();
+        for (int i = 0; i <= m - 3; ++i) {
+            char a = cur[i], b = cur[i+1], c = cur[i+2];
+            char x;
+            if (a == b || a == c) x = a;
+            else x = b;
+            int j = i;
+            while (cur[j] != x) j++;
+            string nxt = cur;
+            nxt.erase(j, 1);
+            if (visited.find(nxt) == visited.end()) {
+                visited.insert(nxt);
+                q.push(nxt);
+            }
+        }
+    }
+    return visited.size() % MOD;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+        cout << count_reachable(s) << '\n';
+    }
+    return 0;
+}

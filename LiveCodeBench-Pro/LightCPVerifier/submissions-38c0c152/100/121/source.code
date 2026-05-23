@@ -1,0 +1,197 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+const int N = 200010;
+
+pair<int,int> sounds[N];
+map<int, vector<int>> vol_to_idx, pitch_to_idx;
+bool used[N];
+int n;
+
+bool construct(vector<int>& path, int start) {
+    memset(used, 0, sizeof(used));
+    path.clear();
+    int cur = start;
+    used[cur] = true;
+    path.push_back(cur);
+    int last_move = -1; // 0: horizontal, 1: vertical
+    for (int step = 1; step < n; step++) {
+        int v_cur = sounds[cur].first;
+        int p_cur = sounds[cur].second;
+        bool found = false;
+        // 决定移动类型
+        if (last_move != 1) {
+            // 尝试水平移动：相同音量
+            for (int nxt : vol_to_idx[v_cur]) {
+                if (!used[nxt] && sounds[nxt].second != p_cur) {
+                    used[nxt] = true;
+                    path.push_back(nxt);
+                    cur = nxt;
+                    last_move = 0;
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (!found && last_move != 0) {
+            // 尝试垂直移动：相同音高
+            for (int nxt : pitch_to_idx[p_cur]) {
+                if (!used[nxt] && sounds[nxt].first != v_cur) {
+                    used[nxt] = true;
+                    path.push_back(nxt);
+                    cur = nxt;
+                    last_move = 1;
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (!found) {
+            // 如果失败，尝试任何可用的移动
+            for (int nxt : vol_to_idx[v_cur]) {
+                if (!used[nxt]) {
+                    used[nxt] = true;
+                    path.push_back(nxt);
+                    cur = nxt;
+                    last_move = 0;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                for (int nxt : pitch_to_idx[p_cur]) {
+                    if (!used[nxt]) {
+                        used[nxt] = true;
+                        path.push_back(nxt);
+                        cur = nxt;
+                        last_move = 1;
+                        found = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!found) return false;
+    }
+    // 验证
+    for (int i = 0; i < n-1; i++) {
+        int idx1 = path[i];
+        int idx2 = path[i+1];
+        auto [v1,p1] = sounds[idx1];
+        auto [v2,p2] = sounds[idx2];
+        if (!((v1 == v2 && p1 != p2) || (p1 == p2 && v1 != v2))) return false;
+    }
+    for (int i = 0; i < n-2; i++) {
+        int idx1 = path[i];
+        int idx2 = path[i+1];
+        int idx3 = path[i+2];
+        auto [v1,p1] = sounds[idx1];
+        auto [v2,p2] = sounds[idx2];
+        auto [v3,p3] = sounds[idx3];
+        if (v1 == v2 && v2 == v3) return false;
+        if (p1 == p2 && p2 == p3) return false;
+    }
+    return true;
+}
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        scanf("%d", &n);
+        vol_to_idx.clear();
+        pitch_to_idx.clear();
+        for (int i = 0; i < n; i++) {
+            int v, p;
+            scanf("%d %d", &v, &p);
+            sounds[i] = {v, p};
+            vol_to_idx[v].push_back(i);
+            pitch_to_idx[p].push_back(i);
+        }
+        // 检查度数条件
+        int max_deg = 0;
+        for (auto& [v, vec] : vol_to_idx) max_deg = max(max_deg, (int)vec.size());
+        for (auto& [p, vec] : pitch_to_idx) max_deg = max(max_deg, (int)vec.size());
+        int limit = (n + 1) / 2;
+        if (max_deg > limit) {
+            printf("NO\n");
+            continue;
+        }
+        // 检查连通性
+        map<int, int> vol_id, pitch_id;
+        int vid = 0, pid = 0;
+        for (auto& [v, vec] : vol_to_idx) vol_id[v] = vid++;
+        for (auto& [p, vec] : pitch_to_idx) pitch_id[p] = pid++;
+        vector<vector<int>> adj(vid + pid);
+        for (int i = 0; i < n; i++) {
+            int v = sounds[i].first;
+            int p = sounds[i].second;
+            int u = vol_id[v];
+            int w = pitch_id[p] + vid;
+            adj[u].push_back(w);
+            adj[w].push_back(u);
+        }
+        vector<bool> vis(vid + pid, false);
+        int start = -1;
+        for (int i = 0; i < vid + pid; i++) {
+            if (!adj[i].empty()) {
+                start = i;
+                break;
+            }
+        }
+        if (start != -1) {
+            vector<int> stack = {start};
+            vis[start] = true;
+            while (!stack.empty()) {
+                int u = stack.back();
+                stack.pop_back();
+                for (int v : adj[u]) {
+                    if (!vis[v]) {
+                        vis[v] = true;
+                        stack.push_back(v);
+                    }
+                }
+            }
+        }
+        bool connected = true;
+        for (int i = 0; i < vid + pid; i++) {
+            if (!adj[i].empty() && !vis[i]) {
+                connected = false;
+                break;
+            }
+        }
+        if (!connected) {
+            printf("NO\n");
+            continue;
+        }
+        // 检查奇度顶点
+        int odd_count = 0;
+        for (int i = 0; i < vid; i++) if (adj[i].size() % 2) odd_count++;
+        for (int i = vid; i < vid+pid; i++) if (adj[i].size() % 2) odd_count++;
+        if (odd_count != 0 && odd_count != 2) {
+            printf("NO\n");
+            continue;
+        }
+        // 尝试每个起始点
+        vector<int> path;
+        bool found = false;
+        for (int s = 0; s < n; s++) {
+            if (construct(path, s)) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            printf("NO\n");
+        } else {
+            printf("YES\n");
+            for (int x : path) printf("%d ", x+1);
+            printf("\n");
+        }
+    }
+    return 0;
+}

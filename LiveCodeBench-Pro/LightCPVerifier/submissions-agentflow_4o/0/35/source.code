@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+
+        vector<vector<int>> tree(n + 1);
+        for (int i = 0; i < n - 1; ++i) {
+            int u, v;
+            cin >> u >> v;
+            tree[u].push_back(v);
+            tree[v].push_back(u);
+        }
+        
+        vector<int> values(n + 1, 0);
+
+        // Query summation of all paths starting from node 1
+        cout << "? 1 " << n << " ";
+        for (int i = 1; i <= n; ++i) {
+            cout << i << " ";
+        }
+        cout << "\n";
+        cout.flush();
+
+        int total;
+        cin >> total;
+
+        // Determine root-bounded values using node 1 perspective
+        for (int i : tree[1]) {
+            cout << "? 1 1 " << i << "\n";
+            cout.flush();
+            int result;
+            cin >> result;
+            
+            values[i] = (result == total - values[1]) ? 1 : -1;
+        }
+
+        // Toggle node 1 for confirming initial assumptions are valid
+        cout << "? 2 1\n";
+        cout.flush();
+        
+        // Validate paths after toggling
+        for (int i : tree[1]) {
+            cout << "? 1 1 " << i << "\n";
+            cout.flush();
+            int toggledResult;
+            cin >> toggledResult;
+            
+            // Affirm value adjustments based on toggle output
+            if (values[i] != (toggledResult + values[1])) {
+                values[i] = -values[i];
+            }
+        }
+
+        // Output final values of nodes as resolved
+        cout << "! ";
+        for (int i = 1; i <= n; ++i) {
+            cout << values[i] << " ";
+        }
+        cout << "\n";
+        cout.flush();
+    }
+
+    return 0;
+}

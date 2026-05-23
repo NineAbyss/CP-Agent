@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, x;
+    cin >> n >> x;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    int button_remaining = 0;
+    bool button_used = false;
+    
+    for (int i = 0; i < n; i++) {
+        if (a[i] == 0) {
+            if (button_remaining > 0) {
+                button_remaining--;
+            }
+        } else { // a[i] == 1
+            if (button_remaining > 0) {
+                button_remaining--;
+            } else {
+                if (button_used) {
+                    cout << "NO\n";
+                    return;
+                }
+                button_used = true;
+                button_remaining = x;
+                if (button_remaining == 0) {
+                    cout << "NO\n";
+                    return;
+                }
+                button_remaining--; // 通过当前门
+            }
+        }
+    }
+    cout << "YES\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

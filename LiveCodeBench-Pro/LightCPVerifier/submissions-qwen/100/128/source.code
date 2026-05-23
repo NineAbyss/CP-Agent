@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    vector<set<int>> arr(n);
+    vector<bool> deleted(q + 1, false); // deleted[i] = true if element i is deleted
+
+    int ans_prev = 0;
+
+    for (int i = 1; i <= q; ++i) {
+        int a, b, c;
+        cin >> a >> b >> c;
+
+        int param, p;
+        if (a == 1 || a == 2) {
+            param = (b + ans_prev - 1) % n + 1;
+        } else {
+            param = (b + ans_prev - 1) % q + 1;
+        }
+        p = (c + ans_prev - 1) % n + 1;
+        p--;
+
+        if (a == 1) {
+            for (int j = 0; j < param; ++j) {
+                arr[j].insert(i);
+            }
+        } else if (a == 2) {
+            reverse(arr.begin(), arr.begin() + param);
+        } else if (a == 3) {
+            deleted[param] = true;
+        }
+
+        // Clean the front of arr[p] and get smallest non-deleted
+        while (!arr[p].empty()) {
+            int candidate = *arr[p].begin();
+            if (deleted[candidate]) {
+                arr[p].erase(arr[p].begin());
+            } else {
+                ans_prev = candidate;
+                break;
+            }
+        }
+        if (arr[p].empty()) {
+            ans_prev = 0;
+        }
+        cout << ans_prev << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        // 收集偶数位置和奇数位置的元素
+        vector<int> even_elems, odd_elems;
+        for (int i = 0; i < n; i++) {
+            if (i % 2 == 0) {
+                even_elems.push_back(a[i]);
+            } else {
+                odd_elems.push_back(a[i]);
+            }
+        }
+        
+        // 排序
+        sort(even_elems.begin(), even_elems.end());
+        sort(odd_elems.begin(), odd_elems.end());
+        
+        // 构建结果
+        vector<int> result(n);
+        int even_idx = 0, odd_idx = 0;
+        for (int i = 0; i < n; i++) {
+            if (i % 2 == 0) {
+                result[i] = even_elems[even_idx++];
+            } else {
+                result[i] = odd_elems[odd_idx++];
+            }
+        }
+        
+        // 输出
+        for (int i = 0; i < n; i++) {
+            cout << result[i];
+            if (i < n - 1) cout << " ";
+        }
+        cout << "\n";
+    }
+    
+    return 0;
+}

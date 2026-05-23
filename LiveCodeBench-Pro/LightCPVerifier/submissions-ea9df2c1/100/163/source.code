@@ -1,0 +1,150 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+typedef long long ll;
+
+struct Dinic {
+    struct Edge {
+        int to, rev;
+        ll cap;
+    };
+    
+    int n;
+    vector<vector<Edge>> g;
+    vector<int> level, iter;
+    
+    Dinic(int n) : n(n), g(n), level(n), iter(n) {}
+    
+    void add_edge(int from, int to, ll cap) {
+        Edge forward = {to, (int)g[to].size(), cap};
+        Edge backward = {from, (int)g[from].size(), 0};
+        g[from].push_back(forward);
+        g[to].push_back(backward);
+    }
+    
+    void bfs(int s) {
+        fill(level.begin(), level.end(), -1);
+        queue<int> q;
+        level[s] = 0;
+        q.push(s);
+        while (!q.empty()) {
+            int v = q.front(); q.pop();
+            for (auto &e : g[v]) {
+                if (e.cap > 0 && level[e.to] < 0) {
+                    level[e.to] = level[v] + 1;
+                    q.push(e.to);
+                }
+            }
+        }
+    }
+    
+    ll dfs(int v, int t, ll f) {
+        if (v == t) return f;
+        for (int &i = iter[v]; i < (int)g[v].size(); i++) {
+            Edge &e = g[v][i];
+            if (e.cap > 0 && level[v] < level[e.to]) {
+                ll d = dfs(e.to, t, min(f, e.cap));
+                if (d > 0) {
+                    e.cap -= d;
+                    g[e.to][e.rev].cap += d;
+                    return d;
+                }
+            }
+        }
+        return 0;
+    }
+    
+    ll max_flow(int s, int t) {
+        ll flow = 0;
+        while (true) {
+            bfs(s);
+            if (level[t] < 0) return flow;
+            fill(iter.begin(), iter.end(), 0);
+            ll f;
+            while ((f = dfs(s, t, 1e18)) > 0) {
+                flow += f;
+            }
+        }
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        
+        vector<ll> s(n);
+        for (int i = 0; i < n; i++) cin >> s[i];
+        
+        vector<vector<ll>> a(m+1, vector<ll>(n));
+        vector<vector<ll>> b(m+1, vector<ll>(n));
+        vector<vector<ll>> c(m+1, vector<ll>(n));
+        
+        for (int i = 1; i <= m; i++) {
+            for (int j = 0; j < n; j++) cin >> a[i][j];
+            for (int j = 0; j < n; j++) cin >> b[i][j];
+            for (int j = 0; j < n; j++) cin >> c[i][j];
+        }
+        
+        // 为每个k计算答案
+        for (int k = 1; k <= m; k++) {
+            // 构建网络 // 节点: 0=S, 1..(k+1)*n 为Y节点，T=最后一个
+            int total_nodes = (k+1) * n + 2;
+            int S = 0, T = total_nodes - 1;
+            Dinic dinic(total_nodes);
+            
+            auto get_node = [&](int day, int airport) {
+                return 1 + (day-1)*n + airport;
+            };
+            
+            // S -> Y_{1,j}
+            for (int j = 0; j < n; j++) {
+                dinic.add_edge(S, get_node(1, j), s[j]);
+            }
+            
+            // 添加每天的边
+            for (int i = 1; i <= k; i++) {
+                for (int j = 0; j < n; j++) {
+                    int from = get_node(i, j);
+                    
+                    // 到第i+1天，同一个机场（留在本地）
+                    int to_same = get_node(i+1, j);
+                    dinic.add_edge(from, to_same, b[i][j]);
+                    
+                    // 到第i+1天，前一个机场
+                    int prev_j = (j-1+n) % n;
+                    int to_prev = get_node(i+1, prev_j);
+                    dinic.add_edge(from, to_prev, a[i][j]);
+                    
+                    // 到第i+1天，后一个机场
+                    int next_j = (j+1) % n;
+                    int to_next = get_node(i+1, next_j);
+                    dinic.add_edge(from, to_next, c[i][j]);
+                }
+            }
+            
+            // Y_{k+1,j} -> T
+            for (int j = 0; j < n; j++) {
+                int node = get_node(k+1, j);
+                dinic.add_edge(node, T, 1e18);
+            }
+            
+            ll flow = dinic.max_flow(S, T);
+            cout << flow;
+            if (k < m) cout << " ";
+        }
+        cout << '\n';
+    }
+    
+    return 0;
+}

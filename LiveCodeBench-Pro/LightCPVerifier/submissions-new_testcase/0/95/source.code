@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        long long S = 0;
+        int mn = INT_MAX, mx = INT_MIN;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            S += a[i];
+            if (a[i] < mn) mn = a[i];
+            if (a[i] > mx) mx = a[i];
+        }
+        bool tom_wins;
+        if (mx - mn > k) {
+            int max_count = 0;
+            for (int x : a) if (x == mx) max_count++;
+            if (max_count == 1 && mx - mn - 1 <= k) {
+                tom_wins = (S % 2 == 1);
+            } else {
+                tom_wins = false;
+            }
+        } else {
+            tom_wins = (S % 2 == 1);
+        }
+        cout << (tom_wins ? "Tom" : "Jerry") << '\n';
+    }
+    return 0;
+}

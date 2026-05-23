@@ -1,0 +1,82 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <unordered_map>
+#include <string>
+#include <functional>
+
+using namespace std;
+
+bool beats(int i, int j, int n) {
+    if (min(i, j) == 1 && max(i, j) == n) {
+        return i == 1;
+    }
+    return i > j;
+}
+
+string solve(int n, uint64_t a_mask, uint64_t b_mask) {
+    static unordered_map<uint64_t, string> memo;
+    if (memo.count(a_mask)) {
+        return memo[a_mask];
+    }
+
+    if (b_mask == 0) {
+        return memo[a_mask] = "Alice";
+    }
+    if (a_mask == 0) {
+        return memo[a_mask] = "Bob";
+    }
+
+    for (int i = 0; i < n; i++) {
+        if (!(a_mask & (1ULL << i))) continue;
+        int card_a = i+1;
+        bool alice_wins_move = true;
+        for (int j = 0; j < n; j++) {
+            if (!(b_mask & (1ULL << j))) continue;
+            int card_b = j+1;
+
+            uint64_t new_a_mask = a_mask, new_b_mask = b_mask;
+            new_a_mask &= ~(1ULL << i);
+            new_b_mask &= ~(1ULL << j);
+
+            if (beats(card_a, card_b, n)) {
+                new_a_mask |= (1ULL << i);
+                new_a_mask |= (1ULL << j);
+            } else {
+                new_b_mask |= (1ULL << i);
+                new_b_mask |= (1ULL << j);
+            }
+
+            string result = solve(n, new_a_mask, new_b_mask);
+            if (result == "Bob") {
+                alice_wins_move = false;
+                break;
+            }
+        }
+        if (alice_wins_move) {
+            return memo[a_mask] = "Alice";
+        }
+    }
+    return memo[a_mask] = "Bob";
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+        uint64_t a_mask = 0, b_mask = 0;
+        for (int i = 0; i < n; i++) {
+            if (s[i] == 'A') {
+                a_mask |= (1ULL << i);
+            } else {
+                b_mask |= (1ULL << i);
+            }
+        }
+        cout << solve(n, a_mask, b_mask) << '\n';
+    }
+    return 0;
+}

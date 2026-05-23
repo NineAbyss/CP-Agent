@@ -1,0 +1,38 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<pair<int, pair<int, int>>> operations;
+
+        if (n == 3) {
+            operations.emplace_back(2, make_pair(1, 3));
+            operations.emplace_back(2, make_pair(2, 3));
+            operations.emplace_back(3, make_pair(1, 2));
+            operations.emplace_back(3, make_pair(2, 3));
+        } else if (n == 4) {
+            operations.emplace_back(2, make_pair(1, 4));
+            operations.emplace_back(3, make_pair(1, 3));
+            operations.emplace_back(3, make_pair(2, 4));
+            operations.emplace_back(4, make_pair(3, 4));
+            operations.emplace_back(4, make_pair(1, 2));
+        } else {
+            for (int i = 1; i <= n; ++i) {
+                operations.emplace_back(i, make_pair(1, n));
+            }
+        }
+
+        cout << operations.size() << '\n';
+        for (auto &op : operations) {
+            cout << op.first << ' ' << op.second.first << ' ' << op.second.second << '\n';
+        }
+    }
+
+    return 0;
+}

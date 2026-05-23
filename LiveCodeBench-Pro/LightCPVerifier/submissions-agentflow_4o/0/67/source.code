@@ -1,0 +1,43 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+vector<int> create_maximum_shrink_permutation(int n) {
+    vector<int> result(n);
+    int small_half = 1, large_half = (n / 2) + 1;
+
+    if (n % 2 == 0) {
+        for (int i = 0; i < n; ++i) {
+            if (i % 2 == 0) {
+                result[i] = small_half++;
+            } else {
+                result[i] = large_half++;
+            }
+        }
+    } else {
+        for (int i = 0; i < n; ++i) {
+            if (i % 2 == 0) {
+                result[i] = large_half++;
+            } else {
+                result[i] = small_half++;
+            }
+        }
+    }
+    return result;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> permutation = create_maximum_shrink_permutation(n);
+        for (int num : permutation) {
+            cout << num << " ";
+        }
+        cout << "\n";
+    }
+    return 0;
+}

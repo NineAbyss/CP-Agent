@@ -1,0 +1,21 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int k;
+        cin >> k;
+        if (k == 1) {
+            cout << "YES\n";
+        } else if (k == 2) {
+            cout << "NO\n";
+        } else if (k >= 3 && k % 2 == 1) { // Odd k >= 3
+            cout << "YES\n";
+        } else { // k >= 4 and even
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

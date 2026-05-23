@@ -1,0 +1,90 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <numeric>
+using namespace std;
+
+struct DSU {
+    vector<int> parent, rank;
+    DSU(int n) : parent(n), rank(n, 0) {
+        iota(parent.begin(), parent.end(), 0);
+    }
+    int find(int x) {
+        if (parent[x] != x) parent[x] = find(parent[x]);
+        return parent[x];
+    }
+    void unite(int x, int y) {
+        x = find(x); y = find(y);
+        if (x == y) return;
+        if (rank[x] < rank[y]) {
+            parent[x] = y;
+        } else if (rank[x] > rank[y]) {
+            parent[y] = x;
+        } else {
+            parent[y] = x;
+            rank[x]++;
+        }
+    }
+};
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        int nodes = 3 * n;
+        DSU dsu(nodes);
+        vector<long long> weight(nodes, 0);
+        // set weights for columns
+        for (int j = 0; j < n; ++j) {
+            if (s[j] == '0') {
+                weight[j] = j; // top part size
+                weight[n + j] = n - j - 1; // bottom part size
+            }
+        }
+        // set weights for diagonal zeros
+        for (int i = 0; i < n; ++i) {
+            if (s[i] == '1') {
+                weight[2*n + i] = 1;
+            }
+        }
+        // merge adjacent zero columns: top with top, bottom with bottom
+        for (int j = 0; j < n-1; ++j) {
+            if (s[j] == '0' && s[j+1] == '0') {
+                dsu.unite(j, j+1);
+                dsu.unite(n + j, n + j + 1);
+            }
+        }
+        // merge diagonal zeros with adjacent zero columns
+        for (int i = 0; i < n; ++i) {
+            if (s[i] == '1') {
+                if (i > 0 && s[i-1] == '0') {
+                    dsu.unite(2*n + i, n + (i-1)); // diag with bottom of column i-1
+                }
+                if (i < n-1 && s[i+1] == '0') {
+                    dsu.unite(2*n + i, (i+1)); // diag with top of column i+1
+                }
+            }
+        }
+        // compute total weight per component
+        vector<long long> compWeight(nodes, 0);
+        for (int i = 0; i < nodes; ++i) {
+            int root = dsu.find(i);
+            compWeight[root] += weight[i];
+        }
+        long long ans = 0;
+        for (int i = 0; i < nodes; ++i) {
+            if (compWeight[i] > ans) ans = compWeight[i];
+        }
+        cout << ans << '\n';
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

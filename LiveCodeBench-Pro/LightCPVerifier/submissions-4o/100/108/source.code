@@ -1,0 +1,57 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+pair<int, int> getCenter(int n, int m) {
+    return {(n - 1) / 2, (m - 1) / 2};
+}
+
+void solve() {
+    int t; // number of test cases
+    cin >> t;
+    
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        
+        vector<pair<int, int>> cells;
+        
+        // Generating all cell positions
+        for(int i = 0; i < n; ++i) {
+            for(int j = 0; j < m; ++j) {
+                cells.emplace_back(i, j);
+            }
+        }
+        
+        pair<int, int> center = getCenter(n, m);
+
+        // Sorting the cells based on the defined distance metric
+        sort(cells.begin(), cells.end(), [&center](pair<int, int> a, pair<int, int> b) {
+            int distA = max(abs(a.first - center.first), abs(a.second - center.second));
+            int distB = max(abs(b.first - center.first), abs(b.second - center.second));
+
+            // If chessboard distance is the same, tie-break with Manhattan distance
+            if (distA == distB) {
+                int manhattanA = abs(a.first - center.first) + abs(a.second - center.second);
+                int manhattanB = abs(b.first - center.first) + abs(b.second - center.second);
+                return manhattanA < manhattanB;
+            }
+            return distA < distB;
+        });
+
+        // Output the sorted cell coordinates
+        for (auto [i, j] : cells) {
+            cout << (i + 1) << " " << (j + 1) << endl;
+        }
+
+        if (t > 0)
+            cout << endl; // Print extra newline between test cases if there are more to process
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

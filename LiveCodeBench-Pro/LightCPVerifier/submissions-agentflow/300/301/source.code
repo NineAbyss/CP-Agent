@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    long long sumx = 0, sumy = 0;
+    for (int i = 0; i < n; ++i) {
+        int x, y;
+        cin >> x >> y;
+        sumx += x;
+        sumy += y;
+    }
+    // parity
+    int s_par = (sumx % 2 + 2) % 2;
+    int t_par = (sumy % 2 + 2) % 2;
+    // output a point with that parity, say (0,0) or (0,1)
+    int s = 0, t = 0;
+    if (s_par != 0) s = 1;
+    if (t_par != 0) t = 1;
+    cout << s << " " << t << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

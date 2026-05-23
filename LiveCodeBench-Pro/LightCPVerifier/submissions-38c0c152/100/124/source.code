@@ -1,0 +1,97 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <bitset>
+#include <algorithm>
+using namespace std;
+
+const int MAX_SUM = 400000; // enough for dist up to 200000 + A up to 10000
+void solve() {
+    int n, m, l;
+    cin >> n >> m >> l;
+    vector<int> A(l);
+    for (int i = 0; i < l; i++) {
+        cin >> A[i];
+    }
+    vector<vector<int>> adj(n);
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        u--; v--;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    // Check bipartite
+    vector<int> color(n, -1);
+    queue<int> q;
+    color[0] = 0;
+    q.push(0);
+    bool bipartite = true;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int v : adj[u]) {
+            if (color[v] == -1) {
+                color[v] = color[u] ^ 1;
+                q.push(v);
+            } else if (color[v] == color[u]) {
+                bipartite = false;
+            }
+        }
+    }
+    
+    // Compute distances from 0
+    vector<int> dist(n, -1);
+    queue<int> qq;
+    dist[0] = 0;
+    qq.push(0);
+    while (!qq.empty()) {
+        int u = qq.front(); qq.pop();
+        for (int v : adj[u]) {
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                qq.push(v);
+            }
+        }
+    }
+    
+    if (!bipartite) {
+        for (int i = 0; i < n; i++) cout << '1';
+        cout << '\n';
+        return;
+    }
+    
+    // Compute subset sums using bitset
+    bitset<MAX_SUM+1> dp;
+    dp[0] = 1;
+    for (int k : A) {
+        dp |= dp << k;
+    }
+    
+    for (int i = 0; i < n; i++) {
+        bool ok = false;
+        int d = dist[i];
+        // need sum s >= d and s % 2 == d % 2 // find smallest s >= d with same parity
+        int s = d;
+        if (s % 2 != d % 2) s++;
+        for (; s <= MAX_SUM; s += 2) {
+            if (dp[s]) {
+                ok = true;
+                break;
+            }
+        }
+        cout << (ok ? '1' : '0');
+    }
+    cout << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

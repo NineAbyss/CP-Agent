@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to perform DFS for threat evaluation
+void dfs(int node, int parent, const vector<int>& a, const vector<vector<int>>& adj, vector<long long>& max_threat, long long current_sum, int depth) {
+    // Calculate current alternating sum, depth even=add, depth odd=subtract
+    current_sum += (depth % 2 == 0 ? a[node - 1] : -a[node - 1]);
+    // Update the maximum threat value for this node
+    max_threat[node - 1] = max(max_threat[node - 1], current_sum);
+    
+    // Traverse adjacent nodes
+    for (int neighbor : adj[node]) {
+        if (neighbor != parent) {
+            dfs(neighbor, node, a, adj, max_threat, current_sum, depth + 1);
+        }
+    }
+}
+
+// Function to compute threats for a single test case
+vector<long long> computeThreats(int n, vector<int>& a, vector<pair<int, int>>& edges) {
+    vector<vector<int>> adj(n + 1);  // Adjacency list representation of the tree
+    for (const auto& edge : edges) {
+        int u = edge.first, v = edge.second;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    vector<long long> max_threat(n, LLONG_MIN);
+    dfs(1, -1, a, adj, max_threat, 0, 0);
+    
+    return max_threat;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;  // Number of test cases
+    
+    while (t--) {
+        int n;
+        cin >> n;  // Number of vertices in the tree
+        vector<int> a(n);
+        for (int& x : a) {
+            cin >> x;  // Danger values of each vertex
+        }
+        
+        vector<pair<int, int>> edges(n - 1);
+        for (auto& edge : edges) {
+            cin >> edge.first >> edge.second;  // Edges of the tree
+        }
+        
+        vector<long long> result = computeThreats(n, a, edges);
+        
+        for (long long x : result) {
+            cout << x << ' ';
+        }
+        cout << '\n';
+    }
+    
+    return 0;
+}

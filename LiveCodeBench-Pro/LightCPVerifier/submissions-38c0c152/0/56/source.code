@@ -1,0 +1,53 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        // 后缀和
+        vector<long long> suffix_sum(n);
+        suffix_sum[n-1] = a[n-1];
+        for (int i = n-2; i >= 0; i--) {
+            suffix_sum[i] = suffix_sum[i+1] + a[i];
+        }
+        
+        // 前缀最大值
+        vector<long long> pref_max(n);
+        pref_max[0] = a[0];
+        for (int i = 1; i < n; i++) {
+            pref_max[i] = max(pref_max[i-1], a[i]);
+        }
+        
+        // 计算答案
+        vector<long long> ans(n);
+        for (int k = 1; k <= n; k++) {
+            if (k == n) {
+                ans[k-1] = suffix_sum[0];
+            } else {
+                int last_k_first_idx = n - k;
+                long long last_k_first = a[last_k_first_idx];
+                long long max_before = pref_max[last_k_first_idx - 1];
+                long long inc = max(0LL, max_before - last_k_first);
+                ans[k-1] = suffix_sum[last_k_first_idx] + inc;
+            }
+        }
+        
+        for (int i = 0; i < n; i++) {
+            cout << ans[i] << (i == n-1 ? '\n' : ' ');
+        }
+    }
+    return 0;
+}

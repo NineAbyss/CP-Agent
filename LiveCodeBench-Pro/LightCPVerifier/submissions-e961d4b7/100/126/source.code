@@ -1,0 +1,99 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+const int N = 150005;
+vector<int> g[N];
+bool has[N];
+int n;
+
+pair<int, int> bfs_farthest(int start, vector<int>& dist) {
+    queue<int> q;
+    q.push(start);
+    dist[start] = 0;
+    int far = start;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        if (has[u] && (dist[u] > dist[far] || (dist[u] == dist[far] && u > far))) far = u;
+        for (int v : g[u]) {
+            if (has[v] && dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+    return {far, dist[far]};
+}
+
+vector<int> get_path(int u, int v, vector<int>& dist, vector<int>& par) {
+    queue<int> q;
+    q.push(u);
+    dist[u] = 0;
+    par[u] = -1;
+    while (!q.empty()) {
+        int x = q.front(); q.pop();
+        if (x == v) break;
+        for (int y : g[x]) {
+            if (has[y] && dist[y] == -1) {
+                dist[y] = dist[x] + 1;
+                par[y] = x;
+                q.push(y);
+            }
+        }
+    }
+    vector<int> path;
+    for (int x = v; x != -1; x = par[x]) path.push_back(x);
+    reverse(path.begin(), path.end());
+    return path;
+}
+
+void solve() {
+    cin >> n;
+    for (int i = 1; i <= n; i++) g[i].clear();
+    for (int i = 1; i < n; i++) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+    for (int i = 1; i <= n; i++) has[i] = true;
+    
+    vector<int> ans;
+    while (true) {
+        int u = -1;
+        for (int i = n; i >= 1; i--) if (has[i]) { u = i; break; }
+        if (u == -1) break;
+        
+        vector<int> dist(n+1, -1);
+        auto [v, d] = bfs_farthest(u, dist);
+        int len = d + 1;
+        
+        ans.push_back(len);
+        ans.push_back(u);
+        ans.push_back(v);
+        
+        // 获取路径并移除
+        dist.assign(n+1, -1);
+        vector<int> par(n+1, -1);
+        vector<int> path = get_path(u, v, dist, par);
+        for (int x : path) has[x] = false;
+    }
+    
+    for (int i = 0; i < (int)ans.size(); i++) {
+        cout << ans[i];
+        if (i+1 < (int)ans.size()) cout << " ";
+    }
+    cout << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

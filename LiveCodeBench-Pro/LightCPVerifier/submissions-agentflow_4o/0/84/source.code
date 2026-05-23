@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MOD = 998244353;
+
+// Function to precompute powers of two modulo MOD
+vector<long long> precomputed_powers(int n) {
+    vector<long long> powers(n);
+    powers[0] = 1;
+    for (int i = 1; i < n; ++i) {
+        powers[i] = (powers[i - 1] * 2) % MOD;
+    }
+    return powers;
+}
+
+// Function to find maximum results efficiently with optimized logic
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+
+        vector<int> p(n), q(n);
+        for (int i = 0; i < n; ++i) cin >> p[i];
+        for (int i = 0; i < n; ++i) cin >> q[i];
+
+        vector<long long> powers = precomputed_powers(n);
+        vector<long long> r(n);
+
+        vector<bool> used_p(n, false);
+        vector<bool> used_q(n, false);
+
+        long long max_prefix = 0;
+        long long max_suffix = 0;
+
+        for (int i = 0; i < n; ++i) {
+            max_prefix = max(max_prefix, powers[p[i]]);
+            max_suffix = max(max_suffix, powers[q[i]]);
+            r[i] = (max_prefix + max_suffix) % MOD;
+        }
+
+        for (int i = 0; i < n; ++i) {
+            cout << r[i];
+            if (i < n - 1) cout << " ";
+        }
+        cout << "\n";
+    }
+    return 0;
+}

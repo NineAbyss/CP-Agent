@@ -1,0 +1,74 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+int median(vector<int> v) {
+    sort(v.begin(), v.end());
+    return v[(v.size()-1)/2];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        set<pair<int, int>> candidates;
+
+        // Try small first segment: l=1,2
+        for (int l : {1, 2}) {
+            for (int r : {l+1, l+2, n-2, n-1}) {
+                if (l < r && r < n) {
+                    candidates.insert({l, r});
+                }
+            }
+        }
+
+        // Try small last segment: r=n-2,n-1
+        for (int r : {n-2, n-1}) {
+            for (int l : {1, 2, r-2, r-1}) {
+                if (l >= 1 && l < r && r < n) {
+                    candidates.insert({l, r});
+                }
+            }
+        }
+
+        bool found = false;
+        for (auto &p : candidates) {
+            int l = p.first;
+            int r = p.second;
+
+            vector<int> seg1(a.begin(), a.begin() + l);
+            vector<int> seg2(a.begin() + l, a.begin() + r);
+            vector<int> seg3(a.begin() + r, a.end());
+
+            int m1 = median(seg1);
+            int m2 = median(seg2);
+            int m3 = median(seg3);
+
+            vector<int> medians = {m1, m2, m3};
+            int final_med = median(medians);
+
+            if (final_med <= k) {
+                found = true;
+                break;
+            }
+        }
+
+        cout << (found ? "YES" : "NO") << '\n';
+    }
+
+    return 0;
+}

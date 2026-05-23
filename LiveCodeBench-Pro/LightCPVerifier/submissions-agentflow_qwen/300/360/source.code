@@ -1,0 +1,27 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+string get_string(long long x) {
+    string s = to_string(x) + to_string(x+1);
+    sort(s.begin(), s.end());
+    return s;
+}
+
+int solve(long long n) {
+    set<string> seen;
+    for (long long x = 1; x <= n; x++) {
+        seen.insert(get_string(x));
+    }
+    return seen.size();
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n;
+        cin >> n;
+        cout << solve(n) << '\n';
+    }
+    return 0;
+}

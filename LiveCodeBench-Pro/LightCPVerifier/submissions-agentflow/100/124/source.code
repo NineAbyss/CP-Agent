@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<int> l(n), r(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> l[i] >> r[i];
+        }
+        
+        vector<int> result(n, 1);
+        // The initial interval's bounds
+        int current_min = l[0], current_max = r[0];
+
+        for (int i = 1; i < n; ++i) {
+            // Calculate intersection of intervals
+            int new_min = max(current_min, l[i]);
+            int new_max = min(current_max, r[i]);
+
+            // Check if a valid extension is possible
+            if (new_min <= new_max) {
+                result[i] = result[i - 1] + 1;
+                current_min = new_min;  // Narrow the minimum bound
+                current_max = new_max;  // Narrow the maximum bound
+            } else {
+                // Reset since the overlap is not possible
+                result[i] = 1;
+                current_min = l[i];
+                current_max = r[i];
+            }
+        }
+
+        for (int i = 0; i < n; ++i) {
+            if (i > 0) cout << " ";
+            cout << result[i];
+        }
+        cout << "\n";
+    }
+
+    return 0;
+}

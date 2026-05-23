@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int simulate(const vector<int>& a, const vector<int>& b) {
+    int n = a.size();
+    int i = 0, j = 0, score = 0;
+    for (int round = 0; round < n; round++) {
+        if (a[i] > b[j]) {
+            score++;
+            i++;
+        } else {
+            j++;
+        }
+    }
+    return score;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i=0; i<n; i++) cin >> a[i];
+        for (int i=0; i<n; i++) cin >> b[i];
+        int base = simulate(a, b);
+        int best = base;
+        // try all swaps
+        for (int i=0; i<n; i++) {
+            for (int j=i+1; j<n; j++) {
+                swap(a[i], a[j]);
+                int s = simulate(a, b);
+                best = max(best, s);
+                swap(a[i], a[j]); // revert
+                if (best == n) break; // cannot be better
+            }
+            if (best == n) break;
+        }
+        cout << best << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,69 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+long long solve_case(const string& s) {
+    int n = s.size();
+    int totalB = 0;
+    for (char c : s) if (c == 'B') totalB++;
+    vector<int> Podd, Peven, Bodd, Beven;
+    for (int i = 0; i < n; i++) {
+        if (i < totalB && s[i] == 'P') {
+            if (i % 2 == 0) Peven.push_back(i);
+            else Podd.push_back(i);
+        }
+        if (i >= totalB && s[i] == 'B') {
+            if (i % 2 == 0) Beven.push_back(i);
+            else Bodd.push_back(i);
+        }
+    }
+    long long ans = 0;
+    // pair even with even
+    int ie = 0, je = 0;
+    while (ie < Peven.size() && je < Beven.size()) {
+        int dist = Beven[je] - Peven[ie];
+        ans += dist / 2;
+        ie++;
+        je++;
+    }
+    // pair odd with odd
+    int io = 0, jo = 0;
+    while (io < Podd.size() && jo < Bodd.size()) {
+        int dist = Bodd[jo] - Podd[io];
+        ans += dist / 2;
+        io++;
+        jo++;
+    }
+    // remaining Peven with Bodd
+    while (ie < Peven.size() && jo < Bodd.size()) {
+        int dist = Bodd[jo] - Peven[ie];
+        ans += (dist + 1) / 2;
+        ie++;
+        jo++;
+    }
+    // remaining Podd with Beven
+    while (io < Podd.size() && je < Beven.size()) {
+        int dist = Beven[je] - Podd[io];
+        ans += (dist + 1) / 2;
+        io++;
+        je++;
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+        cout << solve_case(s) << '\n';
+    }
+    return 0;
+}

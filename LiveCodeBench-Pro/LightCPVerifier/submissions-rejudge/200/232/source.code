@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool solveGame(vector<int> a, int k) {
+    int n = a.size();
+    sort(a.begin(), a.end());
+    
+    long long sum = 0;
+    for (int x : a) sum += x;
+    
+    int mx = a[n-1];
+    int mn = a[0];
+    long long diff = (long long)mx - mn;
+    
+    // 计算最大值的数量
+    int max_count = 0;
+    for (int x : a) if (x == mx) max_count++;
+    
+    if (diff > (long long)k + 1) {
+        return false;
+    } else if (diff < k + 1) {
+        return (sum % 2 == 1);
+    } else { // diff == k + 1
+        return (max_count == 1 && (sum % 2 == 1));
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        bool tom_wins = solveGame(a, k);
+        cout << (tom_wins ? "Tom" : "Jerry") << "\n";
+    }
+    
+    return 0;
+}

@@ -1,0 +1,44 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n), b(n);
+        for (int i=0; i<n; i++) cin >> a[i];
+        for (int i=0; i<n; i++) cin >> b[i];
+        string c;
+        cin >> c;
+        
+        long long x = 0;
+        for (int i=0; i<n; i++) {
+            long long opt1 = x ^ a[i];
+            long long opt2 = x ^ b[i];
+            if (c[i] == '0') {
+                // Gellyfish minimizes
+                if (opt1 < opt2) {
+                    x = opt1;
+                } else {
+                    x = opt2;
+                }
+            } else {
+                // Flower maximizes
+                if (opt1 > opt2) {
+                    x = opt1;
+                } else {
+                    x = opt2;
+                }
+            }
+        }
+        cout << x << '\n';
+    }
+    return 0;
+}

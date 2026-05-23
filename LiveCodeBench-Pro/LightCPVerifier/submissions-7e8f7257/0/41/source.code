@@ -1,0 +1,66 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+typedef long long ll;
+
+bool feasible(int n, const vector<ll>& b, const vector<vector<pair<int, ll>>>& adj, ll X) {
+    vector<ll> maxc(n+1, -1);
+    maxc[1] = 0;
+    for (int i = 1; i <= n; i++) {
+        if (maxc[i] == -1) continue;
+        ll after = maxc[i] + b[i-1];
+        if (after > X) after = X;
+        for (const auto &edge : adj[i]) {
+            int j = edge.first;
+            ll w = edge.second;
+            if (after >= w) {
+                if (maxc[j] == -1 || after > maxc[j]) {
+                    maxc[j] = after;
+                }
+            }
+        }
+    }
+    return maxc[n] != -1;
+}
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<ll> b(n);
+    for (int i=0; i<n; i++) cin >> b[i];
+    vector<vector<pair<int, ll>>> adj(n+1);
+    for (int i=0; i<m; i++) {
+        int s, t; ll w;
+        cin >> s >> t >> w;
+        adj[s].emplace_back(t, w);
+    }
+    const ll INF = 1e18;
+    if (!feasible(n, b, adj, INF)) {
+        cout << -1 << '\n';
+        return;
+    }
+    ll lo = 0, hi = INF;
+    while (lo < hi) {
+        ll mid = (lo + hi) / 2;
+        if (feasible(n, b, adj, mid)) {
+            hi = mid;
+        } else {
+            lo = mid + 1;
+        }
+    }
+    cout << lo << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

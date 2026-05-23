@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<vector<int>> a(n, vector<int>(m));
+        int M = 0;
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                cin >> a[i][j];
+                M = max(M, a[i][j]);
+            }
+        }
+        vector<int> mx_row(n, 0), mx_col(m, 0);
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                mx_row[i] = max(mx_row[i], a[i][j]);
+                mx_col[j] = max(mx_col[j], a[i][j]);
+            }
+        }
+        int ans = M;
+        // 枚举可能的答案 X
+        for (int X = max(0, M-2); X <= M; ++X) {
+            // 计算 bad 计数
+            vector<int> row_bad_cnt(n, 0), col_bad_cnt(m, 0);
+            int total_bad = 0;
+            for (int i = 0; i < n; ++i) {
+                for (int j = 0; j < m; ++j) {
+                    if (a[i][j] > X) {
+                        row_bad_cnt[i]++;
+                        col_bad_cnt[j]++;
+                        total_bad++;
+                    }
+                }
+            }
+            // 枚举所有可能的 (r,c)
+            bool found = false;
+            for (int r = 0; r < n; ++r) {
+                if (mx_row[r] > X+1) continue;
+                for (int c = 0; c < m; ++c) {
+                    if (mx_col[c] > X+1) continue;
+                    if (a[r][c] > X+2) continue;
+                    // 检查是否所有 bad 位置都被覆盖
+                    int cover_bad = row_bad_cnt[r] + col_bad_cnt[c];
+                    if (a[r][c] > X) cover_bad--; // 交叉点重复计算
+                    if (cover_bad == total_bad) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) break;
+            }
+            if (found) {
+                ans = X;
+                break;
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

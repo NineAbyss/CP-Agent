@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+bool canFormSquare(int l1, int b1, int l2, int b2, int l3, int b3) {
+    // Store rectangles
+    vector<pair<int, int>> rects = {{l1, b1}, {l2, b2}, {l3, b3}};
+    int total = l1*b1 + l2*b2 + l3*b3;
+    int L = sqrt(total);
+    if (L * L != total) return false;
+    // Each rectangle must fit inside L x L
+    if (l1 > L || b1 > L || l2 > L || b2 > L || l3 > L || b3 > L) return false;
+    // Try all permutations
+    sort(rects.begin(), rects.end());
+    do {
+        int a1 = rects[0].first, b1_ = rects[0].second;
+        int a2 = rects[1].first, b2_ = rects[1].second;
+        int a3 = rects[2].first, b3_ = rects[2].second;
+        // 1. Horizontal row: all heights equal L, sum of widths = L
+        if (b1_ == L && b2_ == L && b3_ == L && a1 + a2 + a3 == L) return true;
+        // 2. Vertical column: all widths equal L, sum of heights = L
+        if (a1 == L && a2 == L && a3 == L && b1_ + b2_ + b3_ == L) return true;
+        // 3. Top two side by side, bottom one full width
+        if (b1_ == b2_ && a1 + a2 == L && a3 == L && b3_ == L - b1_) return true;
+        // 4. Top one full width, bottom two side by side
+        if (a1 == L && b2_ == b3_ && b2_ == L - b1_ && a2 + a3 == L) return true;
+        // 5. Left two stacked, right one full height
+        if (a1 == a2 && b1_ + b2_ == L && b3_ == L && a3 == L - a1) return true;
+        // 6. Left one full height, right two stacked
+        if (b1_ == L && a2 == a3 && b2_ + b3_ == L && a1 == L - a2) return true;
+    } while (next_permutation(rects.begin(), rects.end()));
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int l1, b1, l2, b2, l3, b3;
+        cin >> l1 >> b1 >> l2 >> b2 >> l3 >> b3;
+        cout << (canFormSquare(l1, b1, l2, b2, l3, b3) ? "YES" : "NO") << '\n';
+    }
+    return 0;
+}

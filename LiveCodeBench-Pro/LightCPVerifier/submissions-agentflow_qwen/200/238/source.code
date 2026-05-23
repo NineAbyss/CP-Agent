@@ -1,0 +1,161 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1000000007;
+
+vector<vector<int>> adj;
+vector<int> parent;
+vector<vector<int>> children;
+vector<int> is_leaf;
+
+void dfs(int u, int p) {
+    parent[u] = p;
+    for (int v : adj[u]) {
+        if (v == p) continue;
+        children[u].push_back(v);
+        dfs(v, u);
+    }
+}
+
+set<int> getSumSet(const vector<int>& a) {
+    int n = a.size();
+    set<int> res;
+    int sum = 0;
+    for (int i = n-1; i >=0; i--) {
+        sum += a[i];
+        res.insert(sum);
+    }
+    return res;
+}
+
+vector<set<int>> generateAllSumSets(int len) {
+    vector<set<int>> res;
+    if (len == 0) return res;
+    int total = 1 << len;
+    for (int mask = 0; mask < total; mask++) {
+        vector<int> a(len);
+        for (int i = 0; i < len; i++) {
+            a[i] = (mask >> i & 1) ? 2 : 1;
+        }
+        res.push_back(getSumSet(a));
+    }
+    return res;
+}
+
+long long countDisjointPairs(int m, int k) {
+    if (m > 25 || k > 25) {
+        return 0;
+    }
+    auto leftSets = generateAllSumSets(m);
+    auto rightSets = generateAllSumSets(k);
+    long long count = 0;
+    for (auto& L : leftSets) {
+        for (auto& R : rightSets) {
+            bool disjoint = true;
+            for (int x : L) {
+                if (R.count(x)) {
+                    disjoint = false;
+                    break;
+                }
+            }
+            if (disjoint) count++;
+        }
+    }
+    return count;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        adj.assign(n+1, vector<int>());
+        parent.assign(n+1, -1);
+        children.assign(n+1, vector<int>());
+        is_leaf.assign(n+1, false);
+
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+
+        // Build tree rooted at 1
+        dfs(1, -1);
+
+        // Mark leaves: nodes with no children
+        int leaf_count = 0;
+        for (int i = 1; i <= n; i++) {
+            if (children[i].empty()) {
+                leaf_count++;
+                is_leaf[i] = true;
+            }
+        }
+
+        if (leaf_count > 2) {
+            cout << 0 << '\n';
+            continue;
+        }
+
+        if (leaf_count == 1) {
+            // Chain
+            long long ans = 1;
+            for (int i = 0; i < n; i++) {
+                ans = (ans * 2) % MOD;
+            }
+            cout << ans << '\n';
+            continue;
+        }
+
+        // Exactly 2 leaves
+        // Find the node with exactly two children (the fork)
+        int fork = -1;
+        for (int i = 1; i <= n; i++) {
+            if (children[i].size() == 2) {
+                fork = i;
+                break;
+            }
+        }
+
+        // Now, the main path from 1 to fork
+        vector<int> main_path;
+        int cur = fork;
+        while (cur != -1) {
+            main_path.push_back(cur);
+            cur = parent[cur];
+        }
+        reverse(main_path.begin(), main_path.end());
+        int d = main_path.size();
+
+        // The two arms from the two children of fork
+        vector<int> arm_nodes[2];
+        for (int idx = 0; idx < 2; idx++) {
+            int child = children[fork][idx];
+            int c = child;
+            while (!is_leaf[c]) {
+                arm_nodes[idx].push_back(c);
+                c = children[c][0]; // since at most one child
+            }
+            arm_nodes[idx].push_back(c); // include the leaf
+        }
+        int m = arm_nodes[0].size();
+        int k = arm_nodes[1].size();
+
+        // Count number of valid arm assignments
+        long long arm_ways = countDisjointPairs(m, k);
+
+        long long main_ways = 1;
+        for (int i = 0; i < d; i++) {
+            main_ways = (main_ways * 2) % MOD;
+        }
+
+        long long ans = (arm_ways * main_ways) % MOD;
+        cout << ans << '\n';
+    }
+    return 0;
+}

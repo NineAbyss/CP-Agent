@@ -1,0 +1,32 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+bool solve(const string& p, const string& s) {
+    int i = 0, j = 0;
+    int n = p.size(), m = s.size();
+    while (i < n && j < m) {
+        if (s[j] != p[i]) return false;
+        // 至少匹配一个
+        j++;
+        // 如果还能匹配一个相同的，就再匹配一个
+        if (j < m && s[j] == p[i]) {
+            j++;
+        }
+        i++;
+    }
+    return i == n && j == m;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        string p, s;
+        cin >> p >> s;
+        cout << (solve(p, s) ? "YES" : "NO") << endl;
+    }
+    return 0;
+}

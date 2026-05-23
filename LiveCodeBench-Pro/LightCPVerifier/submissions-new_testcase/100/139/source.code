@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MOD = 998244353;
+const int MAXN = 500000;
+
+long long modpow(long long a, long long e) {
+    long long res = 1;
+    while (e) {
+        if (e & 1) res = res * a % MOD;
+        a = a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+int main() {
+    // 预处理阶乘和逆元阶乘
+    vector<long long> fact(MAXN+1, 1), inv_fact(MAXN+1, 1);
+    for (int i = 1; i <= MAXN; i++) fact[i] = fact[i-1] * i % MOD;
+    inv_fact[MAXN] = modpow(fact[MAXN], MOD-2);
+    for (int i = MAXN-1; i >= 0; i--) inv_fact[i] = inv_fact[i+1] * (i+1) % MOD;
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        vector<int> c(26);
+        int N = 0;
+        for (int i = 0; i < 26; i++) {
+            cin >> c[i];
+            N += c[i];
+        }
+        int odd_count = (N + 1) / 2; // 奇数位置数量
+        
+        // 分母 prod c_i!
+        long long denom = 1;
+        for (int x : c) {
+            denom = denom * fact[x] % MOD;
+        }
+        
+        // DP 子集和
+        vector<long long> dp(odd_count+1, 0);
+        dp[0] = 1;
+        for (int x : c) {
+            if (x == 0) continue;
+            for (int s = odd_count; s >= x; s--) {
+                dp[s] = (dp[s] + dp[s - x]) % MOD;
+            }
+        }
+        
+        long long ways = fact[odd_count] * fact[N - odd_count] % MOD;
+        ways = ways * dp[odd_count] % MOD;
+        long long inv_denom = modpow(denom, MOD-2);
+        ways = ways * inv_denom % MOD;
+        
+        cout << ways << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int i = 0; i < n; i++) cin >> b[i];
+    
+    // 检查出现次数
+    vector<int> cntA(m+1,0), cntB(m+1,0);
+    for (int x : a) cntA[x]++;
+    for (int x : b) cntB[x]++;
+    for (int v = 1; v <= m; v++) {
+        if (cntA[v] != cntB[v]) {
+            cout << "NO\n";
+            return;
+        }
+    }
+    
+    // 第一次出现位置
+    vector<int> posA(m+1, -1), posB(m+1, -1);
+    for (int i = 0; i < n; i++) {
+        if (posA[a[i]] == -1) posA[a[i]] = i;
+    }
+    for (int i = 0; i < n; i++) {
+        if (posB[b[i]] == -1) posB[b[i]] = i;
+    }
+    
+    // 对齐使得值1的位置相同
+    int shift = (posA[1] - posB[1] + n) % n;
+    for (int v = 1; v <= m; v++) {
+        posB[v] = (posB[v] + shift) % n;
+    }
+    
+    // 检查相对顺序
+    for (int v = 1; v < m; v++) {
+        if ((posA[v] < posA[v+1]) != (posB[v] < posB[v+1])) {
+            cout << "NO\n";
+            return;
+        }
+    }
+    cout << "YES\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

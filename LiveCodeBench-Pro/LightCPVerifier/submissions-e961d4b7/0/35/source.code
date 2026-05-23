@@ -1,0 +1,86 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> xs(n), ys(n);
+        for (int i = 0; i < n; i++) {
+            cin >> xs[i] >> ys[i];
+        }
+        
+        if (n == 1) {
+            cout << "1\n";
+            continue;
+        }
+        
+        vector<int> xs_sorted = xs;
+        vector<int> ys_sorted = ys;
+        sort(xs_sorted.begin(), xs_sorted.end());
+        sort(ys_sorted.begin(), ys_sorted.end());
+        
+        long long ans = LLONG_MAX;
+        
+        // 不移动怪物
+        long long x_len = xs_sorted.back() - xs_sorted[0] + 1;
+        long long y_len = ys_sorted.back() - ys_sorted[0] + 1;
+        ans = min(ans, x_len * y_len);
+        
+        // 枚举移动每个怪物
+        for (int i = 0; i < n; i++) {
+            int x = xs[i];
+            int y = ys[i];
+            
+            // 计算移除这个怪物后的 x 范围
+            int new_min_x, new_max_x;
+            if (x == xs_sorted[0]) {
+                new_min_x = xs_sorted[1];
+            } else {
+                new_min_x = xs_sorted[0];
+            }
+            if (x == xs_sorted.back()) {
+                new_max_x = xs_sorted[n-2];
+            } else {
+                new_max_x = xs_sorted.back();
+            }
+            
+            // 计算移除这个怪物后的 y 范围
+            int new_min_y, new_max_y;
+            if (y == ys_sorted[0]) {
+                new_min_y = ys_sorted[1];
+            } else {
+                new_min_y = ys_sorted[0];
+            }
+            if (y == ys_sorted.back()) {
+                new_max_y = ys_sorted[n-2];
+            } else {
+                new_max_y = ys_sorted.back();
+            }
+            
+            long long new_x_len = new_max_x - new_min_x + 1;
+            long long new_y_len = new_max_y - new_min_y + 1;
+            
+            int rem = n - 1;
+            long long cells = new_x_len * new_y_len;
+            if (rem < cells) {
+                ans = min(ans, cells);
+            } else {
+                ans = min(ans, (new_x_len + 1) * new_y_len);
+                ans = min(ans, new_x_len * (new_y_len + 1));
+            }
+        }
+        
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

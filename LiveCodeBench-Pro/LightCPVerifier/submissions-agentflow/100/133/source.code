@@ -1,0 +1,49 @@
+#include <iostream>
+#include <vector>
+#include <numeric>
+#include <iomanip>
+
+using namespace std;
+
+double solve(int n, int m, double p, const vector<int>& h) {
+    // Calculate total excess HP above 1
+    int initial_excess_hp = accumulate(h.begin(), h.end(), 0) - n;
+    
+    // Set up the DP table: dp[round][excess_hp_above_1]
+    vector<vector<double>> dp(m + 1, vector<double>(initial_excess_hp + 1, 0.0));
+    dp[0][initial_excess_hp] = 1.0;  // Set initial state with maximum excess HP
+
+    // Iterate over each round
+    for (int round = 0; round < m; ++round) {
+        for (int excess_hp = 0; excess_hp <= initial_excess_hp; ++excess_hp) {
+            if (dp[round][excess_hp] > 0) {
+                // Transition when sword shines affects all monsters (reduce all HP)
+                if (excess_hp >= n) {
+                    dp[round + 1][excess_hp - n] += dp[round][excess_hp] * p;
+                }
+                // Transition when sword does not shine affects one HP unit
+                if (excess_hp > 0) {
+                    dp[round + 1][excess_hp - 1] += dp[round][excess_hp] * (1 - p);
+                }
+            }
+        }
+    }
+    return dp[m][0];  // Returning probability that all HP are reduced to exactly 1
+}
+
+int main() {
+    int t;
+    cin >> t;  // Number of test cases
+    while (t--) {
+        int n, m, p_prime;
+        cin >> n >> m >> p_prime;
+        vector<int> h(n);
+        for (int i = 0; i < n; ++i) {  // Read health of each monster
+            cin >> h[i];
+        }
+        
+        double p = p_prime / 100.0;  // Convert percentage to probability
+        cout << fixed << setprecision(9) << solve(n, m, p, h) << "\n";  // Print formatted result
+    }
+    return 0;
+}

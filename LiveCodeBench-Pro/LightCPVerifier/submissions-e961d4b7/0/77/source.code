@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve_one(const string& s) {
+    int n = s.size();
+    // base cost
+    int init0 = (s[0] == '1');
+    int changes0 = 0;
+    for (int i = 1; i < n; ++i) {
+        if (s[i] != s[i-1]) changes0++;
+    }
+    int base = n + init0 + changes0;
+    
+    // Precompute total arrays for each (a,b) where a in {0,1}
+    // total[ab][r] for r=0..n-1
+    // index: a*2 + b
+    vector<vector<int>> total(4, vector<int>(n, INT_MAX));
+    for (int a = 0; a <= 1; ++a) {
+        for (int b = 0; b <= 1; ++b) {
+            int idx = a*2 + b;
+            for (int r = 0; r < n; ++r) {
+                int c = s[r] - '0';
+                int val1 = (c != a) - (b != a);
+                if (r < n-1) {
+                    int d = s[r+1] - '0';
+                    int val2 = (d != b) - (d != c);
+                    total[idx][r] = val1 + val2;
+                } else {
+                    total[idx][r] = val1;
+                }
+            }
+        }
+    }
+    
+    // Suffix minima
+    vector<vector<int>> suf(4, vector<int>(n, INT_MAX));
+    for (int idx = 0; idx < 4; ++idx) {
+        int cur_min = INT_MAX;
+        for (int r = n-1; r >= 0; --r) {
+            cur_min = min(cur_min, total[idx][r]);
+            suf[idx][r] = cur_min;
+        }
+    }
+    
+    int best_delta = 0; // we can choose not to reverse
+    
+    // l>0
+    for (int l = 1; l < n; ++l) {
+        int a = s[l-1] - '0';
+        int b = s[l] - '0';
+        int idx = a*2 + b;
+        int delta = suf[idx][l]; // r >= l
+        if (delta < best_delta) {
+            best_delta = delta;
+        }
+    }
+    
+    // l=0
+    int b0 = s[0] - '0';
+    // For l=0, we need to consider r from 0 to n-1
+    // Delta = (c=='1') - (b0=='1') + [ (d != b0) - (d != c) ] if r<n-1, else (c=='1') - (b0=='1')
+    // We can compute similarly by iterating r
+    for (int r = 0; r < n; ++r) {
+        int c = s[r] - '0';
+        int delta = (c == 1) - (b0 == 1);
+        if (r < n-1) {
+            int d = s[r+1] - '0';
+            delta += (d != b0) - (d != c);
+        }
+        if (delta < best_delta) {
+            best_delta = delta;
+        }
+    }
+    
+    return base + best_delta;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+        cout << solve_one(s) << '\n';
+    }
+    return 0;
+}

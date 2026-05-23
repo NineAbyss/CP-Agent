@@ -1,0 +1,67 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Function to check if array can be exploded
+void solve() {
+    int n;
+    cin >> n;
+    vector<long long> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    // Let x be the number of operations of type 1 (decrease by index i) // Let y be the number of operations of type 2 (decrease by n - i + 1)
+
+    // For each element i (0-indexed), we have: // a[i] - x*(i+1) - y*(n-i) = 0
+    // => x*(i+1) + y*(n-i) = a[i]
+
+    // We'll try to find non-negative integers x and y that satisfy all equations.
+
+    // From first equation (i=0): x*1 + y*n = a[0]  => x + n*y = a[0] // From last equation (i=n-1): x*n + y*1 = a[n-1] => n*x + y = a[n-1]
+
+    // Solve this system: // x = a[0] - n*y
+    // Substitute into second: n*(a[0] - n*y) + y = a[n-1] // => n*a[0] - n^2*y + y = a[n-1]
+    // => y*(1 - n^2) = a[n-1] - n*a[0] // => y = (n*a[0] - a[n-1]) / (n^2 - 1)
+
+    long long denom = 1LL * n * n - 1;
+    
+    // If denominator is zero, n must be 1, but n>=2 so we're safe
+    if ((1LL * n * a[0] - a[n-1]) % denom != 0) {
+        cout << "NO\n";
+        return;
+    }
+
+    long long y = (1LL * n * a[0] - a[n-1]) / denom;
+    long long x = a[0] - 1LL * n * y;
+
+    // Check if x and y are non-negative
+    if (x < 0 || y < 0) {
+        cout << "NO\n";
+        return;
+    }
+
+    // Now verify that these x and y work for all positions
+    for (int i = 0; i < n; i++) {
+        long long expected = x * (i + 1) + y * (n - i);
+        if (expected != a[i]) {
+            cout << "NO\n";
+            return;
+        }
+    }
+
+    cout << "YES\n";
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

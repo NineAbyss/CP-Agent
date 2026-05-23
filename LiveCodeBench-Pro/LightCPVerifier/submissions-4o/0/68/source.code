@@ -1,0 +1,68 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+
+using namespace std;
+
+int main() {
+    int t; // number of test cases
+    cin >> t;
+    while (t--) {
+        int n, q; // length of permutation p and number of queries
+        cin >> n >> q;
+
+        vector<int> p(n + 1); // permutation, 1-indexed
+        vector<int> pos(n + 1); // pos[i] will denote the position of element i in p
+
+        for (int i = 1; i <= n; ++i) {
+            cin >> p[i];
+            pos[p[i]] = i;
+        }
+
+        while (q--) {
+            int l, r, k;
+            cin >> l >> r >> k;
+
+            // Check if k is in the range [l, r]
+            int posK = pos[k];
+            if (posK < l || posK > r) {
+                cout << -1 << "\n";
+                continue;
+            }
+
+            // Now, let's see how we can manipulate the subarray [l, r] to make binary search successful
+            int d = 0;
+
+            // Check binary search path
+            int left = l, right = r;
+
+            while (left <= right) {
+                int m = (left + right) / 2;
+                if (p[m] == k) {
+                    break; // Successful without further modifications
+                }
+                if (p[m] < k) {
+                    // If it's less, move to right and count necessary moves
+                    if (posK > m) {
+                        left = m + 1;
+                    } else {
+                        d++;
+                        right = m - 1;
+                    }
+                } else {
+                    // If it's more, move to left and count necessary moves
+                    if (posK < m) {
+                        right = m - 1;
+                    } else {
+                        d++;
+                        left = m + 1;
+                    }
+                }
+            }
+
+            cout << d << "\n";
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,124 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+const int MAXN = 205;
+const int MAXC = 200;
+const int T = 40000; // threshold = max_c * max_c
+
+int n, m;
+int c[MAXN], w[MAXN];
+vector<int> pred[MAXN];
+long long f[MAXN][T + MAXC + 5];
+int best_c[MAXN], best_w[MAXN];
+
+// compare w1/c1 > w2/c2, using cross multiplication to avoid floating point
+bool better(int c1, int w1, int c2, int w2) {
+    // returns true if w1/c1 > w2/c2
+    // or if equal, c1 < c2
+    long long left = (long long)w1 * c2;
+    long long right = (long long)w2 * c1;
+    if (left != right) return left > right;
+    return c1 < c2;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    cin >> n >> m;
+    for (int i = 1; i <= n; i++) {
+        cin >> c[i] >> w[i];
+        pred[i].clear();
+    }
+    
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        pred[v].push_back(u);
+    }
+    
+    // initialize f with -inf
+    const long long INF = -1e18;
+    for (int i = 1; i <= n; i++) {
+        for (int x = 0; x <= T + MAXC; x++) {
+            f[i][x] = INF;
+        }
+    }
+    
+    // process vertex 1
+    f[1][0] = 0;
+    for (int x = c[1]; x <= T + MAXC; x++) {
+        f[1][x] = max(f[1][x], f[1][x - c[1]] + w[1]);
+    }
+    for (int x = 1; x <= T + MAXC; x++) {
+        f[1][x] = max(f[1][x], f[1][x-1]);
+    }
+    best_c[1] = c[1];
+    best_w[1] = w[1];
+    
+    // process vertices in topological order (1..n)
+    for (int i = 2; i <= n; i++) {
+        // inherit from predecessors
+        for (int x = 0; x <= T + MAXC; x++) {
+            long long best = INF;
+            for (int j : pred[i]) {
+                if (f[j][x] > best) best = f[j][x];
+            }
+            f[i][x] = best;
+        }
+        
+        // determine best item on path to i
+        if (pred[i].size() > 0) {
+            int first = pred[i][0];
+            best_c[i] = best_c[first];
+            best_w[i] = best_w[first];
+            
+            for (int j : pred[i]) {
+                if (better(best_c[j], best_w[j], best_c[i], best_w[i])) {
+                    best_c[i] = best_c[j];
+                    best_w[i] = best_w[j];
+                }
+            }
+            // compare with current vertex
+            if (better(c[i], w[i], best_c[i], best_w[i])) {
+                best_c[i] = c[i];
+                best_w[i] = w[i];
+            }
+        } else {
+            // should not happen for i>1 due to guarantee
+            best_c[i] = c[i];
+            best_w[i] = w[i];
+        }
+        
+        // add cards of vertex i
+        for (int x = c[i]; x <= T + MAXC; x++) {
+            f[i][x] = max(f[i][x], f[i][x - c[i]] + w[i]);
+        }
+        
+        // prefix max
+        for (int x = 1; x <= T + MAXC; x++) {
+            f[i][x] = max(f[i][x], f[i][x-1]);
+        }
+    }
+    
+    int q;
+    cin >> q;
+    while (q--) {
+        int p, r;
+        cin >> p >> r;
+        long long ans;
+        if (r <= T) {
+            ans = f[p][r];
+        } else {
+            int k = (r - T) / best_c[p];
+            int r2 = r - k * best_c[p];
+            ans = (long long)k * best_w[p] + f[p][r2];
+        }
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

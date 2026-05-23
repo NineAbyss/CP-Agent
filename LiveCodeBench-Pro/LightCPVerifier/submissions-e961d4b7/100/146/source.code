@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        map<int, int> cnt_x;
+        map<int, int> cnt_sum;
+        for (int i = 0; i < n; i++) {
+            int x, y;
+            cin >> x >> y;
+            cnt_x[x] ^= 1;
+            cnt_sum[x + y] ^= 1;
+        }
+        int s = 0;
+        for (auto &p : cnt_x) {
+            if (p.second) {
+                s = p.first;
+                break;
+            }
+        }
+        int sum_st = 0;
+        for (auto &p : cnt_sum) {
+            if (p.second) {
+                sum_st = p.first;
+                break;
+            }
+        }
+        int t_val = sum_st - s;
+        cout << s << ' ' << t_val << '\n';
+    }
+    return 0;
+}

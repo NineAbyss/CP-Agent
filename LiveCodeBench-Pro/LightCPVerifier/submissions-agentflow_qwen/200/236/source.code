@@ -1,0 +1,17 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        long long x;
+        cin >> x;
+        int k = 63 - __builtin_clzll((unsigned long long)x);
+        cout << 2 * k + 3 << '\n';
+    }
+    return 0;
+}

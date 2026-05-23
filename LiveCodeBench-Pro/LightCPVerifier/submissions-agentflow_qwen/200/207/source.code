@@ -1,0 +1,126 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 205;
+const int LIM = 40000;
+
+int n, m, q;
+ll c[MAXN], w[MAXN];
+vector<int> graph[MAXN];
+ll dp[MAXN][LIM+1];
+ll best_w[MAXN], best_c[MAXN];
+ll score[MAXN][MAXN];
+
+bool better(ll w1, ll c1, ll w2, ll c2) {
+    return w1 * c2 > w2 * c1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n >> m;
+    for (int i = 1; i <= n; i++) {
+        cin >> c[i] >> w[i];
+    }
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        graph[u].push_back(v);
+    }
+
+    // Initialize dp to 0
+    for (int i = 1; i <= n; i++) {
+        for (int k = 0; k <= LIM; k++) {
+            dp[i][k] = 0;
+        }
+    }
+
+    // Precompute best_w and best_c in topological order
+    for (int i = 1; i <= n; i++) {
+        if (i == 1) {
+            best_w[i] = w[1]; best_c[i] = c[1];
+        } else {
+            best_w[i] = 0; best_c[i] = 1;
+            for (int j = 1; j < i; j++) {
+                for (int v : graph[j]) {
+                    if (v == i) {
+                        if (better(best_w[j], best_c[j], best_w[i], best_c[i])) {
+                            best_w[i] = best_w[j];
+                            best_c[i] = best_c[j];
+                        }
+                    }
+                }
+            }
+            if (better(w[i], c[i], best_w[i], best_c[i])) {
+                best_w[i] = w[i];
+                best_c[i] = c[i];
+            }
+        }
+    }
+
+    // Initial knapsack for node 1
+    for (int k = c[1]; k <= LIM; k++) {
+        dp[1][k] = max(dp[1][k], dp[1][k - c[1]] + w[1]);
+    }
+
+    // DAG DP in topological order
+    for (int i = 1; i <= n; i++) {
+        // First: complete knapsack at node i
+        for (int k = c[i]; k <= LIM; k++) {
+            dp[i][k] = max(dp[i][k], dp[i][k - c[i]] + w[i]);
+        }
+        // Then: propagate to out-neighbors
+        for (int v : graph[i]) {
+            for (int k = 0; k <= LIM; k++) {
+                if (dp[i][k] > dp[v][k]) {
+                    dp[v][k] = dp[i][k];
+                }
+            }
+        }
+    }
+
+    // Precompute score arrays
+    for (int i = 1; i <= n; i++) {
+        int d = best_c[i];
+        for (int mod = 0; mod < d; mod++) {
+            score[i][mod] = -1e18;
+        }
+        for (int k = 0; k <= LIM; k++) {
+            int mod = k % d;
+            ll quot = k / d;
+            ll value = dp[i][k] - quot * best_w[i];
+            if (value > score[i][mod]) {
+                score[i][mod] = value;
+            }
+        }
+    }
+
+    cin >> q;
+    while (q--) {
+        int p; ll r;
+        cin >> p >> r;
+        if (r <= LIM) {
+            ll ans = 0;
+            for (int k = 0; k <= r; k++) {
+                ans = max(ans, dp[p][k]);
+            }
+            cout << ans << '\n';
+        } else {
+            int d = best_c[p];
+            int rd = r % d;
+            ll qd = r / d;
+            ll ans = 0;
+            for (int mod = 0; mod < d; mod++) {
+                ll penalty = (mod > rd) ? 1 : 0;
+                ll candidate = score[p][mod] + qd * best_w[p] - penalty * best_w[p];
+                ans = max(ans, candidate);
+            }
+            cout << ans << '\n';
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,34 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> grid(n, vector<int>(n, 0));
+        
+        int value = 0;
+        for (int i = 0; i < n; i++) {
+            if (i % 2 == 0) {
+                for (int j = 0; j < n; j++) {
+                    grid[i][j] = value++;
+                }
+            } else {
+                for (int j = n - 1; j >= 0; j--) {
+                    grid[i][j] = value++;
+                }
+            }
+        }
+
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
+                cout << grid[i][j] << ' ';
+            }
+            cout << '\n';
+        }
+    }
+    return 0;
+}

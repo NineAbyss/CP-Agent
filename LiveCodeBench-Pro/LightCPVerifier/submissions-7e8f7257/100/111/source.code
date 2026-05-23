@@ -1,0 +1,90 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <tuple>
+#include <climits>
+using namespace std;
+
+struct DSU {
+    vector<int> parent, size, mask;
+    DSU(int n) : parent(n), size(n, 1), mask(n, 0) {
+        for (int i = 0; i < n; i++) parent[i] = i;
+        mask[0] |= 1;
+        if (n-1 != 0) mask[n-1] |= 2;
+    }
+    int find(int x) {
+        while (parent[x] != x) {
+            if (parent[x] != parent[parent[x]])
+                parent[x] = parent[parent[x]];
+            x = parent[x];
+        }
+        return x;
+    }
+    bool unite(int x, int y) {
+        x = find(x); y = find(y);
+        if (x == y) return false;
+        if (size[x] < size[y]) swap(x, y);
+        parent[y] = x;
+        size[x] += size[y];
+        mask[x] |= mask[y];
+        return true;
+    }
+    bool connected(int x, int y) {
+        return find(x) == find(y);
+    }
+    int getMask(int x) {
+        return mask[find(x)];
+    }
+};
+
+long long solve(int n, vector<tuple<int,int,int>>& edges) {
+    sort(edges.begin(), edges.end(), [](auto& a, auto& b) {
+        return get<2>(a) < get<2>(b);
+    });
+    int m = edges.size();
+    long long ans = LLONG_MAX;
+    // precompute first and last index for each weight? not needed.
+    for (int l = 0; l < m; l++) {
+        int wl = get<2>(edges[l]);
+        if ((long long)wl + wl >= ans) break; // because further l will have larger wl
+        DSU dsu(n);
+        // we need to ensure edge l is used, so we add it first.
+        auto [u1,v1,w1] = edges[l];
+        dsu.unite(u1-1, v1-1);
+        // now add edges from l+1 to m-1 until condition met
+        for (int r = l; r < m; r++) {
+            auto [u,v,w] = edges[r];
+            dsu.unite(u-1, v-1);
+            if (dsu.getMask(0) == 3) {
+                // check if edge l and edge r are in component of 1
+                if (dsu.connected(0, u1-1) && dsu.connected(0, v1-1) &&
+                    dsu.connected(0, u-1) && dsu.connected(0, v-1)) {
+                    long long cost = wl + w;
+                    if (cost < ans) ans = cost;
+                    break;
+                }
+            }
+        }
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<tuple<int,int,int>> edges;
+        edges.reserve(m);
+        for (int i = 0; i < m; i++) {
+            int u, v, w;
+            cin >> u >> v >> w;
+            edges.emplace_back(u, v, w);
+        }
+        cout << solve(n, edges) << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        
+        // 计算 f_i 和 odd_i
+        long long total_f = 0;
+        long long total_pow = 0;
+        int odd = -1;
+        bool same_odd = true;
+        for (int x : a) {
+            int f = 0;
+            while (x % 2 == 0) {
+                x /= 2;
+                f++;
+            }
+            total_f += f;
+            total_pow += (1LL << f) - 1;
+            if (odd == -1) odd = x;
+            else if (odd != x) same_odd = false;
+        }
+        
+        bool ok = false;
+        if (k >= n && k <= n + total_f) {
+            ok = true;
+        } else if (same_odd && k <= n + total_pow) {
+            ok = true;
+        }
+        
+        cout << (ok ? "YES" : "NO") << endl;
+    }
+    return 0;
+}

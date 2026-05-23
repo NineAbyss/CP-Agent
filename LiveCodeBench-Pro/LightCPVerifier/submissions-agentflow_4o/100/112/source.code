@@ -1,0 +1,42 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+// Compute the median for an integer vector
+int computeMedian(vector<int> arr) {
+    int len = arr.size();
+    nth_element(arr.begin(), arr.begin() + (len - 1) / 2, arr.end());
+    return arr[(len - 1) / 2];
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        bool found = false;
+        if (n >= 3) {
+            // Iterate over all possible partitions
+            for (int l = 0; l < n - 2 && !found; ++l) {
+                for (int r = l + 1; r < n - 1 && !found; ++r) {
+                    int m1 = computeMedian(vector<int>(a.begin(), a.begin() + l + 1));
+                    int m2 = computeMedian(vector<int>(a.begin() + l + 1, a.begin() + r + 1));
+                    int m3 = computeMedian(vector<int>(a.begin() + r + 1, a.end()));
+                    if (computeMedian({m1, m2, m3}) <= k) {
+                        found = true;
+                    }
+                }
+            }
+        }
+
+        cout << (found ? "YES" : "NO") << '\n';
+    }
+    return 0;
+}

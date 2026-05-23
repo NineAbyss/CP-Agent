@@ -1,0 +1,120 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+
+struct SegTree {
+    int n;
+    vector<int> mn, tag;
+    
+    SegTree(int n) : n(n) {
+        mn.resize(4 * n, 0);
+        tag.resize(4 * n, 0);
+    }
+    
+    void push(int x) {
+        if (tag[x]) {
+            mn[x*2] += tag[x];
+            mn[x*2+1] += tag[x];
+            tag[x*2] += tag[x];
+            tag[x*2+1] += tag[x];
+            tag[x] = 0;
+        }
+    }
+    
+    void update(int x, int l, int r, int ql, int qr, int v) {
+        if (ql <= l && r <= qr) {
+            mn[x] += v;
+            tag[x] += v;
+            return;
+        }
+        push(x);
+        int mid = (l + r) / 2;
+        if (ql <= mid) update(x*2, l, mid, ql, qr, v);
+        if (qr > mid) update(x*2+1, mid+1, r, ql, qr, v);
+        mn[x] = min(mn[x*2], mn[x*2+1]);
+    }
+    
+    int query(int x, int l, int r, int ql, int qr) {
+        if (ql <= l && r <= qr) return mn[x];
+        push(x);
+        int mid = (l + r) / 2;
+        int res = INF;
+        if (ql <= mid) res = min(res, query(x*2, l, mid, ql, qr));
+        if (qr > mid) res = min(res, query(x*2+1, mid+1, r, ql, qr));
+        return res;
+    }
+};
+
+void solve() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        
+        vector<int> type(m), a(m), b(m);
+        // 存储type 1语句的信息
+        vector<tuple<int, int, int>> ones; // (i, L, R)
+        for (int i = 0; i < m; i++) {
+            cin >> type[i] >> a[i] >> b[i];
+            if (type[i] == 1) {
+                ones.emplace_back(i, a[i], b[i]);
+            }
+        }
+        
+        int q;
+        cin >> q;
+        
+        vector<tuple<int, int, int>> queries; // (r, l, id)
+        for (int i = 0; i < q; i++) {
+            int l, r;
+            cin >> l >> r;
+            queries.emplace_back(r, l, i);
+        }
+        
+        sort(queries.begin(), queries.end());
+        
+        // 离线处理
+        SegTree seg(n + 1);
+        vector<string> ans(q, "YES");
+        
+        int ptr = 0; // 当前处理的语句索引
+        for (auto [r, l, id] : queries) {
+            // 添加语句直到r
+            while (ptr < r) {
+                if (type[ptr] == 0) {
+                    seg.update(1, 1, n, a[ptr], b[ptr], 1);
+                }
+                ptr++;
+            }
+            
+            // 检查是否有type 1语句在[l,r]中被完全覆盖
+            bool ok = true;
+            for (auto [i, L, R] : ones) {
+                if (i+1 < l || i+1 > r) continue; // 语句不在查询范围内
+                if (seg.query(1, 1, n, L, R) > 0) {
+                    ok = false;
+                    break;
+                }
+            }
+            
+            if (!ok) {
+                ans[id] = "NO";
+            }
+        }
+        
+        for (int i = 0; i < q; i++) {
+            cout << ans[i] << "\n";
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    solve();
+    return 0;
+}

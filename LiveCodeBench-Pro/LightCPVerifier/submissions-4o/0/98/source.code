@@ -1,0 +1,42 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false); // Faster I/O
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+
+        vector<int> degree(n + 1, 0);
+        
+        for (int i = 0; i < m; ++i) {
+            int u, v;
+            cin >> u >> v;
+            degree[u]++;
+            degree[v]++;
+        }
+
+        int oddDegreeCount = 0;
+        for (int i = 1; i <= n; ++i) {
+            if (degree[i] % 2 == 1) {
+                oddDegreeCount++;
+            }
+        }
+
+        // If the graph G has 0 or 2 odd degree vertices, it has an Euler trail
+        if (oddDegreeCount == 0 || oddDegreeCount == 2) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    
+    return 0;
+}

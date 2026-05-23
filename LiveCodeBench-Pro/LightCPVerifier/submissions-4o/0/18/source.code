@@ -1,0 +1,71 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        
+        vector<long long> positions(n);
+        vector<int> delays(n);
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> positions[i];
+        }
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> delays[i];
+        }
+        
+        unordered_map<long long, int> traffic_lights;
+        for (int i = 0; i < n; ++i) {
+            // Store the delay associated with each traffic light position
+            traffic_lights[positions[i]] = delays[i];
+        }
+
+        int q;
+        cin >> q;
+        
+        while (q--) {
+            long long a;
+            cin >> a;
+            
+            long long time = 0;
+            int direction = 1; // Start moving in the positive direction
+            
+            while (true) {
+                if (traffic_lights.find(a) != traffic_lights.end()) {
+                    // There's a traffic light at position `a`
+                    int d = traffic_lights[a];
+                    if ((time - d) % k == 0) {
+                        // It's currently red at time `time`
+                        direction *= -1; // Turn around
+                    }
+                }
+                
+                a += direction; // Move to the next position
+                time++;
+                
+                if (a < 1 || a > 1e15) {
+                    // Went out of bounds, so we can leave the strip
+                    cout << "YES" << endl;
+                    break;
+                }
+                
+                if (time > 1e100) {
+                    // Simulated time exceeded 1e100 seconds, consider it as "NO"
+                    cout << "NO" << endl;
+                    break;
+                }
+            }
+        }
+    }
+
+    return 0;
+}

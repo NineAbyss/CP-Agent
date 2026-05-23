@@ -1,0 +1,38 @@
+#include <iostream>
+#include <vector>
+#include <map>
+using namespace std;
+
+bool solve(vector<int>& a) {
+    map<int, int> cnt;
+    for (int x : a) {
+        cnt[x+1]++; // 区间左端点
+    }
+    for (auto& [x, c] : cnt) {
+        if (c >= 4) return true;
+        if (c >= 2) {
+            auto it = cnt.find(x+1);
+            if (it != cnt.end() && it->second >= 2) return true;
+            if (it != cnt.end() && it->second >= 1) {
+                auto it2 = cnt.find(x+2);
+                if (it2 != cnt.end() && it2->second >= 2) return true;
+            }
+        }
+    }
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        cout << (solve(a) ? "Yes" : "No") << '\n';
+    }
+    return 0;
+}

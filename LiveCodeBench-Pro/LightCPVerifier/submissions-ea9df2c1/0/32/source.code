@@ -1,0 +1,31 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        int val = 0;
+        for (char c : s) {
+            val = val * 10 + (c - '0');
+        }
+        bool found = false;
+        for (int x = 0; x <= 99; ++x) {
+            if (x * x == val) {
+                // 输出任意 a,b 满足 a+b = x
+                int a = 0;
+                int b = x;
+                cout << a << " " << b << endl;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            cout << -1 << endl;
+        }
+    }
+    return 0;
+}

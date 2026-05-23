@@ -1,0 +1,116 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+
+struct MinCostMaxFlow {
+    struct Edge {
+        int to, cap, cost, rev;
+    };
+    vector<vector<Edge>> g;
+    vector<int> dist, prevv, preve;
+    MinCostMaxFlow(int n) : g(n), dist(n), prevv(n), preve(n) {}
+    void add_edge(int from, int to, int cap, int cost) {
+        g[from].push_back({to, cap, cost, (int)g[to].size()});
+        g[to].push_back({from, 0, -cost, (int)g[from].size() - 1});
+    }
+    int min_cost_flow(int s, int t, int flow_limit) {
+        int res = 0;
+        int flow = 0;
+        while (flow < flow_limit) {
+            fill(dist.begin(), dist.end(), INF);
+            dist[s] = 0;
+            bool update = true;
+            while (update) {
+                update = false;
+                for (int v = 0; v < (int)g.size(); v++) {
+                    if (dist[v] == INF) continue;
+                    for (int i = 0; i < (int)g[v].size(); i++) {
+                        Edge &e = g[v][i];
+                        if (e.cap > 0 && dist[e.to] > dist[v] + e.cost) {
+                            dist[e.to] = dist[v] + e.cost;
+                            prevv[e.to] = v;
+                            preve[e.to] = i;
+                            update = true;
+                        }
+                    }
+                }
+            }
+            if (dist[t] == INF) break;
+            int d = flow_limit - flow;
+            for (int v = t; v != s; v = prevv[v]) {
+                d = min(d, g[prevv[v]][preve[v]].cap);
+            }
+            flow += d;
+            res += d * dist[t];
+            for (int v = t; v != s; v = prevv[v]) {
+                Edge &e = g[prevv[v]][preve[v]];
+                e.cap -= d;
+                g[v][e.rev].cap += d;
+            }
+        }
+        return res;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<int> s(n);
+        for (int i = 0; i < n; i++) cin >> s[i];
+        vector<vector<int>> a(m, vector<int>(n));
+        vector<vector<int>> b(m, vector<int>(n));
+        vector<vector<int>> c(m, vector<int>(n));
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) cin >> a[i][j];
+            for (int j = 0; j < n; j++) cin >> b[i][j];
+            for (int j = 0; j < n; j++) cin >> c[i][j];
+        }
+        
+        auto prev = [&](int j) { return (j-1+n)%n; };
+        auto next = [&](int j) { return (j+1)%n; };
+        
+        long long total_s = 0;
+        for (int x : s) total_s += x;
+        for (int k = 1; k <= m; k++) {
+            // 节点：每天每个机场一个节点，编号 (i-1)*n + j, i=1..k+1 // S = (k+1)*n, T = S+1
+            int N = (k+1)*n + 2;
+            MinCostMaxFlow mcf(N);
+            int S = N-2, T = N-1;
+            
+            // 源点到第一天
+            for (int j = 0; j < n; j++) {
+                mcf.add_edge(S, 0*n + j, s[j], 0);
+            }
+            
+            for (int i = 1; i <= k; i++) {
+                int ai = i-1;
+                for (int j = 0; j < n; j++) {
+                    int u = (i-1)*n + j;
+                    // 保留到当天
+                    mcf.add_edge(u, i*n + j, b[ai][j], 0);
+                    // 被发现
+                    mcf.add_edge(u, T, INF, 1);
+                    // 向前运送
+                    mcf.add_edge(u, i*n + prev(j), a[ai][j], 0);
+                    // 向后运送
+                    mcf.add_edge(u, i*n + next(j), c[ai][j], 0);
+                }
+            }
+            // 最后一天节点到汇点（最终保留）
+            for (int j = 0; j < n; j++) {
+                int u = k*n + j;
+                mcf.add_edge(u, T, INF, 0);
+            }
+            
+            int min_cost = mcf.min_cost_flow(S, T, total_s);
+            cout << total_s - min_cost << '\n';
+        }
+    }
+    return 0;
+}

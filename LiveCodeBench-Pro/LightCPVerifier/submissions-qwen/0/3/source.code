@@ -1,0 +1,49 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+
+using namespace std;
+
+int solve() {
+    int n, s;
+    cin >> n >> s;
+    vector<int> x(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> x[i];
+    }
+
+    // If the starting position is already among the targets, we don't need to visit it again. // But we still need to cover all points.
+
+    // Since we can go left and right, optimal strategy is: // - Go from start to one end, then turn around and go to the other end.
+    // We have two choices: 
+    //   1. Go to the leftmost point first, then go to the rightmost.
+    //   2. Go to the rightmost point first, then go to the leftmost.
+
+    int leftmost = x[0];
+    int rightmost = x[n-1];
+
+    // If the starting point is within [leftmost, rightmost], then we can save some steps.
+    if (s >= leftmost && s <= rightmost) {
+        // We are inside the range. The best path is to go to one end, then go to the opposite end. // But we don't need to come back. So total distance is (rightmost - leftmost) + min(s - leftmost, rightmost - s)
+        return (rightmost - leftmost) + min(s - leftmost, rightmost - s);
+    } else if (s < leftmost) {
+        // We are to the left of all points. Must go to leftmost, then go to rightmost.
+        return rightmost - s;
+    } else { // s > rightmost // We are to the right of all points. Must go to rightmost, then go to leftmost.
+        return s - leftmost;
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << solve() << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+bool check(ll len, ll unit, bool strict) {
+    if (len <= 0) return true;
+    if (!strict && len <= unit) return true;
+    return len % unit == 0;
+}
+
+bool solve(ll w, ll h, ll a, ll b, ll x1, ll y1, ll x2, ll y2) {
+    ll dx = abs(x2 - x1), dy = abs(y2 - y1);
+    // 检查 x 方向对齐
+    if (dx % a == 0) {
+        ll top = h - (max(y1, y2) + b);
+        if (top < 0) top = 0;
+        ll bottom = min(y1, y2);
+        if (bottom < 0) bottom = 0;
+        ll y_gap = dy - b;
+        if (y_gap < 0) y_gap = 0;
+        bool strict = (dx == 0); // 如果 x 方向完全对齐，则中间 gap 必须整除
+        if (check(top, b, false) && check(bottom, b, false) && check(y_gap, b, strict)) return true;
+    }
+    // 检查 y 方向对齐
+    if (dy % b == 0) {
+        ll right = w - (max(x1, x2) + a);
+        if (right < 0) right = 0;
+        ll left = min(x1, x2);
+        if (left < 0) left = 0;
+        ll x_gap = dx - a;
+        if (x_gap < 0) x_gap = 0;
+        bool strict = (dy == 0);
+        if (check(right, a, false) && check(left, a, false) && check(x_gap, a, strict)) return true;
+    }
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        ll w, h, a, b, x1, y1, x2, y2;
+        cin >> w >> h >> a >> b >> x1 >> y1 >> x2 >> y2;
+        cout << (solve(w, h, a, b, x1, y1, x2, y2) ? "Yes" : "No") << endl;
+    }
+    return 0;
+}

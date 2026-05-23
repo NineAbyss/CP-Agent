@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+vector<pair<int, int>> merge_intervals(vector<pair<int, int>> intervals) {
+    if (intervals.empty()) return {};
+    sort(intervals.begin(), intervals.end());
+    vector<pair<int, int>> merged;
+    int start = intervals[0].first, end = intervals[0].second;
+    for (int i = 1; i < intervals.size(); i++) {
+        if (intervals[i].first <= end + 1) {
+            end = max(end, intervals[i].second);
+        } else {
+            merged.push_back({start, end});
+            start = intervals[i].first;
+            end = intervals[i].second;
+        }
+    }
+    merged.push_back({start, end});
+    return merged;
+}
+
+bool is_covered(int L, int R, const vector<pair<int, int>>& merged) {
+    if (merged.empty()) return false;
+    int cur = L;
+    for (const auto& [a, b] : merged) {
+        if (a > cur) break;
+        if (b >= cur) {
+            cur = b + 1;
+        }
+        if (cur > R) return true;
+    }
+    return cur > R;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<tuple<int, int, int>> stmts;
+        for (int i = 0; i < m; i++) {
+            int x, a, b;
+            cin >> x >> a >> b;
+            stmts.emplace_back(x, a, b);
+        }
+
+        int q;
+        cin >> q;
+        while (q--) {
+            int l, r;
+            cin >> l >> r;
+            l--; r--;
+
+            vector<pair<int, int>> zeros, ones;
+            for (int i = l; i <= r; i++) {
+                auto [x, a, b] = stmts[i];
+                if (x == 0) {
+                    zeros.push_back({a, b});
+                } else {
+                    ones.push_back({a, b});
+                }
+            }
+
+            auto merged_zeros = merge_intervals(zeros);
+            bool valid = true;
+            for (auto [a, b] : ones) {
+                if (is_covered(a, b, merged_zeros)) {
+                    valid = false;
+                    break;
+                }
+            }
+            cout << (valid ? "YES" : "NO") << '\n';
+        }
+    }
+    return 0;
+}

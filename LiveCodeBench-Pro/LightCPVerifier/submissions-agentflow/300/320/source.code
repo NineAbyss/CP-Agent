@@ -1,0 +1,138 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<pair<int,int>> edges(n-1);
+    vector<int> deg(n+1,0);
+    for (int i=0; i<n-1; i++) {
+        int u,v;
+        cin >> u >> v;
+        edges[i] = {u,v};
+        deg[u]++;
+        deg[v]++;
+    }
+    // check if star
+    int max_deg = *max_element(deg.begin()+1, deg.end());
+    if (n==2) {
+        cout << "NO\n";
+        return;
+    }
+    if (max_deg == n-1 && n>=4) {
+        cout << "NO\n";
+        return;
+    }
+    cout << "YES\n";
+    // for n==3
+    if (n==3) {
+        cout << edges[0].first << " " << edges[0].second << '\n';
+        cout << edges[1].first << " " << edges[1].second << '\n';
+        return;
+    }
+    // try to orient all edges towards a root that gives sum depths = n
+    // compute depth sum for each root using reroot DP
+    vector<vector<int>> adj(n+1);
+    for (auto &e : edges) {
+        adj[e.first].push_back(e.second);
+        adj[e.second].push_back(e.first);
+    }
+    vector<int> depth_sum(n+1), sub_size(n+1);
+    function<void(int,int,int)> dfs1 = [&](int x, int p, int d) {
+        depth_sum[1] += d;
+        sub_size[x] = 1;
+        for (int y : adj[x]) {
+            if (y==p) continue;
+            dfs1(y,x,d+1);
+            sub_size[x] += sub_size[y];
+        }
+    };
+    dfs1(1,-1,0);
+    function<void(int,int)> dfs2 = [&](int x, int p) {
+        for (int y : adj[x]) {
+            if (y==p) continue;
+            depth_sum[y] = depth_sum[x] - sub_size[y] + (n - sub_size[y]);
+            dfs2(y,x);
+        }
+    };
+    dfs2(1,-1);
+    int root = -1;
+    for (int i=1; i<=n; i++) {
+        if (depth_sum[i] == n) {
+            root = i;
+            break;
+        }
+    }
+    if (root != -1) {
+        // orient all edges towards root
+        vector<pair<int,int>> ans;
+        function<void(int,int)> dfs3 = [&](int x, int p) {
+            for (int y : adj[x]) {
+                if (y==p) continue;
+                // orient y->x if x is closer to root? Actually we want edge to point to root. // Since root is at top, we orient from child to parent towards root.
+                // So for edge x-y, if y is child (farther from root), then y->x. // But we need to know which is parent. In DFS from root, x is parent.
+                // So we can do DFS from root and orient x->y? Wait, we want edge to point to root.
+                // If we root at root, then for edge parent-child, we want child->parent.
+                // So:
+                ans.push_back({y,x}); // child->parent
+                dfs3(y,x);
+            }
+        };
+        dfs3(root, -1);
+        for (auto &p : ans) {
+            cout << p.first << " " << p.second << '\n';
+        }
+        return;
+    }
+    // if no root found, use heuristic orientation (may fail) // choose t as max degree, u as neighbor with degree>=2
+    int t = 1;
+    for (int i=2; i<=n; i++) if (deg[i]>deg[t]) t=i;
+    int u = -1;
+    for (auto &e : edges) {
+        if (e.first==t && deg[e.second]>=2) { u=e.second; break; }
+        if (e.second==t && deg[e.first]>=2) { u=e.first; break; }
+    }
+    if (u==-1) {
+        for (auto &e : edges) {
+            if (e.first==t) { u=e.second; break; }
+            if (e.second==t) { u=e.first; break; }
+        }
+    }
+    vector<pair<int,int>> ans;
+    vector<bool> vis(n+1, false);
+    function<void(int,int)> dfs4 = [&](int x, int p) {
+        vis[x]=true;
+        for (int y : adj[x]) {
+            if (y==p) continue;
+            if (x==t && y==u) {
+                ans.push_back({u,t});
+            } else if (x==t) {
+                ans.push_back({y,t});
+            } else if (x==u) {
+                if (deg[y]==1) {
+                    ans.push_back({y,x});
+                } else {
+                    ans.push_back({u,y});
+                }
+            } else {
+                ans.push_back({y,x});
+            }
+            dfs4(y,x);
+        }
+    };
+    dfs4(t, -1);
+    for (auto &p : ans) {
+        cout << p.first << " " << p.second << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Function to calculate final value of x after rounds are played optimally
+long long findOptimalX(int n, vector<long long>& a, vector<long long>& b, string& c) {
+    long long x = 0;
+    
+    for (int i = 0; i < n; ++i) {
+        if (c[i] == '0') {
+            // Gellyfish's turn - minimize by choosing min(a[i], b[i])
+            x = x ^ min(a[i], b[i]);
+        } else {
+            // Flower's turn - maximize by choosing max(a[i], b[i])
+            x = x ^ max(a[i], b[i]);
+        }
+    }
+    
+    return x;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<long long> a(n), b(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        for (int i = 0; i < n; ++i) cin >> b[i];
+        
+        string c;
+        cin >> c;
+        
+        // Get the optimal x after all rounds for this test case
+        cout << findOptimalX(n, a, b, c) << endl;
+    }
+    
+    return 0;
+}

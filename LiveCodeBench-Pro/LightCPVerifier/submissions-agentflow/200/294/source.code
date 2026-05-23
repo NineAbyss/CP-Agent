@@ -1,0 +1,209 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9+7;
+
+int main() {
+    // 读取输入
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        
+        vector<pair<int, int>> odd_pos(k+1);
+        for (int i = 0; i <= k; i++) {
+            cin >> odd_pos[i].first >> odd_pos[i].second;
+        }
+        
+        // 检查每对相邻奇数位置是否距离为2
+        bool possible = true;
+        for (int i = 0; i < k; i++) {
+            int dx = abs(odd_pos[i].first - odd_pos[i+1].first);
+            int dy = abs(odd_pos[i].second - odd_pos[i+1].second);
+            if (dx + dy != 2) {
+                possible = false;
+                break;
+            }
+        }
+        
+        if (!possible) {
+            cout << 0 << endl;
+            continue;
+        }
+        
+        // 构建候选单元格到ID的映射
+        map<pair<int, int>, int> cell_to_id;
+        vector<pair<int, int>> id_to_cell;
+        
+        // 首先添加所有奇数位置单元格（它们不能作为偶数位置）
+        for (int i = 0; i <= k; i++) {
+            cell_to_id[odd_pos[i]] = -1; // 标记为不可用
+        }
+        
+        // 对于每个偶数位置，收集候选单元格 // 左边节点: 偶数位置 0..k-1
+        // 右边节点: 候选单元格
+        vector<vector<int>> left_to_right(k);
+        vector<vector<int>> right_to_left;
+        
+        for (int i = 0; i < k; i++) {
+            auto& A = odd_pos[i];
+            auto& C = odd_pos[i+1];
+            
+            // 找到A和C的共同邻居
+            vector<pair<int, int>> common;
+            
+            // A的邻居
+            vector<pair<int, int>> dirs = {{1,0}, {-1,0}, {0,1}, {0,-1}};
+            set<pair<int, int>> A_neighbors;
+            for (auto& d : dirs) {
+                int nx = A.first + d.first;
+                int ny = A.second + d.second;
+                if (nx >= 1 && nx <= n && ny >= 1 && ny <= m) {
+                    A_neighbors.insert({nx, ny});
+                }
+            }
+            
+            // C的邻居
+            for (auto& d : dirs) {
+                int nx = C.first + d.first;
+                int ny = C.second + d.second;
+                if (nx >= 1 && nx <= n && ny >= 1 && ny <= m) {
+                    if (A_neighbors.count({nx, ny})) {
+                        // 检查是否与任何奇数位置相同
+                        if (cell_to_id.count({nx, ny}) && cell_to_id[{nx, ny}] == -1) {
+                            // 是奇数位置单元格，不能使用
+                            continue;
+                        }
+                        common.push_back({nx, ny});
+                    }
+                }
+            }
+            
+            if (common.empty()) {
+                possible = false;
+                break;
+            }
+            
+            // 为候选单元格分配ID
+            for (auto& cell : common) {
+                if (!cell_to_id.count(cell)) {
+                    int id = id_to_cell.size();
+                    cell_to_id[cell] = id;
+                    id_to_cell.push_back(cell);
+                    right_to_left.push_back({}); // 初始化空列表
+                }
+            }
+            
+            // 添加边
+            for (auto& cell : common) {
+                int right_id = cell_to_id[cell];
+                left_to_right[i].push_back(right_id);
+                right_to_left[right_id].push_back(i);
+            }
+        }
+        
+        if (!possible) {
+            cout << 0 << endl;
+            continue;
+        }
+        
+        // 找到左边节点的连通分量（通过共享右边节点连接）
+        vector<bool> left_visited(k, false);
+        long long ans = 1;
+        
+        // 定义countComponent函数为lambda表达式
+        auto countComponent = [&](const vector<int>& left_nodes) -> long long {
+            int L = left_nodes.size();
+            if (L == 0) return 1;
+            
+            // 收集该分量中涉及的右边节点
+            set<int> right_set;
+            for (int idx = 0; idx < L; idx++) {
+                int l = left_nodes[idx];
+                for (int r : left_to_right[l]) {
+                    right_set.insert(r);
+                }
+            }
+            
+            vector<int> right_nodes(right_set.begin(), right_set.end());
+            int R = right_nodes.size();
+            
+            // 创建映射
+            map<int, int> right_id;
+            for (int i = 0; i < R; i++) {
+                right_id[right_nodes[i]] = i;
+            }
+            
+            // 对于每个左边节点，它的候选右边节点
+            vector<vector<int>> candidates(L);
+            for (int i = 0; i < L; i++) {
+                int l = left_nodes[i];
+                for (int r : left_to_right[l]) {
+                    candidates[i].push_back(right_id[r]);
+                }
+            }
+            
+            // 状态压缩DP // dp[mask] = 使用mask表示的右边节点的方案数
+            vector<long long> dp(1 << R, 0);
+            dp[0] = 1;
+            
+            for (int i = 0; i < L; i++) {
+                vector<long long> new_dp(1 << R, 0);
+                for (int mask = 0; mask < (1 << R); mask++) {
+                    if (dp[mask] == 0) continue;
+                    // 尝试为左边节点i选择候选
+                    for (int r : candidates[i]) {
+                        if (!(mask & (1 << r))) {
+                            int new_mask = mask | (1 << r);
+                            new_dp[new_mask] = (new_dp[new_mask] + dp[mask]) % MOD;
+                        }
+                    }
+                }
+                dp = move(new_dp);
+            }
+            
+            // 所有左边节点都分配后的总方案数
+            long long total = 0;
+            for (int mask = 0; mask < (1 << R); mask++) {
+                total = (total + dp[mask]) % MOD;
+            }
+            
+            return total;
+        };
+        
+        for (int i = 0; i < k; i++) {
+            if (!left_visited[i]) {
+                // BFS找到连通分量
+                vector<int> left_component;
+                queue<int> q;
+                q.push(i);
+                left_visited[i] = true;
+                left_component.push_back(i);
+                
+                while (!q.empty()) {
+                    int l = q.front(); q.pop();
+                    // 通过右边节点找到连接的左边节点
+                    for (int r : left_to_right[l]) {
+                        for (int l2 : right_to_left[r]) {
+                            if (!left_visited[l2]) {
+                                left_visited[l2] = true;
+                                q.push(l2);
+                                left_component.push_back(l2);
+                            }
+                        }
+                    }
+                }
+                
+                // 计算该分量的方案数
+                long long comp_ways = countComponent(left_component);
+                ans = (ans * comp_ways) % MOD;
+            }
+        }
+        
+        cout << ans << endl;
+    }
+    
+    return 0;
+}

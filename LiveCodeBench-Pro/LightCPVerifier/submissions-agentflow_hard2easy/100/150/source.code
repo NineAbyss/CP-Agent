@@ -1,0 +1,168 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 70005;
+const int LOG = 17;
+
+vector<int> adj[MAXN];
+int depth[MAXN], parent[MAXN][LOG+1];
+int tin[MAXN], tout[MAXN], timer;
+string s;
+int n;
+
+void dfs_lca(int u, int p) {
+    tin[u] = ++timer;
+    parent[u][0] = p;
+    for (int i = 1; i <= LOG; i++) {
+        parent[u][i] = parent[parent[u][i-1]][i-1];
+    }
+    
+    for (int v : adj[u]) {
+        if (v != p) {
+            depth[v] = depth[u] + 1;
+            dfs_lca(v, u);
+        }
+    }
+    tout[u] = ++timer;
+}
+
+bool is_ancestor(int u, int v) {
+    return tin[u] <= tin[v] && tout[u] >= tout[v];
+}
+
+int lca(int u, int v) {
+    if (is_ancestor(u, v)) return u;
+    if (is_ancestor(v, u)) return v;
+    
+    for (int i = LOG; i >= 0; i--) {
+        if (!is_ancestor(parent[u][i], v)) {
+            u = parent[u][i];
+        }
+    }
+    return parent[u][0];
+}
+
+int dist(int u, int v) {
+    int l = lca(u, v);
+    return depth[u] + depth[v] - 2 * depth[l];
+}
+
+void solve() {
+    cin >> n;
+    cin >> s;
+    
+    // 清空邻接表
+    for (int i = 1; i <= n; i++) {
+        adj[i].clear();
+    }
+    
+    // 读入树边
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    // LCA预处理
+    depth[1] = 0;
+    timer = 0;
+    dfs_lca(1, 1);
+    
+    // 收集标记顶点
+    vector<int> marks;
+    for (int i = 1; i <= n; i++) {
+        if (s[i-1] == '1') marks.push_back(i);
+    }
+    
+    int k = marks.size();
+    
+    // 计算答案
+    vector<int> ans(n+1, -1);
+    
+    if (k == 0) {
+        for (int i = 1; i <= n; i++) {
+            cout << "-1" << (i == n ? "\n" : " ");
+        }
+        return;
+    }
+    
+    // 预处理：对于每个标记顶点，计算到其他标记顶点的距离并排序
+    vector<vector<pair<int, int>>> dist_lists(n+1);
+    for (int i : marks) {
+        vector<pair<int, int>> temp;
+        for (int j : marks) {
+            if (i != j) {
+                int d = dist(i, j);
+                temp.push_back({d, j});
+            }
+        }
+        sort(temp.begin(), temp.end());
+        dist_lists[i] = temp;
+    }
+    
+    // 对于每个起始顶点，使用有限深度的搜索
+    for (int start : marks) {
+        int max_len = 1;
+        
+        // 只尝试最远的几个顶点作为第一个顶点
+        const int FIRST_CANDIDATES = min(50, k-1);
+        const auto& start_dists = dist_lists[start];
+        
+        // 尝试最远的FIRST_CANDIDATES个顶点作为第一个顶点
+        for (int idx = max(0, (int)start_dists.size() - FIRST_CANDIDATES); idx < (int)start_dists.size(); idx++) {
+            auto& [d1, v2] = start_dists[idx];
+            
+            vector<bool> used(n+1, false);
+            used[start] = true;
+            used[v2] = true;
+            
+            // 递归搜索，深度限制为18
+            function<void(int, int, int)> dfs = [&](int cur, int last_d, int len) {
+                max_len = max(max_len, len);
+                
+                if (len >= 18) return;
+                
+                const auto& cur_dists = dist_lists[cur];
+                auto it = lower_bound(cur_dists.begin(), cur_dists.end(), 
+                                     make_pair(2 * last_d, 0));
+                
+                // 只尝试最远的几个候选
+                int candidates_tried = 0;
+                for (auto rit = cur_dists.rbegin(); rit != cur_dists.rend(); ++rit) {
+                    if (rit->first < 2 * last_d) break;
+                    
+                    if (!used[rit->second]) {
+                        used[rit->second] = true;
+                        dfs(rit->second, rit->first, len + 1);
+                        used[rit->second] = false;
+                        
+                        candidates_tried++;
+                        if (candidates_tried >= 5) break; // 限制分支数
+                    }
+                }
+            };
+            
+            dfs(v2, d1, 2);
+        }
+        
+        ans[start] = max_len;
+    }
+    
+    for (int i = 1; i <= n; i++) {
+        cout << ans[i] << (i == n ? "\n" : " ");
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool possible(int x, int y, int k) {
+    // check prime factors > k
+    auto get_pf = [&](int n, unordered_map<int, int>& mp) {
+        int temp = n;
+        for (int i = 2; i * i <= temp; ++i) {
+            while (temp % i == 0) {
+                mp[i]++;
+                temp /= i;
+            }
+        }
+        if (temp > 1) mp[temp]++;
+    };
+    unordered_map<int, int> fx, fy;
+    get_pf(x, fx);
+    get_pf(y, fy);
+    unordered_set<int> all_primes;
+    for (auto& p : fx) all_primes.insert(p.first);
+    for (auto& p : fy) all_primes.insert(p.first);
+    for (int p : all_primes) {
+        if (p > k && fx[p] != fy[p]) return false;
+    }
+    return true;
+}
+
+int solve(int x, int y, int k) {
+    if (x == y) return 0;
+    if (!possible(x, y, k)) return -1;
+    // one step
+    if (y % x == 0 && y / x <= k) return 1;
+    if (x % y == 0 && x / y <= k) return 1;
+    long long max_val = max(x, y) * 1LL * k;
+    unordered_map<int, int> dist;
+    queue<int> q;
+    dist[x] = 0;
+    q.push(x);
+    while (!q.empty()) {
+        int cur = q.front(); q.pop();
+        int d = dist[cur];
+        if (d >= 10) continue; // depth limit, answer won't exceed 10 // multiplication
+        for (int a = 1; a <= k; ++a) {
+            long long nxt = 1LL * cur * a;
+            if (nxt > max_val) break;
+            int nxt_i = (int)nxt;
+            if (dist.find(nxt_i) == dist.end()) {
+                dist[nxt_i] = d + 1;
+                if (nxt_i == y) return d + 1;
+                q.push(nxt_i);
+            }
+        }
+        // division
+        for (int a = 1; a <= k; ++a) {
+            if (cur % a != 0) continue;
+            int nxt = cur / a;
+            if (nxt < 1) continue;
+            if (dist.find(nxt) == dist.end()) {
+                dist[nxt] = d + 1;
+                if (nxt == y) return d + 1;
+                q.push(nxt);
+            }
+        }
+    }
+    return -1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int x, y, k;
+        cin >> x >> y >> k;
+        cout << solve(x, y, k) << '\n';
+    }
+    return 0;
+}

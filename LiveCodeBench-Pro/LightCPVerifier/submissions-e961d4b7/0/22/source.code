@@ -1,0 +1,42 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, x;
+        cin >> n >> x;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        int L_max = -1e9, R_min = 1e9;
+        bool possible = true;
+        for (int i = 0; i < n; i++) {
+            if (a[i] == 1) {
+                int door = i + 1; // 门编号从1开始
+                int L = door - x;
+                int R = door - 1;
+                if (L > R) {
+                    possible = false;
+                    break;
+                }
+                L_max = max(L_max, L);
+                R_min = min(R_min, R);
+                if (L_max > R_min) {
+                    possible = false;
+                    break;
+                }
+            }
+        }
+        if (possible && L_max <= R_min) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

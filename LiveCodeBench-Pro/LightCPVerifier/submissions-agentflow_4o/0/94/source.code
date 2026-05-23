@@ -1,0 +1,31 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        long long n, x;
+        cin >> n >> x;
+
+        if (n == 1) {
+            if (x == 0) {
+                cout << "-1\n";
+            } else {
+                cout << x << "\n";
+            }
+        } else if (n == 2) {
+            // Special case adjustment
+            if (x == 0) {
+                cout << "2\n";  // two 1's
+            } else {
+                cout << (x + 1) << "\n";
+            }
+        } else {
+            // Sum => (n-1)*1's + (x)
+            cout << n - 1 + x << "\n";
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Edge {
+    int to;
+    int weight;
+};
+
+// BFS to check for a valid path with weight constraints
+bool is_path_possible(vector<vector<Edge>>& adj, int n, int min_w, int max_w) {
+    vector<bool> visited(n + 1, false);
+    queue<int> q;
+    q.push(1); // Start from vertex 1
+    visited[1] = true;
+
+    while (!q.empty()) {
+        int node = q.front();
+        q.pop();
+        if (node == n) return true; // Valid path reached
+        
+        for (const auto& edge : adj[node]) {
+            if (!visited[edge.to] && edge.weight >= min_w && edge.weight <= max_w) {
+                visited[edge.to] = true;
+                q.push(edge.to);
+            }
+        }
+    }
+    return false; // No valid path found
+}
+
+int find_min_cost(int n, int m, vector<tuple<int, int, int>>& edges) {
+    vector<vector<Edge>> adj(n + 1);
+    set<int> unique_weights;
+
+    // Construct adjacency list and determine unique weights
+    for (auto [u, v, w] : edges) {
+        adj[u].emplace_back(Edge{v, w});
+        adj[v].emplace_back(Edge{u, w});
+        unique_weights.insert(w);
+    }
+
+    vector<int> sorted_weights(unique_weights.begin(), unique_weights.end());
+    int min_cost = INT_MAX;
+
+    // Consider each weight as potential min_w
+    for (size_t i = 0; i < sorted_weights.size(); ++i) {
+        int min_w = sorted_weights[i];
+        int left = i, right = sorted_weights.size() - 1;
+
+        // Binary search for max_w to get valid path
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            int max_w = sorted_weights[mid];
+
+            // Check if path exists within the current weight settings
+            if (is_path_possible(adj, n, min_w, max_w)) {
+                min_cost = min(min_cost, min_w + max_w);
+                right = mid - 1; // Attempt to narrow max_w
+            } else {
+                left = mid + 1; // Increase max_w range search
+            }
+        }
+    }
+
+    return min_cost;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<tuple<int, int, int>> edges(m);
+        for (int i = 0; i < m; ++i) {
+            int u, v, w;
+            cin >> u >> v >> w;
+            edges[i] = {u, v, w};
+        }
+
+        int result = find_min_cost(n, m, edges);
+        cout << result << endl;
+    }
+
+    return 0;
+}

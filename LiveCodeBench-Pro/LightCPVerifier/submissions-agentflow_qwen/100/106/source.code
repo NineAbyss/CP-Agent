@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+
+        vector<vector<int>> graph(2 * n + 1);
+        for (int i = 0; i < n; i++) {
+            graph[a[i]].push_back(i);
+            graph[b[i]].push_back(i);
+        }
+
+        vector<int> color(2 * n + 1, -1);
+        for (int i = 1; i <= 2 * n; i++) {
+            if (color[i] != -1 || graph[i].empty()) continue;
+            vector<int> stack = {i};
+            color[i] = 0;
+            while (!stack.empty()) {
+                int u = stack.back(); stack.pop_back();
+                for (int idx : graph[u]) {
+                    int v = a[idx] ^ b[idx] ^ u;
+                    if (color[v] == -1) {
+                        color[v] = color[u] ^ 1;
+                        stack.push_back(v);
+                    }
+                }
+            }
+        }
+
+        vector<int> res_a = a, res_b = b;
+        for (int i = 0; i < n; i++) {
+            if (color[b[i]] == 0) {
+                swap(res_a[i], res_b[i]);
+            }
+        }
+
+        set<int> sa(res_a.begin(), res_a.end());
+        set<int> sb(res_b.begin(), res_b.end());
+        cout << sa.size() + sb.size() << '\n';
+        for (int x : res_a) cout << x << ' ';
+        cout << '\n';
+        for (int x : res_b) cout << x << ' ';
+        cout << '\n';
+    }
+    return 0;
+}

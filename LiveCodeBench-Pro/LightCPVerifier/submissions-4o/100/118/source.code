@@ -1,0 +1,53 @@
+#include <iostream>
+#include <queue>
+#include <unordered_set>
+using namespace std;
+
+int minOperations(int x, int y, int k) {
+    if (x == y) return 0;
+    
+    queue<pair<int, int>> q; // pair<current_value, operations_count>
+    unordered_set<int> visited; // to avoid revisiting the same number
+    q.push({x, 0});
+    visited.insert(x);
+
+    while (!q.empty()) {
+        auto [current, operations] = q.front();
+        q.pop();
+
+        for (int i = 1; i <= k; ++i) {
+            int new_value_multiply = current * i;
+            int new_value_divide = (current % i == 0) ? (current / i) : -1;
+
+            // If multiplying achieves the target
+            if (new_value_multiply == y) return operations + 1;
+
+            // If dividing achieves the target
+            if (new_value_divide == y) return operations + 1;
+
+            // Push new values to the queue, if not visited yet
+            if (new_value_multiply <= 1e6 && visited.find(new_value_multiply) == visited.end()) {
+                q.push({new_value_multiply, operations + 1});
+                visited.insert(new_value_multiply);
+            }
+            
+            if (new_value_divide != -1 && new_value_divide >= 1 && visited.find(new_value_divide) == visited.end()) {
+                q.push({new_value_divide, operations + 1});
+                visited.insert(new_value_divide);
+            }
+        }
+    }
+
+    return -1; // If y is not reachable
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int x, y, k;
+        cin >> x >> y >> k;
+        cout << minOperations(x, y, k) << "\n";
+    }
+    return 0;
+}

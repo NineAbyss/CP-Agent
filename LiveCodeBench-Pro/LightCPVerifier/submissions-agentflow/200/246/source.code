@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+const int MAX_N = 500000;
+
+long long modpow(long long a, long long e) {
+    long long res = 1;
+    while (e) {
+        if (e & 1) res = res * a % MOD;
+        a = a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+void solve() {
+    vector<int> c(26);
+    int n = 0;
+    for (int i = 0; i < 26; i++) {
+        cin >> c[i];
+        n += c[i];
+    }
+    
+    // 预计算阶乘和逆元
+    static vector<long long> fact(MAX_N + 1, 1), inv_fact(MAX_N + 1, 1);
+    static bool precomputed = false;
+    if (!precomputed) {
+        for (int i = 1; i <= MAX_N; i++) fact[i] = fact[i-1] * i % MOD;
+        inv_fact[MAX_N] = modpow(fact[MAX_N], MOD-2);
+        for (int i = MAX_N-1; i >= 0; i--) inv_fact[i] = inv_fact[i+1] * (i+1) % MOD;
+        precomputed = true;
+    }
+    
+    // DP
+    vector<long long> dp(n+1, 0);
+    dp[0] = 1;
+    int sum = 0;
+    for (int cnt : c) {
+        if (cnt == 0) continue;
+        vector<long long> ndp(n+1, 0);
+        for (int x = 0; x <= sum; x++) {
+            if (dp[x] == 0) continue;
+            // 放在奇数位置
+            ndp[x + cnt] = (ndp[x + cnt] + dp[x] * inv_fact[cnt]) % MOD;
+            // 放在偶数位置
+            ndp[x] = (ndp[x] + dp[x] * inv_fact[cnt]) % MOD;
+        }
+        sum += cnt;
+        dp = ndp;
+    }
+    
+    int odd_pos = (n + 1) / 2;  // ceil(n/2)
+    int even_pos = n / 2;       // floor(n/2)
+    long long ans = 0;
+    for (int x = 0; x <= n; x++) {
+        if (dp[x] == 0) continue;
+        int y = n - x;  // 偶数位置占用数
+        if (x > odd_pos || y > even_pos) continue;
+        long long ways = dp[x] * fact[odd_pos] % MOD;
+        ways = ways * fact[even_pos] % MOD;
+        ways = ways * inv_fact[odd_pos - x] % MOD;
+        ways = ways * inv_fact[even_pos - y] % MOD;
+        ans = (ans + ways) % MOD;
+    }
+    
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

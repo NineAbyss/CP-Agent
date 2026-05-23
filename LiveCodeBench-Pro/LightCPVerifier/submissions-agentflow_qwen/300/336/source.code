@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        vector<int> event(n+2, 0);
+        vector<int> res(n, 0);
+        int inc = 0;
+
+        for (int i = 0; i < n; i++) {
+            inc -= event[i];
+            res[i] = inc;
+            long long eff = a[i] + inc;
+            if (eff < n - i) {
+                int end = i + 1 + static_cast<int>(eff);
+                event[end]++;
+            }
+            inc++;
+        }
+
+        vector<bool> present(n+2, false);
+        for (int x : res) {
+            if (x <= n+1) {
+                present[x] = true;
+            }
+        }
+        int mex = 0;
+        while (present[mex]) {
+            mex++;
+        }
+        cout << mex << '\n';
+    }
+    return 0;
+}

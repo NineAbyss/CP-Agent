@@ -1,0 +1,31 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, x;
+        cin >> n >> x;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        int min_t = n + 1, max_t = -1;
+        for (int i = 0; i < n; i++) {
+            if (a[i] == 1) {
+                min_t = min(min_t, i);
+                max_t = max(max_t, i);
+            }
+        }
+        // 关门时刻集合 {i | a[i]==1}，需要能被长度为 x 的区间覆盖
+        if (max_t - min_t + 1 <= x) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

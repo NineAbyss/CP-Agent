@@ -1,0 +1,42 @@
+#include <iostream>
+#include <vector>
+#include <algorithm> // Add this include for the sort function
+
+using namespace std;
+
+vector<int> min_permutation(vector<int>& a, int n) {
+    bool madeSwaps;
+    do {
+        madeSwaps = false;
+        for (int i = 0; i <= n - 4; ++i) {
+            // Perform the swap if it results in a smaller ordering
+            if (a[i] > a[i + 2]) {
+                swap(a[i], a[i + 2]);
+                swap(a[i + 1], a[i + 3]);
+                madeSwaps = true;
+            }
+        }
+    } while (madeSwaps); // Repeat if swaps are made
+    return a;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i]; // Read permutation array
+        }
+        
+        vector<int> result = min_permutation(a, n);
+        for (int num : result) {
+            cout << num << ' '; // Output result
+        }
+        cout << '\n'; // New line after each test case result
+    }
+
+    return 0; // End program
+}

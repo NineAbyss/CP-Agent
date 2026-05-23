@@ -1,0 +1,71 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        for (int i = 0; i < n; ++i) {
+            cin >> b[i];
+        }
+
+        // Create sets to count distinct elements
+        unordered_set<int> set_a(a.begin(), a.end()), set_b(b.begin(), b.end());
+
+        int current_distinct_count = set_a.size() + set_b.size();
+        bool found_swap = true;
+
+        while (found_swap) {
+            found_swap = false;
+            for (int i = 0; i < n; ++i) {
+                // Attempt to swap a[i] and b[i]
+                set_a.erase(a[i]);
+                set_b.erase(b[i]);
+
+                set_a.insert(b[i]);
+                set_b.insert(a[i]);
+
+                int new_distinct_count = set_a.size() + set_b.size();
+                if (new_distinct_count > current_distinct_count) {
+                    swap(a[i], b[i]);  // Swap in original arrays
+                    current_distinct_count = new_distinct_count;
+                    found_swap = true;
+                    break;
+                }
+
+                // Revert the sets if swap wasn't beneficial
+                set_a.erase(b[i]);
+                set_b.erase(a[i]);
+                set_a.insert(a[i]);
+                set_b.insert(b[i]);
+            }
+        }
+
+        cout << current_distinct_count << endl;
+        for (int num : a) {
+            cout << num << " ";
+        }
+        cout << endl;
+        for (int num : b) {
+            cout << num << " ";
+        }
+        cout << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

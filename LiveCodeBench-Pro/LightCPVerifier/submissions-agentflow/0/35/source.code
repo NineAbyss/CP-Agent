@@ -1,0 +1,34 @@
+#include <iostream>
+
+using namespace std;
+
+// Function checks if given rectangles can form a square
+bool canFormSquare(int l1, int b1, int l2, int b2, int l3, int b3) {
+    // Specific configurations -- side-pair checks ensuring boundary alignment for square
+    return (l1 == l2 + l3 && b1 == b2 && b1 == b3) ||  // Check one alignment
+           (b1 == b2 + b3 && l1 == l2 && l1 == l3);    // Vertical alignment check
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int l1, b1, l2, b2, l3, b3;
+        cin >> l1 >> b1 >> l2 >> b2 >> l3 >> b3;
+
+        // Check if any permutation of rectangles can form a square
+        if (canFormSquare(l1, b1, l2, b2, l3, b3) ||
+            canFormSquare(l1, b1, l3, b3, l2, b2) ||
+            canFormSquare(l2, b2, l1, b1, l3, b3) ||
+            canFormSquare(l2, b2, l3, b3, l1, b1) ||
+            canFormSquare(l3, b3, l1, b1, l2, b2) ||
+            canFormSquare(l3, b3, l2, b2, l1, b1)) {
+            cout << "YES" << endl;
+        } else {
+            cout << "NO" << endl;
+        }
+    }
+
+    return 0;
+}

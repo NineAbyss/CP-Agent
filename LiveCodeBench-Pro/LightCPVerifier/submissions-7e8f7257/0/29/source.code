@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve(vector<int>& a) {
+    int n = a.size();
+    unordered_map<int, int> freq;
+    for (int x : a) freq[x]++;
+    int maxf = 0;
+    for (auto& p : freq) maxf = max(maxf, p.second);
+    if (maxf == 1) return 1;
+    // 特判：如果数组开头有一个只出现一次的元素，且它不是最大频率元素，则答案减1
+    if (freq[a[0]] == 1) {
+        // 检查a[0]是否不是最大频率元素
+        if (freq[a[0]] != maxf) {
+            // 还需要确保这个元素不在任何其他段中出现？简单减1
+            return maxf - 1;
+        }
+    }
+    return maxf;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        cout << solve(a) << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve_one_test(int n, int m, vector<int>& a, vector<int>& b) {
+    // pre_pos[i]: latest position in a that can match b[0..i-1]
+    vector<int> pre_pos(m + 1, -1);
+    pre_pos[0] = -1;
+    
+    int j = 0;
+    for (int i = 0; i < n && j < m; i++) {
+        if (a[i] >= b[j]) {
+            pre_pos[j + 1] = i;
+            j++;
+        }
+    }
+    
+    // If we can match all b without magic, return 0
+    if (j == m) return 0;
+    
+    // suf_pos[i]: earliest position in a that can match b[i..m-1]
+    vector<int> suf_pos(m + 1, n);
+    suf_pos[m] = n;
+    
+    j = m - 1;
+    for (int i = n - 1; i >= 0 && j >= 0; i--) {
+        if (a[i] >= b[j]) {
+            suf_pos[j] = i;
+            j--;
+        }
+    }
+    
+    // For each i, check if we can use magic flower to match b[i]
+    int min_k = INT_MAX;
+    
+    for (int i = 0; i < m; i++) {
+        // Check if prefix b[0..i-1] can be matched
+        if (pre_pos[i] == -1 && i > 0) continue;
+        
+        // Check if suffix b[i+1..m-1] can be matched
+        if (suf_pos[i + 1] == n && i + 1 < m) continue;
+        
+        // Magic flower can be inserted in range [left_bound+1, right_bound]
+        int left_bound = (i == 0) ? -1 : pre_pos[i];
+        int right_bound = (i == m - 1) ? n : suf_pos[i + 1];
+        
+        if (left_bound + 1 <= right_bound) {
+            min_k = min(min_k, b[i]);
+        }
+    }
+    
+    return (min_k == INT_MAX) ? -1 : min_k;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        vector<int> b(m);
+        for (int i = 0; i < m; i++) {
+            cin >> b[i];
+        }
+        
+        cout << solve_one_test(n, m, a, b) << '\n';
+    }
+    
+    return 0;
+}

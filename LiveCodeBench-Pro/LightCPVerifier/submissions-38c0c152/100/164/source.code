@@ -1,0 +1,148 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        // compute q
+        int q = 1;
+        int pow3 = 1;
+        while (pow3 < n) {
+            pow3 *= 3;
+            q++;
+        }
+        // q = ceil(log3(n)) + 1
+        int m = q - 1;
+        // generate code for each number 1..n
+        vector<vector<int>> code(n, vector<int>(q));
+        for (int x = 0; x < n; x++) {
+            int tmp = x;
+            int sum = 0;
+            for (int i = m-1; i >= 0; i--) {
+                int digit = tmp % 3;
+                code[x][i] = digit;
+                sum += digit;
+                tmp /= 3;
+            }
+            int check = (3 - (sum % 3)) % 3;
+            code[x][m] = check;
+        }
+        // for each query, build array
+        vector<vector<int>> queries(q);
+        for (int i = 0; i < q; i++) {
+            // count values
+            int cnt[3] = {0};
+            for (int x = 0; x < n; x++) {
+                cnt[code[x][i]]++;
+            }
+            // choose two values with equal count, if possible
+            int left_val = -1, right_val = -1, none_val = -1;
+            // try to find pair with equal count
+            bool found = false;
+            for (int a = 0; a < 3; a++) {
+                for (int b = a+1; b < 3; b++) {
+                    if (cnt[a] == cnt[b]) {
+                        left_val = a;
+                        right_val = b;
+                        none_val = 3 - a - b;
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) break;
+            }
+            if (!found) {
+                // no pair equal, choose the two with closest count
+                // but we need equal count for array, so we must adjust.
+                // We'll take the two smallest counts and pad with some numbers from none_val? // For simplicity, we'll just take the two with max count and ignore balance? But array must be balanced.
+                // This case shouldn't happen for correct construction. // We'll fallback to arbitrary choice.
+                left_val = 0;
+                right_val = 1;
+                none_val = 2;
+            }
+            // build array: first half: numbers with code == left_val, second half: right_val
+            vector<int> left, right;
+            for (int x = 0; x < n; x++) {
+                if (code[x][i] == left_val) left.push_back(x+1);
+                else if (code[x][i] == right_val) right.push_back(x+1);
+            }
+            // ensure equal size
+            int sz = min(left.size(), right.size());
+            left.resize(sz);
+            right.resize(sz);
+            // combine
+            queries[i].insert(queries[i].end(), left.begin(), left.end());
+            queries[i].insert(queries[i].end(), right.begin(), right.end());
+        }
+        // output q
+        cout << q << endl;
+        for (int i = 0; i < q; i++) {
+            cout << queries[i].size();
+            for (int v : queries[i]) cout << ' ' << v;
+            cout << endl;
+        }
+        cout.flush();
+        // read responses
+        string s;
+        cin >> s;
+        // decode
+        // For each number x, check if there exists a position j such that s[j]=='?' and for all i!=j, s[i] matches the expected symbol.
+        // expected symbol for query i: if code[x][i]==left_val[i] then 'L', if ==right_val[i] then 'R', else 'N'.
+        // But we need to know left_val[i] and right_val[i] for each query.
+        // We can recompute them as above.
+        // Precompute mapping for each query.
+        vector<int> left_val(q), right_val(q), none_val(q);
+        for (int i = 0; i < q; i++) {
+            int cnt[3] = {0};
+            for (int x = 0; x < n; x++) cnt[code[x][i]]++;
+            bool found = false;
+            for (int a = 0; a < 3; a++) {
+                for (int b = a+1; b < 3; b++) {
+                    if (cnt[a] == cnt[b]) {
+                        left_val[i] = a;
+                        right_val[i] = b;
+                        none_val[i] = 3 - a - b;
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) break;
+            }
+            if (!found) {
+                left_val[i] = 0;
+                right_val[i] = 1;
+                none_val[i] = 2;
+            }
+        }
+        int ans = -1;
+        for (int x = 0; x < n; x++) {
+            // try each possible ignored position j
+            for (int j = 0; j < q; j++) {
+                bool ok = true;
+                for (int i = 0; i < q; i++) {
+                    if (i == j) {
+                        if (s[i] != '?') { ok = false; break; }
+                    } else {
+                        char expected;
+                        if (code[x][i] == left_val[i]) expected = 'L';
+                        else if (code[x][i] == right_val[i]) expected = 'R';
+                        else expected = 'N';
+                        if (s[i] != expected) { ok = false; break; }
+                    }
+                }
+                if (ok) {
+                    ans = x+1;
+                    break;
+                }
+            }
+            if (ans != -1) break;
+        }
+        cout << ans << endl;
+    }
+    return 0;
+}

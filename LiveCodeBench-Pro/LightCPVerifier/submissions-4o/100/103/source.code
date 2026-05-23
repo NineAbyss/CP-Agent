@@ -1,0 +1,80 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <map>
+
+using namespace std;
+
+bool is_cyclic_util(int v, vector<bool>& visited, vector<bool>& stack, const vector<vector<int>>& adj) {
+    if(!visited[v]) {
+        visited[v] = true;
+        stack[v] = true;
+        
+        for(int i : adj[v]) {
+            if(!visited[i] && is_cyclic_util(i, visited, stack, adj)) {
+                return true;
+            } else if(stack[i]) {
+                return true;
+            }
+        }
+    }
+    stack[v] = false;
+    return false;
+}
+
+bool is_cyclic(int n, const vector<vector<int>>& adj) {
+    vector<bool> visited(n, false);
+    vector<bool> stack(n, false);
+    for(int i = 0; i < n; i++) {
+        if(is_cyclic_util(i, visited, stack, adj)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while(t--) {
+        int n, k;
+        cin >> n >> k;
+        
+        vector<vector<set<int>>> graphs(k, vector<set<int>>(n));
+        
+        for(int g = 0; g < k; ++g) {
+            int m;
+            cin >> m;
+            for(int j = 0; j < m; ++j) {
+                int u, v;
+                cin >> u >> v;
+                --u; --v;
+                graphs[g][u].insert(v);
+                graphs[g][v].insert(u);
+            }
+        }
+        
+        // Process each graph G_i -> V'
+        vector<vector<int>> adj(n);
+        for(int i = 0; i < n; ++i) {
+            bool hasIntersection = false;
+            for(int g1 = 0; g1 < k && !hasIntersection; ++g1) {
+                for(int nei : graphs[g1][i]) {
+                    if(i != nei) {
+                        for(int g2 = 0; g2 < k; ++g2) {
+                            if(g1 != g2 && graphs[g2][i].find(nei) != graphs[g2][i].end()) {
+                                adj[i].push_back(nei);
+                                adj[nei].push_back(i);
+                                hasIntersection = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        cout << (is_cyclic(n, adj) ? "No" : "Yes") << endl;
+    }
+    return 0;
+}

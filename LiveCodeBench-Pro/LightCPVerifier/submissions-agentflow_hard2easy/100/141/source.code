@@ -1,0 +1,142 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// 记忆化计算 f(c)
+map<pair<vector<int>, bool>, int> memo;
+
+int f_rec(vector<int> c, bool turtle_turn) {
+    int m = c.size();
+    if (m == 1) return c[0];
+    
+    auto key = make_pair(c, turtle_turn);
+    if (memo.find(key) != memo.end()) return memo[key];
+    
+    int best;
+    if (turtle_turn) {
+        best = -1e9;
+        for (int i = 0; i < m-1; i++) {
+            vector<int> next = c;
+            next[i] = min(next[i], next[i+1]);
+            next.erase(next.begin() + i + 1);
+            int val = f_rec(next, !turtle_turn);
+            if (val > best) best = val;
+        }
+    } else {
+        best = 1e9;
+        for (int i = 0; i < m-1; i++) {
+            vector<int> next = c;
+            next[i] = max(next[i], next[i+1]);
+            next.erase(next.begin() + i + 1);
+            int val = f_rec(next, !turtle_turn);
+            if (val < best) best = val;
+        }
+    }
+    
+    memo[key] = best;
+    return best;
+}
+
+int compute_f(const vector<int>& c) {
+    int k = c.size();
+    // 对于 k <= 10，使用精确计算
+    if (k <= 10) {
+        return f_rec(c, true);
+    }
+    
+    // 对于大k，使用启发式
+    int min_val = *min_element(c.begin(), c.end());
+    int max_val = *max_element(c.begin(), c.end());
+    
+    int min_pos = -1;
+    for (int i = 0; i < k; i++) if (c[i] == min_val) { min_pos = i; break; }
+    
+    if (min_pos == k-1) return min_val;
+    else return c[0];
+}
+
+long long beauty(const vector<int>& p) {
+    int n = p.size();
+    long long sum = 0;
+    
+    for (int i = 0; i < n; i++) {
+        vector<int> current;
+        for (int j = i; j < n; j++) {
+            current.push_back(p[j]);
+            sum += compute_f(current);
+        }
+    }
+    
+    return sum;
+}
+
+long long solve_case(int n, vector<int> a) {
+    // 收集可用数字
+    vector<bool> used(n+1, false);
+    for (int x : a) if (x != 0) used[x] = true;
+    
+    vector<int> available;
+    for (int x = 1; x <= n; x++) if (!used[x]) available.push_back(x);
+    
+    int m = available.size();
+    if (m == 0) {
+        memo.clear();
+        return beauty(a);
+    }
+    
+    // 如果缺失元素少，尝试所有排列
+    if (m <= 8) {
+        sort(available.begin(), available.end());
+        long long max_beauty = 0;
+        
+        do {
+            memo.clear();
+            vector<int> b = a;
+            int idx = 0;
+            for (int i = 0; i < n; i++) {
+                if (b[i] == 0) b[i] = available[idx++];
+            }
+            max_beauty = max(max_beauty, beauty(b));
+        } while (next_permutation(available.begin(), available.end()));
+        
+        return max_beauty;
+    } else {
+        // 贪心
+        sort(available.begin(), available.end());
+        vector<int> b1 = a, b2 = a;
+        int idx1 = 0, idx2 = m-1;
+        
+        for (int i = 0; i < n; i++) {
+            if (b1[i] == 0) b1[i] = available[idx1++];
+        }
+        
+        for (int i = 0; i < n; i++) {
+            if (b2[i] == 0) b2[i] = available[idx2--];
+        }
+        
+        memo.clear();
+        long long b1_val = beauty(b1);
+        memo.clear();
+        long long b2_val = beauty(b2);
+        
+        return max(b1_val, b2_val);
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        
+        cout << solve_case(n, a) << '\n';
+    }
+    
+    return 0;
+}

@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        int cr = (n + 1) / 2;
+        int cc = (m + 1) / 2;
+        vector<pair<int, int>> cells;
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= m; j++) {
+                cells.emplace_back(i, j);
+            }
+        }
+        // 排序函数
+        sort(cells.begin(), cells.end(), [&](const pair<int, int>& a, const pair<int, int>& b) {
+            int ma = abs(a.first - cr) + abs(a.second - cc);
+            int mb = abs(b.first - cr) + abs(b.second - cc);
+            if (ma != mb) return ma < mb;
+            int da = max(abs(a.first - cr), abs(a.second - cc));
+            int db = max(abs(b.first - cr), abs(b.second - cc));
+            if (da != db) return da < db;
+            if (a.first != b.first) return a.first < b.first;
+            return a.second < b.second;
+        });
+        // 将中心移动到末尾
+        vector<pair<int, int>> order;
+        for (auto& cell : cells) {
+            if (cell.first == cr && cell.second == cc) continue;
+            order.push_back(cell);
+        }
+        order.emplace_back(cr, cc);
+        // 输出
+        for (auto& cell : order) {
+            cout << cell.first << " " << cell.second << endl;
+        }
+    }
+    return 0;
+}

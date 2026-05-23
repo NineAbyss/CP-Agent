@@ -1,0 +1,99 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+struct SegTree {
+    int n;
+    vector<int> mn, lazy;
+    SegTree(int size) {
+        n = size;
+        mn.assign(4*n, 0);
+        lazy.assign(4*n, 0);
+        build(1, 1, n);
+    }
+    void build(int idx, int l, int r) {
+        if (l == r) {
+            mn[idx] = l;
+            return;
+        }
+        int mid = (l+r)/2;
+        build(idx*2, l, mid);
+        build(idx*2+1, mid+1, r);
+        mn[idx] = min(mn[idx*2], mn[idx*2+1]);
+    }
+    void push(int idx) {
+        if (lazy[idx]) {
+            mn[idx*2] += lazy[idx];
+            lazy[idx*2] += lazy[idx];
+            mn[idx*2+1] += lazy[idx];
+            lazy[idx*2+1] += lazy[idx];
+            lazy[idx] = 0;
+        }
+    }
+    void update(int idx, int l, int r, int ql, int qr, int val) {
+        if (ql > qr) return;
+        if (ql <= l && r <= qr) {
+            mn[idx] += val;
+            lazy[idx] += val;
+            return;
+        }
+        push(idx);
+        int mid = (l+r)/2;
+        if (ql <= mid) update(idx*2, l, mid, ql, qr, val);
+        if (qr > mid) update(idx*2+1, mid+1, r, ql, qr, val);
+        mn[idx] = min(mn[idx*2], mn[idx*2+1]);
+    }
+    int query(int idx, int l, int r, int ql, int qr) {
+        if (ql > qr) return INT_MAX;
+        if (ql <= l && r <= qr) return mn[idx];
+        push(idx);
+        int mid = (l+r)/2;
+        int res = INT_MAX;
+        if (ql <= mid) res = min(res, query(idx*2, l, mid, ql, qr));
+        if (qr > mid) res = min(res, query(idx*2+1, mid+1, r, ql, qr));
+        return res;
+    }
+    void add(int l, int r, int val) {
+        update(1, 1, n, l, r, val);
+    }
+    int getMin(int l, int r) {
+        return query(1, 1, n, l, r);
+    }
+};
+
+int main() {
+    vector<int> a = {1,1,4,1,5};
+    int n = a.size();
+    vector<int> arr(n+1);
+    for (int i = 0; i < n; i++) arr[i+1] = a[i];
+    vector<bool> pref_ok(n+1, false);
+    pref_ok[0] = true;
+    SegTree st1(n);
+    for (int k = 1; k <= n; k++) {
+        st1.add(1, arr[k], 1);
+        int min_val = st1.getMin(1, k);
+        if (min_val >= k+1) pref_ok[k] = true;
+        cout << "pref k=" << k << " min_val=" << min_val << " need " << k+1 << " ok=" << pref_ok[k] << endl;
+    }
+    vector<bool> suff_ok(n+1, false);
+    suff_ok[0] = true;
+    SegTree st2(n);
+    for (int k = 1; k <= n; k++) {
+        st2.add(1, arr[n - k + 1], 1);
+        int min_val = st2.getMin(1, k);
+        if (min_val >= k+1) suff_ok[k] = true;
+        cout << "suff k=" << k << " min_val=" << min_val << " need " << k+1 << " ok=" << suff_ok[k] << endl;
+    }
+    int max_k = 0;
+    for (int k = 0; k <= n/2; k++) {
+        if (pref_ok[k] && suff_ok[k]) {
+            max_k = k;
+            cout << "candidate k=" << k << endl;
+        }
+    }
+    long long beauty = max_k * 1LL * (n - max_k);
+    cout << "beauty = " << beauty << endl;
+    return 0;
+}

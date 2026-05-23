@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long solve(string& s) {
+    int n = s.length();
+    
+    // d[i] = pre0[i] - pre1[i]，取值范围 [-n, n] // 使用偏移量 n，使得索引范围 [0, 2n]
+    vector<int> cnt(2*n + 1, 0);
+    int d = n; // d[0] = 0，加上偏移量 n
+    cnt[d]++;
+    
+    for(char c : s) {
+        if(c == '0') d++;
+        else d--;
+        cnt[d]++;
+    }
+    
+    // 所有子串长度之和
+    long long len_sum = (long long)n * (n+1) * (n+2) / 6;
+    
+    // 计算所有对 |d[j] - d[i]| 之和 // d 数组有 m = n+1 个元素
+    int m = n + 1;
+    long long abs_diff_sum = 0;
+    
+    // 遍历所有可能的 d 值（已经排序，因为 d 值从 -n 到 n）
+    int idx = 0;
+    for(int val = 0; val <= 2*n; val++) {
+        int count = cnt[val];
+        if(count == 0) continue;
+        
+        // 当前值 val-n 出现了 count 次 // 这些值在排序数组中的索引范围是 [idx, idx+count-1]
+        // 对于每个索引 i，贡献为 (val-n) * (2*i - (m-1)) // 我们可以使用等差数列求和
+        // Σ_{k=0}^{count-1} (val-n) * (2*(idx+k) - (m-1)) // = (val-n) * count * (2*idx + count - m)
+        
+        long long total_contrib = (long long)(val - n) * count * (2LL * idx + count - m);
+        abs_diff_sum += total_contrib;
+        
+        idx += count;
+    }
+    
+    return (len_sum + abs_diff_sum) / 2;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while(t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+        
+        cout << solve(s) << '\n';
+    }
+    
+    return 0;
+}

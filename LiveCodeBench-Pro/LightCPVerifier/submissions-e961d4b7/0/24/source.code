@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int popcount(long long x) {
+    return __builtin_popcountll(x);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        vector<long long> a(n);
+        long long base = 0;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            base += popcount(a[i]);
+        }
+        // 收集所有正增益操作
+        vector<pair<long long, int>> ops;
+        for (int i = 0; i < n; i++) {
+            long long cur = a[i];
+            int cur_pop = popcount(cur);
+            // 生成一些操作，直到增益很小
+            for (int d = 1; d <= 100000 && d <= k; d++) {
+                long long nxt = cur + d;
+                int nxt_pop = popcount(nxt);
+                int gain = nxt_pop - cur_pop;
+                if (gain > 0) {
+                    ops.push_back({d, gain});
+                }
+                cur = nxt;
+                cur_pop = nxt_pop;
+            }
+        }
+        // 按增益/成本降序排序
+        sort(ops.begin(), ops.end(), [](const pair<long long, int>& x, const pair<long long, int>& y) {
+            return x.second * y.first > y.second * x.first;
+        });
+        long long total_cost = 0;
+        long long total_gain = 0;
+        for (auto& op : ops) {
+            if (total_cost + op.first <= k) {
+                total_cost += op.first;
+                total_gain += op.second;
+            }
+        }
+        // 如果还有剩余操作，平均每步增益约0.5
+        if (k > total_cost) {
+            total_gain += (k - total_cost) / 2;
+        }
+        cout << base + total_gain << '\n';
+    }
+    return 0;
+}

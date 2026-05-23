@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t; // Number of test cases
+
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        string s;
+        cin >> s;
+
+        int current_good_pairs = 0;
+        // Count current good pairs
+        for (int i = 0; i < n / 2; i++) {
+            if (s[i] == s[n - i - 1]) {
+                current_good_pairs++;
+            }
+        }
+
+        int mismatches = (n / 2) - current_good_pairs;
+
+        // Verify if the required k pairs can be achieved using mismatches
+        if (abs(k - current_good_pairs) <= mismatches) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+
+    return 0;
+}

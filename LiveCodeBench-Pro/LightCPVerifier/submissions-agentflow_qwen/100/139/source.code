@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> xs(n), ys(n);
+        for (int i = 0; i < n; i++) {
+            cin >> xs[i] >> ys[i];
+        }
+
+        int cnt[2][2] = {{0}};
+        for (int i = 0; i < n; i++) {
+            int a_parity = xs[i] & 1;
+            int b_parity = (xs[i] + ys[i]) & 1;
+            cnt[a_parity][b_parity]++;
+        }
+
+        int freq[2][2];
+        int total_odd = 0;
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 2; j++) {
+                freq[i][j] = cnt[i][j] & 1;
+                total_odd += freq[i][j];
+            }
+        }
+
+        int target_r = 0, target_s = 0;
+        if (total_odd == 1) {
+            for (int i = 0; i < 2; i++) {
+                for (int j = 0; j < 2; j++) {
+                    if (freq[i][j] == 1) {
+                        target_r = i;
+                        target_s = j;
+                    }
+                }
+            }
+        } else {
+            for (int i = 0; i < 2; i++) {
+                for (int j = 0; j < 2; j++) {
+                    if (freq[i][j] == 0) {
+                        target_r = i;
+                        target_s = j;
+                    }
+                }
+            }
+        }
+
+        // Use the maximum x with correct parity
+        long long x = LLONG_MIN;
+        for (long long xi : xs) {
+            if ((xi & 1) == target_r) {
+                if (xi > x) x = xi;
+            }
+        }
+        // If none found, use adjusted min_x
+        if (x == LLONG_MIN) {
+            long long min_x = *min_element(xs.begin(), xs.end());
+            x = min_x;
+            if ((x & 1) != target_r) x++;
+        }
+
+        int needed_y_parity = (target_s - (x & 1) + 2) % 2;
+        long long y = needed_y_parity;
+        // Use the last y in input with correct parity
+        for (long long yj : ys) {
+            if ((yj & 1) == needed_y_parity) {
+                y = yj;
+            }
+        }
+
+        cout << x << " " << y << "\n";
+    }
+    return 0;
+}

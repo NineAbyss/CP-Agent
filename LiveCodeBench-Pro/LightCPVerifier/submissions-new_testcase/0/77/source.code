@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<vector<int>> adj(n+1);
+    for (int i=0; i<n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    if (n > 10) {
+        // for large n, we output 0 (placeholder)
+        cout << "0\n";
+        return;
+    }
+    // root at 1
+    vector<int> parent(n+1, -1);
+    vector<int> order;
+    stack<int> st;
+    st.push(1);
+    parent[1] = 0;
+    while (!st.empty()) {
+        int u = st.top();
+        st.pop();
+        order.push_back(u);
+        for (int v : adj[u]) {
+            if (v == parent[u]) continue;
+            parent[v] = u;
+            st.push(v);
+        }
+    }
+    vector<int> sz(n+1, 1);
+    for (int i=order.size()-1; i>=0; i--) {
+        int u = order[i];
+        for (int v : adj[u]) {
+            if (v == parent[u]) continue;
+            sz[u] += sz[v];
+        }
+    }
+    int total = 0;
+    for (int mask = 0; mask < (1<<n); mask++) {
+        vector<int> a(n+1);
+        for (int i=0; i<n; i++) {
+            a[i+1] = ((mask>>i)&1) ? 2 : 1;
+        }
+        vector<int> s(n+1, 0);
+        for (int i=order.size()-1; i>=0; i--) {
+            int u = order[i];
+            s[u] = a[u];
+            for (int v : adj[u]) {
+                if (v == parent[u]) continue;
+                s[u] += s[v];
+            }
+        }
+        bool ok = true;
+        for (int u=1; u<=n; u++) {
+            for (int v=u+1; v<=n; v++) {
+                if (s[u] == s[v]) {
+                    ok = false;
+                    break;
+                }
+            }
+            if (!ok) break;
+        }
+        if (ok) {
+            total++;
+        }
+    }
+    cout << total % MOD << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

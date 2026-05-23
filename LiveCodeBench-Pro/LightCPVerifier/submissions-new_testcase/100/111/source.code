@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        sort(a.begin(), a.end());
+        int m = n - k;
+        ll ans;
+        if (m % 2 == 0) {
+            int L = m / 2;
+            int left_val = a[L - 1];
+            int right_val = a[n - m + L];
+            ans = (ll)right_val - left_val + 1;
+        } else {
+            int L = (m + 1) / 2;
+            int start = L - 1;
+            int end = n - m + L - 1;
+            // 统计 a[start..end] 中不同值的数量
+            int cnt = 0;
+            int prev = -1;
+            for (int i = start; i <= end; ++i) {
+                if (a[i] != prev) {
+                    ++cnt;
+                    prev = a[i];
+                }
+            }
+            ans = cnt;
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

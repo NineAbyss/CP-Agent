@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        if (n == 1) {
+            cout << __builtin_popcountll(a[0] + k) << '\n';
+            continue;
+        }
+
+        long long beauty = 0;
+        for (long long x : a) {
+            beauty += __builtin_popcountll(x);
+        }
+
+        priority_queue<pair<long long, int>> pq;
+        for (int i = 0; i < n; i++) {
+            long long gain = __builtin_popcountll(a[i] + 1) - __builtin_popcountll(a[i]);
+            pq.push({gain, i});
+        }
+
+        long long iter = 0;
+        while (k > 0 && !pq.empty() && iter < 1000000) {
+            iter++;
+            auto [gain, i] = pq.top();
+            pq.pop();
+
+            long long current_gain = __builtin_popcountll(a[i] + 1) - __builtin_popcountll(a[i]);
+            if (gain != current_gain) {
+                continue;
+            }
+            if (current_gain < 0) {
+                break;
+            }
+            if (current_gain > 0) {
+                a[i]++;
+                beauty += current_gain;
+                k--;
+                long long new_gain = __builtin_popcountll(a[i] + 1) - __builtin_popcountll(a[i]);
+                pq.push({new_gain, i});
+            }
+        }
+
+        cout << beauty << '\n';
+    }
+    return 0;
+}

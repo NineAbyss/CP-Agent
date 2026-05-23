@@ -1,0 +1,31 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, l, r;
+        cin >> n >> m >> l >> r;
+        int best_l = l;
+        double best_center = best_l + m / 2.0;
+        double best_abs = abs(best_center);
+        for (int lp = l; lp <= r - m; lp++) {
+            double center = lp + m / 2.0;
+            double ab = abs(center);
+            if (ab < best_abs - 1e-9) {
+                best_abs = ab;
+                best_center = center;
+                best_l = lp;
+            } else if (abs(ab - best_abs) < 1e-9 && center > best_center) {
+                best_center = center;
+                best_l = lp;
+            }
+        }
+        cout << best_l << " " << best_l + m << "\n";
+    }
+    return 0;
+}

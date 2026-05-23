@@ -1,0 +1,68 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+bool possible(const vector<int>& a) {
+    int n = a.size();
+    if (n == 1) return true;
+    // dp[i][s]: whether it's feasible up to player i (1-indexed) with x_i = s // i ranges from 1 to n-1 (since there are n-1 matches)
+    vector<vector<bool>> dp(n, vector<bool>(2, false));
+    // player 1 constraint
+    if (a[0] == 0) {
+        // must lose -> x1 must be 1 (player 2 wins match 1)
+        dp[1][1] = true;
+    } else {
+        // must win at least one -> x1 must be 0 (player 1 wins match 1)
+        dp[1][0] = true;
+    }
+    // for players 2..n-1
+    for (int i = 2; i <= n-1; i++) {
+        int player_idx = i-1; // 0-based index of player i
+        for (int prev = 0; prev <= 1; prev++) {
+            if (!dp[i-1][prev]) continue;
+            for (int cur = 0; cur <= 1; cur++) {
+                // wins of player i = (x_{i-1} == 1) + (x_i == 0)
+                int wins = (prev == 1) + (cur == 0);
+                if (a[player_idx] == 0) {
+                    if (wins != 0) continue;
+                } else {
+                    if (wins < 1) continue;
+                }
+                dp[i][cur] = true;
+            }
+        }
+    }
+    // player n constraint
+    int last_player = n-1; // 0-based
+    for (int s = 0; s <= 1; s++) {
+        if (!dp[n-1][s]) continue;
+        // wins of player n = (x_{n-1} == 1)
+        int wins = (s == 1) ? 1 : 0;
+        if (a[last_player] == 0) {
+            if (wins != 0) continue;
+        } else {
+            if (wins < 1) continue;
+        }
+        return true;
+    }
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        if (possible(a)) {
+            cout << "NO\n";
+        } else {
+            cout << "YES\n";
+        }
+    }
+    return 0;
+}

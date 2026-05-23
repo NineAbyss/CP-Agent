@@ -1,0 +1,288 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <cstring>
+#include <map>
+#include <cmath>
+using namespace std;
+
+const int MAXN = 70005;
+const int LOG = 17;
+const int LEN = 20;
+
+int n;
+string s;
+vector<int> adj[MAXN];
+bool is_one[MAXN];
+
+int tin[MAXN], tout[MAXN], timer;
+int up[MAXN][LOG];
+int depth[MAXN];
+
+void dfs_lca(int u, int p) {
+    tin[u] = ++timer;
+    up[u][0] = p;
+    for (int i=1; i<LOG; i++) {
+        up[u][i] = up[ up[u][i-1] ][i-1];
+    }
+    for (int v : adj[u]) {
+        if (v != p) {
+            depth[v] = depth[u] + 1;
+            dfs_lca(v, u);
+        }
+    }
+    tout[u] = ++timer;
+}
+
+bool is_ancestor(int u, int v) {
+    return tin[u] <= tin[v] && tout[v] <= tout[u];
+}
+
+int lca(int u, int v) {
+    if (is_ancestor(u, v)) return u;
+    if (is_ancestor(v, u)) return v;
+    for (int i=LOG-1; i>=0; i--) {
+        if (!is_ancestor(up[u][i], v)) {
+            u = up[u][i];
+        }
+    }
+    return up[u][0];
+}
+
+int dist(int u, int v) {
+    int w = lca(u, v);
+    return depth[u] + depth[v] - 2*depth[w];
+}
+
+int first[MAXN][LEN+1]; // first[i][l] 如上所述，初始化为 -1
+
+// 计算 first[i][2]：到其他标记顶点的最大距离
+void compute_first2() {
+    // 找到任意标记顶点
+    int start = -1;
+    for (int i=1; i<=n; i++) if (is_one[i]) { start = i; break; }
+    if (start == -1) return;
+    // 第一次 DFS，找到离 start 最远的标记顶点 A
+    vector<int> dist_arr(n+1, -1);
+    vector<int> stack = {start};
+    dist_arr[start] = 0;
+    int A = start;
+    while (!stack.empty()) {
+        int u = stack.back(); stack.pop_back();
+        if (is_one[u] && dist_arr[u] > dist_arr[A]) A = u;
+        for (int v : adj[u]) {
+            if (dist_arr[v] == -1) {
+                dist_arr[v] = dist_arr[u] + 1;
+                stack.push_back(v);
+            }
+        }
+    }
+    // 第二次 DFS，从 A 开始，计算到所有顶点的距离，并找到离 A 最远的标记顶点 B
+    dist_arr.assign(n+1, -1);
+    stack = {A};
+    dist_arr[A] = 0;
+    int B = A;
+    while (!stack.empty()) {
+        int u = stack.back(); stack.pop_back();
+        if (is_one[u] && dist_arr[u] > dist_arr[B]) B = u;
+        for (int v : adj[u]) {
+            if (dist_arr[v] == -1) {
+                dist_arr[v] = dist_arr[u] + 1;
+                stack.push_back(v);
+            }
+        }
+    }
+    // 从 A 开始的距离
+    vector<int> distA(n+1, -1);
+    stack = {A};
+    distA[A] = 0;
+    while (!stack.empty()) {
+        int u = stack.back(); stack.pop_back();
+        for (int v : adj[u]) {
+            if (distA[v] == -1) {
+                distA[v] = distA[u] + 1;
+                stack.push_back(v);
+            }
+        }
+    }
+    // 从 B 开始的距离
+    vector<int> distB(n+1, -1);
+    stack = {B};
+    distB[B] = 0;
+    while (!stack.empty()) {
+        int u = stack.back(); stack.pop_back();
+        for (int v : adj[u]) {
+            if (distB[v] == -1) {
+                distB[v] = distB[u] + 1;
+                stack.push_back(v);
+            }
+        }
+    }
+    // 对于每个标记顶点 i，first[i][2] = max(distA[i], distB[i])，但如果 i 是 A 或 B，则使用另一个距离
+    for (int i=1; i<=n; i++) {
+        if (!is_one[i]) continue;
+        int d1 = (i == A) ? 0 : distA[i];
+        int d2 = (i == B) ? 0 : distB[i];
+        first[i][2] = max(d1, d2);
+        if (first[i][2] == 0) first[i][2] = -1; // 如果没有其他标记顶点
+    }
+}
+
+// 重心分解相关
+bool removed[MAXN];
+int sz[MAXN];
+
+void dfs_sz(int u, int p) {
+    sz[u] = 1;
+    for (int v : adj[u]) {
+        if (v != p && !removed[v]) {
+            dfs_sz(v, u);
+            sz[u] += sz[v];
+        }
+    }
+}
+
+int find_centroid(int u, int p, int total) {
+    for (int v : adj[u]) {
+        if (v != p && !removed[v] && sz[v] > total/2) {
+            return find_centroid(v, u, total);
+        }
+    }
+    return u;
+}
+
+struct Node {
+    int v, d, sub;
+};
+vector<Node> nodes;
+
+void collect_nodes(int u, int p, int d, int sub) {
+    nodes.push_back({u, d, sub});
+    for (int v : adj[u]) {
+        if (v != p && !removed[v]) {
+            collect_nodes(v, u, d+1, sub);
+        }
+    }
+}
+
+void process_len(int len) {
+    memset(removed, 0, sizeof(removed));
+    function<void(int)> go = [&](int u) {
+        dfs_sz(u, -1);
+        int c = find_centroid(u, -1, sz[u]);
+        nodes.clear();
+        nodes.push_back({c, 0, -1});
+        int sub_idx = 0;
+        for (int v : adj[c]) {
+            if (!removed[v]) {
+                collect_nodes(v, c, 1, sub_idx);
+                sub_idx++;
+            }
+        }
+        int sub_cnt = sub_idx;
+        vector<vector<pair<int,int>>> sub_data(sub_cnt);
+        for (auto& node : nodes) {
+            int v = node.v;
+            if (!is_one[v] || first[v][len-1] == -1) continue;
+            int A = first[v][len-1] - 2 * node.d;
+            if (node.sub != -1) {
+                sub_data[node.sub].push_back({A, node.d});
+            }
+        }
+        vector<vector<pair<int,int>>> sorted_sub_data(sub_cnt);
+        vector<vector<int>> suffix_max(sub_cnt);
+        for (int i=0; i<sub_cnt; i++) {
+            auto& vec = sub_data[i];
+            sort(vec.begin(), vec.end());
+            sorted_sub_data[i] = vec;
+            int m = vec.size();
+            vector<int> suf(m+1, -1000000000);
+            for (int j=m-1; j>=0; j--) {
+                suf[j] = max(vec[j].second, suf[j+1]);
+            }
+            suffix_max[i] = suf;
+        }
+        for (auto& node_i : nodes) {
+            int i = node_i.v;
+            if (!is_one[i]) continue;
+            int d_i = node_i.d;
+            int sub_i = node_i.sub;
+            int best_d = -1000000000;
+            for (int sub_j=0; sub_j<sub_cnt; sub_j++) {
+                if (sub_j == sub_i) continue;
+                auto& vec = sorted_sub_data[sub_j];
+                auto& suf = suffix_max[sub_j];
+                int threshold = 2 * d_i;
+                int pos = lower_bound(vec.begin(), vec.end(), make_pair(threshold, -1000000000)) - vec.begin();
+                if (pos < (int)vec.size()) {
+                    best_d = max(best_d, suf[pos]);
+                }
+            }
+            // 考虑重心本身
+            if (is_one[c] && c != i && first[c][len-1] != -1) {
+                int A_c = first[c][len-1] - 2 * 0;
+                if (A_c >= 2 * d_i) {
+                    best_d = max(best_d, 0);
+                }
+            }
+            if (best_d > -1000000000) {
+                int candidate = d_i + best_d;
+                if (candidate > first[i][len]) first[i][len] = candidate;
+            }
+        }
+        removed[c] = true;
+        for (int v : adj[c]) {
+            if (!removed[v]) {
+                go(v);
+            }
+        }
+    };
+    go(1);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        cin >> n;
+        cin >> s;
+        for (int i=1; i<=n; i++) {
+            adj[i].clear();
+            is_one[i] = (s[i-1] == '1');
+        }
+        for (int i=0; i<n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+        // LCA 预处理
+        timer = 0;
+        depth[1] = 0;
+        dfs_lca(1, 1);
+        // 初始化 first 为 -1
+        memset(first, -1, sizeof(first));
+        compute_first2();
+        // 对于 len=3..LEN，计算 first[i][len]
+        for (int len=3; len<=LEN; len++) {
+            process_len(len);
+        }
+        // 计算答案
+        for (int i=1; i<=n; i++) {
+            if (!is_one[i]) {
+                cout << -1 << " ";
+                continue;
+            }
+            int ans = 1;
+            for (int l=2; l<=LEN; l++) {
+                if (first[i][l] != -1) ans = l;
+            }
+            cout << ans << " ";
+        }
+        cout << '\n';
+    }
+    return 0;
+}

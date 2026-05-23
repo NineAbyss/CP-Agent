@@ -1,0 +1,19 @@
+#include <cstdio>
+#include <cstring>
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        int n;
+        char s[11];
+        scanf("%d %s", &n, s);
+        int cnt1 = 0;
+        for (int i = 0; i < n; i++) {
+            if (s[i] == '1') cnt1++;
+        }
+        int ans = n + cnt1 * (n - 2);
+        printf("%d\n", ans);
+    }
+    return 0;
+}

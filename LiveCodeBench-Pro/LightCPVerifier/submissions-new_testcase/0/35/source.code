@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+bool canFormSquare(int l1, int b1, int l2, int b2, int l3, int b3) {
+    int area = l1*b1 + l2*b2 + l3*b3;
+    int s = sqrt(area);
+    if (s*s != area) return false;
+    
+    vector<pair<int,int>> rects = {{l1,b1}, {l2,b2}, {l3,b3}};
+    vector<int> perm = {0,1,2};
+    do {
+        int la = rects[perm[0]].first;
+        int ba = rects[perm[0]].second;
+        int lb = rects[perm[1]].first;
+        int bb = rects[perm[1]].second;
+        int lc = rects[perm[2]].first;
+        int bc = rects[perm[2]].second;
+        
+        // 配置1：水平堆叠
+        if (ba == s && bb == s && bc == s && la+lb+lc == s) return true;
+        
+        // 配置2：垂直堆叠
+        if (la == s && lb == s && lc == s && ba+bb+bc == s) return true;
+        
+        // 配置3：顶部矩形 A，底部并排 B 和 C
+        if (la == s) {
+            int bottom_height = s - ba;
+            if (bottom_height > 0 && bb == bottom_height && bc == bottom_height && lb + lc == s) return true;
+        }
+        
+        // 配置4：底部矩形 A，顶部并排 B 和 C
+        if (la == s) {
+            int top_height = s - ba;
+            if (top_height > 0 && bb == top_height && bc == top_height && lb + lc == s) return true;
+        }
+        
+        // 配置5：左侧矩形 A，右侧堆叠 B 和 C
+        if (ba == s) {
+            int right_width = s - la;
+            if (right_width > 0 && lb == right_width && lc == right_width && bb + bc == s) return true;
+        }
+        
+        // 配置6：右侧矩形 A，左侧堆叠 B 和 C
+        if (ba == s) {
+            int left_width = s - la;
+            if (left_width > 0 && lb == left_width && lc == left_width && bb + bc == s) return true;
+        }
+    } while (next_permutation(perm.begin(), perm.end()));
+    return false;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int l1, b1, l2, b2, l3, b3;
+        cin >> l1 >> b1 >> l2 >> b2 >> l3 >> b3;
+        cout << (canFormSquare(l1, b1, l2, b2, l3, b3) ? "YES" : "NO") << endl;
+    }
+    return 0;
+}

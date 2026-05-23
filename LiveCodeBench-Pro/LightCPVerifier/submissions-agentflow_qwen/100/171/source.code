@@ -1,0 +1,70 @@
+#include <iostream>
+#include <queue>
+#include <unordered_map>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+int solve(int x, int y, int k) {
+    if (x == y) return 0;
+    unordered_map<int, int> dist;
+    queue<int> q;
+    const long long MAX_VAL = 2000000;
+    const long long MIN_VAL = 1;
+
+    dist[x] = 0;
+    q.push(x);
+
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        int d = dist[u];
+
+        // Division: v = u / a where a is a divisor of u and a <= k
+        vector<int> divisors;
+        for (int a = 1; a * a <= u; a++) {
+            if (u % a == 0) {
+                if (a <= k) divisors.push_back(a);
+                int b = u / a;
+                if (b != a && b <= k) divisors.push_back(b);
+            }
+        }
+        for (int a : divisors) {
+            int v = u / a;
+            if (v < MIN_VAL || v > MAX_VAL) continue;
+            if (!dist.count(v)) {
+                dist[v] = d + 1;
+                if (v == y) return dist[v];
+                q.push(v);
+            }
+        }
+
+        // Multiplication: v = u * a for a in [1, k]
+        for (int a = 1; a <= k; a++) {
+            long long product = (long long)u * a;
+            if (product > MAX_VAL) break;
+            int v = (int)product;
+            if (!dist.count(v)) {
+                dist[v] = d + 1;
+                if (v == y) return dist[v];
+                q.push(v);
+            }
+        }
+    }
+    return -1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int x, y, k;
+        cin >> x >> y >> k;
+        cout << solve(x, y, k) << '\n';
+    }
+
+    return 0;
+}

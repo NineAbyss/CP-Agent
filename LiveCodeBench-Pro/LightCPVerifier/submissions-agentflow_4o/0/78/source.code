@@ -1,0 +1,43 @@
+#include <iostream>
+#include <unordered_map>
+#include <string>
+using namespace std;
+
+// Dictionary to store precomputed squares
+unordered_map<string, pair<int, int>> precomputed_map;
+
+void precompute() {
+    for (int a = 0; a <= 99; ++a) {
+        for (int b = 0; b <= 99; ++b) {
+            int sum = a + b;
+            int square = sum * sum;
+            if (square <= 9999) {
+                // Convert to a zero-padded 4-character string
+                string formatted = string(4 - to_string(square).length(), '0') + to_string(square);
+                precomputed_map[formatted] = make_pair(a, b); // Store the pair
+            }
+        }
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    // Precompute all possible (a + b)^2 results
+    precompute();
+
+    while (t--) {
+        string s;
+        cin >> s;
+
+        // Check whether the year can be represented as (a + b)^2
+        if (precomputed_map.count(s)) {
+            cout << precomputed_map[s].first << " " << precomputed_map[s].second << endl;
+        } else {
+            cout << -1 << endl;
+        }
+    }
+
+    return 0;
+}

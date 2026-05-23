@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<pair<int, int>> cells;
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= m; j++) {
+                cells.push_back({i, j});
+            }
+        }
+        // 按到四个角的切比雪夫距离的最大值从小到大排序
+        sort(cells.begin(), cells.end(), [&](const pair<int,int>& a, const pair<int,int>& b) {
+            int ra = a.first, ca = a.second;
+            int rb = b.first, cb = b.second;
+            int da1 = max(ra-1, ca-1);
+            int da2 = max(ra-1, m-ca);
+            int da3 = max(n-ra, ca-1);
+            int da4 = max(n-ra, m-ca);
+            int maxA = max(max(da1, da2), max(da3, da4));
+            
+            int db1 = max(rb-1, cb-1);
+            int db2 = max(rb-1, m-cb);
+            int db3 = max(n-rb, cb-1);
+            int db4 = max(n-rb, m-cb);
+            int maxB = max(max(db1, db2), max(db3, db4));
+            
+            if (maxA != maxB) return maxA < maxB;
+            // 同层按任意顺序，这里按行、列排序
+            if (ra != rb) return ra < rb;
+            return ca < cb;
+        });
+        
+        for (auto& p : cells) {
+            cout << p.first << " " << p.second << "\n";
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        int cnt[51] = {0};
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            cnt[a[i]]++;
+        }
+        int mn = 51, mx = 0;
+        for (int i = 1; i <= 50; i++) {
+            if (cnt[i]) {
+                mn = min(mn, i);
+                mx = max(mx, i);
+            }
+        }
+        if ((mn + mx) % 2 == 0) {
+            cout << 0 << '\n';
+            continue;
+        }
+        int pref[51] = {0};
+        for (int i = 1; i <= 50; i++) {
+            pref[i] = pref[i-1] + cnt[i];
+        }
+        int ans = n - 1;
+        for (int L = 1; L <= 50; L++) {
+            if (cnt[L] == 0) continue;
+            for (int R = L; R <= 50; R++) {
+                if (cnt[R] == 0) continue;
+                if ((L + R) % 2 != 0) continue;
+                int count = pref[R] - pref[L-1];
+                if (count > 0) {
+                    ans = min(ans, n - count);
+                }
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

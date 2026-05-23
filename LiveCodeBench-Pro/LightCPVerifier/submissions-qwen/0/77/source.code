@@ -1,0 +1,118 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int mex(const vector<int>& v) {
+    unordered_set<int> s(v.begin(), v.end());
+    int res = 0;
+    while (s.count(res)) res++;
+    return res;
+}
+
+bool canAchieve(vector<int>& a, int k, int target) {
+    int n = a.size();
+    int segments = 0;
+    int i = 0;
+    
+    // We need to form exactly k segments, and each segment must have MEX >= target
+    while (i < n && segments < k) {
+        // Start a new segment at position i
+        unordered_set<int> seen;
+        int j = i;
+        bool found_target = false;
+        
+        // Try to extend the current segment as little as possible // We want to ensure that this segment has MEX >= target
+        while (j < n) {
+            seen.insert(a[j]);
+            // Check if we already have all values from 0 to target-1
+            bool has_all = true;
+            for (int x = 0; x < target; x++) {
+                if (!seen.count(x)) {
+                    has_all = false;
+                    break;
+                }
+            }
+            if (has_all) {
+                // This segment has all values [0, target-1], so its MEX >= target
+                found_target = true;
+                break;
+            }
+            j++;
+        }
+        
+        if (!found_target) {
+            // Even if we extend to the end, we don't have all 0..target-1 // So this segment cannot achieve MEX >= target
+            // But we can still use the rest of the array to form segments
+            // However, since we're greedy, we just take one element if needed
+            j = i; // reset
+            // Just take one element to form a minimal segment
+            j = i + 1 - 1; // actually just move by one // But better: just take one element and continue
+            j = i;
+            j++; // take at least one element
+        } else {
+            j++; // because we broke at j, so segment is [i, j)
+        }
+        
+        segments++;
+        i = j;
+    }
+    
+    // If we used more than k segments, it's not valid
+    if (segments > k) return false;
+    
+    // If we used fewer than k segments, we can split some segments further // Since splitting a segment can only increase or keep same the MEX values,
+    // and we care about minimum MEX, we can always split without reducing the min MEX
+    // So if we can cover with <= k segments, each having MEX >= target, then it's possible
+    return segments <= k;
+}
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    // Binary search on the answer x (the min MEX over k subarrays) // x can be at most n+1 in theory, but likely much smaller
+    int low = 0;
+    int high = n + 2; // upper bound
+    
+    // Special case: if k == n, we have single-element segments
+    // Then MEX of [x] is 0 if x != 0, 1 if x == 0
+    // So min MEX is 0 if there's any non-zero, otherwise 1
+    if (k == n) {
+        bool all_zero = true;
+        for (int x : a) {
+            if (x != 0) {
+                all_zero = false;
+                break;
+            }
+        }
+        cout << (all_zero ? 1 : 0) << '\n';
+        return;
+    }
+    
+    while (low < high) {
+        int mid = (low + high + 1) / 2;
+        if (canAchieve(a, k, mid)) {
+            low = mid;
+        } else {
+            high = mid - 1;
+        }
+    }
+    
+    cout << low << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

@@ -1,0 +1,25 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+int ceil_log2(long long x) {
+    if (x <= 1) return 0;
+    return 64 - __builtin_clzll(x - 1);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n, m, a, b;
+        cin >> n >> m >> a >> b;
+        long long ra = min(a, n - a + 1);
+        long long cb = min(b, m - b + 1);
+        int opt1 = ceil_log2(ra) + ceil_log2(m);
+        int opt2 = ceil_log2(n) + ceil_log2(cb);
+        cout << 1 + min(opt1, opt2) << '\n';
+    }
+    return 0;
+}

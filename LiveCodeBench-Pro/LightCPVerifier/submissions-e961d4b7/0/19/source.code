@@ -1,0 +1,109 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<string> grid(n);
+        for (int i = 0; i < n; i++) {
+            cin >> grid[i];
+        }
+        // Collect all gold positions and empty positions
+        vector<pair<int, int>> golds;
+        vector<pair<int, int>> empties;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (grid[i][j] == 'g') {
+                    golds.emplace_back(i, j);
+                } else if (grid[i][j] == '.') {
+                    empties.emplace_back(i, j);
+                }
+            }
+        }
+        int G = (int)golds.size();
+        if (G == 0) {
+            cout << 0 << '\n';
+            continue;
+        }
+        // Precompute for each cell the list of golds on boundary and inside
+        vector<vector<vector<int>>> boundary(n, vector<vector<int>>(m));
+        vector<vector<vector<int>>> inside(n, vector<vector<int>>(m));
+        for (int cx = 0; cx < n; cx++) {
+            for (int cy = 0; cy < m; cy++) {
+                for (int gid = 0; gid < G; gid++) {
+                    int gx = golds[gid].first, gy = golds[gid].second;
+                    int d = max(abs(cx - gx), abs(cy - gy));
+                    if (d == k) boundary[cx][cy].push_back(gid);
+                    if (d < k) inside[cx][cy].push_back(gid);
+                }
+            }
+        }
+        vector<bool> gold_alive(G, true);
+        vector<vector<bool>> empty(n, vector<bool>(m, false));
+        for (auto& e : empties) {
+            empty[e.first][e.second] = true;
+        }
+        int total = 0;
+        // We will simulate explosions until no improvement
+        while (true) {
+            // Find the best center that is empty and gives maximum gain
+            int best_x = -1, best_y = -1, best_gain = 0;
+            for (int cx = 0; cx < n; cx++) {
+                for (int cy = 0; cy < m; cy++) {
+                    if (!empty[cx][cy]) continue;
+                    int gain = 0;
+                    for (int gid : boundary[cx][cy]) {
+                        if (gold_alive[gid]) gain++;
+                    }
+                    if (gain > best_gain) {
+                        best_gain = gain;
+                        best_x = cx;
+                        best_y = cy;
+                    }
+                }
+            }
+            if (best_gain == 0) {
+                // If no direct gain, try to explode any empty cell to expand empty region
+                bool expanded = false;
+                for (int cx = 0; cx < n && !expanded; cx++) {
+                    for (int cy = 0; cy < m && !expanded; cy++) {
+                        if (empty[cx][cy]) {
+                            // explode this cell even if gain=0
+                            best_x = cx;
+                            best_y = cy;
+                            best_gain = 0;
+                            expanded = true;
+                        }
+                    }
+                }
+                if (!expanded) break;
+            }
+            // Explode at (best_x, best_y)
+            for (int gid : boundary[best_x][best_y]) {
+                if (gold_alive[gid]) {
+                    gold_alive[gid] = false;
+                    total++;
+                }
+            }
+            for (int gid : inside[best_x][best_y]) {
+                gold_alive[gid] = false;
+            }
+            // Update empty cells within the square
+            for (int dx = -k; dx <= k; dx++) {
+                for (int dy = -k; dy <= k; dy++) {
+                    int nx = best_x + dx, ny = best_y + dy;
+                    if (nx >= 0 && nx < n && ny >= 0 && ny < m) {
+                        empty[nx][ny] = true;
+                    }
+                }
+            }
+        }
+        cout << total << '\n';
+    }
+    return 0;
+}

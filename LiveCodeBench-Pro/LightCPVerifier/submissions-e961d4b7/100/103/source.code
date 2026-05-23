@@ -1,0 +1,87 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <queue>
+using namespace std;
+
+long long total_anger(long long x) {
+    return x * (x + 1) / 2;
+}
+
+long long solve_one(vector<int>& a, int k) {
+    int n = a.size();
+    long long S = accumulate(a.begin(), a.end(), 0LL);
+    sort(a.begin(), a.end());
+    
+    // 二分 L
+    int low = 0, high = 2'000'000; // a_i <= 1e6, k <= 1e6, L+k <= 2e6
+    while (low < high) {
+        int mid = low + (high - low) / 2;
+        long long total = 0;
+        for (int x : a) {
+            if (x < mid) total += mid;
+            else if (x > mid + k) total += mid + k;
+            else total += x;
+        }
+        if (total >= S) high = mid;
+        else low = mid + 1;
+    }
+    int L = low;
+    
+    vector<long long> b(n);
+    long long total = 0;
+    for (int i = 0; i < n; i++) {
+        if (a[i] < L) b[i] = L;
+        else if (a[i] > L + k) b[i] = L + k;
+        else b[i] = a[i];
+        total += b[i];
+    }
+    
+    long long D = total - S;
+    // 节省 = b[i] - k * (a[i] >= b[i])
+    using PLI = pair<long long, int>;
+    priority_queue<PLI> pq;
+    for (int i = 0; i < n; i++) {
+        if (b[i] == 0) continue;
+        long long save = b[i] - k * (a[i] >= b[i]);
+        pq.push({save, i});
+    }
+    
+    while (D > 0 && !pq.empty()) {
+        auto [save, i] = pq.top(); pq.pop();
+        b[i]--;
+        D--;
+        if (b[i] > 0) {
+            long long new_save = b[i] - k * (a[i] >= b[i]);
+            pq.push({new_save, i});
+        }
+    }
+    
+    // 计算总成本
+    long long cost = 0;
+    long long total_diff = 0;
+    for (int i = 0; i < n; i++) {
+        cost += total_anger(b[i]);
+        total_diff += abs(a[i] - b[i]);
+    }
+    long long move_count = total_diff / 2;
+    cost += move_count * k;
+    return cost;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        cout << solve_one(a, k) << '\n';
+    }
+    return 0;
+}

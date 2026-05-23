@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        string s;
+        cin >> s;
+        int cnt0 = 0, cnt1 = 0;
+        for (char c : s) {
+            if (c == '0') cnt0++;
+            else cnt1++;
+        }
+        int half = n / 2;
+        int diff_pairs = half - k; // number of pairs that must be different
+        // need at least diff_pairs zeros and ones
+        if (cnt0 < diff_pairs || cnt1 < diff_pairs) {
+            cout << "NO\n";
+            continue;
+        }
+        int rem0 = cnt0 - diff_pairs;
+        int rem1 = cnt1 - diff_pairs;
+        if (rem0 % 2 != 0 || rem1 % 2 != 0) {
+            cout << "NO\n";
+        } else {
+            cout << "YES\n";
+        }
+    }
+    return 0;
+}

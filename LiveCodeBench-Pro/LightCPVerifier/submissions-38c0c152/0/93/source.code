@@ -1,0 +1,72 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MOD = 998244353;
+const int MAXN = 500000;
+
+long long fact[MAXN+5];
+long long invfact[MAXN+5];
+
+long long modpow(long long a, long long e) {
+    long long res = 1;
+    while (e) {
+        if (e & 1) res = res * a % MOD;
+        a = a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+void precompute() {
+    fact[0] = 1;
+    for (int i = 1; i <= MAXN; i++) {
+        fact[i] = fact[i-1] * i % MOD;
+    }
+    invfact[MAXN] = modpow(fact[MAXN], MOD-2);
+    for (int i = MAXN-1; i >= 0; i--) {
+        invfact[i] = invfact[i+1] * (i+1) % MOD;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    precompute();
+    int t;
+    cin >> t;
+    while (t--) {
+        vector<int> c(26);
+        int n = 0;
+        for (int i = 0; i < 26; i++) {
+            cin >> c[i];
+            n += c[i];
+        }
+        int odd = (n + 1) / 2;
+        int even = n / 2;
+        
+        // denominator: product of invfact[c[i]]
+        long long denom = 1;
+        for (int i = 0; i < 26; i++) {
+            denom = denom * invfact[c[i]] % MOD;
+        }
+        long long numerator = fact[odd] * fact[even] % MOD;
+        
+        // DP for count: number of subsets with sum = odd
+        vector<long long> dp(n+1, 0);
+        dp[0] = 1;
+        for (int i = 0; i < 26; i++) {
+            if (c[i] == 0) continue;
+            for (int x = n; x >= c[i]; x--) {
+                dp[x] = (dp[x] + dp[x - c[i]]) % MOD;
+            }
+        }
+        long long count = dp[odd];
+        
+        long long ans = numerator * denom % MOD * count % MOD;
+        cout << ans << '\n';
+    }
+    return 0;
+}

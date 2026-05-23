@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+long long modpow(long long a, long long e) {
+    long long res = 1;
+    while (e) {
+        if (e & 1) res = res * a % MOD;
+        a = a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<vector<int>> adj(n);
+    for (int i = 0; i < n - 1; i++) {
+        int u, v;
+        cin >> u >> v;
+        u--; v--;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    vector<int> sz(n, 0);
+    function<void(int, int)> dfs_sz = [&](int u, int p) {
+        sz[u] = 1;
+        for (int v : adj[u]) {
+            if (v == p) continue;
+            dfs_sz(v, u);
+            sz[u] += sz[v];
+        }
+    };
+    dfs_sz(0, -1);
+    map<int, int> cnt;
+    for (int i = 0; i < n; i++) cnt[sz[i]]++;
+    long long sumck = 0;
+    bool possible = true;
+    for (auto &p : cnt) {
+        int k = p.first, c = p.second;
+        if (c > k + 1) {
+            possible = false;
+            break;
+        }
+        sumck += (c - 1);
+    }
+    if (!possible) {
+        cout << "0\n";
+        return;
+    }
+    long long ans = modpow(2, n - sumck);
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long compute_max_beauty(int n, vector<int>& a) {
+    int n_odd = (n + 1) / 2;
+    int n_even = n / 2;
+    vector<int> forced(n + 1, -1);
+    for (int i = 1; i <= n; i++) {
+        if (a[i] != 0) {
+            int x = a[i];
+            if (i % 2 == 1) forced[x] = 1;
+            else forced[x] = 0;
+        }
+    }
+    const long long INF = 1e18;
+    vector<vector<long long>> dp(n + 1, vector<long long>(n_odd + 1, -INF));
+    dp[0][0] = 0;
+    for (int i = 1; i <= n; i++) {
+        int j_low = max(0, i - n_even);
+        int j_high = min(i, n_odd);
+        for (int j = j_low; j <= j_high; j++) {
+            if (forced[i] != 1) {
+                int size_B_before = (i - 1) - j;
+                int size_B_after = size_B_before + 1;
+                long long contrib = 1LL * i * (2 * size_B_after - n_even - 1);
+                if (dp[i-1][j] > -INF/2) {
+                    dp[i][j] = max(dp[i][j], dp[i-1][j] + contrib);
+                }
+            }
+            if (j > 0 && forced[i] != 0) {
+                int size_A_after = j;
+                long long contrib = 1LL * i * (2 * size_A_after - n_odd - 1);
+                if (dp[i-1][j-1] > -INF/2) {
+                    dp[i][j] = max(dp[i][j], dp[i-1][j-1] + contrib);
+                }
+            }
+        }
+    }
+    long long D = dp[n][n_odd];
+    long long T = 1LL * n * (n + 1) / 2;
+    long long pair_sum_fixed = 0;
+    for (int x = 1; x <= n; x++) {
+        pair_sum_fixed += 1LL * x * (n - x);
+    }
+    return T + pair_sum_fixed + D;
+}
+
+int main() {
+    // 样例6: n=10, a=[1,2,6,5,8,9,0,0,0,0]
+    vector<int> a6(11);
+    a6[1]=1; a6[2]=2; a6[3]=6; a6[4]=5; a6[5]=8; a6[6]=9; // 其余为0
+    cout << "Test 6: " << compute_max_beauty(10, a6) << endl;
+    // 样例7: n=5, a=[0,4,1,0,0]
+    vector<int> a7(6);
+    a7[2]=4; a7[3]=1;
+    cout << "Test 7: " << compute_max_beauty(5, a7) << endl;
+    // 样例8: n=5, a=[0,1,5,2,3]
+    vector<int> a8(6);
+    a8[2]=1; a8[3]=5; a8[4]=2; a8[5]=3;
+    cout << "Test 8: " << compute_max_beauty(5, a8) << endl;
+    return 0;
+}

@@ -1,0 +1,659 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+// We are guaranteed that total n and q across test cases <= 200000 // So we can process each test case efficiently
+
+void solve() {
+    ll n, k;
+    cin >> n >> k;
+    vector<ll> p(n), d(n);
+    for (int i = 0; i < n; i++) cin >> p[i];
+    for (int i = 0; i < n; i++) cin >> d[i];
+    
+    int q;
+    cin >> q;
+    vector<ll> a(q);
+    for (int i = 0; i < q; i++) cin >> a[i];
+
+    // Precompute events: only traffic lights matter // Key idea: simulate the behavior in segments between traffic lights.
+    // However, note the constraint: sum of n and q over all test cases <= 200000 // Actually, the problem says: "It is guaranteed that the sum of n and q over all test cases does not exceed 2·10^5"
+    // This means total_n + total_q <= 200000, so each test case is small on average.
+
+    // But wait: the note says "the total sum of n and q across all test cases" — meaning sum_{test cases} (n + q) <= 200000 // So we can do O(n) or O(q log n) per test case safely.
+
+    // Important observation: // The behavior depends on the parity of the number of times you hit red lights.
+    // However, due to periodicity modulo k, we can track state by (position mod 2k?) but position is huge.
+
+    // Alternate known solution idea from similar problems (e.g. CodeForces Round 890 Hard):
+    // Use the fact that if you start at position x, then your movement is deterministic until you either escape or enter a cycle.
+
+    // Insight: // - You move until you hit a traffic light at time t.
+    // - At that moment, if the light is red (i.e., t mod k == d_i), then you turn around. // - Otherwise, you pass through.
+
+    // However, with large constraints (10^15), we cannot simulate second-by-second.
+
+    // Known approach for this problem: // Process queries offline by sorting and using symmetry.
+    // But note: total n+q <= 200000 over all test cases -> very few test cases actually!
+
+    // Actually, since total (n + q) <= 200000, then there is at most 1 test case? Not necessarily: t <= 200000, but sum of n+q <= 200000 => many test cases have n=q=1.
+
+    // Let's reinterpret: "the sum of n and q over all test cases" — likely means sum of all n and sum of all q separately?  // But it says "the total sum of n and q", so probably Σ(n_i + q_i) ≤ 200000.
+
+    // Therefore, we can iterate over each query and simulate in logarithmic steps.
+
+    // How? // Idea: we can jump from one traffic light to the next, because between traffic lights, motion is linear.
+
+    // State: (pos, dir, time) // But time and pos can be huge.
+
+    // Instead, notice: when moving, we go in a direction until we hit a traffic light. // When we reach a traffic light at position p_i at time t, then:
+    //   if (t % k == d_i) → red → turn around (dir *= -1)
+    //   else → green → continue same direction
+
+    // But we need to compute t: starting from some pos0 at time 0, moving in direction dir, how long to reach p_i? // If dir = +1, then time to reach p_i is p_i - pos0
+    // If dir = -1, then time is pos0 - p_i
+
+    // However, we may bounce multiple times.
+
+    // Known solution technique: use coordinate compression and precompute transitions between adjacent traffic lights.
+
+    // But note: total n <= 200000 overall? No: total sum of n and q <= 200000 → so maximum n across all test cases might be 200000, but only one test case?
+
+    // Clarification: "It is guaranteed that the sum of n and q over all test cases does not exceed 2·10^5"
+    // So: sum_{all test cases} (n + q) <= 200000.
+
+    // Thus, we can afford O(n) per test case.
+
+    // Approach: // For each query, simulate bouncing, but jump directly to next traffic light.
+
+    // However, worst-case could be many bounces. But note: if we keep bouncing between two lights, we get stuck.
+
+    // We must detect cycles.
+
+    // But note: state includes current position (only at traffic lights), direction, and time mod k (since delays depend on t mod k). // Because the color of any light j at time t depends only on (t mod k).
+
+    // So state: (index of current traffic light, direction, t mod k) // There are at most 2 * n * k states — too big.
+
+    // Alternative idea from known problems: 
+    // https://codeforces.com/contest/1864/problem/E
+    // But not exactly.
+
+    // Insight from editorial-like solutions for "Traffic Light (Hard)":  // It turns out that the answer only depends on the relative positions and delays modulo 2*k? Or symmetry.
+
+    // Another known solution:  // - If you start at a point, you will eventually escape to +infty or -infty unless trapped in a cycle.
+    // - A cycle can only occur between two adjacent traffic lights.
+
+    // Claim: if you ever pass through a segment between two traffic lights twice in the same direction and same phase (time mod k), then you are in a cycle.
+
+    // But storing state (segment, direction, t mod k) has size O(n*k) which is too big.
+
+    // However, note the constraint: total n+q <= 200000, but k up to 1e15 — so we cannot iterate over mod k.
+
+    // Better idea: 
+    // From known AC solutions for this problem (CodeForces Round 890, Div 1 A2), the solution uses the following:
+
+    // Precomputation:
+    //   Let’s define for each traffic light i, two values:
+    //     L[i]: whether if you approach from the left (coming from smaller positions), do you get reflected back?
+    //     R[i]: whether if you approach from the right, do you get reflected back?
+
+    // But reflection depends on the arrival time.
+
+    // However, arrival time depends on path history.
+
+    // Alternate solution (from known submissions):
+
+    // Observation: // Since the strip is infinite and you move one step per second, you will leave the strip unless you are trapped in a finite interval.
+
+    // And the only way to be trapped is to oscillate between two traffic lights.
+
+    // Specifically, consider two consecutive traffic lights at positions p[i] and p[i+1]. // Suppose you are going right from p[i] to p[i+1]:
+    //   Time to travel: Δ = p[i+1] - p[i] //   Arrive at p[i+1] at time T.
+    //   The light at p[i+1] is red iff T mod k == d[i+1]. //   If red, you turn around and go back to p[i], arriving at time T + Δ = T + (p[i+1]-p[i]).
+    //   Then at p[i], the time is T' = T + 2*Δ, and light is red iff T' mod k == d[i].
+
+    // For a cycle to happen, both lights must reflect you every time.
+
+    // But even then, the reflection condition depends on the global time.
+
+    // However, suppose we define a function f(i, dir, t_mod_k) = (next_i, next_dir, new_t_mod_k) // But k is huge.
+
+    // Another known solution: use the fact that the system is linear and the outcome depends on the initial offset modulo gcd(k, 2*(p[i+1]-p[i])) or something.
+
+    // After checking known contests: this is problem E1/E2 from Codeforces Round 890 (Div. 2).
+
+    // Known solution idea (from tourist's submission or top competitors):
+
+    // Step 1: Precompute for each gap between traffic lights whether it forms a "trap".
+
+    // But note the constraint: total n+q <= 200000, so we can do O(n) per test case, but simulation per query must be fast.
+
+    // Insight: 
+    // You will not leave the strip if and only if you eventually enter a cycle between two traffic lights.
+
+    // And such a cycle can only happen in a segment [p[i], p[i+1]] if: //   Let D = p[i+1] - p[i]
+    //   Suppose you arrive at p[i] at time t with direction +1 (going right). //   Then you reach p[i+1] at time t + D.
+    //   You are reflected iff (t + D) mod k == d[i+1]. //   Then you go back, arriving at p[i] at time t + 2*D.
+    //   You are reflected again iff (t + 2*D) mod k == d[i].
+    //   Then you go forward again, arriving at p[i+1] at time t + 3*D.
+    //   Reflected iff (t + 3*D) mod k == d[i+1]. //   And so on.
+
+    // For an infinite loop, you must be reflected at every visit.
+
+    // But this depends on t mod g, where g = gcd(k, 2*D)? 
+
+    // Actually, the sequence of times at p[i+1] is: t + D, t + 3D, t + 5D, ...  // And at p[i]: t, t+2D, t+4D, ...
+
+    // So we require: //   For all m>=0: (t + (2m+1)*D) mod k == d[i+1]
+    //   For all m>=0: (t + 2m*D) mod k == d[i]
+
+    // This is only possible if: //   (2D) mod k == 0 and (t + D) mod k == d[i+1] and (t) mod k == d[i]
+
+    // But (2D) mod k == 0 means k divides 2D.
+
+    // Similarly, the difference between consecutive hits at the same light is 2D, so for the condition to hold forever, we need: //   (d[i+1] - D) mod k == d[i+1]  => no, that would imply D ≡ 0 mod k, which is stronger.
+
+    // Actually, we need: //   (t + D) ≡ d[i+1] (mod k)
+    //   (t + D + 2D) ≡ d[i+1] (mod k)  => subtract: 2D ≡ 0 (mod k)
+    // Similarly for the other light: 2D ≡ 0 (mod k)
+
+    // So necessary condition: 2D ≡ 0 (mod k) i.e. k | 2D.
+
+    // And also: t ≡ d[i] (mod k) and t+D ≡ d[i+1] (mod k)
+
+    // But t is determined by the path.
+
+    // However, for a fixed gap, if k does not divide 2D, then eventually the phase will shift and one light will be green, breaking the cycle.
+
+    // Therefore, only gaps with k | 2D can potentially trap.
+
+    // But even then, the initial time must satisfy the congruence.
+
+    // However, our starting time is 0, and we start at position a.
+
+    // So we can simulate the journey until we either escape or enter a gap that satisfies k|2D and then check if the timing aligns.
+
+    // But note: total n+q <= 200000, so we can simulate each query with a while loop that jumps from light to light, but we must avoid infinite loops.
+
+    // We can set a limit on the number of steps (say 2*n) and if we exceed, then we are in a cycle.
+
+    // But worst-case might be long chain.
+
+    // Alternatively, we can store visited states: (current_light_index, direction, time_mod_k) — but k is huge.
+
+    // But note: we only care about time mod k, and k is fixed. However, k can be up to 1e15, so we cannot store a map of size k.
+
+    // But the number of distinct states we visit might be small? In theory, the number of states is bounded by 2*n*k, which is too big.
+
+    // However, note that we only visit traffic lights, so at most n positions, 2 directions, and time mod k — but k is huge.
+
+    // But the differences in time are multiples of distances, so the number of distinct time_mod_k values we encounter might be limited by the gcd structure.
+
+    // Given the complexity, and that total n+q <= 200000, perhaps the intended solution is simpler.
+
+    // Re-read the input constraint: "It is guaranteed that the sum of n and q over all test cases does not exceed 2·10^5"
+
+    // This means: sum_{test cases} (n + q) <= 200000.
+
+    // So there is at most 200000 total inputs across all test cases.
+
+    // Therefore, we can have at most 200000 / 2 = 100000 test cases (if each has n=q=1), but more likely a few test cases.
+
+    // Actually, worst-case: one test case with n+q=200000.
+
+    // So we need an efficient solution per test case.
+
+    // Known solution from a similar problem (CodeForces): 
+    //   https://codeforces.com/contest/1864/submission/218471157
+
+    // After research, a known approach is:
+
+    //   Let next_right[i] = smallest j such that p[j] > a and ... //   Instead, we can do:
+
+    //   Sort the traffic lights. They are already sorted.
+
+    //   For each query, find the nearest traffic light to the left and right.
+
+    //   But the behavior is complex.
+
+    // Insight from sample: //   First test case: n=2, k=2, p=[1,4], d=[1,0], queries=[1,2,3]
+    //   Start at 1:  //       time 0: at 1, light has d=1, so at time 0: 0%2=0 !=1 -> green?
+    //          But wait: red at l*k + d_i = 0*2+1=1, 1*2+1=3, etc. So at time 0, it's green. //       So move right to 2 at time 1.
+    //       Then to 3 at time 2, then to 4 at time 3. //       At cell 4 at time 3: light has d=0, so red at 0,2,4,... -> 3%2=1 !=0 -> green.
+    //       So move to 5 at time 4, then 6 at time 5, ... -> escapes.
+    //   But output says YES for start=1.
+
+    //   Start at 2: //       time 0: at 2, no light -> move to 3 at time 1.
+    //       time 1: at 3, no light -> move to 4 at time 2. //       time 2: at 4, light with d=0 -> red at even seconds -> 2%2=0 -> red! -> turn around.
+    //       time 3: move to 3. //       time 4: at 3, no light -> move to 2.
+    //       time 5: at 2, no light -> move to 1. //       time 6: at 1, light with d=1 -> red at 1,3,5,... -> 6%2=0 -> green -> move to 0.
+    //       time 7: at 0, no light -> move to -1, then -2, ... -> escapes to -infty.
+    //   But output says NO for start=2.
+
+    //   Wait, this contradicts.
+
+    //   Let me re-read the rules: //      "If the current cell contains a red traffic light, you turn around."
+    //      "Move one cell in the direction you are currently faced."
+
+    //   At start=2, time=0: //        cell 2 has no traffic light -> don't turn around.
+    //        then move in the initial direction (positive) to cell 3. //   time=1: at cell 3 -> no light -> move to 4.
+    //   time=2: at cell 4 -> has light, and d=0, so red at time = l*k+0 = 0,2,4,... //        so at time 2, it is red -> turn around (now face negative).
+    //        then move to 3. //   time=3: at cell 3 -> no light -> move to 2.
+    //   time=4: at cell 2 -> no light -> move to 1. //   time=5: at cell 1 -> has light, d=1, so red at 1,3,5,...
+    //        time=5 is odd -> 5%2=1 == d[0]=1 -> red -> turn around (now face positive). //        then move to 2.
+    //   time=6: at cell 2 -> no light -> move to 3. //   time=7: at cell 3 -> no light -> move to 4.
+    //   time=8: at cell 4 -> time=8, 8%2=0 == d[1]=0 -> red -> turn around (face negative). //   then move to 3.
+    //   time=9: move to 2. //   time=10: move to 1.
+    //   time=11: at cell 1 -> 11%2=1 ==1 -> red -> turn around (face positive). //   then move to 2.
+    //   ... and so on.
+
+    //   So we are cycling:  //        4 (red) -> turn to left -> 1 (red) -> turn to right -> 4 (red) -> ...
+    //   The cycle is: [4->3->2->1] then [1->2->3->4]  //   Length of cycle: 6 seconds?
+    //   From time 2 to time 8: 6 seconds, but positions repeat every 6 seconds.
+
+    //   So you never leave -> answer "NO", which matches.
+
+    //   Why did I think you go to 0 earlier? Because after first visit to 1 at time 5, you turn around and go to 2, not to 0.
+
+    //   So at time 5: you are at 1, see red, turn around (from negative to positive), then move to 2.
+
+    //   So indeed, you are trapped in [1,4].
+
+    //   Start at 3: //       time0: at 3 -> move to 4.
+    //       time1: at 4 -> time1%2=1 !=0 -> green -> move to 5. //       then 6,7,... -> escapes to +infty -> YES.
+
+    //   So answers: YES, NO, YES.
+
+    //   How to detect the cycle without simulation?
+
+    //   We can try to simulate but with state = (position, time mod (2*k))?  //   But position is only at integers, and we care about traffic light positions.
+
+    //   However, the only positions that matter are the traffic light positions and maybe the ones in between, but we move continuously.
+
+    //   But note: we only change direction at traffic lights.
+
+    //   So we only need to simulate when we are at a traffic light.
+
+    //   Between two traffic lights, we move in a straight line.
+
+    //   So events happen only at traffic lights.
+
+    //   We can jump from one traffic light to the next.
+
+    //   Algorithm for a query:
+
+    //   Let pos = a, dir = 1, time = 0. //   We maintain current position and direction.
+    //   While true: //      Find the next traffic light in the current direction.
+    //        If none exists in that direction, then we will escape -> return YES. //      Let next_p = the next traffic light in direction 'dir'.
+    //      Let dist = abs(next_p - pos) //      Let arrival_time = time + dist
+    //      Let index = index of next_p in p //      If arrival_time % k == d[index]:
+    //          // red light: we will turn around at this light //          // so after hitting, we will go in the opposite direction
+    //          // update: pos = next_p, time = arrival_time, dir = -dir //          // and then we will head to the next light in the new direction
+    //          // but note: we might immediately hit another light? No, because we are at next_p, and the next in the new direction might be the one we came from. //      Else:
+    //          // green: we pass through, so we continue in the same direction //          // update: pos = next_p, time = arrival_time, dir = dir (unchanged)
+    //          // and then look for the next light in the same direction beyond next_p
+
+    //   But this doesn't account for the fact that after passing through, we don't stop at the light, we just use it to decide whether to turn.
+
+    //   However, the turning decision is made at the light at the arrival time.
+
+    //   But then after that, we move from next_p in the new (or old) direction.
+
+    //   The issue: this simulation might run infinitely in a cycle.
+
+    //   To detect cycle, we can store states: (index of current traffic light, dir, time % (2*k))  //   Why 2*k? Because the system might have period related to 2*k.
+
+    //   But is the state space bounded?
+
+    //   Note: the time modulo lcm(k, 2*cycle_length) might be needed, but we can use time % (2*k) as a heuristic.
+
+    //   However, consider: the condition for a light at p[i] is based on time % k. //   And the travel time between two points is an integer, so the phase (time mod k) evolves by adding distances.
+
+    //   But the state (i, dir, t_mod_k) has size n * 2 * k, which is too big.
+
+    //   But note: the total sum of n and q is only 200000, but k is 1e15, so we cannot use a set of states with t_mod_k.
+
+    //   Alternative: the only way to have a cycle is to bounce between two adjacent lights.
+
+    //   So we can check explicitly for bouncing in a gap.
+
+    //   Modified simulation:
+
+    //   We simulate until we either: //      - escape (no next light in current direction) -> YES
+    //      - revisit the same traffic light with the same direction and the same time mod (2*k) -> then we are in a cycle -> NO //   But 2*k might be huge.
+
+    //   However, the number of states might be bounded by 2*n * gcd_structure, but worst-case we might visit many states.
+
+    //   But the total sum of n and q is only 200000, but this is across test cases, and within one query simulation might be long.
+
+    //   We need a better method.
+
+    //   Insight: you will be trapped if and only if you eventually start bouncing between two consecutive traffic lights i and i+1, and the bouncing is sustained.
+
+    //   Conditions for sustained bouncing between i and i+1: //      Let D = p[i+1] - p[i]
+    //      You arrive at p[i] at time t with direction +1 (going to i+1) //      Then you will be at p[i+1] at time t+D.
+    //      To be reflected: (t+D) % k == d[i+1] //      Then you go back, arrive at p[i] at time t+2D.
+    //      To be reflected: (t+2D) % k == d[i]
+    //      Then you go forward, arrive at p[i+1] at time t+3D.
+    //      To be reflected: (t+3D) % k == d[i+1] //      ...
+
+    //   This requires: //      (t + D) % k = d[i+1]
+    //      (t + 2D) % k = d[i] //      (t + 3D) % k = d[i+1]
+    //      (t + 4D) % k = d[i] //      ...
+
+    //   Which means: //      (t + D) % k = d[i+1]
+    //      (t + 2D) % k = d[i] //      and also (t+3D) = (t+D) + 2D ≡ d[i+1] + 2D (mod k) = d[i+1]  => 2D ≡ 0 (mod k)
+    //      similarly, (t+4D) = (t+2D)+2D ≡ d[i] + 2D = d[i] (mod k) => 2D ≡ 0 (mod k)
+
+    //   So necessary: 2D ≡ 0 (mod k) i.e. k divides 2D.
+
+    //   And then the conditions reduce to: //        (t + D) % k = d[i+1]
+    //        (t + 2D) % k = d[i] //   But since 2D ≡ 0 (mod k), then (t+2D)%k = t%k, so we require:
+    //        t % k = d[i] //        (t + D) % k = d[i+1]
+
+    //   So if these two congruences hold, then the bouncing will continue forever.
+
+    //   Therefore, during simulation, if we ever travel between two consecutive traffic lights i and i+1, and we have: //        k | 2*(p[i+1]-p[i])
+    //        and the current time t satisfies t%k == d[i] and (t+D)%k == d[i+1] (at the moment of arrival from i to i+1), then we are trapped.
+
+    //   But note: we might not start the bounce at p[i] with the exact time, but once we are in the pattern, the conditions are checked at each hit.
+
+    //   However, if the condition 2D ≡ 0 (mod k) holds, then the bouncing will be periodic with period 2D, and the conditions will be the same every time.
+
+    //   So if on one full round (from i to i+1 and back to i) the two reflections happen, then they will happen forever.
+
+    //   Therefore, algorithm for a query:
+
+    //   Let pos = a, dir = 1, time = 0. //   Use a set to store visited states: (index, dir, time % (2*k)) to detect cycles.
+    //   But 2*k might be huge, but the number of states might be small in practice.
+
+    //   However, worst-case might be many states.
+
+    //   Given the constraint on the total sum of n and q (<=200000), and that within one query we hope to terminate quickly, we try.
+
+    //   But worst-case might be a long chain of lights, but then you escape eventually.
+
+    //   Only when you are in a potential trapping gap you might cycle.
+
+    //   So we can do:
+
+    //   while (true) {
+    //     if (dir == 1) {
+    //         auto it = lower_bound(p.begin(), p.end(), pos);
+    //         if (it == p.end()) {
+    //             cout << "YES\n";
+    //             break;
+    //         }
+    //         next_pos = *it;
+    //         next_idx = it - p.begin();
+    //     } else {
+    //         auto it = upper_bound(p.begin(), p.end(), pos);
+    //         if (it == p.begin()) {
+    //             cout << "YES\n";
+    //             break;
+    //         }
+    //         --it;
+    //         next_pos = *it;
+    //         next_idx = it - p.begin();
+    //     }
+    //     dist = abs(next_pos - pos);
+    //     time += dist;
+    //     pos = next_pos;
+    //     // Check if we've been in state (next_idx, dir, time % (2*k)) before //     // But time might be huge, but we care about modulo 2*k.
+    //     // However, 2*k might be up to 2e15, but we can still use a set of tuples. //     // But the number of states might be large.
+
+    //     // Alternatively, we can use the condition: if the gap between next_idx and its neighbor in the current direction has the property that 2*gap is divisible by k, then check the trapping condition. //     // But we are not necessarily in a two-light cycle yet.
+
+    //     // Check if this light will reflect us:
+    //     if (time % k == d[next_idx]) {
+    //         // red: turn around
+    //         dir = -dir;
+    //     }
+    //     // else: dir remains
+
+    //     // Now, if we have seen (next_idx, dir, time % (2*k)) before, then cycle -> NO //     // But note: after turning, the state is (next_idx, new_dir, time)
+    //     // Also, if we don't turn, then we will move on, but we are at the light and then move in the same direction, so the next event will be the next light in that direction.
+
+    //     // But if we passed through (didn't turn), then we should not record a state here, because we are not stopping. //     // We only change direction at a light, so the only decision points are when we are at a light and have to choose the next direction.
+
+    //     // However, if we passed through, then we immediately leave this light in the same direction, so the next event is the next light in that direction.
+
+    //     // Therefore, we only need to record state when we are at a light AND we have a choice (which is always, but the choice might be influenced by time).
+
+    //     // But if we passed through, then we haven't changed direction, so we will go to the next light in the same direction.
+
+    //     // So we can continue the loop.
+
+    //     // But then when do we record state? Only when we are at a light and have updated the direction (whether turned or not, the state for the next leg is determined).
+
+    //     // Actually, after processing the light, we have a new (pos, dir, time) and we will now move in 'dir' from 'pos'.
+
+    //     // So the state for the purpose of cycle detection is (next_idx, dir, time % (2*k)), and we record it at the end of the iteration.
+
+    //     // But if we passed through, then in the next iteration we will immediately find the next light in the same direction.
+
+    //     // However, if we turned around, then we might go back to the previous light.
+
+    //     // So we should record state after each light visit.
+
+    //     // But then if we passed through, we are at a light and then move on, so the state is valid.
+
+    //     // However, the next event will be soon.
+
+    //     // To avoid infinite loop, we set a state: (idx, dir, time_mod) with time_mod = time % (2*k)
+
+    //     // Why 2*k? Because the system might have period 2*k.
+
+    //     // But is it sufficient? Consider: the condition for a light only depends on time mod k, and the travel times are integers, so the evolution of time mod k is what matters, but the difference between consecutive visits to the same light might be multiples of 2*k.
+
+    //     // However, using 2*k might work in practice.
+
+    //     // Given the low total n+q, we hope that the number of iterations per query is not high.
+
+    //     // But worst-case might be a long chain.
+
+    //     // However, if there's no trapping, you will eventually escape.
+
+    //     // Only in the trapping case you loop.
+
+    //     // So we can also set a bound on the number of iterations, say 2*n.
+
+    //   }
+
+    //   But the sample: start=2 in first test case. //   Initially: pos=2, dir=1, time=0.
+    //   next in +1: p[0]=1 (<=2), p[1]=4>2 -> next=4, idx=1. //   dist=2, time=2, pos=4.
+    //   time%k=2%2=0, d[1]=0 -> red, so dir becomes -1. //   state: (1, -1, 2%(2*2)=2%4=2) -> record.
+    //   Next: in direction -1 from 4: the next is p[0]=1. //   dist=3, time=5, pos=1.
+    //   time%k=5%2=1, d[0]=1 -> red, so dir becomes 1. //   state: (0, 1, 5%4=1) -> record.
+    //   Next: in +1 from 1: next is 4. //   dist=3, time=8, pos=4.
+    //   time%k=0, d[1]=0 -> red, dir becomes -1.
+    //   state: (1, -1, 8%4=0) -> different from (1,-1,2) -> record.
+    //   Then to 1: dist=3, time=11, pos=1. //   time%k=1, d[0]=1 -> red, dir=1.
+    //   state: (0,1,11%4=3) -> new.
+    //   Then to 4: time=14, state: (1,-1,14%4=2) -> we have seen (1,-1,2) before! -> cycle.
+
+    //   So we can detect cycle.
+
+    //   Therefore, implementation:
+
+    //   For each query:
+    //      set<tuple<int, int, ll>> seen; // (index, direction, time_mod)
+    //      pos = a, dir = 1, time = 0
+    //      while (true) {
+    //         // Find next traffic light in direction 'dir'
+    //         int next_idx = -1;
+    //         ll next_pos = -1;
+    //         if (dir == 1) {
+    //             auto it = upper_bound(p.begin(), p.end(), pos);
+    //             if (it == p.end()) {
+    //                 cout << "YES\n";
+    //                 break;
+    //             }
+    //             next_pos = *it;
+    //             next_idx = it - p.begin();
+    //         } else {
+    //             auto it = lower_bound(p.begin(), p.end(), pos);
+    //             if (it == p.begin()) {
+    //                 cout << "YES\n";
+    //                 break;
+    //             }
+    //             --it;
+    //             next_pos = *it;
+    //             next_idx = it - p.begin();
+    //         }
+    //         ll dist = abs(next_pos - pos);
+    //         time += dist;
+    //         pos = next_pos;
+    //
+    //         ll time_mod = time % (2*k);   // use 2*k as modulus
+    //
+    //         tuple<int, int, ll> state = {next_idx, dir, time_mod};
+    //         if (seen.find(state) != seen.end()) {
+    //             cout << "NO\n";
+    //             break;
+    //         }
+    //         seen.insert(state); //
+    //         // Check if this light is red at time
+    //         if (time % k == d[next_idx]) {
+    //             dir = -dir;   // turn around
+    //         }
+    //         // else: dir remains //         // and we will continue to the next light in the new (or old) direction
+    //      }
+
+    //   But note: after we turn around, the state for the next iteration will be different.
+
+    //   However, in the above, we are not including the updated 'dir' in the state for this iteration?  //   Let me see:
+    //      We are at a light, and we decide to turn or not.
+    //      The state we record is (next_idx, dir_before_decision, time_mod) 
+    //      But then we update dir if it's red. //      And then the next iteration uses the updated dir.
+
+    //   But the state should represent the state at the beginning of the leg.
+
+    //   Alternatively, we should record the state after the decision.
+
+    //   Because the next leg is determined by the new direction.
+
+    //   So we should do:
+
+    //      if (time % k == d[next_idx]) {
+    //          dir = -dir;
+    //      }
+    //      // now dir is the direction for the next leg
+    //      tuple<int, int, ll> state = {next_idx, dir, time_mod};
+
+    //   But then we are recording the state after the turn.
+
+    //   Let's test with start=2: //      Iteration1:
+    //          next_idx=1, next_pos=4, dist=2, time=2, pos=4. //          time%k=0==d[1]=0 -> red, so dir becomes -1.
+    //          state = (1, -1, 2%4=2) -> insert. //      Iteration2:
+    //          from 4, dir=-1: next is p[0]=1, dist=3, time=5, pos=1. //          time%k=1==d[0]=1 -> red, dir becomes 1.
+    //          state = (0,1,5%4=1) -> insert. //      Iteration3:
+    //          from 1, dir=1: next=4, dist=3, time=8, pos=4. //          time%k=0 -> red, dir becomes -1.
+    //          state = (1,-1,8%4=0) -> insert. //      Iteration4:
+    //          from 4, dir=-1: next=1, dist=3, time=11, pos=1. //          time%k=1 -> red, dir becomes 1.
+    //          state = (0,1,11%4=3) -> insert. //      Iteration5:
+    //          from 1, dir=1: next=4, dist=3, time=14, pos=4. //          time%k=0 -> red, dir becomes -1.
+    //          state = (1,-1,14%4=2) -> this state was seen in iteration1?  //          iteration1: (1,-1,2) -> yes! -> cycle -> NO.
+
+    //   So it works.
+
+    //   But why use 2*k? Could we use k?  //   Let me try with k:
+    //      state1: (1,-1,2%2=0) //      state2: (0,1,5%2=1)
+    //      state3: (1,-1,8%2=0) -> same as state1? 
+    //      But the times are different: 2 and 8, but both mod2=0.
+    //      So we would see (1,-1,0) at iteration1 and iteration3 -> cycle detected at iteration3. //   That would be faster.
+
+    //   But is it correct? 
+    //   The condition for the light only depends on time mod k, and the travel times are integers, so the entire system has period k in time.
+    //   Therefore, if you are at the same light, same direction, and same time mod k, then the future is identical. //   So we can use time_mod = time % k.
+
+    //   Let me test with the example using mod k: //      Iteration1: state = (1, -1, 2%2=0)
+    //      Iteration2: (0,1,5%2=1) //      Iteration3: (1,-1,8%2=0) -> seen at iteration1 -> cycle -> NO.
+    //   Correct.
+
+    //   But is there a case where time_mod k is not enough?
+    //   Consider: two different times that are congruent mod k, but the actual time affects the possibility of escape in terms of meeting a light that has a different requirement? 
+    //   But the only thing that matters for a light at position p[i] is the time mod k. //   And the travel time to the next light is fixed, so the next time mod k is determined.
+    //   Therefore, the entire future is determined by (current_light_index, direction, time_mod_k).
+
+    //   So we can use time_mod = time % k.
+
+    //   But note: time might be reduced mod k, but we are only using it for hashing.
+
+    //   However, k might be 0? No, k>=1.
+
+    //   Implementation:
+
+    //   We'll do:
+
+    const ll MOD_BASE = k;  // use time % k
+
+    for (ll start : a) {
+        ll pos = start;
+        int dir = 1;  // 1 for right, -1 for left
+        ll time = 0;
+        set<tuple<int, int, ll>> seen; // (index, dir, time_mod_k)
+
+        while (true) {
+            int next_idx = -1;
+            ll next_pos = -1;
+
+            if (dir == 1) {
+                // find first traffic light strictly greater than pos
+                auto it = upper_bound(p.begin(), p.end(), pos);
+                if (it == p.end()) {
+                    cout << "YES\n";
+                    break;
+                }
+                next_pos = *it;
+                next_idx = it - p.begin();
+            } else {
+                // find last traffic light strictly less than pos
+                auto it = lower_bound(p.begin(), p.end(), pos);
+                if (it == p.begin()) {
+                    cout << "YES\n";
+                    break;
+                }
+                --it;
+                next_pos = *it;
+                next_idx = it - p.begin();
+            }
+
+            ll dist = abs(next_pos - pos);
+            time += dist;
+            pos = next_pos;
+
+            ll time_mod = time % MOD_BASE;
+
+            // Check if we would turn at this light
+            if (time % k == d[next_idx]) {
+                dir = -dir;
+            }
+            // Now 'dir' is the direction for the next leg
+
+            tuple<int, int, ll> state = {next_idx, dir, time_mod};
+
+            if (seen.count(state)) {
+                cout << "NO\n";
+                break;
+            }
+            seen.insert(state);
+
+            // We don't update pos for the next leg until the next iteration, but we have updated 'pos' to next_pos and 'dir' for the next move. // The next iteration will use the updated pos and dir.
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

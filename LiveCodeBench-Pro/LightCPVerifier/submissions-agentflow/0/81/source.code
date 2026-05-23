@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to fill the array to achieve exact max subarray sum of `k`
+bool solve(int n, long long k, const string &s, vector<long long>& a, vector<long long>& result_array) {
+    long long current_sum = 0;
+    long long max_sub_sum = LLONG_MIN;
+    bool filled = false;
+
+    for (int i = 0; i < n; ++i) {
+        if (s[i] == '1') {
+            // Utilize known value
+            current_sum += a[i];
+            result_array[i] = a[i];
+        } else {
+            // Fill zero value to encourage reaching `k`
+            if (current_sum < k) {
+                result_array[i] = k - current_sum;
+                current_sum = k; // Achieve precise progression towards `k`
+                filled = true;
+            } else {
+                result_array[i] = 0;
+            }
+        }
+        max_sub_sum = max(max_sub_sum, current_sum);
+        current_sum = max(0LL, current_sum); // Reset negative
+    }
+
+    // Final confirmation phase, ensuring max subarray sum exactly equals `k`
+    current_sum = 0;
+    max_sub_sum = LLONG_MIN;
+    for (int i = 0; i < n; ++i) {
+        current_sum += result_array[i];
+        max_sub_sum = max(max_sub_sum, current_sum);
+        current_sum = max(0LL, current_sum); // Reset negative subarray sums
+    }
+
+    return max_sub_sum == k; // Return validation result
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int test_cases;
+    cin >> test_cases;
+    while (test_cases--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        string s;
+        cin >> s;
+        vector<long long> a(n), result_array(n);
+
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        if (solve(n, k, s, a, result_array)) {
+            cout << "Yes\n";
+            for (long long val : result_array) {
+                cout << val << ' ';
+            }
+            cout << '\n';
+        } else {
+            cout << "No\n";
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,19 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n;
+        cin >> n;
+        long long ans;
+        if (n % 2 == 0) {
+            ans = (n * n + 4) / 4;
+        } else {
+            ans = (n * n + 3) / 4;
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

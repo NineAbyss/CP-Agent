@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#pragma comment(linker, "/STACK:268435456")
+
+const int N = 200005;
+vector<int> adj[N];
+long long a[N];
+long long threat[N];
+int depth[N];
+long long P[N];
+long long bestEven, bestOdd;
+
+void dfs(int u, int par, long long curP) {
+    depth[u] = (par == -1 ? 0 : depth[par] + 1);
+    P[u] = curP + ((depth[u] % 2 == 0) ? a[u] : -a[u]);
+    if (depth[u] % 2 == 0) {
+        long long cand = (bestEven == LLONG_MIN) ? LLONG_MIN : P[u] + bestEven;
+        threat[u] = max(a[u], cand);
+    } else {
+        long long cand = (bestOdd == LLONG_MIN) ? LLONG_MIN : -P[u] + bestOdd;
+        threat[u] = max(a[u], cand);
+    }
+    long long oldBestEven = bestEven, oldBestOdd = bestOdd;
+    if (depth[u] % 2 == 0) {
+        bestEven = max(bestEven, -curP);
+    } else {
+        bestOdd = max(bestOdd, curP);
+    }
+    for (int v : adj[u]) {
+        if (v == par) continue;
+        dfs(v, u, P[u]);
+    }
+    bestEven = oldBestEven;
+    bestOdd = oldBestOdd;
+}
+
+void solve() {
+    int n;
+    scanf("%d", &n);
+    for (int i = 0; i < n; i++) {
+        scanf("%lld", &a[i]);
+        adj[i].clear();
+    }
+    for (int i = 0; i < n - 1; i++) {
+        int u, v;
+        scanf("%d %d", &u, &v);
+        u--; v--;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    bestEven = LLONG_MIN;
+    bestOdd = LLONG_MIN;
+    dfs(0, -1, 0);
+    for (int i = 0; i < n; i++) {
+        printf("%lld%c", threat[i], " \n"[i == n-1]);
+    }
+}
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

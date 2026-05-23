@@ -1,0 +1,96 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+using ll = long long;
+
+ll max_subarray_sum(const vector<ll>& arr) {
+    ll max_ending_here = 0;
+    ll max_so_far = LLONG_MIN;
+    for (ll x : arr) {
+        max_ending_here = max(x, max_ending_here + x);
+        max_so_far = max(max_so_far, max_ending_here);
+    }
+    return max_so_far;
+}
+
+void solve() {
+    int n;
+    ll k;
+    cin >> n >> k;
+    string s;
+    cin >> s;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) cin >> a[i];
+
+    // 统计未知位置数量
+    vector<int> unknown_pos;
+    for (int i = 0; i < n; ++i) if (s[i] == '0') unknown_pos.push_back(i);
+    int m = unknown_pos.size();
+
+    if (m == 0) {
+        // 全已知
+        if (max_subarray_sum(a) == k) {
+            cout << "Yes\n";
+            for (int i = 0; i < n; ++i) cout << a[i] << " \n"[i==n-1];
+        } else {
+            cout << "No\n";
+        }
+        return;
+    }
+
+    // 尝试设置所有未知值为同一个值 x // 枚举 x 的可能值
+    vector<ll> candidates = {0, k, -k, k/2, -k/2, 1, -1};
+    for (ll x : candidates) {
+        vector<ll> b = a;
+        for (int pos : unknown_pos) b[pos] = x;
+        if (max_subarray_sum(b) == k) {
+            cout << "Yes\n";
+            for (int i = 0; i < n; ++i) cout << b[i] << " \n"[i==n-1];
+            return;
+        }
+    }
+
+    // 如果未知位置数量为1，尝试更多值
+    if (m == 1) {
+        int pos = unknown_pos[0];
+        for (ll x = k - 100; x <= k + 100; ++x) {
+            vector<ll> b = a;
+            b[pos] = x;
+            if (max_subarray_sum(b) == k) {
+                cout << "Yes\n";
+                for (int i = 0; i < n; ++i) cout << b[i] << " \n"[i==n-1];
+                return;
+            }
+        }
+    }
+
+    // 如果未知位置数量为2，尝试设置两个值相同
+    if (m == 2) {
+        for (ll x = k - 10; x <= k + 10; ++x) {
+            vector<ll> b = a;
+            for (int pos : unknown_pos) b[pos] = x;
+            if (max_subarray_sum(b) == k) {
+                cout << "Yes\n";
+                for (int i = 0; i < n; ++i) cout << b[i] << " \n"[i==n-1];
+                return;
+            }
+        }
+    }
+
+    cout << "No\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

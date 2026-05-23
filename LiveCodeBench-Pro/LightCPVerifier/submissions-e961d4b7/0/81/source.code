@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        vector<int> a(n);
+        int cnt_greater = 0;
+        for (char c : s) if (c == '>') cnt_greater++;
+        a[0] = n - cnt_greater;
+        set<int> avail;
+        for (int i = 1; i <= n; i++) avail.insert(i);
+        avail.erase(a[0]);
+        int cur_min = a[0];
+        int cur_max = a[0];
+        for (int i = 1; i < n; i++) {
+            if (s[i-1] == '<') {
+                auto it = avail.lower_bound(cur_min);
+                --it; // there always exists such element
+                int val = *it;
+                a[i] = val;
+                avail.erase(val);
+                cur_min = min(cur_min, val);
+            } else {
+                auto it = avail.upper_bound(cur_max);
+                int val = *it;
+                a[i] = val;
+                avail.erase(val);
+                cur_max = max(cur_max, val);
+            }
+        }
+        for (int i = 0; i < n; i++) {
+            cout << a[i];
+            if (i < n-1) cout << ' ';
+        }
+        cout << '\n';
+    }
+    return 0;
+}

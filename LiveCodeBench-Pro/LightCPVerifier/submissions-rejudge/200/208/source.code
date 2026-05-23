@@ -1,0 +1,22 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int x;
+        cin >> x;
+        int k = 0;
+        int tmp = x;
+        while (tmp > 1) {
+            tmp >>= 1;
+            k++;
+        }
+        cout << 2 * k + 3 << '\n';
+    }
+    return 0;
+}

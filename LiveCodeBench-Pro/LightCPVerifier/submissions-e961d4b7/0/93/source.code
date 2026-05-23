@@ -1,0 +1,69 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+const int MOD = 998244353;
+const int MAXN = 500005;
+
+long long fact[MAXN], invfact[MAXN];
+
+long long modpow(long long a, long long e) {
+    long long res = 1;
+    while (e) {
+        if (e & 1) res = res * a % MOD;
+        a = a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+void precompute() {
+    fact[0] = 1;
+    for (int i = 1; i < MAXN; i++) fact[i] = fact[i-1] * i % MOD;
+    invfact[MAXN-1] = modpow(fact[MAXN-1], MOD-2);
+    for (int i = MAXN-2; i >= 0; i--) invfact[i] = invfact[i+1] * (i+1) % MOD;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    precompute();
+    int t;
+    cin >> t;
+    while (t--) {
+        int c[26];
+        long long n = 0;
+        for (int i = 0; i < 26; i++) {
+            cin >> c[i];
+            n += c[i];
+        }
+        long long O = (n + 1) / 2, E = n / 2;
+        // Check if any letter cannot fit into either odd or even positions
+        bool feasible = true;
+        for (int i = 0; i < 26; i++) {
+            if (c[i] > O && c[i] > E) {
+                feasible = false;
+                break;
+            }
+        }
+        if (!feasible) {
+            cout << 0 << '\n';
+            continue;
+        }
+        vector<long long> dp(n + 1, 0);
+        dp[0] = 1;
+        for (int i = 0; i < 26; i++) {
+            if (c[i] == 0) continue;
+            for (long long s = n; s >= c[i]; s--) {
+                dp[s] = (dp[s] + dp[s - c[i]]) % MOD;
+            }
+        }
+        long long invprod = 1;
+        for (int i = 0; i < 26; i++) {
+            if (c[i] > 0) invprod = invprod * invfact[c[i]] % MOD;
+        }
+        long long ans = fact[O] * fact[E] % MOD * dp[O] % MOD * invprod % MOD;
+        cout << ans << '\n';
+    }
+    return 0;
+}

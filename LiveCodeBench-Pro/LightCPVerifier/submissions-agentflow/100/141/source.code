@@ -1,0 +1,70 @@
+#include <iostream>
+#include <queue>
+#include <unordered_map>
+using namespace std;
+
+// Function to perform a BFS search from a given front
+int bfsLayer(queue<pair<long long, int>>& q, unordered_map<long long, int>& visited, unordered_map<long long, int>& visited_other, int k) {
+    int size = q.size();
+    while (size--) {
+        auto [current, ops] = q.front();
+        q.pop();
+
+        // If the opposite side has met this state, return the operation count sum
+        if (visited_other.find(current) != visited_other.end()) {
+            return ops + visited_other[current];
+        }
+
+        // Explore multipliers
+        for (int a = k; a >= 1; --a) {
+            long long multiplied = current * a;
+            if (multiplied > 1000000 || visited.find(multiplied) != visited.end()) continue;
+            visited[multiplied] = ops + 1;
+            q.push({multiplied, ops + 1});
+        }
+
+        // Explore divisors
+        for (int a = 1; a <= k; ++a) {
+            if (current % a == 0) {
+                long long divided = current / a;
+                if (visited.find(divided) != visited.end()) continue;
+                visited[divided] = ops + 1;
+                q.push({divided, ops + 1});
+            }
+        }
+    }
+    return -1;
+}
+
+int minOperations(int x, int y, int k) {
+    if (x == y) return 0;
+
+    unordered_map<long long, int> visited_from_x, visited_from_y;
+    queue<pair<long long, int>> q_from_x, q_from_y;
+    q_from_x.push({x, 0});
+    q_from_y.push({y, 0});
+    visited_from_x[x] = 0;
+    visited_from_y[y] = 0;
+
+    while (!q_from_x.empty() && !q_from_y.empty()) {
+        int dist = -1;
+        if (q_from_x.size() <= q_from_y.size()) {
+            dist = bfsLayer(q_from_x, visited_from_x, visited_from_y, k);
+        } else {
+            dist = bfsLayer(q_from_y, visited_from_y, visited_from_x, k);
+        }
+        if (dist != -1) return dist;
+    }
+    return -1;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int x, y, k;
+        cin >> x >> y >> k;
+        cout << minOperations(x, y, k) << endl;
+    }
+    return 0;
+}

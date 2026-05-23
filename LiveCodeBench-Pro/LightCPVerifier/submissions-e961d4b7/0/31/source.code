@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    
+    // 检查是否全相等
+    bool all_eq = true;
+    for (int i = 1; i < n; i++) {
+        if (a[i] != a[0]) { all_eq = false; break; }
+    }
+    if (all_eq) {
+        cout << 0 << '\n';
+        return;
+    }
+    
+    // 值范围1..n
+    vector<vector<int>> pos(n+1);
+    for (int i = 0; i < n; i++) {
+        pos[a[i]].push_back(i+1); // 1-indexed
+    }
+    
+    long long ans = LLONG_MAX;
+    for (int x = 1; x <= n; x++) {
+        if (pos[x].empty()) continue;
+        vector<int>& v = pos[x];
+        int k = v.size();
+        // 单个位置
+        ans = min(ans, 1LL * x * (n-1));
+        // 相邻位置 p<q
+        for (int i = 0; i < k-1; i++) {
+            ans = min(ans, 1LL * x * (n-1 + (v[i+1] - v[i])));
+        }
+        // 连续段
+        int i = 0;
+        while (i < k) {
+            int j = i;
+            while (j+1 < k && v[j+1] == v[j] + 1) j++;
+            // 连续段 [v[i], v[j]]
+            int len = v[j] - v[i] + 1;
+            ans = min(ans, 1LL * x * (n - len));
+            i = j+1;
+        }
+    }
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

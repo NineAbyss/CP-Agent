@@ -1,0 +1,40 @@
+#include <iostream>
+using namespace std;
+
+bool willPocket(long long x0, long long y0, int dx, int dy, long long s, int px, int py) {
+    long long A = (px * s - x0) * dx;
+    long long B = (py * s - y0) * dy;
+    if (A < 0) return false;
+    if ((A - B) % (2LL * s) != 0) return false;
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long s;
+        cin >> n >> s;
+        int ans = 0;
+        for (int i = 0; i < n; i++) {
+            int dx, dy;
+            long long x0, y0;
+            cin >> dx >> dy >> x0 >> y0;
+            bool pocketed = false;
+            for (int px = 0; px <= 1 && !pocketed; px++) {
+                for (int py = 0; py <= 1 && !pocketed; py++) {
+                    if (willPocket(x0, y0, dx, dy, s, px, py)) {
+                        pocketed = true;
+                    }
+                }
+            }
+            if (pocketed) ans++;
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

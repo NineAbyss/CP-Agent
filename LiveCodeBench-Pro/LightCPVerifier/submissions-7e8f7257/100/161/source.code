@@ -1,0 +1,146 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const long long INF = (long long)1e18;
+
+struct MaxFlow {
+    struct Edge {
+        int to, rev;
+        long long cap;
+    };
+    int n;
+    vector<vector<Edge>> g;
+    vector<int> level, iter;
+    MaxFlow(int n) : n(n), g(n), level(n), iter(n) {}
+    void add_edge(int from, int to, long long cap) {
+        g[from].push_back({to, (int)g[to].size(), cap});
+        g[to].push_back({from, (int)g[from].size() - 1, 0});
+    }
+    bool bfs(int s, int t) {
+        fill(level.begin(), level.end(), -1);
+        queue<int> q;
+        level[s] = 0;
+        q.push(s);
+        while (!q.empty()) {
+            int v = q.front(); q.pop();
+            for (auto &e : g[v]) {
+                if (e.cap > 0 && level[e.to] < 0) {
+                    level[e.to] = level[v] + 1;
+                    q.push(e.to);
+                }
+            }
+        }
+        return level[t] >= 0;
+    }
+    long long dfs(int v, int t, long long f) {
+        if (v == t) return f;
+        for (int &i = iter[v]; i < (int)g[v].size(); i++) {
+            Edge &e = g[v][i];
+            if (e.cap > 0 && level[v] < level[e.to]) {
+                long long d = dfs(e.to, t, min(f, e.cap));
+                if (d > 0) {
+                    e.cap -= d;
+                    g[e.to][e.rev].cap += d;
+                    return d;
+                }
+            }
+        }
+        return 0;
+    }
+    long long max_flow(int s, int t) {
+        long long flow = 0;
+        while (bfs(s, t)) {
+            fill(iter.begin(), iter.end(), 0);
+            long long f;
+            while ((f = dfs(s, t, INF)) > 0) {
+                flow += f;
+            }
+        }
+        return flow;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<long long> s(n);
+        for (int i = 0; i < n; i++) cin >> s[i];
+        vector<vector<long long>> a(m, vector<long long>(n));
+        vector<vector<long long>> b(m, vector<long long>(n));
+        vector<vector<long long>> c(m, vector<long long>(n));
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) cin >> a[i][j];
+            for (int j = 0; j < n; j++) cin >> b[i][j];
+            for (int j = 0; j < n; j++) cin >> c[i][j];
+        }
+        vector<long long> luggage = s;
+        for (int day = 0; day < m; day++) {
+            // Build graph
+            int S = 0, T = 1;
+            int offset = 2;
+            int N = 2 + n;
+            MaxFlow mf(N);
+            // Store original capacities for extraction
+            vector<long long> cap_a(n), cap_c(n), cap_b(n);
+            for (int j = 0; j < n; j++) {
+                mf.add_edge(S, offset + j, luggage[j]);
+            }
+            for (int j = 0; j < n; j++) {
+                mf.add_edge(offset + j, T, b[day][j]);
+                cap_b[j] = b[day][j];
+            }
+            for (int j = 0; j < n; j++) {
+                int prev_j = (j - 1 + n) % n;
+                mf.add_edge(offset + j, offset + prev_j, a[day][j]);
+                cap_a[j] = a[day][j];
+            }
+            for (int j = 0; j < n; j++) {
+                int next_j = (j + 1) % n;
+                mf.add_edge(offset + j, offset + next_j, c[day][j]);
+                cap_c[j] = c[day][j];
+            }
+            // Add edges from prev(j) and next(j) to T with INF capacity
+            for (int j = 0; j < n; j++) {
+                int prev_j = (j - 1 + n) % n;
+                mf.add_edge(offset + prev_j, T, INF);
+            }
+            for (int j = 0; j < n; j++) {
+                int next_j = (j + 1) % n;
+                mf.add_edge(offset + next_j, T, INF);
+            }
+            long long found = mf.max_flow(S, T);
+            // Extract p_j, q_j, r_j
+            vector<long long> p(n, 0), q(n, 0), r(n, 0);
+            for (int j = 0; j < n; j++) {
+                int u = offset + j;
+                for (auto &e : mf.g[u]) {
+                    if (e.to == offset + ((j - 1 + n) % n)) {
+                        p[j] = cap_a[j] - e.cap;
+                    } else if (e.to == offset + ((j + 1) % n)) {
+                        q[j] = cap_c[j] - e.cap;
+                    } else if (e.to == T) {
+                        // This is the direct edge j->T (capacity b[day][j])
+                        r[j] = cap_b[j] - e.cap;
+                    }
+                }
+            }
+            // Update luggage
+            vector<long long> new_luggage(n, 0);
+            for (int j = 0; j < n; j++) {
+                int prev_j = (j - 1 + n) % n;
+                int next_j = (j + 1) % n;
+                new_luggage[j] = r[j] + p[next_j] + q[prev_j];
+            }
+            luggage = new_luggage;
+            long long total = 0;
+            for (auto x : luggage) total += x;
+            cout << total << '\n';
+        }
+    }
+    return 0;
+}

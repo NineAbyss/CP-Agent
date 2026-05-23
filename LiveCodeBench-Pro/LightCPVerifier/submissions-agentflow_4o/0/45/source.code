@@ -1,0 +1,75 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+bool canTransform(const vector<int>& a, vector<int>& b) {
+    int n = a.size();
+    for (int round = 0; round < n; ++round) {
+        bool changed = false;
+        for (int i = 1; i < n; ++i) {
+            int min_pos = i;
+            for (int j = i; j < n; ++j) {
+                if (b[j] < b[min_pos]) {
+                    min_pos = j;  // Search minimum element position
+                }
+            }
+            if (b[min_pos] < b[i-1]) {
+                rotate(b.begin() + i - 1, b.begin() + min_pos, b.begin() + min_pos + 1);
+                changed = true;  // Perform rotation
+                break;
+            }
+        }
+        if (!changed) return false;  // No more transformations possible
+    }
+    return b == a;  // Verify final transformation matches
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+
+        vector<int> a(n), c(n), b(n);
+        set<int> remaining;
+        for (int i = 1; i <= n; ++i) remaining.insert(i);
+
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        for (int i = 0; i < n; ++i) {
+            cin >> c[i];
+            if (c[i] != 0) {
+                b[i] = c[i];
+                remaining.erase(c[i]);
+            }
+        }
+
+        // Filling b with remaining numbers
+        auto it = remaining.begin();
+        for (int i = 0; i < n; ++i) {
+            if (c[i] == 0) {
+                b[i] = *it;
+                ++it;
+            }
+        }
+
+        // Checking if transformation is possible
+        if (canTransform(a, b)) {
+            for (int i = 0; i < n; ++i) cout << b[i] << ' ';
+            cout << '\n';
+        } else {
+            cout << "-1\n";
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

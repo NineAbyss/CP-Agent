@@ -1,0 +1,66 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <deque>
+using namespace std;
+
+void solve(vector<vector<int64_t>> &queries) {
+    for (const auto& query : queries) {
+        int n = query[0];
+        int64_t s = query[1];
+        int64_t x = query[2];
+        vector<int64_t> a(query.begin() + 3, query.end());
+
+        int count = 0;
+        int64_t prefix_sum = 0;
+        unordered_map<int64_t, int> prefix_count;
+        prefix_count[0] = 1;
+        deque<int> max_indices;
+
+        for (int r = 0; r < n; ++r) {
+            prefix_sum += a[r];
+
+            // Maintain the deque for the maximum in the current window
+            while (!max_indices.empty() && a[max_indices.back()] <= a[r]) {
+                max_indices.pop_back();
+            }
+            max_indices.push_back(r);
+
+            // Remove elements outside the current window for max
+            while (!max_indices.empty() && max_indices.front() <= r - n) {
+                max_indices.pop_front();
+            }
+
+            // Check if this is a valid subarray
+            if (a[max_indices.front()] == x) {
+                count += prefix_count[prefix_sum - s];
+            }
+
+            // Update the prefix count map
+            prefix_count[prefix_sum]++;
+        }
+
+        cout << count << "\n";
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+    vector<vector<int64_t>> queries(t);
+    for (int i = 0; i < t; ++i) {
+        int n;
+        int64_t s, x;
+        cin >> n >> s >> x;
+        queries[i].resize(n + 3);
+        queries[i][0] = n;
+        queries[i][1] = s;
+        queries[i][2] = x;
+        for (int j = 0; j < n; ++j) {
+            cin >> queries[i][j + 3];
+        }
+    }
+    solve(queries);
+
+    return 0;
+}

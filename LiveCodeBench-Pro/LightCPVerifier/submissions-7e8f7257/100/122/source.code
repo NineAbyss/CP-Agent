@@ -1,0 +1,71 @@
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+const int MOD = 998244353;
+const int MAXN = 505;
+
+long long fact[MAXN], invfact[MAXN];
+
+long long modpow(long long a, long long e) {
+    long long res = 1;
+    while (e) {
+        if (e & 1) res = res * a % MOD;
+        a = a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+void precompute() {
+    fact[0] = 1;
+    for (int i = 1; i < MAXN; ++i) fact[i] = fact[i-1] * i % MOD;
+    invfact[MAXN-1] = modpow(fact[MAXN-1], MOD-2);
+    for (int i = MAXN-2; i >= 0; --i) invfact[i] = invfact[i+1] * (i+1) % MOD;
+}
+
+long long C(int n, int k) {
+    if (k < 0 || k > n) return 0;
+    return fact[n] * invfact[k] % MOD * invfact[n-k] % MOD;
+}
+
+int cnt(int j, int parity) {
+    if (parity == 0) {
+        return (j + 2 - (j % 2)) / 2;
+    } else {
+        return (j + 1) / 2;
+    }
+}
+
+int solve(int n, int k, string s) {
+    vector<long long> dp(k+1, 0);
+    dp[0] = 1;
+    for (int p = n; p >= 1; --p) {
+        int parity = (s[p-1] == '1') ? 1 : 0;
+        vector<long long> ndp(k+1, 0);
+        for (int j = 0; j <= k; ++j) {
+            if (dp[j] == 0) continue;
+            int available = cnt(j, parity);
+            for (int d = 0; d <= available && j + d <= k; ++d) {
+                long long ways = dp[j] * C(available, d) % MOD;
+                ndp[j + d] = (ndp[j + d] + ways) % MOD;
+            }
+        }
+        dp = ndp;
+    }
+    return dp[k];
+}
+
+int main() {
+    precompute();
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        string s;
+        cin >> n >> k >> s;
+        cout << solve(n, k, s) << endl;
+    }
+    return 0;
+}

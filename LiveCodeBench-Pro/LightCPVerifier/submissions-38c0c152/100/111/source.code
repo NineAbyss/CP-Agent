@@ -1,0 +1,79 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <queue>
+#include <tuple>
+using namespace std;
+
+bool check(int n, const vector<tuple<int,int,int>>& edges, int L, int R) {
+    vector<vector<pair<int,int>>> adj(n);
+    for (auto [w, u, v] : edges) {
+        if (w >= L && w <= R) {
+            adj[u].emplace_back(v, w);
+            adj[v].emplace_back(u, w);
+        }
+    }
+    vector<vector<bool>> vis(n, vector<bool>(2, false));
+    queue<pair<int,int>> q;
+    q.emplace(0, 0);
+    vis[0][0] = true;
+    while (!q.empty()) {
+        auto [u, f] = q.front(); q.pop();
+        if (u == n-1 && f == 1) return true;
+        for (auto [v, w] : adj[u]) {
+            int nf = f | (w == L ? 1 : 0);
+            if (!vis[v][nf]) {
+                vis[v][nf] = true;
+                q.emplace(v, nf);
+            }
+        }
+    }
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<tuple<int,int,int>> edges(m);
+        for (int i = 0; i < m; i++) {
+            int u, v, w;
+            cin >> u >> v >> w;
+            u--; v--;
+            edges[i] = {w, u, v};
+        }
+        sort(edges.begin(), edges.end());
+        vector<int> weights(m);
+        for (int i = 0; i < m; i++) weights[i] = get<0>(edges[i]);
+        int ans = 2e9;
+        for (int i = 0; i < m; i++) {
+            int L = weights[i];
+            // 如果 L + L >= ans，那么即使 R = L，代价也 >= ans，可以跳过
+            if (L + L >= ans) break;
+            int lo = i, hi = m-1, best = -1;
+            while (lo <= hi) {
+                int mid = (lo + hi) / 2;
+                int R = weights[mid];
+                if (L + R >= ans) {
+                    hi = mid - 1;
+                    continue;
+                }
+                if (check(n, edges, L, R)) {
+                    best = mid;
+                    hi = mid - 1;
+                } else {
+                    lo = mid + 1;
+                }
+            }
+            if (best != -1) {
+                ans = min(ans, L + weights[best]);
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

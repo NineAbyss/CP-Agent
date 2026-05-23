@@ -1,0 +1,108 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Operation {
+    int i, j, x;
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        
+        // 检查可行性：b 多重集
+        vector<int> b(n), sorted_a = a;
+        for (int i = 0; i < n; i++) b[i] = min(a[i], k - a[i]);
+        sort(sorted_a.begin(), sorted_a.end());
+        vector<int> b_target(n);
+        for (int i = 0; i < n; i++) b_target[i] = min(sorted_a[i], k - sorted_a[i]);
+        sort(b.begin(), b.end());
+        sort(b_target.begin(), b_target.end());
+        if (b != b_target) {
+            cout << -1 << '\n';
+            continue;
+        }
+        
+        // 确定目标值
+        map<int, vector<int>> pos_by_b;
+        for (int i = 0; i < n; i++) {
+            int bi = min(a[i], k - a[i]);
+            pos_by_b[bi].push_back(i);
+        }
+        map<int, vector<int>> vals_by_b;
+        for (int v : sorted_a) {
+            int bi = min(v, k - v);
+            vals_by_b[bi].push_back(v);
+        }
+        vector<int> target(n);
+        for (auto &p : pos_by_b) {
+            int bi = p.first;
+            vector<int> idxs = p.second;
+            vector<int> vals = vals_by_b[bi];
+            for (int j = 0; j < (int)idxs.size(); j++) {
+                target[idxs[j]] = vals[j];
+            }
+        }
+        
+        // 调整：使用栈，按 b 值分组，每组内部分为 low 和 high
+        vector<int> cur = a;
+        map<int, stack<int>> low, high;
+        vector<Operation> ops;
+        
+        for (int i = 0; i < n; i++) {
+            if (cur[i] == target[i]) continue;
+            int bi = min(cur[i], k - cur[i]);
+            if (cur[i] == bi) { // 当前是 low
+                if (!high[bi].empty()) {
+                    int j = high[bi].top();
+                    high[bi].pop();
+                    // cur[i] = bi, cur[j] = k-bi // 需要调整到 target[i] 和 target[j]
+                    // 因为 cur[i]+cur[j]=k, target[i]+target[j]=k // 所以 cur[i]-target[i] = target[j]-cur[j]
+                    int x = cur[i] - target[i];
+                    if (x > 0) {
+                        ops.push_back({i + 1, j + 1, x});
+                        cur[i] -= x;
+                        cur[j] += x;
+                    } else {
+                        ops.push_back({j + 1, i + 1, -x});
+                        cur[j] -= -x;
+                        cur[i] += -x;
+                    }
+                } else {
+                    low[bi].push(i);
+                }
+            } else { // 当前是 high
+                if (!low[bi].empty()) {
+                    int j = low[bi].top();
+                    low[bi].pop();
+                    int x = cur[i] - target[i];
+                    if (x > 0) {
+                        ops.push_back({i + 1, j + 1, x});
+                        cur[i] -= x;
+                        cur[j] += x;
+                    } else {
+                        ops.push_back({j + 1, i + 1, -x});
+                        cur[j] -= -x;
+                        cur[i] += -x;
+                    }
+                } else {
+                    high[bi].push(i);
+                }
+            }
+        }
+        
+        // 输出
+        cout << ops.size() << '\n';
+        for (auto &op : ops) {
+            cout << op.i << ' ' << op.j << ' ' << op.x << '\n';
+        }
+    }
+    return 0;
+}

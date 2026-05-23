@@ -1,0 +1,73 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath> // for log2
+
+using namespace std;
+
+// Function to calculate beauty of a number
+int calculateBeauty(int num) {
+    return __builtin_popcount(num); // Uses GCC/Clang built-in to count set bits in integer
+}
+
+// Function to compute the maximum beauty of the array after at most k operations
+long long maximumBeautyAfterKOperations(int n, long long k, vector<int> &a) {
+    // Sort potential point of increment causing change in beauty
+    vector<pair<int, long long>> changes; // (gain in beauty, cost in increments)
+
+    long long initialBeauty = 0;
+
+    for (int i = 0; i < n; ++i) {
+        int currentBeauty = calculateBeauty(a[i]);
+        initialBeauty += currentBeauty;
+
+        // Examine points where this bit count increments
+        for (int b = 0; b < 31; ++b) { // 31 because a_i can be as large as 10^9
+            int Ai_beauty = calculateBeauty(a[i]);
+            if ((a[i] & (1 << b)) == 0) {
+                int incrementedBeauty = calculateBeauty(a[i] + (1 << b));
+                int gain = incrementedBeauty - Ai_beauty;
+                if (gain > 0) {
+                    changes.emplace_back(gain, (1 << b) - (a[i] & ((1 << b) - 1)));
+                }
+            }
+        }
+
+    }
+
+    long long maximumBeauty = initialBeauty;
+
+    // sort changes by cost, if costs same then by their beauty gain descending
+    sort(changes.begin(), changes.end(), [](const pair<int, long long>& a, const pair<int, long long>& b) {
+        if (a.second == b.second) return a.first > b.first;
+        return a.second < b.second;
+    });
+
+    for (auto &change : changes) {
+        if (k >= change.second) {
+            maximumBeauty += change.first;
+            k -= change.second;
+        } else {
+            break; // no further increments possible within `k` moves
+        }
+    }
+
+    return maximumBeauty;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        cout << maximumBeautyAfterKOperations(n, k, a) << "\n";
+    }
+    return 0;
+}

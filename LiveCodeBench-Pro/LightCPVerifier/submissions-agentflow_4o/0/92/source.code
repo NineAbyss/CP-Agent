@@ -1,0 +1,22 @@
+#include <iostream>
+using namespace std;
+
+bool canFormArray(int n, int m, int p, int q) {
+    // Check if the overall contribution of segments matches the total array sum
+    return (n - p + 1) * q == n * m;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, p, q;
+        cin >> n >> m >> p >> q;
+        if (canFormArray(n, m, p, q)) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

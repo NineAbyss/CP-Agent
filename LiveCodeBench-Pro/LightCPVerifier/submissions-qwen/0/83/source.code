@@ -1,0 +1,86 @@
+#include <iostream>
+#include <vector>
+#include <cctype>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+
+ll coord_to_num(int n, ll x, ll y) {
+    if (n == 0) {
+        return 1;
+    }
+    ll h = 1LL << (n - 1);
+    ll area = 1LL << (2 * n - 2);
+    
+    if (x < h && y < h) {
+        return coord_to_num(n - 1, x, y);
+    } else if (x >= h && y >= h) {
+        return area + coord_to_num(n - 1, x - h, y - h);
+    } else if (x >= h && y < h) {
+        return 2 * area + coord_to_num(n - 1, x - h, y);
+    } else {
+        return 3 * area + coord_to_num(n - 1, x, y - h);
+    }
+}
+
+pair<ll, ll> num_to_coord(int n, ll d) {
+    if (n == 0) {
+        return {0, 0};
+    }
+    ll h = 1LL << (n - 1);
+    ll area = 1LL << (2 * n - 2);
+    ll idx = d / area;
+    ll rem = d % area;
+
+    pair<ll, ll> pos;
+    if (idx == 0) {
+        pos = num_to_coord(n - 1, rem);
+        return pos;
+    } else if (idx == 1) {
+        pos = num_to_coord(n - 1, rem);
+        return {pos.first + h, pos.second + h};
+    } else if (idx == 2) {
+        pos = num_to_coord(n - 1, rem);
+        return {pos.first + h, pos.second};
+    } else {
+        pos = num_to_coord(n - 1, rem);
+        return {pos.first, pos.second + h};
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        int q;
+        cin >> q;
+
+        while (q--) {
+            string type;
+            cin >> type;
+            if (type == "->") {
+                ll x, y;
+                cin >> x >> y;
+                x--; y--;
+                ll num = coord_to_num(n, x, y);
+                cout << num << '\n';
+            } else if (type == "<-") {
+                ll d;
+                cin >> d;
+                d--;
+                auto [x, y] = num_to_coord(n, d);
+                cout << x + 1 << " " << y + 1 << '\n';
+            }
+        }
+    }
+
+    return 0;
+}

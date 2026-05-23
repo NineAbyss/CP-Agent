@@ -1,0 +1,38 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        long long total = 0;
+        int cntP = 0;
+        for (char c : s) {
+            if (c == 'P') cntP++;
+            else total += cntP;
+        }
+        if (total == 0) {
+            cout << 0 << '\n';
+            continue;
+        }
+        vector<int> bpos;
+        for (int i = 0; i < n; i++) if (s[i] == 'B') bpos.push_back(i);
+        int k = bpos.size();
+        int mx1 = 0;
+        for (int j = 0; j < k; j++) {
+            int diff = bpos[j] - j; // bj - (j+1) because bpos is 0-indexed
+            mx1 = max(mx1, (diff + 1) / 2);
+        }
+        long long ans = max((total + 1) / 2, (long long)mx1 + (k - 1) / 2);
+        cout << ans << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,85 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+void solve() {
+    int n; ll k;
+    cin >> n >> k;
+    vector<ll> p(n), d(n);
+    for (int i = 0; i < n; i++) cin >> p[i];
+    for (int i = 0; i < n; i++) cin >> d[i];
+
+    int q;
+    cin >> q;
+    while (q--) {
+        ll a;
+        cin >> a;
+
+        // Find first light >= a
+        int idx = lower_bound(p.begin(), p.end(), a) - p.begin();
+        ll t = 0;
+        int dir = 1;
+        int cur = -1;
+
+        set<tuple<int, int, ll>> seen;
+
+        // Check if start on a traffic light
+        if (idx < n && p[idx] == a) {
+            cur = idx;
+        } else {
+            // Move to next right light
+            if (idx == n) {
+                cout << "YES\n";
+                continue;
+            }
+            t += p[idx] - a;
+            cur = idx;
+        }
+
+        bool escaped = false;
+        // Limit steps to avoid infinite loop
+        for (int step = 0; step < 2 * n + 5; step++) {
+            ll tm = t % k;
+            // If red light, turn around
+            if (tm == d[cur]) {
+                dir = -dir;
+            }
+
+            auto state = make_tuple(cur, dir, tm);
+            if (seen.count(state)) {
+                cout << "NO\n";
+                escaped = true;
+                break;
+            }
+            seen.insert(state);
+
+            // Next light in current direction
+            int nxt = cur + dir;
+            if (nxt < 0 || nxt >= n) {
+                cout << "YES\n";
+                escaped = true;
+                break;
+            }
+
+            // Move to next light
+            ll dist = abs(p[nxt] - p[cur]);
+            t += dist;
+            cur = nxt;
+        }
+        if (!escaped) {
+            cout << "NO\n";
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

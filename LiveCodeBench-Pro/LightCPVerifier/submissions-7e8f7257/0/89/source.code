@@ -1,0 +1,106 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 505;
+vector<int> g[N];
+int match[N];
+bool used[N];
+
+bool dfs(int v) {
+    if (used[v]) return false;
+    used[v] = true;
+    for (int to : g[v]) {
+        if (match[to] == -1 || dfs(match[to])) {
+            match[to] = v;
+            return true;
+        }
+    }
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<string> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        vector<vector<string>> b(m, vector<string>(n));
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                cin >> b[i][j];
+            }
+        }
+        
+        bool ok = true;
+        for (int j = 0; j < n; j++) {
+            bool has = false;
+            for (int i = 0; i < m; i++) {
+                if (b[i][j] == a[j]) { has = true; break; }
+            }
+            if (!has) { ok = false; break; }
+        }
+        if (!ok) {
+            cout << "-1\n";
+            continue;
+        }
+        
+        for (int i = 0; i < n; i++) g[i].clear();
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (b[j][i] == a[i]) {
+                    g[i].push_back(j);
+                }
+            }
+        }
+        
+        memset(match, -1, sizeof(match));
+        int matchSize = 0;
+        for (int i = 0; i < n; i++) {
+            memset(used, 0, sizeof(used));
+            if (dfs(i)) matchSize++;
+        }
+        
+        int ans;
+        if (matchSize == n) {
+            // 检查是否存在一个网络匹配至少两个位置，且其中某个位置只被这个网络匹配
+            bool reduce = false;
+            for (int i = 0; i < m; i++) {
+                int cnt = 0;
+                vector<int> pos;
+                for (int j = 0; j < n; j++) {
+                    if (b[i][j] == a[j]) {
+                        cnt++;
+                        pos.push_back(j);
+                    }
+                }
+                if (cnt >= 2) {
+                    // 检查这些位置中是否有位置只被这个网络匹配
+                    for (int p : pos) {
+                        int only = true;
+                        for (int k = 0; k < m; k++) {
+                            if (k != i && b[k][p] == a[p]) {
+                                only = false;
+                                break;
+                            }
+                        }
+                        if (only) {
+                            reduce = true;
+                            break;
+                        }
+                    }
+                    if (reduce) break;
+                }
+            }
+            ans = 2 * n - (reduce ? 1 : 0);
+        } else {
+            ans = n + 2 * (n - matchSize);
+        }
+        cout << ans << "\n";
+    }
+    return 0;
+}

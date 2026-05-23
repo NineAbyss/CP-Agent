@@ -1,0 +1,756 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // We want to find the minimum number of clones. // Each clone can press a contiguous decreasing sequence of values?
+        // Actually, we can think greedily: we need to form a non-increasing sequence of button presses. // But the key is that clones can be created at any position and then moved.
+
+        // Insight: // We are allowed to create clones anywhere. Once created, a clone can move left/right and press unpressed buttons.
+        // The constraint is that the order of pressing must have non-increasing weights.
+
+        // Important observation: // Since each clone can traverse a contiguous path (but only press each button once), we can simulate the process
+        // by trying to cover the indices with as few "chains" as possible, where each chain corresponds to one clone's // path, and the weights along the path (in the order they are pressed) must be non-increasing.
+
+        // However, note that a clone doesn't have to move in a contiguous segment — it can go back and forth, // but it cannot press a button twice.
+
+        // Alternate insight from known similar problems: // This problem is equivalent to finding the minimum number of decreasing subsequences (not necessarily contiguous)
+        // that cover all elements, but with an important twist: the actual positions matter because movement is only adjacent.
+
+        // But wait: clones can start anywhere and move freely (one step at a time). So the physical location matters.
+        // However, since we can create clones at any position, and move them arbitrarily, the only constraint is the
+        // order in which buttons are pressed must be non-increasing in weight.
+
+        // However, we cannot press two buttons simultaneously. But more importantly, when a clone moves, it presses // buttons in the order of traversal. So the sequence of weights pressed by a single clone must be non-increasing?
+
+        // Not exactly: consider a clone moving from left to right over [5, 3, 1] → that gives 5,3,1 — valid.
+        // But if it goes over [1,3,5], it would press 1 then 3 then 5 — increasing — invalid.
+        // So for a single clone, the weights of the buttons it presses, in the order pressed, must be non-increasing.
+
+        // BUT: the clone can move arbitrarily — it could go right, then left, then right again. However, if it moves // from position 1 (value 5) to 2 (value 3) to 3 (value 4), then the sequence is 5,3,4 — which is not non-increasing.
+
+        // Therefore, within a single clone’s journey, the sequence of weights pressed must be non-increasing.
+
+        // So overall, we need to partition the set of buttons into sequences such that in each sequence, the weights
+        // form a non-increasing subsequence — and each sequence corresponds to one clone.
+
+        // However, there's another constraint: a clone starts at some button (presses it immediately), and then can // move to adjacent positions. So the clone can only press buttons that are reachable via adjacent movements,
+        // but since the row is linear and all positions are connected, any button can eventually be reached — so the // spatial layout does not prevent coverage, but affects the *order* in which buttons are pressed.
+
+        // But note: we can choose the starting point of each clone arbitrarily. Then the clone can walk around and press // buttons in any order? No — because to get from i to j, it has to pass through intermediate buttons, and those
+        // will be pressed when first visited.
+
+        // So the path of a clone defines a contiguous walk on the array, and whenever it steps on an unpressed button, // it gets pressed immediately.
+
+        // Thus, the sequence of button presses for a clone is determined by the order in which it visits new buttons.
+
+        // To avoid pressing a high-weight button after a low-weight one (which would break non-increasing), we must ensure // that within a clone's path, every time it presses a new button, its weight is ≤ the previous pressed weight.
+
+        // Therefore, the entire global sequence of button presses must be non-increasing, and this sequence is formed by // interleaving the actions of multiple clones (each contributing a subsequence of non-increasing weights).
+
+        // But here's the catch: we can interleave clones arbitrarily. So the total sequence is non-increasing if and only
+        // if we can assign each button to a clone such that the buttons assigned to each clone, in the order they are
+        // pressed by that clone, form a non-increasing sequence.
+
+        // However, the order in which a clone presses buttons depends on its path — which we can design.
+
+        // So the problem reduces to: what is the minimum number of clones (i.e., paths) such that we can cover all buttons // and the sequence of weights pressed by each clone is non-increasing?
+
+        // But note: we can plan the paths optimally. So for each clone, we can choose its starting point and route to # collect a set of buttons in non-increasing order of weights.
+
+        // However, known similar problems (e.g., CodeForces "Escaping the Matrix") suggest that the answer is the length # of the longest non-decreasing subsequence of the array.
+
+        // Why? Because of Dilworth's theorem:  // In any finite partially ordered set, the minimum number of chains (decreasing sequences) needed to cover the set
+        // equals the size of the largest antichain.
+
+        // But here, what is the partial order?
+        // We require that in the pressing order, if button i is pressed before button j, then a[i] >= a[j].
+        // Also, the pressing order must respect the possibility of movement — but since we can create clones anywhere,
+        # and move freely, the only hard constraint is the weight condition.
+
+        // However, there is no inherent dependency between indices based on position — we can always send a new clone # to any unpressed button.
+
+        // Therefore, the problem becomes: decompose the sequence of weights into as few non-increasing subsequences as possible.
+
+        // By Dilworth's theorem:  # In a finite poset, the minimum number of chains (totally ordered subsets covering the set) equals the size of the
+        # maximum antichain (set of pairwise incomparable elements).
+        #
+        # If we define a partial order: i <= j if i appears before j in the pressing order and a[i] >= a[j], but we are free
+        # to choose the order (as long as it's non-increasing in value), then we are looking for the minimum number of
+        # decreasing chains that cover all elements.
+
+        # Actually, Dilworth’s theorem says: 
+        #   minimum number of decreasing subsequences needed to cover the sequence = length of the longest increasing subsequence.
+        #
+        # But wait: Dilworth applies to posets. For sequences, there's a dual version:
+        #   The minimum number of non-increasing subsequences required to cover a permutation is equal to the length of the 
+        #   longest strictly increasing subsequence? Not exactly.
+
+        # Actually, a well-known result: 
+        #   The minimum number of decreasing subsequences into which a sequence can be partitioned is equal to the length 
+        #   of the longest non-decreasing subsequence.
+
+        # Let me test with examples:
+
+        # Example 1: [4,3,2,1,5]
+        #   Longest non-decreasing subsequence: [1,5] or [4,5] -> length 2.
+        #   Answer expected: 2 -> matches.
+
+        # Example 2: [1,1,1]
+        #   Longest non-decreasing subsequence: [1,1,1] -> length 3? 
+        #   But expected answer is 1.
+
+        # That doesn't match.
+
+        # Wait: actually, the dual of Dilworth for permutations:
+        #   The minimum number of increasing subsequences needed to cover the sequence is equal to the length of the longest decreasing subsequence.
+        #   Similarly, the minimum number of decreasing subsequences needed is equal to the length of the longest increasing subsequence.
+
+        # But in our case, we want decreasing subsequences (non-increasing) — so we want to cover with non-increasing sequences.
+
+        # So the minimum number of non-increasing subsequences = length of the longest strictly increasing subsequence?
+
+        # Example 1: [4,3,2,1,5]
+        #   Longest strictly increasing subsequence: [1,5] or [4,5] -> length 2 -> matches answer 2.
+
+        # Example 2: [1,1,1]
+        #   Longest strictly increasing subsequence: length 1 (since no strictly increasing pair) -> then answer would be 1 -> matches.
+
+        # Example 3: [7,8,1,5,9,2]
+        #   Strictly increasing subsequence: e.g., [7,8,9] -> length 3? but expected answer is 2.
+
+        # That gives 3, but expected is 2 — so that doesn't work.
+
+        # Alternatively, maybe it's the longest non-decreasing subsequence?
+
+        # Example 3: [7,8,1,5,9,2]
+        #   Non-decreasing: [7,8,9] -> length 3 -> still not 2.
+
+        # Another idea: greedy simulation.
+
+        # Known similar problem: "minimum number of taps" or "jump game", but not quite.
+
+        # Alternative approach from known solutions to this exact problem:
+
+        # After checking, this problem is known and the solution is to compute the maximum number of times a value is "needed"
+        # at the same time.
+
+        # Insight: 
+        # Consider processing the desired pressing order: we want to press buttons in non-increasing order of weights.
+        # But if two buttons with the same weight are far apart, we might need two clones.
+
+        # However, we can press buttons in any order as long as the weights form a non-increasing sequence.
+
+        # So we can sort the buttons by weight descending, and by index arbitrarily.
+
+        # But the movement constraint: a clone takes time to move. However, we can create clones in parallel.
+
+        # Actually, the key is that we can create clones at any time and at any position.
+
+        # So the only bottleneck is: when we have multiple buttons that must be pressed early (because they have high weight),
+        # and they are far apart, we may need multiple clones.
+
+        # Specifically, suppose we decide to press the buttons in descending order of weight. For buttons with the same weight,
+        # we can press them in any order.
+
+        # How many clones do we need? It's the maximum over all weights w of the number of "components" of buttons with weight >= w
+        # that are separated by lower weights? Not exactly.
+
+        # Another known solution: 
+        #   We traverse from left to right and simulate the number of active clones.
+        #   But I recall that the answer is the maximum frequency in a "greedy grouping".
+
+        # After reading the sample cases:
+
+        # Case 1: [4,3,2,1,5] -> answer 2.
+        #   Buttons: 
+        #       0:4, 1:3, 2:2, 3:1, 4:5
+        #   To have non-increasing: we must press 5 before 4,3,2,1? But 5 is greater than 4, so 5 must come first.
+        #   So sequence must start with 5. Then we can do 4,3,2,1.
+        #   But 5 is at the end. So we need a clone to start at 5 (presses 5), and another clone to start at 4 (presses 4), then move to 3,2,1.
+        #   But when the second clone moves from 4 to 3, it presses 3, which is fine (4>=3), etc.
+        #   However, the clone that pressed 5 can later move left and press 1 at the end? But then the sequence would be:
+        #       5 (from clone1), 4 (clone2), 3 (clone2), 2 (clone2), 1 (clone1) — that's 5,4,3,2,1 — valid.
+        #   But can clone1 press 1 after already pressing 5? Yes, but when it moves from 5 to 4, button 4 is already pressed, so nothing happens.
+        #   Then to 3: pressed, then to 2: pressed, then to 1: unpressed -> presses it. And 5>=1, so it's okay for the same clone?
+        #   But the sequence of presses by clone1: 5, then later 1 -> 5>=1, so non-increasing — valid.
+        #   So one clone could do [5,1] and the other [4,3,2]. But then we only need 2 clones.
+
+        # But could one clone do everything? 
+        #   Suppose we start a clone at 5: presses 5.
+        #   Then move it left: 4->3->2->1. When it reaches 4, it presses 4 (5>=4, ok), then 3 (4>=3), then 2, then 1.
+        #   Sequence: 5,4,3,2,1 — valid! So why isn't the answer 1?
+
+        # But wait: the example says the answer is 2, and provides a solution with 2 clones.
+
+        # Can one clone really do it? 
+        #   Step 1: create clone at button 5 (index 4): presses 5.
+        #   Step 2: move clone to index 3: presses 1? But 1<5, so 5>=1 -> valid.
+        #   But then we haven't pressed 4,3,2 yet. 
+        #   The clone is now at index 3 (weight 1). To press 4, it needs to go to index 0, passing through 2 and 1.
+        #   But when it moves to index 2, button 2 (weight=2) is unpressed -> it will press it.
+        #   But currently last pressed by this clone is 1, and now pressing 2 -> 1<=2, so 1<2 -> violates non-increasing (we need >=).
+        #   So it cannot press 2 after 1.
+
+        # Therefore, once a clone presses a button of weight w, it can only press buttons with weight <= w afterward.
+
+        # So after pressing 5 and then 1, it cannot press 2 (or 3 or 4) because 1<2,1<3,1<4.
+
+        # Hence, the clone that presses 5 cannot later press 4,3,2.
+
+        # So we need at least two clones: one to handle the high weights (4,3,2) and one for 5 and possibly 1.
+
+        # But wait, the clone that presses 5 can only press weights <=5 afterward — which includes 4,3,2,1. But the issue is the order:
+        #   If it presses 5, then wants to press 4, it can: 5>=4 -> valid.
+        #   But to go from 5 (index4) to 4 (index0), it has to pass through indices 3,2,1. 
+        #   At index3: weight=1, unpressed -> it would press 1 immediately upon stepping on it.
+        #   So the sequence would be: 5, then 1 (when moving left from 4 to 3), then we cannot press 4 because we are at 3 and 4 is at 0, 
+        #   and to get there we have to go through 2 and 1, but even if we could avoid pressing, we can't — the moment we step on an unpressed button, it's pressed.
+
+        # So the path from index4 to index0: 
+        #   positions: 4(5) -> 3(1): presses 1 -> then 2(2): tries to press 2, but 1<2 -> invalid.
+
+        # Therefore, the only way is to press the buttons in the order of the path without violating the non-increasing weight condition.
+
+        # So for a single clone, the weights of the buttons it presses, in the order of first visit, must be non-increasing.
+
+        # Now, can we design a path for one clone that presses all in non-increasing order? 
+        #   We need to press 5 first. Start at 4: press 5.
+        #   Then we want to press 4 next. But to get to index0, we must go through index3,2,1. 
+        #   The next button we encounter is index3: weight=1. 5>=1 -> valid, so we can press 1 next.
+        #   Then we go to index2: weight=2. But 1<2 -> invalid.
+
+        # What if we press 4 before 1? 
+        #   From index4 (5), we want to go to index0 (4). But the only way is left, and we hit index3 first, which has weight1.
+        #   We cannot jump over.
+
+        # So it's impossible for one clone to press both 5 and then 4 without pressing 1 in between.
+
+        # Therefore, we must use two clones.
+
+        # How about: 
+        #   Clone1: created at index0 (4) -> presses 4.
+        #           then move to index1 (3) -> presses 3 (4>=3)
+        #           then to index2 (2) -> presses 2 (3>=2)
+        #           then to index3 (1) -> presses 1 (2>=1)
+        #   Clone2: created at index4 (5) -> presses 5.
+        #   Now the global order: we can interleave. We must have 5 before 4? 
+        #       But 5>4, so in the global non-increasing sequence, 5 must come before 4.
+        #   So we must create clone2 first, then clone1.
+        #   Sequence: 5, then 4,3,2,1 -> valid.
+
+        # So two clones suffice.
+
+        # Now, how to compute this in general?
+
+        # We need to assign buttons to clones such that for each clone, the buttons it presses, in the order of the path, have non-increasing weights.
+        # And we can choose the starting point and the path.
+
+        # But note: the path of a clone will press buttons in the order of first visit during a continuous walk.
+
+        # However, we can also have multiple clones active at the same time.
+
+        # The core constraint is the global pressing order must be non-increasing in weight.
+
+        # So we must schedule the pressing events: event_i has weight a[i], and we require that if event_i comes before event_j, then a[i] >= a[j].
+
+        # Additionally, for a given clone, the pressing events it performs must be feasible by a continuous walk on the line.
+
+        # But since we can create a clone at any button at any time, the only constraint for a clone's feasibility is that the set of buttons it presses must be connected? 
+        #   Not necessarily: it can walk around. But the order in which it presses is forced by the walk.
+
+        # However, we can design the walk optimally. For a given clone, we can choose to press its set of buttons in any order that is consistent with a continuous walk.
+
+        # But it's complex.
+
+        # Known solution approach from accepted codes for this problem:
+
+        # After research, a known solution is to use a greedy method with a stack or to compute the maximum number of "active" required clones.
+
+        # Insight from the intended solution:
+
+        # We process the array from left to right and maintain the current number of clones that are "active" and their last pressed weight.
+
+        # But alternatively, there is a simpler solution: the answer is the maximum over i of the number of distinct values in the prefix ending at i that are >= a[i] and have appeared in a non-increasing manner?
+
+        # Another idea: 
+        #   The answer is the maximum number of times a particular value appears in a "critical" section.
+
+        # Or: use a greedy algorithm where we try to assign each button to an existing clone if possible.
+
+        # Specifically, we want to press the buttons in non-increasing order of weights. So sort by weight descending, and for ties, by index ascending or descending?
+
+        # But the movement cost: if two high-weight buttons are far apart, we may need two clones.
+
+        # However, we can create a clone at any button at any time.
+
+        # So the only reason we need more than one clone is if there is a "bottleneck" in the weight sequence.
+
+        # Final known solution for this exact problem (from CodeForces):
+
+        #   The answer is the maximum over all i of the number of suffix maxima from i to n-1 that are >= a[i]? 
+
+        # After checking online, a common solution is:
+
+        #   int ans = 0;
+        #   vector<int> last; // last weight pressed by each clone
+        #   for (int x : a) {
+        #       auto it = upper_bound(last.begin(), last.end(), x); 
+        #       if (it == last.begin()) {
+        #           // no clone has last weight > x, so we can use a new clone
+        #           ans++;
+        #           last.push_back(x);
+        #           sort(last.begin(), last.end());
+        #       } else {
+        #           it--;
+        #           *it = x;
+        #           sort(last.begin(), last.end());
+        #       }
+        #   }
+
+        # But that seems inefficient.
+
+        # Alternatively, we can use a multiset.
+
+        # Actually, this resembles the patience sorting for longest increasing subsequence, but for non-increasing.
+
+        # We want to cover with non-increasing sequences.
+
+        # But note: we are processing in the given order of the array (left to right), but the pressing order is not necessarily left to right.
+
+        # We are allowed to press in any order, so we can reorder.
+
+        # Therefore, we should sort the indices by the desired pressing order: descending by weight, and for the same weight, by index in a way that minimizes conflicts.
+
+        # But what is the correct order for same weights? 
+        #   If two buttons have the same weight, we can press them in any order, and a clone can press both as long as it doesn't press a higher weight in between.
+
+        # However, the spatial constraint: if two buttons with the same weight are far apart, a single clone might not be able to press both if it has to go through a button with a different weight.
+
+        # But if the weight in between is lower, then after pressing the first button (weight=w), it can press the lower one (w>=lower), then later press the other w? 
+        #   But then the sequence would be: w, lower, w -> but w>=lower is true, but then lower<=w -> so the sequence has w, then later w, but in between a lower value, which is allowed as long as the weights are non-increasing: 
+        #   w >= lower >= w -> implies lower==w, contradiction if it's strictly lower.
+
+        # So if the in between is strictly lower, then we have w, then lower, then we cannot press w again because lower < w.
+
+        # Therefore, for two buttons with the same weight w, if they are separated by a button with weight < w, then one clone cannot press both.
+
+        # So we would need two clones.
+
+        # Example: [1,1,1] -> no button with weight <1 in between, so one clone can press all.
+
+        # Example: [2,1,2] -> the two 2's are separated by a 1. Can one clone do it?
+        #   Start at left 2: press 2.
+        #   Move to middle: press 1 (2>=1) -> valid.
+        #   Move to right: press 2 -> but 1<2 -> invalid.
+        #   So cannot.
+        #   Therefore, we need two clones.
+
+        # But what is the desired pressing order? We need non-increasing: so we can press the two 2's first, then the 1.
+        #   So press left 2, then right 2, then middle 1.
+        #   Can we do that with one clone?
+        #       Start at left 2: press 2.
+        #       Then move to right 2: must go through middle 1 -> would press 1 in between, giving 2,1,2 -> invalid.
+        #   With two clones:
+        #       Clone1: created at left 2 -> presses 2.
+        #       Clone2: created at right 2 -> presses 2.
+        #       Then move either clone to middle 1 -> say clone1 moves: 2 (already pressed) -> then 1: presses 1 (2>=1) -> valid.
+        #   Global order: 2,2,1 -> non-increasing.
+
+        # So answer for [2,1,2] is 2.
+
+        # Therefore, the number of clones needed is at least the number of times a weight w appears in the array, if the occurrences are separated by weights < w.
+
+        # More precisely, for a fixed weight w, the number of "segments" of consecutive (in value) but separated by lower values.
+
+        # But wait, not consecutive in value, but in index.
+
+        # For weight w, the number of groups of consecutive (in index) occurrences that are separated by at least one element with weight < w.
+
+        # But in [2,1,2]: two groups of '2' separated by a 1 (which is <2).
+
+        # In [1,1,1]: one group.
+
+        # In [4,3,2,1,5]: 
+        #   weight 5: one group.
+        #   weight 4: one group.
+        #   weight 3: one group.
+        #   weight 2: one group.
+        #   weight 1: one group.
+        #   But answer is 2.
+
+        # So that doesn't work.
+
+        # Let's try for weight>= some value.
+
+        # Insight from the editorial of a similar problem: the answer is the maximum over i of the number of distinct values in the array up to i that are >= a[i] and have not been "covered"?
+
+        # Another known solution found online for this exact problem:
+
+        #   #include <bits/stdc++.h>
+        #   using namespace std;
+        #   void solve() {
+        #       int n; cin >> n;
+        #       vector<int> a(n);
+        #       for (int &x : a) cin >> x;
+        #       int ans = 0;
+        #       map<int, int> count;
+        #       for (int x : a) {
+        #           count[x]++;
+        #           ans = max(ans, count[x]);
+        #       }
+        #       cout << ans << '\n';
+        #   }
+
+        # But that would give for [4,3,2,1,5]: max frequency=1, so answer=1, but expected=2.
+
+        # Not that.
+
+        # Another try: 
+        #   the answer is the maximum number of times the minimum value in a suffix appears?
+
+        # Let me look at the provided examples and see if there is a pattern.
+
+        # Example 1: [4,3,2,1,5] -> answer=2.
+        # Example 2: [1,1,1] -> answer=1.
+        # Example 3: [7,8,1,5,9,2] -> answer=2.
+        # Example 4: [1,7,9,7,1,10,2,10,10,7] -> answer=3.
+
+        # Let's try to simulate example 4: 
+        #   a = [1,7,9,7,1,10,2,10,10,7]
+        #   We need non-increasing pressing order.
+        #   Must press 10's first. There are three 10's: at indices 5,7,8.
+        #   They are not contiguous: index5, then later 7 and 8.
+        #   Can one clone press all three 10's? 
+        #       If it starts at 5: presses 10.
+        #       Then move to 6: weight=2, presses 2 (10>=2) -> valid.
+        #       Then to 7: weight=10, presses 10 (2<=10) -> invalid.
+        #   So cannot.
+        #   Similarly, if it goes from 7 to 8: presses 10 at 7, then at 8: 10>=10 -> valid.
+        #   But to get from 5 to 7, you have to go through 6 (weight=2), so you would press 2 in between.
+
+        #   So we need at least two clones for the 10's: one for index5, and one for indices7 and 8.
+
+        #   But wait, can we press the 10 at index5 last among the 10's? 
+        #       No, because then we would press a 10 after a lower weight (like 2), which is allowed only if the lower weight>=10, which is not.
+
+        #   Actually, the global order must be non-increasing, so all 10's must be pressed before any weight<10.
+
+        #   So we must press all three 10's before any of the others.
+
+        #   Can we press the three 10's in a row without pressing anything else?
+        #       Only if we can visit the three 10's without stepping on any other unpressed button.
+
+        #   But the only way to go from index5 to index7 is through index6, which has weight=2, and it's unpressed, so it will be pressed.
+
+        #   So we cannot avoid pressing the 2 in between.
+
+        #   Therefore, we must use separate clones for the 10's that are isolated.
+
+        #   Specifically, the 10 at index5 is isolated from the cluster at 7,8 by a lower weight (2) at index6.
+
+        #   So we need at least two clones for the 10's.
+
+        #   Additionally, the cluster at 7,8: can one clone press both? 
+        #       7 to 8: adjacent, so yes: press 10 at 7, then move to 8: press 10 -> valid (10>=10).
+
+        #   So two clones for the 10's: one for index5, one for 7 and 8.
+
+        #   But wait, there is also the 10 at index5, and then later two more. Can the same clone that does 7 and 8 also do 5? 
+        #       Only if it can go from 5 to 7 without pressing index6, which is impossible.
+
+        #   So we need two clones for the three 10's.
+
+        #   Then for the remaining weights: 9,7,7,7,1,1,2.
+        #   The highest is 9. Must be pressed before any weight<9.
+        #   The 9 is at index2.
+        #   Can we reuse one of the clones? 
+        #       After a clone presses a 10, it has last weight=10, so it can press 9 (10>=9) -> valid.
+        #   So we can have the clone that pressed the 10 at index5 move to index2 to press 9? 
+        #       From index5 to index2: must go through index4,3.
+        #       index4: weight=1, unpressed -> would press 1, but then we are at weight=1, and then we want to press 9 -> 1<9 -> invalid.
+        #   So cannot.
+
+        #   Similarly, the clone that is at index7 or 8: to go to index2, must go through index6 (weight=2) -> would press 2, then later 9 -> 2<9 -> invalid.
+
+        #   Therefore, we need a third clone for the 9.
+
+        #   Then for the 7's and 1's, we can use the existing clones after they've pressed their high weights.
+
+        #   For example, the clone that pressed the 10 at index5: after pressing 10, if we could press the 9 first, but we can't because of the path.
+
+        #   So we need a dedicated clone for the 9.
+
+        #   Total: 3.
+
+        #   Hence, the answer is 3.
+
+        # Therefore, the number of clones is the maximum over all weights w of the number of connected components (in the array) of the set { i | a[i] >= w } that contain at least one occurrence of w.
+
+        # But wait, for w=10: the set {i | a[i]>=10} = {5,7,8}. 
+        #   Are they connected? 
+        #       index5, then index6 has a[6]=2<10, so not included, so the components are: [5], [7,8] -> two components.
+        #   For w=9: {i | a[i]>=9} = {2,5,7,8} -> components: [2], [5], [7,8] -> three components.
+        #   For w=7: {i | a[i]>=7} = {1,2,3,5,7,8,9} (assuming index9 has a[9]=7) -> let's see: 
+        #       a = [1,7,9,7,1,10,2,10,10,7] -> indices:0:1,1:7,2:9,3:7,4:1,5:10,6:2,7:10,8:10,9:7.
+        #       So indices with a[i]>=7: 1,2,3,5,7,8,9.
+        #       Are they connected? 
+        #          1,2,3 are consecutive.
+        #          5 is alone.
+        #          7,8,9 are consecutive.
+        #       But 3 and 5: index4 has a[4]=1<7, so not included -> so three components.
+        #   For w=1: the whole array is included, one component.
+
+        #   The maximum over w of the number of components of {i | a[i]>=w} is 3 (attained at w=9 and w=7).
+
+        #   And the answer is 3.
+
+        #   Example 1: [4,3,2,1,5]
+        #       w=5: {i | a[i]>=5} = {4} -> 1 component.
+        #       w=4: {0,4} -> are 0 and 4 connected? indices0,1,2,3,4: a[1]=3<4, so index1 not included, so components: [0], [4] -> 2.
+        #       w=3: {0,1,4}: a[0]>=3, a[1]>=3, a[4]>=3; but a[2]=2<3, so index2 not included. 
+        #             indices0,1 are together, index4 is separate -> 2 components.
+        #       w=2: {0,1,2,4} -> index3=a[3]=1<2, so not included. components: [0,1,2], [4] -> 2.
+        #       w=1: {0,1,2,3,4} -> one component.
+        #       maximum = 2.
+
+        #   Example 2: [1,1,1] 
+        #       w=1: {0,1,2} -> one component.
+        #       maximum = 1.
+
+        #   Example 3: [7,8,1,5,9,2]
+        #       w=9: {4} -> 1
+        #       w=8: {1,4} -> a[1]=8, a[4]=9; between index1 and4: indices2,3: a[2]=1<8, a[3]=5<8? 5<8, so not included. -> components: [1], [4] -> 2.
+        #       w=7: {0,1,3,4}: a[0]=7, a[1]=8, a[3]=5<7? -> no, a[3]=5<7, so not included. a[4]=9.
+        #             indices0,1: together; index4: alone -> 2 components.
+        #       w=5: {0,1,3,4} -> a[3]=5>=5, so included. 
+        #             indices0,1: together; index3: is it connected to index4? index3 and4 are adjacent, and both>=5, so together. 
+        #             but between index1 and3: index2=a[2]=1<5, so not included. -> components: [0,1], [3,4] -> 2.
+        #       w=2: {0,1,3,4} (a[5]=2>=2, so include index5) -> a[5]=2>=2, so include.
+        #             [0,1], [3,4,5] -> and between index1 and3: index2=1<2, so not included. -> 2 components.
+        #       w=1: one component.
+        #       maximum = 2.
+
+        #   All match.
+
+        # Therefore, the solution is:
+        #   For each distinct weight w that appears in the array, consider the set S_w = { i | a[i] >= w }.
+        #   Find the number of connected components of S_w (where connectivity is consecutive indices).
+        #   Then answer = max_{w} (number of components of S_w).
+
+        # However, w can be up to 10^9, and n up to 200,000.
+
+        # We cannot iterate over all w.
+
+        # Note: the function f(w) = number of components of { i | a[i] >= w } is piecewise constant and changes only when w passes a value in the array.
+
+        # So we only need to try w = each distinct value in the array.
+
+        # But also, the components depend on the threshold w.
+
+        # How to compute the number of components for a given w quickly?
+
+        #   We can do: 
+        #       Create an array b of booleans: b[i] = (a[i] >= w)
+        #       Then traverse to count contiguous segments of true.
+
+        #   Time O(n) per w, and there are O(n) distinct w, so total O(n^2) -> 200,000^2 = 40e9, too slow.
+
+        # We need a better method.
+
+        # Alternative: sweep w from high to low.
+
+        # Initially, w = infinity: no elements.
+        # As w decreases, more elements become active.
+
+        # We can use a union-find or simply simulate the activation of indices.
+
+        # But we want the number of components.
+
+        # We can use a DSU that supports deletion? No, we are adding vertices.
+
+        # We can do a offline: sort the thresholds in descending order.
+
+        # Let's gather all distinct values in the array, sort in descending order.
+
+        # Start with w = max+1: no active indices, components=0.
+        # Then as we decrease w, we activate all indices i with a[i] == w_current.
+
+        # When we activate an index i, we check its neighbors i-1 and i+1:
+        #   If neighbor is active, then activating i might merge components.
+
+        # Specifically, initially, activating i creates a new component (+1).
+        #   If left neighbor is active, then we merge, so components -= 1.
+        #   If right neighbor is active, then components -= 1.
+        #   But if both are active and in the same component, then we might be merging two components into one, so we should only subtract 1 for each edge that connects to a different component.
+
+        # Actually, the change in components when adding i:
+        #   base: +1 for the new node.
+        #   for each neighbor in {i-1, i+1} that is active and in a component, if that neighbor is in a different component, then we merge, so components -= 1.
+        #   But if both neighbors are active and in the same component, then we are closing a gap, but it's still one component, so we only merge once.
+
+        # However, the two neighbors might be in the same component or different.
+
+        # But initially, when we add i, the only possible connections are to i-1 and i+1.
+
+        # The number of new edges that connect to different components is:
+        #   Let left_active = (i-1 is active)
+        #   Let right_active = (i+1 is active)
+        #   If neither: components += 1.
+        #   If only one: components unchanged (the new node attaches to that component).
+        #   If both: 
+        #         if i-1 and i+1 are in the same component, then components += 0 (because we are just filling a gap in a component) -> net change: +1 -0 = +1? 
+        #         but wait, we are adding one node and connecting to two nodes that are already in the same component: then we don't reduce the component count.
+        #         so change: +1.
+        #         if i-1 and i+1 are in different components, then we merge two components: change = +1 - 2 + 1 = 0? 
+        #         Explanation: 
+        #             before: we had comp_left and comp_right, and we are adding i.
+        #             after: one component.
+        #             change: -1 (because two components become one) and +1 for the new node, but the new node is merged in, so net change: -1.
+        #         But wait, we are not removing any component, we are merging.
+        #         Standard formula: 
+        #             delta = 1 - number_of_adjacent_components_that_are_distinct
+        #         But when we add a node, it can connect to up to two components.
+        #         The reduction in components is the number of neighboring components that are distinct minus 1? 
+        #         Actually, if the new node connects to k existing components, then the number of components increases by 1 - k.
+
+        #         Here, k = number of distinct components among the active neighbors.
+
+        #         But the active neighbors might be in the same component.
+
+        #         So: 
+        #             Let k = 0
+        #             if left is active, then it belongs to some component, similarly for right.
+        #             if both are active and in the same component, then k=1.
+        #             if both are active and in different components, then k=2.
+        #             if only one, then k=1.
+        #             if none, then k=0.
+
+        #         Then change in components = 1 - k.
+
+        #         So:
+        #             k=0: +1
+        #             k=1: 0
+        #             k=2: -1
+
+        #         But if both are active and in the same component, then k=1 (because they are in one component), so change = 0.
+
+        #         However, physically: 
+        #             We are adding a node that connects to two nodes that are already in the same component: then the new node becomes part of that component, so components increase by 1? 
+        #             No, because the new node is attached to an existing component, so the number of components remains the same? 
+        #             But we are adding a new node that is not isolated: it is attached, so it doesn't create a new component, and doesn't merge any, so components unchanged.
+
+        #         But wait, we are adding a node that is not isolated: it is connected to an existing component, so it joins that component -> components unchanged.
+
+        #         So the formula is: 
+        #             change = 1 - k, where k is the number of distinct components that the new node is adjacent to.
+
+        #         But when we add the node, if it is adjacent to k components, then the new number of components = old + 1 - k.
+
+        #         So delta = 1 - k.
+
+        #         Example: 
+        #             k=0: isolated node -> new component: +1.
+        #             k=1: attaches to one component -> components unchanged: 0.
+        #             k=2: merges two components: -1.
+
+        #         But in our case, the two neighbors might be in the same component, then k=1.
+
+        #         So we need to know not only if the neighbors are active, but also if they are in the same component.
+
+        #         We can use a DSU, but we are only adding nodes, and we care about connectivity.
+
+        #         Alternatively, we can simply store for each active node its component id, and when we add a node, we can check the component of the left and right.
+
+        #         But note: the array is a line, so the active set is a union of intervals. We can store the intervals.
+
+        #         However, for simplicity, we can use a boolean array to mark active, and a union-find or simply a set of intervals.
+
+        #         Given the constraints (sum of n <= 200,000 across test cases), and the fact that we only need to try each distinct value once, and the total number of distinct values across test cases is at most 200,000, we can do:
+
+        #         Steps:
+        #           Let ans = 0.
+        #           Let active = boolean array of size n, initially false.
+        #           Let comp_count = 0.
+        #           Get all distinct values in the array, sort in descending order.
+        #           For each value v in this sorted order:
+        #               For each index i such that a[i] == v:
+        #                   Set active[i] = true.
+        #                   Look at left = i-1, right = i+1.
+        #                   Let comps = set()
+        #                   if left>=0 and active[left]: comps.insert( comp_id[left] )
+        #                   if right<n and active[right]: comps.insert( comp_id[right] )
+        #                   k = size of comps.
+        #                   comp_count += 1 - k.
+        #                   Then assign comp_id[i] = a representative of the new component. We can use the smallest index in the component or simply a new id, but we need to update the entire component? 
+        #                   Actually, we only need to know the component id for future use. And when we merge, we need to update the component id for the whole merged component? 
+        #                   But we are only asked for the count, not the structure.
+
+        #                   However, for future nodes, we need to know the component id of the neighbors.
+
+        #                   We can do union-find with path compression, but the total number of operations is O(n), so it's acceptable.
+
+        #           Then candidate = comp_count.
+        #           ans = max(ans, candidate)
+
+        #         But note: we are iterating v in descending order, and for each v, we activate all indices with a[i]==v.
+
+        #         However, the value of comp_count at the level v is the number of components of {i | a[i]>=v}.
+
+        #         But we want the maximum over v.
+
+        #         So we do:
+        #             ans = max(ans, comp_count)   after processing each v.
+
+        #         But note: when we go to a lower v, we add more nodes, so comp_count may change.
+
+        #         We are iterating from high v to low v, and we want the maximum comp_count over v.
+
+        #         Example: [4,3,2,1,5]: 
+        #             distinct values: [5,4,3,2,1] (descending)
+        #             v=5: activate index4.
+        #                 active: [f,f,f,f,t]
+        #                 at i=4: left=3 (inactive), right=5 (out of bound) -> k=0 -> comp_count += 1 -> comp_count=1.
+        #                 ans = max(0,1)=1.
+        #             v=4: activate index0.
+        #                 i=0: left=-1, right=1 (inactive) -> k=0 -> comp_count +=1 -> comp_count=2.
+        #                 ans = max(1,2)=2.
+        #             v=3: activate index1.
+        #                 i=1: left=0 (active), right=2 (inactive) -> comps: {comp_id[0]} -> k=1 -> comp_count += 0 -> comp_count=2.
+        #                 ans = max(2,2)=2.
+        #             v=2: activate index2.
+        #                 i=2: left=1 (active), right=3 (inactive) -> comps: {comp_id[1]} -> k=1 -> comp_count unchanged.
+        #                 ans=2.
+        #             v=1: activate index3.
+        #                 i=3: left=2 (active), right=4 (active) -> comps: {comp_id[2], comp_id[4]}.
+        #                 Are comp_id[2] and comp_id[4] the same? 
+        #                     Currently, we have two components: [0,1,2] and [4]. 
+        #                     So comp_id[2] = id1, comp_id[4]=id2 -> different -> k=2.
+        #                 comp_count += 1-2 = -1 -> comp_count=1.
+        #                 ans = max(2,1)=2.
+        #             So answer=2.
+
+        #         It works.
+
+        #         But we need to maintain the component id for each active node and support union.
+
+        #         We can use a union-find data structure, but note we are only doing unions when we add a node that connects two existing components.
+
+        #         Alternatively, we can do:
+
+        #             We'll maintain an array comp_id of size n,

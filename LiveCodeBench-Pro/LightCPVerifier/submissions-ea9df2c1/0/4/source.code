@@ -1,0 +1,51 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+bool canFormSquare(int l1, int b1, int l2, int b2, int l3, int b3, int S) {
+    vector<pair<int, int>> rects = {{l1, b1}, {l2, b2}, {l3, b3}};
+    sort(rects.begin(), rects.end());
+    do {
+        int a = rects[0].first, b = rects[0].second;
+        int c = rects[1].first, d = rects[1].second;
+        int e = rects[2].first, f = rects[2].second;
+        // 三个水平条带
+        if (b == S && d == S && f == S && a + c + e == S) return true;
+        // 三个垂直条带
+        if (a == S && c == S && e == S && b + d + f == S) return true;
+        // 两个水平条带在上方，一个在下方
+        if (b == d) {
+            int h = b;
+            if (a + c == S && f == S - h && e == S) return true;
+        }
+        // 两个垂直条带在左侧，一个在右侧
+        if (a == c) {
+            int w = a;
+            if (b + d == S && e == S - w && f == S) return true;
+        }
+    } while (next_permutation(rects.begin(), rects.end()));
+    return false;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int l1, b1, l2, b2, l3, b3;
+        cin >> l1 >> b1 >> l2 >> b2 >> l3 >> b3;
+        int totalArea = l1 * b1 + l2 * b2 + l3 * b3;
+        int S = sqrt(totalArea);
+        if (S * S != totalArea) {
+            cout << "NO\n";
+            continue;
+        }
+        if (canFormSquare(l1, b1, l2, b2, l3, b3, S)) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

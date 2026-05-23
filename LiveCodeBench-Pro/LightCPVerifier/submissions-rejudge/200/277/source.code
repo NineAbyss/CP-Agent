@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    scanf("%d", &n);
+    vector<int> p(n);
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &p[i]);
+        p[i]--;
+    }
+    vector<int> d(n);
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &d[i]);
+        d[i]--;
+    }
+    vector<int> comp(n, -1);
+    vector<int> sz;
+    int comps = 0;
+    for (int i = 0; i < n; i++) {
+        if (comp[i] != -1) continue;
+        int cur = i;
+        int s = 0;
+        do {
+            comp[cur] = comps;
+            cur = p[cur];
+            s++;
+        } while (comp[cur] == -1);
+        sz.push_back(s);
+        comps++;
+    }
+    vector<char> has_del(comps, 0);
+    int ans = 0;
+    for (int i = 0; i < n; i++) {
+        int pos = d[i];
+        int c = comp[pos];
+        if (!has_del[c]) {
+            has_del[c] = 1;
+            ans += sz[c];
+        }
+        printf("%d%c", ans, " \n"[i == n-1]);
+    }
+}
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

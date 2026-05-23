@@ -1,0 +1,35 @@
+#include <iostream>
+using namespace std;
+
+bool canFormSquare(int l1, int b1, int l2, int b2, int l3, int b3) {
+    // Determine the potential side of the square
+    // Side could be straight if it's max in its straight orientation
+    int maxSideLength = max(l1, max(b1, max(l2, max(b2, max(l3, b3)))));
+
+    // Check configurations: // Either align one fully and others fit vertically/horizontally
+    if ((l1 == maxSideLength && l2 + l3 == maxSideLength && b1 == b2 && b1 == b3) ||
+        (b1 == maxSideLength && b2 + b3 == maxSideLength && l1 == l2 && l1 == l3)) {
+            return true;
+    }
+    // Check if other configurations might yield a square
+    if ((l1 == l2 && b1 + b3 == maxSideLength && b1 == b2 + b3) ||
+        (b1 == b2 && l1 + l3 == maxSideLength && l1 == l2 + l3)) {
+            return true;
+    }
+
+    return false;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int l1, b1, l2, b2, l3, b3;
+        cin >> l1 >> b1 >> l2 >> b2 >> l3 >> b3;
+        if (canFormSquare(l1, b1, l2, b2, l3, b3))
+            cout << "YES" << endl;
+        else
+            cout << "NO" << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,80 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <unordered_map>
+#include <cmath>
+using namespace std;
+
+int bfs(int n, int k) {
+    if (n == 1) return 0;
+    // 快速检查质因子是否都 <= k
+    int temp = n;
+    for (int i = 2; i * i <= temp; ++i) {
+        if (temp % i == 0) {
+            if (i > k) return -1;
+            while (temp % i == 0) temp /= i;
+        }
+    }
+    if (temp > 1 && temp > k) return -1;
+    
+    // 获取所有约数
+    vector<int> divs;
+    for (int i = 1; i * i <= n; ++i) {
+        if (n % i == 0) {
+            divs.push_back(i);
+            if (i != n / i) divs.push_back(n / i);
+        }
+    }
+    sort(divs.begin(), divs.end());
+    
+    unordered_map<int, int> dist;
+    dist[n] = 0;
+    queue<int> q;
+    q.push(n);
+    while (!q.empty()) {
+        int cur = q.front(); q.pop();
+        if (cur == 1) break;
+        // 枚举约数中 <= k 且整除 cur 的
+        for (int d : divs) {
+            if (d > k) break;
+            if (d == 1) continue;
+            if (cur % d == 0) {
+                int nxt = cur / d;
+                if (!dist.count(nxt)) {
+                    dist[nxt] = dist[cur] + 1;
+                    q.push(nxt);
+                }
+            }
+        }
+    }
+    if (dist.count(1)) return dist[1];
+    else return -1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int x, y, k;
+        cin >> x >> y >> k;
+        if (x == y) {
+            cout << "0\n";
+            continue;
+        }
+        int g = __gcd(x, y);
+        int a = x / g;
+        int b = y / g;
+        int ops_a = bfs(a, k);
+        int ops_b = bfs(b, k);
+        if (ops_a == -1 || ops_b == -1) {
+            cout << "-1\n";
+        } else {
+            cout << ops_a + ops_b << "\n";
+        }
+    }
+    return 0;
+}

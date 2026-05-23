@@ -1,0 +1,106 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int inv_parity(const vector<int>& v) {
+    int n = v.size();
+    vector<int> pos(n);
+    for (int i = 0; i < n; i++) pos[i] = i;
+    // sort indices based on values
+    sort(pos.begin(), pos.end(), [&](int i, int j) { return v[i] < v[j]; });
+    // now pos is permutation sigma: sorted index -> current index // compute parity of sigma
+    vector<bool> visited(n, false);
+    int parity = 0;
+    for (int i = 0; i < n; i++) {
+        if (!visited[i]) {
+            int len = 0;
+            int j = i;
+            while (!visited[j]) {
+                visited[j] = true;
+                j = pos[j];
+                len++;
+            }
+            if (len % 2 == 0) parity ^= 1;
+        }
+    }
+    return parity;
+}
+
+vector<int> construct(const vector<int>& odd, const vector<int>& even) {
+    int n = odd.size() + even.size();
+    vector<int> ans(n);
+    for (int i = 0; i < n; i++) {
+        if (i % 2 == 0) ans[i] = odd[i/2];
+        else ans[i] = even[i/2];
+    }
+    return ans;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        vector<int> odd, even;
+        for (int i = 0; i < n; i++) {
+            if (i % 2 == 0) odd.push_back(a[i]);
+            else even.push_back(a[i]);
+        }
+        int par_o = inv_parity(odd);
+        int par_e = inv_parity(even);
+        int delta = par_o ^ par_e; // 1 if different
+        
+        vector<int> odd_sorted = odd;
+        vector<int> even_sorted = even;
+        sort(odd_sorted.begin(), odd_sorted.end());
+        sort(even_sorted.begin(), even_sorted.end());
+        
+        int delta_sorted = 0; // sorted sequences have parity 0
+        if (delta == delta_sorted) {
+            vector<int> ans = construct(odd_sorted, even_sorted);
+            for (int x : ans) cout << x << ' ';
+            cout << '\n';
+        } else {
+            // need to flip parity of one sequence
+            vector<int> candidate_odd = odd_sorted;
+            vector<int> candidate_even = even_sorted;
+            bool flip_odd = false, flip_even = false;
+            if (odd_sorted.size() >= 2) {
+                flip_odd = true;
+                swap(candidate_odd[odd_sorted.size()-1], candidate_odd[odd_sorted.size()-2]);
+            }
+            if (even_sorted.size() >= 2) {
+                flip_even = true;
+                swap(candidate_even[even_sorted.size()-1], candidate_even[even_sorted.size()-2]);
+            }
+            vector<int> ans1, ans2;
+            if (flip_odd) {
+                ans1 = construct(candidate_odd, even_sorted);
+            }
+            if (flip_even) {
+                ans2 = construct(odd_sorted, candidate_even);
+            }
+            vector<int> ans;
+            if (flip_odd && flip_even) {
+                ans = min(ans1, ans2);
+            } else if (flip_odd) {
+                ans = ans1;
+            } else {
+                ans = ans2;
+            }
+            for (int x : ans) cout << x << ' ';
+            cout << '\n';
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

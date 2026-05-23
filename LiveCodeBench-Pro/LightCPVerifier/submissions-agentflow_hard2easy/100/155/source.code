@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+const int inv2 = (MOD + 1) / 2;
+
+void fwt_xor(vector<int>& a, bool inv) {
+    int n = a.size();
+    for (int len = 1; len < n; len <<= 1) {
+        for (int i = 0; i < n; i += len << 1) {
+            for (int j = 0; j < len; j++) {
+                int x = a[i + j];
+                int y = a[i + j + len];
+                a[i + j] = (x + y) % MOD;
+                a[i + j + len] = (x - y + MOD) % MOD;
+                if (inv) {
+                    a[i + j] = 1LL * a[i + j] * inv2 % MOD;
+                    a[i + j + len] = 1LL * a[i + j + len] * inv2 % MOD;
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    // 测试FWT和逆FWT
+    vector<int> a = {1, 2, 3, 4};
+    vector<int> b = a;
+    
+    cout << "Original: ";
+    for (int x : a) cout << x << " ";
+    cout << endl;
+    
+    fwt_xor(a, false);
+    cout << "FWT: ";
+    for (int x : a) cout << x << " ";
+    cout << endl;
+    
+    fwt_xor(a, true);
+    cout << "Inverse FWT: ";
+    for (int x : a) cout << x << " ";
+    cout << endl;
+    
+    cout << "Match original? " << (a == b ? "Yes" : "No") << endl;
+    
+    return 0;
+}

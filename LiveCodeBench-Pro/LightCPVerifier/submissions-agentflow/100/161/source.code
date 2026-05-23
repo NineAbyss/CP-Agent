@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    string s;
+    cin >> n >> s;
+    vector<int> cnt(26, 0);
+    for (char c : s) cnt[c - 'a']++;
+    for (int i = 1; i <= n - 2; ++i) {
+        if (cnt[s[i] - 'a'] >= 2) {
+            cout << "Yes\n";
+            return;
+        }
+    }
+    cout << "No\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

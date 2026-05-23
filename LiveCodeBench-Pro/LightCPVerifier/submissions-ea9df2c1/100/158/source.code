@@ -1,0 +1,170 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <random>
+#include <algorithm>
+using namespace std;
+
+// Treap节点，维护排列
+struct Node {
+    int orig_idx;      // 原始集合索引
+    int priority;
+    int size;
+    Node *left, *right;
+    bool rev;
+    
+    Node(int idx) : orig_idx(idx), priority(rand()), size(1), 
+                    left(nullptr), right(nullptr), rev(false) {}
+};
+
+int getSize(Node* node) {
+    return node ? node->size : 0;
+}
+
+void updateSize(Node* node) {
+    if(node) node->size = 1 + getSize(node->left) + getSize(node->right);
+}
+
+void pushRev(Node* node) {
+    if(node && node->rev) {
+        node->rev = false;
+        swap(node->left, node->right);
+        if(node->left) node->left->rev ^= 1;
+        if(node->right) node->right->rev ^= 1;
+    }
+}
+
+pair<Node*, Node*> split(Node* root, int k) {
+    if(!root) return {nullptr, nullptr};
+    pushRev(root);
+    int leftSize = getSize(root->left);
+    if(k <= leftSize) {
+        auto [left, right] = split(root->left, k);
+        root->left = right;
+        updateSize(root);
+        return {left, root};
+    } else {
+        auto [left, right] = split(root->right, k - leftSize - 1);
+        root->right = left;
+        updateSize(root);
+        return {root, right};
+    }
+}
+
+Node* merge(Node* left, Node* right) {
+    if(!left) return right;
+    if(!right) return left;
+    
+    pushRev(left);
+    pushRev(right);
+    
+    if(left->priority > right->priority) {
+        left->right = merge(left->right, right);
+        updateSize(left);
+        return left;
+    } else {
+        right->left = merge(left, right->left);
+        updateSize(right);
+        return right;
+    }
+}
+
+Node* reverseRange(Node* root, int l, int r) {
+    auto [a, bc] = split(root, l);
+    auto [b, c] = split(bc, r - l + 1);
+    if(b) b->rev ^= 1;
+    return merge(merge(a, b), c);
+}
+
+int getOrigIdx(Node* root, int k) {
+    Node* cur = root;
+    while(cur) {
+        pushRev(cur);
+        int leftSize = getSize(cur->left);
+        if(k < leftSize) {
+            cur = cur->left;
+        } else if(k == leftSize) {
+            return cur->orig_idx;
+        } else {
+            k -= leftSize + 1;
+            cur = cur->right;
+        }
+    }
+    return -1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n >> q;
+    
+    srand(12345);
+    
+    // 初始化Treap
+    Node* root = nullptr;
+    for(int i = 0; i < n; i++) {
+        root = merge(root, new Node(i));
+    }
+    
+    // 每个原始集合的元素（使用multiset维护有序性）
+    vector<multiset<int>> orig_sets(n);
+    
+    // 记录每个元素出现在哪些原始集合中
+    vector<vector<int>> elem_orig_sets(q+1);
+    
+    int ans_prev = 0;
+    
+    for(int i = 1; i <= q; i++) {
+        int a, b, c;
+        cin >> a >> b >> c;
+        
+        int r, x, p;
+        if(a == 1 || a == 2) {
+            r = (b + ans_prev - 1) % n + 1;
+            p = (c + ans_prev - 1) % n + 1;
+        } else {
+            x = (b + ans_prev - 1) % q + 1;
+            p = (c + ans_prev - 1) % n + 1;
+        }
+        
+        if(a == 1) {
+            // 插入操作：将i插入到前r个集合 // 优化：批量处理
+            vector<int> orig_indices;
+            orig_indices.reserve(r);
+            for(int j = 0; j < r; j++) {
+                orig_indices.push_back(getOrigIdx(root, j));
+            }
+            
+            // 去重并批量插入
+            sort(orig_indices.begin(), orig_indices.end());
+            orig_indices.erase(unique(orig_indices.begin(), orig_indices.end()), orig_indices.end());
+            
+            for(int orig_idx : orig_indices) {
+                orig_sets[orig_idx].insert(i);
+                elem_orig_sets[i].push_back(orig_idx);
+            }
+        } else if(a == 2) {
+            // 反转操作
+            root = reverseRange(root, 0, r-1);
+        } else if(a == 3) {
+            // 删除操作
+            for(int orig_idx : elem_orig_sets[x]) {
+                orig_sets[orig_idx].erase(x);
+            }
+            // 不清空elem_orig_sets[x]，因为x可能被再次删除
+        }
+        
+        // 查询
+        int orig_idx = getOrigIdx(root, p-1);
+        int ans = 0;
+        if(!orig_sets[orig_idx].empty()) {
+            ans = *orig_sets[orig_idx].begin();
+        }
+        cout << ans << '\n';
+        ans_prev = ans;
+    }
+    
+    return 0;
+}

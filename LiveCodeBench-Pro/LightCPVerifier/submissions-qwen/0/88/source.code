@@ -1,0 +1,436 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+const int MAXN = 500000;
+
+long long fact[MAXN + 1], invf[MAXN + 1];
+
+long long modpow(long long base, long long exp, long long mod) {
+    long long res = 1;
+    while (exp > 0) {
+        if (exp & 1) res = (res * base) % mod;
+        base = (base * base) % mod;
+        exp >>= 1;
+    }
+    return res;
+}
+
+void precompute() {
+    fact[0] = 1;
+    for (int i = 1; i <= MAXN; ++i) {
+        fact[i] = (fact[i - 1] * i) % MOD;
+    }
+    invf[MAXN] = modpow(fact[MAXN], MOD - 2, MOD);
+    for (int i = MAXN - 1; i >= 0; --i) {
+        invf[i] = (invf[i + 1] * (i + 1)) % MOD;
+    }
+}
+
+long long nCr(int n, int r) {
+    if (r < 0 || r > n) return 0;
+    return fact[n] * invf[r] % MOD * invf[n - r] % MOD;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    precompute();
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        vector<int> c(26);
+        for (int i = 0; i < 26; ++i) {
+            cin >> c[i];
+        }
+
+        // Count total length
+        int total_len = 0;
+        for (int x : c) total_len += x;
+
+        // Check parity condition: all occurrences of same char must be at indices with even differences.
+        // This implies that for a given character, all its positions must have the same parity (all even or all odd).
+        // So we can assign each character to either even-indexed positions or odd-indexed positions.
+
+        // Let E = number of even positions = (total_len + 1) / 2 // Let O = number of odd positions = total_len / 2
+
+        int E = (total_len + 1) / 2;
+        int O = total_len / 2;
+
+        // Now, for each character with count `cnt`, we need to assign all its occurrences to either even or odd positions. // But we cannot assign more than E characters to even positions and more than O to odd.
+
+        // However, note: if a character appears `cnt` times, then we must place all `cnt` in even OR all in odd.
+        // So we are to choose a subset S of characters to assign to even positions, such that sum_{i in S} c[i] <= E,
+        // and the rest go to odd, so sum_{i not in S} c[i] <= O.
+
+        // But note: sum of all c[i] = total_len = E + O, so sum_S c[i] <= E  <=> sum_{not S} c[i] >= O is not automatic?
+        // Actually: sum_S c[i] <= E  => sum_{not S} = total_len - sum_S >= total_len - E = O.
+        // But we require sum_{not S} <= O. So we must have: //   sum_S c[i] <= E   AND   total_len - sum_S c[i] <= O
+        // The second inequality: sum_S >= total_len - O = E
+        // Therefore: sum_S must be exactly E? Because E = (total_len+1)//2, O = total_len//2
+        // Then: sum_S >= E and sum_S <= E -> sum_S == E.
+
+        // So the necessary and sufficient condition is that the sum of counts assigned to even positions must be exactly E.
+
+        // Therefore, we need to count the number of ways to assign each character to even or odd such that:
+        //   sum_{assigned to even} c[i] = E
+
+        // Then, for a valid assignment:
+        //   - Assign specific positions: multinomial coefficients.
+        //   - For even positions: distribute the selected characters into E positions: E! / (∏_{i in even} c[i]!)
+        //   - For odd positions: O! / (∏_{i in odd} c[i]!)
+
+        // And the total number of strings for a fixed assignment is:
+        //   (E! / ∏_{even} c[i]!) * (O! / ∏_{odd} c[i]!)
+
+        // But note: the assignment of which characters go to even/odd is part of the choice.
+
+        // However, we cannot iterate over subsets because 26 is small but counts are large.
+
+        // Alternate approach: use DP over letters with state = sum assigned to even. // The maximum sum is up to 500000, but total sum over test cases is only 500000, so worst-case one test case has total_len ~ 500000.
+
+        // But note: constraint says "The sum of c_i over all test cases does not exceed 5e5" // So total input size is bounded by 500000.
+
+        // Therefore, we can do a knapsack over the 26 letters, but the capacity is E, which can be up to 250000. // However, worst-case total_len = 500000 -> E = 250001, and doing a DP with 26 * 250001 ~ 6.5e6 states per test case might be acceptable?
+        // BUT: there can be up to 10000 test cases? Wait: the constraint says "sum of c_i over all test cases" <= 500000.
+
+        // That means the total number of characters across all test cases is <= 500000. // So the number of test cases t can be up to 10000, but most test cases will have very small c_i.
+
+        // How many non-zero c_i per test case? We don't know, but the sum of all c_i over test cases is 500000.
+
+        // So we can do:
+
+        // Let dp[x] = number of ways (in terms of assignment choices) to achieve even sum = x, but actually we want to accumulate the product of factorials?
+
+        // Actually, no: the formula depends on the actual grouping.
+
+        // We need to compute:
+        //   Sum_{S ⊆ {0..25}, sum_{i in S} c[i] = E} [ (E! / ∏_{i in S} c[i]!) * (O! / ∏_{i not in S} c[i]!) ]
+
+        // = E! * O! * Sum_{S: sum_S = E} [ 1 / (∏_{i in S} c[i]! * ∏_{i not in S} c[i]!) ]
+
+        // = E! * O! * Sum_{S: sum_S = E} [ ∏_{i} 1/(c[i]!) ] * [ ∏_{i in S} c[i]! / (c[i]!)? ] -> no.
+
+        // Actually: 1/(∏_{i in S} c[i]! * ∏_{i not in S} c[i]!) = ∏_{i} 1/(c[i]!) 
+
+        // Because it's the same denominator regardless of partition.
+
+        // So:
+        //   Total = E! * O! * (∏_{i} 1/(c[i]!)) * (number of subsets S such that sum_{i in S} c[i] = E)
+
+        // But wait: that would be true only if the term was independent of S. And indeed, ∏_{i} 1/(c[i]!) is constant.
+
+        // So: //   Answer = fact[E] * fact[O] % MOD * inv_prod % MOD * (number of ways to pick S with sum = E) % MOD
+
+        // But wait: let me verify with first example:
+        // c = [2,1,0,...,1] for 'a','b','k' -> c[0]=2, c[1]=1, c[10]=1, others 0.
+        // total_len = 2+1+1 = 4 -> E = (4+1)/2 = 2, O = 2. // We need sum_S = 2.
+
+        // Possible S: //   Option 1: put 'a' (2) in even -> sum=2 -> valid. Then b and k in odd.
+        //   Option 2: put b and k (1+1=2) in even -> valid. Then a in odd. //   Others: single 1 -> sum=1, two 1's already considered, 2 alone considered, etc.
+        // So count = 2.
+
+        // Then answer = fact[2]*fact[2] * (1/(2! * 1! * 1!)) * 2 // = 2*2 * (1/2) * 2 = 4 * (1/2) * 2 = 4 -> matches.
+
+        // But wait: what about the multinomial coefficients? // For option 1:
+        //   even: only 'a' with 2 times -> number of ways = 2! / 2! = 1 //   odd: 'b' and 'k' -> 2! / (1!1!) = 2
+        //   total for this assignment = 1 * 2 = 2 // For option 2:
+        //   even: 'b' and 'k' -> 2!/(1!1!)=2 //   odd: 'a' -> 2!/2!=1
+        //   total = 2 // Overall = 2+2 = 4.
+
+        // And our formula:  //   fact[2]*fact[2] = 4
+        //   ∏ 1/c[i]! = 1/(2! * 1! * 1!) = 1/2 //   count = 2
+        //   total = 4 * (1/2) * 2 = 4.
+
+        // So yes, the formula holds.
+
+        // Therefore:
+        //   Answer = fact[E] * fact[O] % MOD * (∏_{i} invf[c[i]]) % MOD * (number of subsets S ⊆ {0..25} with sum c[i] over S = E) % MOD
+
+        // But note: what if a letter has c[i] = 0? Then we can assign it arbitrarily? But 0 doesn't contribute to sum. // And 1/(0!) = 1, so it's fine. Also, the subset count: including or excluding 0 doesn't matter since they add 0.
+        // But we have to consider: the number of subsets that yield sum E: but zeros can be assigned arbitrarily without affecting the sum. // However, in our derivation above, we assumed that the denominator ∏ 1/c[i]! is constant, which it is.
+
+        // But the catch: the number of subsets S that yield sum E should count every subset of the non-zero elements that sum to E, and the zero elements can be assigned arbitrarily?  // Actually no: in the derivation, we did not multiply by 2^(#zeros). Why?
+
+        // Let's reexamine:  // In the expression:
+        //   Sum_{S ⊆ [26]} [ 1/(∏_{i in S} c[i]! * ∏_{i not in S} c[i]!) ]
+        // For a zero element: c[i]=0, then 1/(0!)=1 regardless of assignment. So the term is 1 for both choices.
+        // But we are summing over ALL subsets S. So if there are k zeros, then each valid non-zero assignment is counted 2^k times?
+
+        // However, wait: in our earlier example, we did not have zeros. Let's take a tiny example with zero.
+
+        // Example: two letters: c[0]=2, c[1]=0. total_len=2 -> E=1, O=1. // But wait: total_len=2 -> E=(2+1)/2=1? No: (2+1)//2 = 1? Actually:
+        //   positions: 0,1 -> even: index0, odd: index1 -> E=1, O=1. // We need to assign the letter 'a' (count=2) to either even or odd. But even has only 1 spot, odd has 1 spot -> impossible to put 2 in either.
+        // So answer should be 0.
+
+        // But according to our condition: we need sum_S = E = 1. But c[0]=2, c[1]=0. 
+        //   S can be: {} -> sum=0, {0} -> sum=2, {1} -> sum=0, {0,1}->sum=2. None equals 1 -> count=0 -> answer=0. Correct.
+
+        // Now, what if we have c[0]=1, c[1]=0. total_len=1 -> E=1, O=0. // We need sum_S = 1.
+        //   S: {0} -> sum=1 -> valid; {0,1} -> sum=1 -> also valid? But c[1]=0, so adding it doesn't change sum.
+        //   So two subsets: {0} and {0,1}.
+        // Then our count = 2.
+
+        // But what are the actual strings? Only one letter 'a'. It must be placed at position0 (the only position).  // The string is "a".
+        // How many assignments? The letter 'a' must go to even (since only even exists). The zero letter can be assigned arbitrarily?  // But the zero letter doesn't appear, so it doesn't matter. However, in our counting of distinct strings, we only care about the actual letters.
+
+        // But in our formula for a fixed assignment:
+        //   For S={0}: 
+        //      even: 'a' -> 1 occurrence -> ways = 1! / 1! = 1 //      odd: nothing -> 0! / ... = 1
+        //      total = 1
+        //   For S={0,1}:
+        //      even: 'a' and (letter1 with count0) -> still just 'a' //      odd: nothing
+        //      ways = 1!/(1! * 0!) * 0!/(...) = 1/1 * 1 = 1 //   So total = 1+1 = 2.
+
+        // But there is only one string: "a".
+
+        // So what went wrong?
+
+        // The issue: when a letter has count 0, we shouldn't be including it in the assignment as a choice that doubles the count.
+        // But in reality, the multinomial coefficient for even positions: we are dividing by c[i]! for every i in S, but if c[i]=0, then 0!=1, so it's fine.
+        // However, the problem is that the same physical arrangement is being counted multiple times: once for each way of assigning the zero-count letters.
+
+        // But note: the string does not contain the zero-count letters. So the assignment of zero-count letters to even/odd does not produce different strings.
+
+        // Therefore, we should not sum over all subsets including the zero ones arbitrarily. Instead, we should only consider the non-zero ones for the knapsack, and then multiply by 1 (since zeros don't affect the sum and we don't get extra strings).
+
+        // But wait: in the formula:
+        //   The term ∏_{i} 1/c[i]! is fixed, and the sum over S includes all 2^(#nonzero) * 2^(#zero) subsets? 
+        //   But the multinomial coefficients are the same for any inclusion of zero-count letters? 
+        //   Actually, including a zero-count letter in S adds a factor of 1/(0!)=1 in the even denominator and if not included then 1/(0!)=1 in the odd denominator. So the denominator term for a zero-count letter is always 1.
+
+        // However, the numerator: the factorials fact[E] and fact[O] are fixed.
+
+        // But the key: the multinomial coefficient for even positions is defined as: 
+        //   E! / (∏_{i in S} c[i]!)
+        // and if we include a zero-count letter, we are dividing by 0!=1, so it doesn't change. Similarly for odd.
+
+        // But then why did we get 2 for the example? Because we counted two assignments that yield the same string.
+
+        // However, the problem asks for the number of distinct strings s. So we should not be counting assignments of zero-count letters as producing different strings.
+
+        // But note: the condition in the problem is only on the indices of the letters that appear. The zero-count letters do not appear, so they don't impose constraints.
+
+        // And the string s is built only from the letters with positive count.
+
+        // Therefore, the assignment of zero-count letters to even/odd is irrelevant and should not be counted as separate.
+
+        // How to fix?
+
+        // We should only consider the non-zero count letters in the subset sum. The zero-count letters do not contribute to the sum and do not affect the multinomial coefficients (since 0!=1), so they can be ignored.
+
+        // But then why did the formula work for the first example? Because there were no zeros? Actually there were many zeros, but they didn't break it because we required the sum to be exactly E, and zeros don't help reach E.
+
+        // The real issue: in the derivation, the term:
+        //   Sum_{S ⊆ [26]} [ 1 / (∏_{i in S} c[i]! * ∏_{i not in S} c[i]!) ]
+        // = [∏_{i} 1/c[i]!] * [Sum_{S ⊆ [26]} 1]   ??? -> no, that's not true.
+
+        // Actually, it's:
+        //   = ∏_{i} [ 1/(c[i]! * c[i]!) ]^{1/2}? -> no.
+
+        // Let me write for two letters:
+        //   = 1/(c0! * c1!) * [ 1/(1) for S={} -> but wait: 
+        //   S={}: 1/( (for i in S: none) * (for i not in S: c0! and c1!) ) = 1/(c0! * c1!)
+        //   S={0}: 1/(c0! * c1!) 
+        //   S={1}: 1/(c0! * c1!)
+        //   S={0,1}: 1/(c0! * c1!)
+        //   So total = 4/(c0! * c1!)
+
+        // But if c1=0, then we have 4/(c0! * 1) = 4/c0!.
+
+        // But we want only 1/c0! because the string is determined solely by the non-zero letters.
+
+        // So the formula overcounts by a factor of 2^(# of zero-count letters).
+
+        // Therefore, we must divide by 2^(#zero) at the end? But wait, no: because in the sum over S, we are including every subset, but the physical string is independent of the assignment of zero-count letters.
+
+        // Alternatively, we can restrict S to be any subset of the non-zero indices, and then the zero indices can be assigned arbitrarily but they don't change the string. So each string is counted 2^(#zero) times.
+
+        // But that is not true: in the multinomial coefficient, we are not creating different arrangements by assigning zero-count letters. The arrangement is only on the positions for non-zero letters.
+
+        // Actually, the entire expression:
+        //   For a fixed assignment of non-zero letters to even/odd, and for any assignment of zero-count letters, the multinomial coefficient is the same? 
+        //   But the multinomial coefficient for even positions: 
+        //        = E! / (∏_{i in S_nonzero} c[i]! * ∏_{i in S_zero} 0! )
+        //   and 0!=1, so it's just E! / (∏_{i in S_nonzero} c[i]! )
+        //   Similarly for odd.
+        //   So the value of the term is independent of the zero-count letter assignment.
+
+        // Therefore, for a fixed assignment of non-zero letters, the term is added 2^(#zero) times.
+
+        // Hence, the entire sum is multiplied by 2^(#zero).
+
+        // So to get the correct count of strings, we must divide the entire result by 2^(#zero)?
+
+        // But wait: no, because the problem asks for the number of strings, and we have overcounted by 2^(#zero) in the summation.
+
+        // Therefore:
+        //   Answer = [ fact[E] * fact[O] * (∏_{i} invf[c[i]]) % MOD * (knapsack_count) ] * inv(2^(#zero)) % MOD
+
+        // But let's test with c[0]=1, c[1]=0: //   E=1, O=0.
+        //   fact[1]=1, fact[0]=1. //   ∏ invf[c[i]] = invf[1] * invf[0] = 1 * 1 = 1.
+        //   knapsack_count: we consider non-zero: only i=0 with c[0]=1. We need sum=1 -> one subset: {0}. So count=1. //   Then we have overcount factor: 2^(#zero)=2^1=2 -> so we divide by 2.
+        //   Answer = 1 * 1 * 1 * 1 * inv(2) = 1/2 mod MOD -> not an integer.
+
+        // But expected answer is 1.
+
+        // Alternatively, maybe we should not have included the zero-count letters in the subset sum at all? And then we don't overcount.
+
+        // How about: define the sum only over non-zero indices? Then:
+        //   Sum_{S ⊆ non_zero_indices} [ 1/(∏_{i in S} c[i]! * ∏_{i not in S} c[i]! * ∏_{i in zero} c[i]! ???) ] -> no.
+
+        // Actually, the denominator is always ∏_{all i} c[i]! ? No, it's split: for i in S: c[i]! in even denominator, for i not in S: c[i]! in odd denominator.
+
+        // But the entire denominator is ∏_{i} c[i]! regardless of S? Yes! Because every c[i]! appears exactly once: either in the even part or the odd part.
+
+        // Therefore: 
+        //   For any S, the denominator is ∏_{i=0}^{25} c[i]! 
+        //   So the term is 1 / (∏_{i} c[i]!) for every S.
+
+        // Then the entire sum over S is: (number of valid S) / (∏_{i} c[i]!)
+
+        // And the answer becomes:
+        //   fact[E] * fact[O] * (number of valid S) / (∏_{i} c[i]!) 
+
+        // Now, what is a valid S? A subset of {0,...,25} such that sum_{i in S} c[i] = E.
+
+        // And note: the zero-count letters: if c[i]=0, then including or excluding them doesn't change the sum. So if the non-zero part sums to E, then we can include any subset of the zero-count letters and it's still valid.
+
+        // Therefore, the number of valid S = (number of subsets of non-zero indices that sum to E) * (2^(#zero))
+
+        // Then:
+        //   Answer = fact[E] * fact[O] * [ (count_nonzero * 2^(#zero)) ] / (∏_{i} c[i]!) 
+
+        // But now test with c[0]=1, c[1]=0: //   E=1, O=0.
+        //   fact[1]=1, fact[0]=1. //   count_nonzero: non-zero indices: [0] with c[0]=1. We need sum=1 -> count_nonzero=1.
+        //   #zero = 1 -> 2^1 = 2. //   denominator = 1! * 0! = 1.
+        //   Answer = 1 * 1 * (1 * 2) / 1 = 2.
+
+        // But expected is 1.
+
+        // What are the two strings? There is only one string: "a".
+
+        // Why 2? Because we are counting two assignments: one where the zero-count letter is assigned to even and one to odd. But these assignments do not produce different strings.
+
+        // So the issue remains: the formula counts assignments, not strings.
+
+        // But note: the multinomial coefficients already account for the arrangement of the letters that appear. The assignment of non-appearing letters doesn't create new strings.
+
+        // Therefore, we should not multiply by 2^(#zero). Instead, we should only count the non-zero part, and ignore the zero-count letters in the subset sum (they don't affect the sum and we don't get extra strings).
+
+        // But then how many S are there? Only the non-zero indices matter for the sum, and the condition is sum_{non-zero in S} c[i] = E.
+
+        // And the zero-count letters can be assigned arbitrarily, but that doesn't yield new strings. So we should count each non-zero assignment only once.
+
+        // Therefore, the number of valid S (that yield distinct string constructions) is simply the number of subsets of non-zero indices that sum to E.
+
+        // And the denominator is ∏_{i} c[i]! -> which includes zeros.
+
+        // Then:
+        //   Answer = fact[E] * fact[O] * (count_nonzero_sum_E) / (∏_{i} c[i]!) 
+
+        // Test: c[0]=1, c[1]=0: //   count_nonzero_sum_E: non-zero indices: [0] with c[0]=1, need sum=1 -> count=1.
+        //   denominator = 1! * 0! = 1. //   Answer = 1 * 1 * 1 / 1 = 1. -> correct.
+
+        // Test first example: c[0]=2, c[1]=1, c[10]=1, others 0. //   non-zero: indices 0,1,10 with values 2,1,1.
+        //   E = (2+1+1+...)=4 -> E=2.
+        //   We need subsets of {0,1,10} with sum=2:
+        //       {0}: 2 -> valid.
+        //       {1,10}: 1+1=2 -> valid.
+        //       others: {1}->1, {10}->1, {0,1}->3, etc -> invalid. //   count = 2.
+        //   denominator = 2! * 1! * 1! * (for zeros: 0! for 23 letters) = 2 * 1 * 1 * 1 = 2. //   Answer = fact[2]*fact[2] * 2 / 2 = 2*2 * 2 / 2 = 4. -> correct.
+
+        // Therefore, algorithm:
+
+        // Step 1: Read c[0..25] // Step 2: total_len = sum(c)
+        //         E = (total_len+1)/2, O = total_len/2 // Step 3: If E < 0 or O < 0: but they won't be.
+        // Step 4: Collect non-zero counts: vector<int> nz;
+        //         Also compute denom = ∏_{i} fact[c[i]] mod MOD -> then we want 1/denom.
+        //         Actually: we need ∏_{i} invf[c[i]], because invf[x] = 1/fact[x] mod MOD.
+
+        // Step 5: Use dynamic programming (knapsack) to count the number of subsets of non-zero elements that sum to E.
+
+        // But note: it's possible that E is not achievable, or E might be fractional? No, E is integer.
+
+        // However, what if total_len is 0? Then E=0, O=0. But the input says "sum of c_i for every test case is positive", so skip.
+
+        // Step 6: dp[0] = 1, then for each non-zero count x, do: //         new_dp[i] = dp[i] + dp[i-x]   (mod MOD)
+        //         But note: we are counting the number of subsets, not the number of ways with repetition.
+
+        // But caution: the counts can be up to 500000, and E up to 250000, and the number of non-zero elements is at most 26.
+
+        // So we can do a DP with array of size E+1.
+
+        // However, worst-case E=250000, and 26 items -> 26*250000 = 6.5e6 operations per test case.
+
+        // But the total sum of c_i over test cases is 500000, so the total work in knapsack over all test cases might be bounded by the number of test cases times 26 * (E+1). 
+        // But E can be up to 250000, and the number of test cases could be many if each has small total_len.
+
+        // However, the constraint: "sum of c_i over all test cases" <= 500000. // This means the total number of characters is bounded, but the total_len per test case can be up to 500000?
+        // But then there can be only one test case.
+
+        // Actually: the sum of c_i for one test case can be up to 500000, and the sum over test cases of the c_i is <= 500000 -> so there can be at most one test case with total_len>=1, and the rest must be 0? 
+        // But the input says: "the sum of c_i for every test case is positive", and "the sum of c_i over all test cases does not exceed 500000".
+
+        // So the total number of characters across all test cases is <= 500000.
+
+        // Therefore, the worst-case is one test case with total_len=500000, then we do a knapsack with capacity 250000 and 26 items -> 26*250000 = 6.5e6, which is acceptable.
+
+        // But worst-case total work over test cases: the sum of (number_of_nonzero_in_test_case * (E+1)) over test cases.
+
+        // However, note: E = (total_len+1)//2, and total_len is the sum of c_i in the test case.
+
+        // And the sum over test cases of total_len <= 500000.
+
+        // But the work per test case is O(26 * E) = O(total_len) since E<=total_len.
+
+        // And the sum of total_len over test cases is <=500000, so the total work is O(26 * 500000) = 13e6, which is acceptable.
+
+        // Actually: worst-case one test case: total_len=500000 -> work = 26 * 250001 ~ 6.5e6.
+        // And if there are many test cases, each with small total_len, then the work per test case is small.
+
+        // Implementation:
+
+        long long total = 0;
+        for (int x : c) total += x;
+
+        int E = (total + 1) / 2;
+        int O = total / 2;
+
+        // If E is negative or O negative -> not possible, but total>=1 so E>=1, O>=0.
+
+        // Precompute the denominator factor: ∏_{i} invf[c[i]]
+        long long denom_inv = 1;
+        vector<int> nonzero;
+        for (int i = 0; i < 26; ++i) {
+            denom_inv = denom_inv * invf[c[i]] % MOD;
+            if (c[i] > 0) {
+                nonzero.push_back(c[i]);
+            }
+        }
+
+        // Knapsack: dp[x] = number of ways to achieve sum x using the non-zero counts (each used at most once)
+        vector<long long> dp(E + 1, 0);
+        dp[0] = 1;
+
+        for (int cnt : nonzero) {
+            // iterate backwards to avoid using the same element twice
+            for (int s = E; s >= cnt; --s) {
+                dp[s] = (dp[s] + dp[s - cnt]) % MOD;
+            }
+        }
+
+        long long ways = dp[E]; // number of subsets of non-zero elements that sum to E
+
+        long long ans = fact[E] * fact[O] % MOD;
+        ans = ans * denom_inv % MOD;
+        ans = ans * ways % MOD;
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

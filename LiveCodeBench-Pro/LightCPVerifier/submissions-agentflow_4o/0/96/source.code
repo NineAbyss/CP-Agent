@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to calculate the maximum sums for each k from 1 to n
+vector<long long> calculateMaxSums(vector<long long> &a, int n) {
+    vector<long long> max_sums(n);
+    
+    for (int k = 1; k <= n; ++k) {
+        long long initial_sum = accumulate(a.end() - k, a.end(), 0LL);
+        long long max_sum = initial_sum;
+
+        // Iterate through possible swaps
+        for (int i = 0; i < n; ++i) {
+            if (i < n-k) {
+                long long swap_sum = initial_sum - a[n-k] + a[i];
+                max_sum = max(max_sum, swap_sum);
+            }
+        }
+
+        // Store the result for k
+        max_sums[k-1] = max_sum;
+    }
+    
+    return max_sums;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<long long> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        
+        vector<long long> result = calculateMaxSums(a, n);
+        
+        for (long long val : result) {
+            cout << val << " ";
+        }
+        cout << "\n";
+    }
+    
+    return 0;
+}

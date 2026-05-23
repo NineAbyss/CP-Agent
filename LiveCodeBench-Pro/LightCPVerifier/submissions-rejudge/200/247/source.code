@@ -1,0 +1,82 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    vector<int> p(n);
+    vector<int> pos(n+1);
+    for (int i = 0; i < n; i++) {
+        cin >> p[i];
+        pos[p[i]] = i+1;
+    }
+    
+    vector<int> ans;
+    ans.reserve(q);
+    
+    while (q--) {
+        int l, r, k;
+        cin >> l >> r >> k;
+        
+        int pos_k = pos[k];
+        if (pos_k < l || pos_k > r) {
+            ans.push_back(-1);
+            continue;
+        }
+        
+        int L = l, R = r;
+        int total_need_L = 0, total_need_G = 0;
+        int must_L = 0, must_G = 0;
+        int cntL_path = 0, cntG_path = 0;
+        
+        while (L <= R) {
+            int m = (L + R) / 2;
+            if (m == pos_k) break;
+            
+            if (p[m-1] == k) {
+                must_L = must_G = -1;
+                break;
+            }
+            
+            if (pos_k > m) {
+                total_need_L++;
+                if (p[m-1] >= k) must_L++;
+                if (p[m-1] < k) cntL_path++;
+                L = m + 1;
+            } else {
+                total_need_G++;
+                if (p[m-1] <= k) must_G++;
+                if (p[m-1] > k) cntG_path++;
+                R = m - 1;
+            }
+        }
+        
+        if (must_L == -1 || total_need_L > k-1 || total_need_G > n-k) {
+            ans.push_back(-1);
+            continue;
+        }
+        
+        int extra_L = max(0, total_need_L - cntL_path);
+        int extra_G = max(0, total_need_G - cntG_path);
+        ans.push_back(must_L + must_G + extra_L + extra_G);
+    }
+    
+    for (int i = 0; i < (int)ans.size(); i++) {
+        cout << ans[i];
+        if (i + 1 < (int)ans.size()) cout << ' ';
+    }
+    cout << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// To achieve lexicographically smallest string, we can use greedy and reverse processing. // Idea: Process operations in reverse order and determine which conversions are actually useful.
+// We maintain what each character can eventually be converted to (via a mapping or union-find style).
+
+// However, simpler idea: since only a, b, c are involved, we can precompute for each character // what is the best (smallest) character it can be turned into after all operations.
+
+// But note: operations are sequential and we can choose to skip any operation.
+// So we want to simulate backwards: from last operation to first, track what transformations
+// are beneficial and propagate them.
+
+// Alternate approach:
+// Let’s define for each character (a, b, c), what is the minimal character it can become
+// after applying a subsequence of the operations (in order). Since we can skip operations,
+// we can process operations from back to front and update transformation rules greedily.
+
+// We'll maintain an array `to` such that `to[c]` is the best (lex smallest) char that c can become // considering future operations. Initially, to[x] = x.
+
+// Then traverse operations from last to first:
+//   if we have op (x -> y), then we can consider: if converting x to y is beneficial,
+//   i.e., if y can become something small (say z), then x can also become z.
+//   So: if to[y] < to[x], then we update to[x] = to[y] (because we can convert x to y, then y becomes to[y])
+
+// After computing the final `to` mapping, apply it to the original string.
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    string s;
+    cin >> s;
+    
+    vector<pair<char, char>> ops;
+    for (int i = 0; i < q; i++) {
+        char x, y;
+        cin >> x >> y;
+        ops.push_back({x, y});
+    }
+    
+    // Best mapping: what each char can be turned into
+    map<char, char> to;
+    to['a'] = 'a';
+    to['b'] = 'b';
+    to['c'] = 'c';
+    
+    // Process operations in reverse
+    for (int i = q - 1; i >= 0; i--) {
+        char x = ops[i].first;
+        char y = ops[i].second;
+        
+        // If converting x to y helps (i.e., y can become a smaller char than what x currently can), // then we update x's target
+        if (to[y] < to[x]) {
+            to[x] = to[y];
+        }
+    }
+    
+    // Apply the mapping to the original string
+    for (int i = 0; i < n; i++) {
+        s[i] = to[s[i]];
+    }
+    
+    cout << s << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

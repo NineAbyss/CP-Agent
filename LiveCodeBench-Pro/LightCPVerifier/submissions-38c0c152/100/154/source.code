@@ -1,0 +1,98 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+const int N = 205;
+const int MAXC = 40005; // n*200
+
+int n, m;
+int c[N], w[N];
+vector<int> g[N];
+long long dp[N][MAXC];
+int best_cost[N], best_power[N]; // 从1到p的路径上性价比最高的顶点
+
+bool better(int c1, int w1, int c2, int w2) {
+    // 返回 (w1/c1) 是否优于 (w2/c2)
+    return (long long)w1 * c2 > (long long)w2 * c1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    cin >> n >> m;
+    for (int i = 1; i <= n; i++) {
+        cin >> c[i] >> w[i];
+    }
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+    }
+    
+    // 初始化 dp 为 0
+    memset(dp, 0, sizeof dp);
+    
+    // 对顶点1完全背包
+    for (int j = c[1]; j < MAXC; j++) {
+        dp[1][j] = max(dp[1][j], dp[1][j - c[1]] + w[1]);
+    }
+    
+    best_cost[1] = c[1];
+    best_power[1] = w[1];
+    
+    // 按拓扑序（编号顺序）更新
+    for (int u = 1; u <= n; u++) {
+        for (int v : g[u]) {
+            // 复制 dp[u] 到 dp[v]，取 max
+            for (int j = 0; j < MAXC; j++) {
+                dp[v][j] = max(dp[v][j], dp[u][j]);
+            }
+            // 对 v 做完全背包
+            for (int j = c[v]; j < MAXC; j++) {
+                dp[v][j] = max(dp[v][j], dp[v][j - c[v]] + w[v]);
+            }
+            // 更新 best[v]
+            best_cost[v] = best_cost[u];
+            best_power[v] = best_power[u];
+            if (better(c[v], w[v], best_cost[v], best_power[v])) {
+                best_cost[v] = c[v];
+                best_power[v] = w[v];
+            } else if (!better(best_cost[v], best_power[v], c[v], w[v])) {
+                // 性价比相同，选 cost 小的
+                if (c[v] < best_cost[v]) {
+                    best_cost[v] = c[v];
+                    best_power[v] = w[v];
+                }
+            }
+        }
+    }
+    
+    // 将 dp 转为不超过 j 金币的最大力量
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j < MAXC; j++) {
+            dp[i][j] = max(dp[i][j], dp[i][j-1]);
+        }
+    }
+    
+    int q;
+    cin >> q;
+    while (q--) {
+        int p, r;
+        cin >> p >> r;
+        if (r < MAXC) {
+            cout << dp[p][r] << "\n";
+        } else {
+            long long ans = dp[p][MAXC - 1];
+            long long rem = r - (MAXC - 1);
+            // 性价比最高的顶点
+            int cc = best_cost[p];
+            int ww = best_power[p];
+            ans += (rem / cc) * ww;
+            cout << ans << "\n";
+        }
+    }
+    return 0;
+}

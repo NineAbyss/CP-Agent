@@ -1,0 +1,76 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <map>
+using namespace std;
+
+bool check(const vector<int>& a, const vector<int>& b, int n, int m) {
+    for (int x = 1; x < m; x++) {
+        vector<int> seq_a, seq_b;
+        for (int i = 0; i < n; i++) {
+            if (a[i] == x || a[i] == x+1) seq_a.push_back(a[i]);
+            if (b[i] == x || b[i] == x+1) seq_b.push_back(b[i]);
+        }
+        if (seq_a.size() != seq_b.size()) return false;
+        int len = seq_a.size();
+        bool found = false;
+        for (int shift = 0; shift < len; shift++) {
+            bool ok = true;
+            for (int i = 0; i < len; i++) {
+                if (seq_a[(shift + i) % len] != seq_b[i]) {
+                    ok = false;
+                    break;
+                }
+            }
+            if (ok) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        
+        vector<int> cnt_a(m+1,0), cnt_b(m+1,0);
+        for (int i = 0; i < n; i++) {
+            cnt_a[a[i]]++;
+            cnt_b[b[i]]++;
+        }
+        bool multiset_ok = true;
+        for (int i = 1; i <= m; i++) {
+            if (cnt_a[i] != cnt_b[i]) {
+                multiset_ok = false;
+                break;
+            }
+        }
+        if (!multiset_ok) {
+            cout << "NO\n";
+            continue;
+        }
+        
+        if (n == m) {
+            cout << "YES\n";
+            continue;
+        }
+        
+        if (check(a, b, n, m)) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

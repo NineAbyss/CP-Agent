@@ -1,0 +1,114 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve(const string& s) {
+    int n = s.length();
+    
+    // 计算基础成本
+    int base_moves = (s[0] == '1');
+    for (int i = 1; i < n; i++) {
+        if (s[i] != s[i-1]) base_moves++;
+    }
+    int base_cost = n + base_moves;
+    
+    // 如果没有字符变化，成本已经最小
+    if (base_moves <= 1) {
+        return base_cost;
+    }
+    
+    // 最佳delta初始为0
+    int best_delta = 0;
+    
+    // 预处理right_diff
+    vector<int> right_diff(n, 0);
+    for (int i = 0; i < n-1; i++) {
+        right_diff[i] = (s[i] != s[i+1]);
+    }
+    
+    // 预处理每个字符的位置
+    vector<vector<int>> pos(2);
+    for (int i = 0; i < n; i++) {
+        pos[s[i]-'0'].push_back(i);
+    }
+    
+    // 情况1: l=0
+    if (s[0] == '1') {
+        // 我们需要s[r]=='0'
+        for (int r : pos[0]) {
+            int delta = -1;  // 左边界改善
+            if (r < n-1) {
+                delta += (s[0]!=s[r+1]) - right_diff[r];
+            }
+            if (delta < best_delta) {
+                best_delta = delta;
+                if (best_delta == -2) goto done;
+            }
+        }
+    }
+    
+    // 情况2: l>0且s[l]!=s[l-1]
+    for (int l = 1; l < n; l++) {
+        if (s[l] != s[l-1]) {
+            int target = (s[l-1] - '0');  // 需要s[r]==s[l-1]
+            
+            // 使用二分查找找到第一个≥l的位置
+            auto& positions = pos[target];
+            auto it = lower_bound(positions.begin(), positions.end(), l);
+            for (; it != positions.end(); ++it) {
+                int r = *it;
+                int delta = -1;  // 左边界改善
+                if (r < n-1) {
+                    delta += (s[l]!=s[r+1]) - right_diff[r];
+                }
+                if (delta < best_delta) {
+                    best_delta = delta;
+                    if (best_delta == -2) goto done;
+                }
+            }
+        }
+    }
+    
+    // 情况3: 右边界改善
+    for (int r = 0; r < n-1; r++) {
+        if (s[r] != s[r+1]) {
+            int target = (s[r+1] - '0');  // 需要s[l]==s[r+1]
+            
+            auto& positions = pos[target];
+            // 找到所有≤r的位置
+            auto it = upper_bound(positions.begin(), positions.end(), r);
+            for (auto pit = positions.begin(); pit != it; ++pit) {
+                int l = *pit;
+                int delta = -1;  // 右边界改善
+                if (l == 0) {
+                    delta += (s[r]=='1') - (s[0]=='1');
+                } else {
+                    delta += (s[r]!=s[l-1]) - (s[l]!=s[l-1]);
+                }
+                if (delta < best_delta) {
+                    best_delta = delta;
+                    if (best_delta == -2) goto done;
+                }
+            }
+        }
+    }
+    
+done:
+    return base_cost + best_delta;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+        cout << solve(s) << '\n';
+    }
+    
+    return 0;
+}

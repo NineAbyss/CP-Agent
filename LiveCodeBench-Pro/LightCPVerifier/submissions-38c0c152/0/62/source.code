@@ -1,0 +1,52 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+bool feasible(int cnt[10], int start) {
+    int tmp[10];
+    for (int i = 0; i < 10; i++) tmp[i] = cnt[i];
+    for (int i = start; i < 10; i++) {
+        int bound = 9 - i;
+        int d = bound;
+        while (d <= 9 && tmp[d] == 0) d++;
+        if (d > 9) return false;
+        tmp[d]--;
+    }
+    return true;
+}
+
+string solve(string s) {
+    int cnt[10] = {0};
+    for (char c : s) {
+        cnt[c - '0']++;
+    }
+    string ans(10, ' ');
+    for (int pos = 0; pos < 10; pos++) {
+        int low = 9 - pos;
+        for (int d = low; d <= 9; d++) {
+            if (cnt[d] > 0) {
+                cnt[d]--;
+                if (feasible(cnt, pos + 1)) {
+                    ans[pos] = '0' + d;
+                    break;
+                } else {
+                    cnt[d]++;
+                }
+            }
+        }
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        cout << solve(s) << '\n';
+    }
+    return 0;
+}

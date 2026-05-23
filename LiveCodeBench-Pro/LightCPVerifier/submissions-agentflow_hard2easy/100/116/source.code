@@ -1,0 +1,140 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, m, l;
+    cin >> n >> m >> l;
+    
+    vector<int> A(l);
+    for(int i = 0; i < l; i++) {
+        cin >> A[i];
+    }
+    
+    vector<vector<int>> adj;
+    adj.resize(n+1);
+    for(int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    // 1. 检查是否为二分图
+    vector<int> color(n+1, -1);
+    bool is_bipartite = true;
+    queue<int> q;
+    color[1] = 0;
+    q.push(1);
+    
+    while(!q.empty() && is_bipartite) {
+        int u = q.front(); q.pop();
+        for(int v : adj[u]) {
+            if(color[v] == -1) {
+                color[v] = color[u] ^ 1;
+                q.push(v);
+            } else if(color[v] == color[u]) {
+                is_bipartite = false;
+                break;
+            }
+        }
+    }
+    
+    // 2. 计算dist[i]（最短路径长度）
+    vector<int> dist(n+1, -1);
+    queue<int> q2;
+    dist[1] = 0;
+    q2.push(1);
+    while(!q2.empty()) {
+        int u = q2.front(); q2.pop();
+        for(int v : adj[u]) {
+            if(dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                q2.push(v);
+            }
+        }
+    }
+    
+    // 3. 如果非二分图，计算min_even和min_odd
+    vector<int> min_even(n+1, 1e9), min_odd(n+1, 1e9);
+    if(!is_bipartite) {
+        vector<vector<int>> min_len;
+        min_len.resize(n+1, vector<int>(2, 1e9));
+        queue<pair<int,int>> q3;
+        min_len[1][0] = 0; // 偶数长度0
+        q3.push(make_pair(1, 0));
+        
+        while(!q3.empty()) {
+            int u = q3.front().first;
+            int p = q3.front().second;
+            q3.pop();
+            int cur_len = min_len[u][p];
+            for(int v : adj[u]) {
+                int new_p = p ^ 1;
+                if(cur_len + 1 < min_len[v][new_p]) {
+                    min_len[v][new_p] = cur_len + 1;
+                    q3.push(make_pair(v, new_p));
+                }
+            }
+        }
+        
+        for(int i = 1; i <= n; i++) {
+            min_even[i] = min_len[i][0];
+            min_odd[i] = min_len[i][1];
+        }
+    }
+    
+    // 4. 处理步数A
+    long long total_even = 0;
+    vector<int> odds;
+    for(int k : A) {
+        if(k % 2 == 0) total_even += k;
+        else odds.push_back(k);
+    }
+    
+    sort(odds.rbegin(), odds.rend()); // 降序
+    int m_odd = odds.size();
+    vector<long long> prefix_odd(m_odd+1, 0);
+    for(int i = 0; i < m_odd; i++) {
+        prefix_odd[i+1] = prefix_odd[i] + odds[i];
+    }
+    
+    // 计算最大偶数和和最大奇数和
+    long long max_even_sum = 0, max_odd_sum = 0;
+    for(int L = 0; L <= m_odd; L++) {
+        long long sum = prefix_odd[L] + total_even;
+        if(L % 2 == 0) {
+            if(sum > max_even_sum) max_even_sum = sum;
+        } else {
+            if(sum > max_odd_sum) max_odd_sum = sum;
+        }
+    }
+    
+    // 5. 输出结果
+    for(int i = 1; i <= n; i++) {
+        bool reachable = false;
+        if(is_bipartite) {
+            if(dist[i] % 2 == 0) {
+                reachable = (dist[i] <= max_even_sum);
+            } else {
+                reachable = (dist[i] <= max_odd_sum);
+            }
+        } else {
+            reachable = (min_even[i] <= max_even_sum) || (min_odd[i] <= max_odd_sum);
+        }
+        cout << (reachable ? '1' : '0');
+    }
+    cout << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while(t--) {
+        solve();
+    }
+    
+    return 0;
+}

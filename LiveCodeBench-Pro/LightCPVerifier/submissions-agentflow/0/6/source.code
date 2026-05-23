@@ -1,0 +1,25 @@
+#include <iostream>
+using namespace std;
+
+const int MOD = 1000000007;
+
+int main() {
+    int t;  // 输入测试用例的数量
+    cin >> t;
+    while (t--) {
+        int a, b, k;
+        cin >> a >> b >> k;  // 输入每个测试用例的参数 a, b, 和 k
+
+        // 计算所需的矩阵行数和列数
+        long long n = a + (a - 1) * (k - 1);
+        long long m = b + (b - 1) * (k - 1);
+
+        // 确保结果取模
+        n = n % MOD;
+        m = m % MOD;
+
+        // 输出结果
+        cout << n << " " << m << '\n';
+    }
+    return 0;
+}

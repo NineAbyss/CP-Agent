@@ -1,0 +1,204 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+void solve() {
+    int n;
+    cin >> n;
+    
+    vector<vector<ll>> h(n, vector<ll>(n));
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            cin >> h[i][j];
+        }
+    }
+    
+    vector<ll> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int j = 0; j < n; j++) cin >> b[j];
+    
+    // We are allowed to add any subset of row increments and column increments.
+    // Let x_i = 1 if we hire worker i from company A, else 0.
+    // Let y_j = 1 if we hire worker j from company B, else 0. // Then final height at (i,j) is: h[i][j] + x_i + y_j.
+    
+    // The city is beautiful if:
+    // For all i, j: h[i][j] + x_i + y_j != h[i][j+1] + x_i + y_{j+1}   --> same row
+    //               => (h[i][j] - h[i][j+1]) != (y_{j+1} - y_j)
+    // Similarly, for vertical: h[i][j] + x_i + y_j != h[i+1][j] + x_{i+1} + y_j
+    //                         => (h[i][j] - h[i+1][j]) != (x_{i+1} - x_i)
+    
+    // But note: x_i, y_j are either 0 or 1. So differences can only be -1, 0, or 1.
+    
+    // However, instead of thinking in terms of differences, we can try to model this as a bipartite graph coloring. // Insight: Consider that each row operation adds 1 to the entire row, each col op adds 1 to entire col.
+    // So the final value is h[i][j] + r[i] + c[j], where r[i] in {0,1}, c[j] in {0,1}.
+    
+    // We want: //   h[i][j] + r[i] + c[j] != h[i][j+1] + r[i] + c[j+1]  => h[i][j] + c[j] != h[i][j+1] + c[j+1]
+    //   h[i][j] + r[i] + c[j] != h[i+1][j] + r[i+1] + c[j]  => h[i][j] + r[i] != h[i+1][j] + r[i+1]
+    
+    // So constraints separate: horizontal constraints involve only c[j], vertical only r[i].
+    
+    // Therefore, we can independently check feasibility for rows and columns? // Actually not quite: because both r and c affect the final values, but the constraints decouple!
+    
+    // Horizontal constraint for row i, between col j and j+1: //   h[i][j] + c[j] != h[i][j+1] + c[j+1]
+    // This must hold for every row i. But it involves only c[j] and c[j+1]. So if for some j, 
+    // for all possible choices of c[j], c[j+1] in {0,1}, there exists an i such that 
+    // h[i][j] + c[j] == h[i][j+1] + c[j+1], then impossible.
+    
+    // But wait: we can choose c[j] and c[j+1] to avoid conflicts. However, the choice must work for all rows simultaneously.
+    
+    // Actually: the condition must hold for every cell. So for fixed assignment of c[0..n-1], we require:
+    //   for every i, j: h[i][j] + c[j] != h[i][j+1] + c[j+1]
+    // Similarly, for r: for every i, j: h[i][j] + r[i] != h[i+1][j] + r[i+1]
+    
+    // But note: we are free to choose both r and c. So the total value is h[i][j] + r[i] + c[j].
+    // The horizontal constraint is:
+    //   h[i][j] + r[i] + c[j] != h[i][j+1] + r[i] + c[j+1]  => h[i][j] + c[j] != h[i][j+1] + c[j+1] // The r[i] cancels! Similarly, vertical:
+    //   h[i][j] + r[i] + c[j] != h[i+1][j] + r[i+1] + c[j]  => h[i][j] + r[i] != h[i+1][j] + r[i+1]
+    
+    // So indeed, the constraints on r and c are independent!
+    
+    // Step 1: Check if we can assign c[0..n-1] in {0,1} such that for every i, j (with j < n-1): //         h[i][j] + c[j] != h[i][j+1] + c[j+1]
+    // Similarly, assign r[0..n-1] in {0,1} such that for every i < n-1, j: //         h[i][j] + r[i] != h[i+1][j] + r[i+1]
+    
+    // But note: we are minimizing cost: sum_i (r[i] ? a[i] : 0) + sum_j (c[j] ? b[j] : 0)
+    
+    // So we can do DP or even try all possibilities? But n up to 1000 -> 2^n too big.
+    
+    // However, note the constraints: the sum of n over test cases <= 1000. // But wait: "It is guaranteed that the sum of n over all test cases does not exceed 1000."
+    // That means total n across test cases <= 1000 -> so at most 1000/2 = 500 test cases? But t<=100, and n>=2.
+    // Actually, the constraint says: "the sum of n" — probably meaning the sum of the sizes n of the grids?
+    // But then worst-case one test case with n=1000, and others small. But 1000 is acceptable only if we do O(n) or O(n^2).
+    
+    // But note: we have two separate problems: one for rows (r) and one for columns (c). Each of size n.
+    
+    // How to solve one side? Say for columns: we want to assign c[0..n-1] in {0,1} to minimize sum_j c[j]*b[j],
+    // subject to: for every row i and every j from 0 to n-2:
+    //     h[i][j] + c[j] != h[i][j+1] + c[j+1]
+    
+    // Rearranged: c[j+1] - c[j] != h[i][j] - h[i][j+1]
+    
+    // Let d_j = c[j+1] - c[j]. Then d_j in {-1,0,1}. And we require d_j != diff[i][j] for every i, where diff[i][j] = h[i][j] - h[i][j+1].
+    
+    // But note: if for a fixed j, the set of forbidden differences is {-1,0,1}, then no assignment works.
+    
+    // Specifically, for position j (between col j and j+1), let:
+    //   bad[j] = set of d in {-1,0,1} such that there exists i with d == h[i][j] - h[i][j+1]
+    // Then we require d_j not in bad[j].
+    
+    // But d_j = c[j+1] - c[j], and c[j] in {0,1}. So d_j can only be -1, 0, or 1, but also constrained by the binary nature. // Actually:
+    //   if c[j]=0, c[j+1]=0 -> d_j=0 //   c[j]=0, c[j+1]=1 -> d_j=1
+    //   c[j]=1, c[j+0]=0 -> d_j=-1 //   c[j]=1, c[j+1]=1 -> d_j=0
+    // // So possible d_j: -1, 0, 1. But 0 appears twice.
+    
+    // Now, if for some j, bad[j] = {-1,0,1}, then no matter what we choose for (c[j],c[j+1]), we get a conflict -> impossible.
+    
+    // Otherwise, we can model this as a DP over j from 0 to n-1, state = c[j] (0 or 1), and transition to c[j+1] only if 
+    // the difference d = c[j+1]-c[j] is not in bad[j].
+    
+    // Similarly for rows: for each i from 0 to n-2, we have a constraint on r[i+1]-r[i] != h[i][j] - h[i+1][j] for every j.
+    // So for a fixed i, let bad_row[i] = { d in {-1,0,1} such that exists j with d == h[i][j] - h[i+1][j] }.
+    // Then we require d_i = r[i+1]-r[i] not in bad_row[i].
+    
+    // Then we can run DP for columns and DP for rows independently, and add the minimal costs.
+    
+    // Steps:
+    // 1. Precompute bad_col[j] for j in [0, n-2]: the set of differences d in {-1,0,1} that appear as h[i][j]-h[i][j+1] for some i.
+    // 2. Similarly, bad_row[i] for i in [0, n-2]: differences d = h[i][j]-h[i+1][j] for some j.
+    // 3. Run DP for columns: dp_col[j][state] = minimum cost to assign c[0..j] with c[j]=state (0 or 1), satisfying constraints for positions 0 to j-1.
+    //    Transition: for next state in {0,1}:  //        d = next_state - state
+    //        if d is not in bad_col[j], then update.
+    // 4. Similarly for rows: dp_row[i][state] for r[i]=state.
+    // 5. Answer = min(dp_col[n-1][0], dp_col[n-1][1]) + min(dp_row[n-1][0], dp_row[n-1][1])
+    
+    // But note: the grid has n columns -> we have j from 0 to n-2 for column constraints (between adjacent columns).
+    // Similarly, n rows -> i from 0 to n-2 for row constraints.
+    
+    // However, what if n==1? But n>=2 per input.
+    
+    // Let's code accordingly.
+    
+    // First, check column constraints:
+    vector<set<int>> bad_col(n-1); // for j in [0, n-2]: bad_col[j] contains forbidden differences for c[j+1]-c[j]
+    for (int j = 0; j < n-1; j++) {
+        for (int i = 0; i < n; i++) {
+            int diff = h[i][j] - h[i][j+1];
+            if (diff >= -1 && diff <= 1) {
+                bad_col[j].insert(diff);
+            }
+        }
+    }
+    
+    // DP for columns: dp[j][c] = minimum cost for prefix [0..j] ending with c[j]=c
+    vector<vector<ll>> dp_col(n, vector<ll>(2, 1e18));
+    // Initialize first column
+    dp_col[0][0] = 0;
+    dp_col[0][1] = b[0];
+    
+    for (int j = 0; j < n-1; j++) {
+        for (int cur = 0; cur < 2; cur++) {
+            if (dp_col[j][cur] == 1e18) continue;
+            for (int nxt = 0; nxt < 2; nxt++) {
+                int d = nxt - cur;
+                if (bad_col[j].count(d)) continue; // forbidden
+                ll cost = (nxt == 1) ? b[j+1] : 0;
+                dp_col[j+1][nxt] = min(dp_col[j+1][nxt], dp_col[j][cur] + cost);
+            }
+        }
+    }
+    
+    ll cost_col = min(dp_col[n-1][0], dp_col[n-1][1]);
+    if (cost_col >= 1e18) {
+        cout << -1 << '\n';
+        return;
+    }
+    
+    // Now for rows: bad_row[i] for i in [0, n-2]
+    vector<set<int>> bad_row(n-1);
+    for (int i = 0; i < n-1; i++) {
+        for (int j = 0; j < n; j++) {
+            int diff = h[i][j] - h[i+1][j];
+            if (diff >= -1 && diff <= 1) {
+                bad_row[i].insert(diff);
+            }
+        }
+    }
+    
+    // DP for rows: dp[i][r] = minimum cost for prefix [0..i] ending with r[i]=r
+    vector<vector<ll>> dp_row(n, vector<ll>(2, 1e18));
+    dp_row[0][0] = 0;
+    dp_row[0][1] = a[0];
+    
+    for (int i = 0; i < n-1; i++) {
+        for (int cur = 0; cur < 2; cur++) {
+            if (dp_row[i][cur] == 1e18) continue;
+            for (int nxt = 0; nxt < 2; nxt++) {
+                int d = nxt - cur;
+                if (bad_row[i].count(d)) continue;
+                ll cost = (nxt == 1) ? a[i+1] : 0;
+                dp_row[i+1][nxt] = min(dp_row[i+1][nxt], dp_row[i][cur] + cost);
+            }
+        }
+    }
+    
+    ll cost_row = min(dp_row[n-1][0], dp_row[n-1][1]);
+    if (cost_row >= 1e18) {
+        cout << -1 << '\n';
+        return;
+    }
+    
+    cout << cost_col + cost_row << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

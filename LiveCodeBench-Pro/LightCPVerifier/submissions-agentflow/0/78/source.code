@@ -1,0 +1,53 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> arr(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> arr[i];
+        }
+
+        // Check if all elements are the same
+        if (all_of(arr.begin(), arr.end(), [&](int x){ return x == arr[0]; })) {
+            cout << "No\n";
+            continue;
+        }
+        
+        vector<int> result(n);
+
+        // Find two different numbers
+        int first_diff_index = -1;
+        for (int i = 1; i < n; ++i) {
+            if (arr[i] != arr[0]) {
+                first_diff_index = i;
+                break;
+            }
+        }
+        
+        if (first_diff_index != -1) {
+            // Create sequences
+            cout << "Yes\n";
+            result[0] = 1;
+            result[first_diff_index] = 2;
+            for (int i = 1; i < n; ++i) {
+                if (i != first_diff_index) {
+                    result[i] = 1;
+                }
+            }
+            for (int x : result) {
+                cout << x << " ";
+            }
+            cout << "\n";
+        } else {
+            cout << "No\n";
+        }
+    }
+    return 0;
+}

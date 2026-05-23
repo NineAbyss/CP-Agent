@@ -1,0 +1,24 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        long long xor_x = 0, xor_sum = 0;
+        for (int i = 0; i < n; ++i) {
+            long long x, y;
+            cin >> x >> y;
+            xor_x ^= x;
+            xor_sum ^= (x + y);
+        }
+        long long sx = xor_x;
+        long long sy = xor_sum - sx;
+        cout << sx << ' ' << sy << '\n';
+    }
+    return 0;
+}

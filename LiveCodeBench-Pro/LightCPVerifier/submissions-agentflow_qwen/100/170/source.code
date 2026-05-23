@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+using ull = unsigned long long;
+
+vector<ull> a, b;
+string c;
+int n;
+
+struct pair_hash {
+    size_t operator()(const pair<int, ull>& p) const {
+        return hash<int>()(p.first) ^ hash<ull>()(p.second);
+    }
+};
+
+unordered_map<pair<int, ull>, ull, pair_hash> memo;
+
+ull dfs(int i, ull x) {
+    if (i == n) {
+        return x;
+    }
+    auto key = make_pair(i, x);
+    if (memo.find(key) != memo.end()) {
+        return memo[key];
+    }
+    ull res1 = dfs(i+1, x ^ a[i]);
+    ull res2 = dfs(i+1, x ^ b[i]);
+    ull res = (c[i] == '0') ? min(res1, res2) : max(res1, res2);
+    return memo[key] = res;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        cin >> n;
+        a.assign(n, 0);
+        b.assign(n, 0);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        cin >> c;
+        memo.clear();
+        cout << dfs(0, 0) << '\n';
+    }
+    return 0;
+}

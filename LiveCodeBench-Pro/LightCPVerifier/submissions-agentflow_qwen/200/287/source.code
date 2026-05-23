@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int q;
+        cin >> q;
+        deque<long long> dq;
+        bool reversed = false;
+        long long n = 0, total_sum = 0, rizziness = 0;
+
+        while (q--) {
+            int op;
+            cin >> op;
+            if (op == 1) {
+                long long last_elem = reversed ? dq.front() : dq.back();
+                rizziness = rizziness + total_sum - last_elem * n;
+                if (!reversed) {
+                    long long x = dq.back();
+                    dq.pop_back();
+                    dq.push_front(x);
+                } else {
+                    long long x = dq.front();
+                    dq.pop_front();
+                    dq.push_back(x);
+                }
+            } else if (op == 2) {
+                rizziness = (n + 1) * total_sum - rizziness;
+                reversed = !reversed;
+            } else if (op == 3) {
+                long long k;
+                cin >> k;
+                rizziness = rizziness + k * (n + 1);
+                total_sum += k;
+                n++;
+                if (!reversed) {
+                    dq.push_back(k);
+                } else {
+                    dq.push_front(k);
+                }
+            }
+            cout << rizziness << '\n';
+        }
+    }
+    return 0;
+}

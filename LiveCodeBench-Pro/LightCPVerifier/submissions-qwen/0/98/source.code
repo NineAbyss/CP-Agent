@@ -1,0 +1,126 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX_N = 100005;
+const long long INF = 1e15;
+
+vector<int> graph[MAX_N];
+int n, m, x, y;
+
+vector<int> get_path(int start, int end) {
+    vector<int> parent(n+1, -1);
+    vector<int> dist(n+1, -1);
+    queue<int> q;
+    q.push(start);
+    dist[start] = 0;
+    parent[start] = -1;
+
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int v : graph[u]) {
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                parent[v] = u;
+                q.push(v);
+            }
+        }
+    }
+
+    // Reconstruct path
+    vector<int> path;
+    int cur = end;
+    while (cur != -1) {
+        path.push_back(cur);
+        cur = parent[cur];
+    }
+    reverse(path.begin(), path.end());
+    return path;
+}
+
+void solve() {
+    cin >> n >> m >> x >> y;
+    
+    // Clear graph
+    for (int i = 1; i <= n; i++) {
+        graph[i].clear();
+    }
+    
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        graph[u].push_back(v);
+        graph[v].push_back(u);
+    }
+    
+    vector<unordered_set<int>> bad_times(n+1); // bad_times[v] = set of times when v is forbidden
+    int M = 0; // maximum time we need to consider for forbidden
+    
+    for (int i = 0; i < m; i++) {
+        int a, b;
+        cin >> a >> b;
+        vector<int> path = get_path(a, b);
+        // Time 1 to len(path): at time t, at path[t-1]
+        int len = path.size();
+        M = max(M, len);
+        for (int t = 1; t <= len; t++) {
+            int v = path[t-1];
+            bad_times[v].insert(t);
+        }
+    }
+    
+    // Dijkstra
+    vector<long long> dist(n+1, INF);
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> pq;
+    
+    // Check if we can start at x at time 1
+    if (bad_times[x].find(1) != bad_times[x].end()) {
+        // Cannot start
+        cout << -1 << '\n';
+        return;
+    }
+    
+    dist[x] = 1;
+    pq.push({1, x});
+    long long ans = -1;
+    
+    while (!pq.empty()) {
+        auto [t, v] = pq.top(); pq.pop();
+        if (t != dist[v]) continue;
+        
+        if (v == y) {
+            ans = t;
+            break;
+        }
+        
+        for (int u : graph[v]) {
+            long long arrival_time = t + 1;
+            // Skip all times up to M that are forbidden at u
+            while (arrival_time <= M && bad_times[u].find((int)arrival_time) != bad_times[u].end()) {
+                arrival_time++;
+            }
+            // Now arrival_time is the earliest time we can arrive at u
+            if (arrival_time < dist[u]) {
+                dist[u] = arrival_time;
+                pq.push({arrival_time, u});
+            }
+        }
+    }
+    
+    if (ans == -1) {
+        cout << -1 << '\n';
+    } else {
+        cout << ans << '\n';
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

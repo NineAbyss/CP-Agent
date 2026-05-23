@@ -1,0 +1,80 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <cmath>
+
+using namespace std;
+
+int countBits(int x) {
+    return __builtin_popcount(x);
+}
+
+long long maximizeBeauty(vector<int>& a, long long k) {
+    long long beauty = 0;
+
+    // Calculate initial beauty and prepare operations
+    priority_queue<pair<int, pair<int, int>>> pq;
+
+    for (int i = 0; i < a.size(); ++i) {
+        int curr_beauty = countBits(a[i]);
+        beauty += curr_beauty;
+
+        for (int j = 0; j < 32; ++j) { // Assuming a[i] <= 10^9, we have 32 bits
+            if (!(a[i] & (1 << j))) {
+                int next_value = a[i] | (1 << j);
+                int gain = countBits(next_value) - curr_beauty;
+                int operations_needed = next_value - a[i];
+                pq.push({gain, {operations_needed, i}});
+                break;
+            }
+        }
+    }
+
+    while (!pq.empty() && k > 0) {
+        auto [gain, info] = pq.top();
+        pq.pop();
+        int ops_needed = info.first;
+        int index = info.second;
+
+        if (ops_needed <= k) {
+            beauty += gain;
+            k -= ops_needed;
+            a[index] += ops_needed;
+            for (int j = 0; j < 32; ++j) {
+                if (!(a[index] & (1 << j))) {
+                    int next_value = a[index] | (1 << j);
+                    int new_gain = countBits(next_value) - countBits(a[index]);
+                    ops_needed = next_value - a[index];
+                    pq.push({new_gain, {ops_needed, index}});
+                    break;
+                }
+            }
+        }
+    }
+
+    return beauty;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    vector<long long> results(t);
+    for (int test_case = 0; test_case < t; ++test_case) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int &x : a) cin >> x;
+
+        results[test_case] = maximizeBeauty(a, k);
+    }
+
+    for (long long result : results) {
+        cout << result << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    vector<int> ans(n);
+    int beauty = 0;
+    int max_val = 0;
+    set<int> T;
+    for (int i = 0; i < n; ++i) {
+        int x = a[i];
+        if (x > beauty/2) {
+            T.insert(x);
+        }
+        if (x > max_val) max_val = x;
+        // Check if there exists s such that max_val/2 < s < max_val
+        auto it = T.upper_bound(max_val/2);
+        if (it != T.end() && *it < max_val) {
+            beauty = max_val;
+        } else {
+            for (int s : T) {
+                int f = (x % s) + (s % x);
+                if (f > beauty) beauty = f;
+            }
+        }
+        // Remove all s <= beauty/2
+        while (!T.empty() && *T.begin() <= beauty/2) {
+            T.erase(T.begin());
+        }
+        ans[i] = beauty;
+    }
+    for (int i = 0; i < n; ++i) {
+        cout << ans[i] << " \n"[i == n-1];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

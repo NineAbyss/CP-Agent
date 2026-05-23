@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int solve(string s) {
+    unordered_set<string> visited;
+    queue<string> q;
+    q.push(s);
+    visited.insert(s);
+    
+    while (!q.empty()) {
+        string cur = q.front(); q.pop();
+        int m = cur.length();
+        if (m <= 2) continue;
+        
+        for (int i = 0; i <= m - 3; i++) {
+            char a = cur[i], b = cur[i+1], c = cur[i+2];
+            int cnt0 = (a=='0') + (b=='0') + (c=='0');
+            char median = (cnt0 >= 2) ? '0' : '1';
+            int j = i;
+            while (j < m && cur[j] != median) j++;
+            // j always exists
+            
+            string next = cur;
+            next.erase(next.begin() + j);
+            if (visited.find(next) == visited.end()) {
+                visited.insert(next);
+                q.push(next);
+            }
+        }
+    }
+    
+    return visited.size() % MOD;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        cout << solve(s) << '\n';
+    }
+    
+    return 0;
+}

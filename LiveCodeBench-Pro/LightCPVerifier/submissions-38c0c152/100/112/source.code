@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+map<pair<vector<int>, int>, double> memo;
+
+double dfs(vector<int> state, int rounds, double p) {
+    if (rounds == 0) {
+        for (int x : state) if (x != 0) return 0.0;
+        return 1.0;
+    }
+    // 如果已经全 0
+    bool all_zero = true;
+    for (int x : state) if (x != 0) { all_zero = false; break; }
+    if (all_zero) return 1.0;
+
+    auto key = make_pair(state, rounds);
+    if (memo.find(key) != memo.end()) return memo[key];
+
+    int n = state.size();
+
+    // 剑发光的情况
+    double prob_shine;
+    bool can_shine = true;
+    for (int x : state) if (x == 0) { can_shine = false; break; }
+    if (can_shine) {
+        vector<int> new_state = state;
+        for (int &x : new_state) x--;
+        sort(new_state.rbegin(), new_state.rend());
+        prob_shine = dfs(new_state, rounds - 1, p);
+    } else {
+        // 不能发光攻击，只能选择不攻击（否则会杀死怪物）
+        prob_shine = dfs(state, rounds - 1, p);
+    }
+
+    // 剑不发光的情况
+    double best_noshine = 0.0;
+    // 不攻击
+    best_noshine = max(best_noshine, dfs(state, rounds - 1, p));
+    // 单体攻击
+    for (int i = 0; i < n; i++) {
+        if (state[i] > 0) {
+            vector<int> new_state = state;
+            new_state[i]--;
+            sort(new_state.rbegin(), new_state.rend());
+            best_noshine = max(best_noshine, dfs(new_state, rounds - 1, p));
+        }
+    }
+
+    double ans = p * prob_shine + (1 - p) * best_noshine;
+    memo[key] = ans;
+    return ans;
+}
+
+void solve() {
+    int n, m, p_percent;
+    cin >> n >> m >> p_percent;
+    double p = p_percent / 100.0;
+    vector<int> h(n);
+    for (int i = 0; i < n; i++) cin >> h[i];
+    vector<int> start(n);
+    for (int i = 0; i < n; i++) start[i] = h[i] - 1;
+    sort(start.rbegin(), start.rend());
+    memo.clear();
+    double ans = dfs(start, m, p);
+    cout << fixed << setprecision(12) << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

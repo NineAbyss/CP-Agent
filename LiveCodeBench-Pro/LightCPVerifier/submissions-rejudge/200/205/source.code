@@ -1,0 +1,24 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, x;
+        cin >> n >> x;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        int mn = n, mx = -1;
+        for (int i = 0; i < n; i++) {
+            if (a[i] == 1) {
+                mn = min(mn, i);
+                mx = max(mx, i);
+            }
+        }
+        // 到达时间是 i（因为门 i+1 的到达时间是 i） // 但题目保证至少有一个关着的门，所以 mx 和 mn 会被更新
+        if (mx - mn < x) cout << "YES\n";
+        else cout << "NO\n";
+    }
+    return 0;
+}

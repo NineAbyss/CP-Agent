@@ -1,0 +1,35 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+void solve(int n, int k) {
+    string result(n, '0'); // Start with a bitstring of all '0's.
+    int count1 = 0;        // Number of '1's in the current string.
+
+    // Place '1's in alternating positions to maintain balance.
+    for (int i = 0; i < n && count1 < k; i += 2) {
+        result[i] = '1';
+        count1++;
+    }
+    
+    // If needed more '1's fill the remaining indexes with '1's
+    for (int i = 1; i < n && count1 < k; i += 2) {
+        result[i] = '1';
+        count1++;
+    }
+
+    cout << result << endl;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        solve(n, k);
+    }
+    return 0;
+}

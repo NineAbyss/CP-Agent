@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 2e9;
+
+int solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    vector<int> b(m);
+    for (int i = 0; i < m; i++) cin >> b[i];
+    
+    // 检查不操作是否可行
+    int j = 0;
+    for (int i = 0; i < n && j < m; i++) {
+        if (a[i] >= b[j]) {
+            j++;
+        }
+    }
+    if (j == m) return 0;
+    
+    // 计算 L[t] = 匹配前 t-1 个 b 后下一个 a 的索引
+    vector<int> L(m+2, INF);
+    j = 0;
+    int idx = 0;
+    for (int t = 1; t <= m; t++) {
+        while (j < t-1 && idx < n) {
+            if (a[idx] >= b[j]) {
+                j++;
+            }
+            idx++;
+        }
+        if (j == t-1) {
+            L[t] = idx;
+        } else {
+            L[t] = INF;
+        }
+    }
+    
+    // 计算 R[t] = 匹配后 m-t 个 b 的最小索引
+    vector<int> R(m+2, -INF);
+    j = m-1;
+    idx = n-1;
+    for (int t = m; t >= 1; t--) {
+        while (j >= t && idx >= 0) {
+            if (a[idx] >= b[j]) {
+                j--;
+            }
+            idx--;
+        }
+        if (j == t-1) {
+            R[t] = idx+1; // 匹配的这些花的最小索引
+        } else {
+            R[t] = -INF;
+        }
+    }
+    
+    int ans = INF;
+    for (int t = 1; t <= m; t++) {
+        if (L[t] != INF && R[t] != -INF && L[t] <= R[t]) {
+            ans = min(ans, b[t-1]);
+        }
+    }
+    
+    if (ans == INF) return -1;
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << solve() << '\n';
+    }
+    return 0;
+}

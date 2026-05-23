@@ -1,0 +1,43 @@
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        vector<int> bpos;
+        for (int i = 0; i < n; i++) {
+            if (s[i] == 'B') bpos.push_back(i);
+        }
+        int m = bpos.size();
+        long long ans = 0;
+        int i = 0;
+        while (i < m) {
+            int j = i;
+            // 连续黑熊组：位置连续递增1
+            while (j + 1 < m && bpos[j + 1] == bpos[j] + 1) {
+                j++;
+            }
+            int odd_cnt = 0;
+            long long sum_ceil = 0;
+            for (int k = i; k <= j; k++) {
+                int idx = k;          // 第 idx 个黑熊（0-indexed）
+                int d = bpos[k] - idx; // 需要左移的距离
+                if (d < 0) d = 0;     // 不会出现，但安全处理
+                sum_ceil += (d + 1) / 2; // ceil(d/2)
+                if (d % 2 == 1) odd_cnt++;
+            }
+            ans += sum_ceil - odd_cnt / 2;
+            i = j + 1;
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

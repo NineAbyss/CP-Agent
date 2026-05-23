@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long solve_final(vector<int>& a, int d) {
+    int n = a.size();
+    
+    // 获取所有不同高度，降序排序
+    vector<int> heights = a;
+    sort(heights.begin(), heights.end());
+    heights.erase(unique(heights.begin(), heights.end()), heights.end());
+    reverse(heights.begin(), heights.end());
+    int k = heights.size();
+    
+    // 按高度分组位置
+    unordered_map<int, vector<int>> positions_by_height;
+    for (int i = 0; i < n; i++) {
+        positions_by_height[a[i]].push_back(i + 1);
+    }
+    
+    set<int> active; // 活跃位置排序集合
+    vector<long long> f_values(k); // 每个高度的 f 值
+    
+    // 从高到低处理高度
+    for (int idx = 0; idx < k; idx++) {
+        int h = heights[idx];
+        // 添加高度为h的位置
+        for (int pos : positions_by_height[h]) {
+            active.insert(pos);
+        }
+        
+        // 计算当前区间数 f(S_h)
+        int current_f = 0;
+        if (!active.empty()) {
+            int R = -1e9;
+            for (int pos : active) {
+                if (pos > R) {
+                    current_f++;
+                    R = pos + d - 1;
+                }
+            }
+        }
+        f_values[idx] = current_f;
+    }
+    
+    // 计算总答案
+    long long total = 0;
+    for (int idx = 0; idx < k; idx++) {
+        int h = heights[idx];
+        int h_next = (idx == k-1) ? 0 : heights[idx+1];
+        total += f_values[idx] * (h - h_next);
+    }
+    
+    return total;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, d;
+        cin >> n >> d;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        cout << solve_final(a, d) << '\n';
+    }
+    
+    return 0;
+}

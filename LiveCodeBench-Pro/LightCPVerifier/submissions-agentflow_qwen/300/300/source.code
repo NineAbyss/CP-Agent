@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        sort(a.begin(), a.end());
+        int L = n - k;
+
+        vector<pair<long long, long long>> intervals;
+        for (int l = 0; l <= n - L; l++) {
+            int r = l + L - 1;
+            int mid_left_idx = l + (L-1)/2;
+            int mid_right_idx = l + L/2;
+            long long A = a[mid_left_idx];
+            long long B = a[mid_right_idx];
+            intervals.push_back({A, B});
+        }
+
+        sort(intervals.begin(), intervals.end());
+        if (intervals.empty()) {
+            cout << "0\n";
+            continue;
+        }
+
+        long long total = 0;
+        long long cur_left = intervals[0].first;
+        long long cur_right = intervals[0].second;
+        for (int i = 1; i < intervals.size(); i++) {
+            if (intervals[i].first <= cur_right + 1) {
+                cur_right = max(cur_right, intervals[i].second);
+            } else {
+                total += cur_right - cur_left + 1;
+                cur_left = intervals[i].first;
+                cur_right = intervals[i].second;
+            }
+        }
+        total += cur_right - cur_left + 1;
+        cout << total << '\n';
+    }
+    return 0;
+}

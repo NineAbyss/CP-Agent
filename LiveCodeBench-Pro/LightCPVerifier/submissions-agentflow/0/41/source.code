@@ -1,0 +1,75 @@
+<code>
+cpp_code = r'''
+#include <iostream>
+#include <vector>
+#include <utility>
+
+using namespace std;
+
+// Record the swap operations aligning with expected order
+void record_swap(int type, int index, vector<pair<int, int>>& ops) {
+    ops.emplace_back(type, index);
+}
+
+// Function to solve each test case
+void solve() {
+    int t;
+    cin >> t;  // Number of test cases
+
+    while (t--) {
+        int n;
+        cin >> n;  // Length of arrays a and b
+        vector<int> a(n), b(n);
+        
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        for (int i = 0; i < n; ++i) cin >> b[i];
+
+        vector<pair<int, int>> operations;
+
+        // Step 1: Perform swaps to ensure a[i] < b[i]
+        for (int i = 0; i < n; ++i) {
+            if (a[i] > b[i]) {
+                swap(a[i], b[i]);
+                record_swap(3, i + 1, operations);
+            }
+        }
+
+        // Step 2: Bubble sort array 'a'
+        for (int i = 0; i < n - 1; ++i) {
+            for (int j = 0; j < n - i - 1; ++j) {
+                if (a[j] > a[j + 1]) {
+                    swap(a[j], a[j + 1]);
+                    record_swap(1, j + 1, operations);
+                }
+            }
+        }
+
+        // Step 3: Bubble sort array 'b'
+        for (int i = 0; i < n - 1; ++i) {
+            for (int j = 0; j < n - i - 1; ++j) {
+                if (b[j] > b[j + 1]) {
+                    swap(b[j], b[j + 1]);
+                    record_swap(2, j + 1, operations);
+                }
+            }
+        }
+
+        // Output the operations
+        cout << operations.size() << '\n';
+        for (const auto& op : operations) {
+            cout << op.first << ' ' << op.second << '\n';
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false); 
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}
+'''
+
+result = cpp_validation(cpp_code)
+print(result)
+</code>

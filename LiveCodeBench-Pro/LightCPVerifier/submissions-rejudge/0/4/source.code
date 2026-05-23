@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<long long> p(n);
+        for (int i = 0; i < n; i++) {
+            cin >> p[i];
+        }
+        
+        for (int day = 0; day < m; day++) {
+            vector<long long> a(n), b(n), c(n);
+            for (int i = 0; i < n; i++) cin >> a[i];
+            for (int i = 0; i < n; i++) cin >> b[i];
+            for (int i = 0; i < n; i++) cin >> c[i];
+            
+            vector<long long> t(n), u(n), v(n);
+            for (int j = 0; j < n; j++) {
+                t[j] = min(b[j], p[j]);
+                long long rem = p[j] - t[j];
+                u[j] = min(a[j], rem);
+                rem -= u[j];
+                v[j] = min(c[j], rem);
+                // 剩余丢弃
+            }
+            
+            vector<long long> p_next(n, 0);
+            for (int j = 0; j < n; j++) {
+                int next_j = (j + 1) % n;
+                int prev_j = (j - 1 + n) % n;
+                p_next[j] = t[j] + u[next_j] + v[prev_j];
+            }
+            
+            long long total = 0;
+            for (int j = 0; j < n; j++) total += p_next[j];
+            cout << total << '\n';
+            
+            p = p_next;
+        }
+    }
+    return 0;
+}

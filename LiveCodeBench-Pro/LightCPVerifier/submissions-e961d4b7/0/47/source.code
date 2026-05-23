@@ -1,0 +1,48 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        // command 1: mul 9
+        cout << "mul 9" << endl;
+        cout.flush();
+        string response;
+        cin >> response;
+        if (response == "-1") {
+            return 0;
+        }
+        // command 2: digit
+        cout << "digit" << endl;
+        cout.flush();
+        cin >> response;
+        if (response == "-1") {
+            return 0;
+        }
+        // command 3: digit
+        cout << "digit" << endl;
+        cout.flush();
+        cin >> response;
+        if (response == "-1") {
+            return 0;
+        }
+        // command 4: add (n-9)
+        cout << "add " << (n - 9) << endl;
+        cout.flush();
+        cin >> response;
+        if (response == "-1") {
+            return 0;
+        }
+        // final answer
+        cout << "!" << endl;
+        cout.flush();
+        cin >> response;
+        // if response is "-1", it's an error, but according to problem, if correct it should be "1"
+        // we don't need to check, because if wrong the interactor will terminate.
+    }
+    return 0;
+}

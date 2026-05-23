@@ -1,0 +1,213 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+
+// 全局缓存 can[n][mask][w][l]
+static bool can_cache[11][1024][151][151];
+static bool computed_cache[11][1024][151][151];
+
+// packing 检查
+int W, L;
+bool grid[151][151];
+vector<int> sizes;
+bool found;
+
+void dfs_pack(int idx, long long remain_area) {
+    if (found) return;
+    if (idx == sizes.size()) {
+        found = true;
+        return;
+    }
+    int s = sizes[idx];
+    if (remain_area < 1LL * s * s) return;
+    for (int x = 0; x <= W - s; x++) {
+        for (int y = 0; y <= L - s; y++) {
+            bool ok = true;
+            for (int dx = 0; dx < s && ok; dx++)
+                for (int dy = 0; dy < s && ok; dy++)
+                    if (grid[x+dx][y+dy]) ok = false;
+            if (!ok) continue;
+            for (int dx = 0; dx < s; dx++)
+                for (int dy = 0; dy < s; dy++)
+                    grid[x+dx][y+dy] = true;
+            dfs_pack(idx+1, remain_area - 1LL*s*s);
+            for (int dx = 0; dx < s; dx++)
+                for (int dy = 0; dy < s; dy++)
+                    grid[x+dx][y+dy] = false;
+            if (found) return;
+        }
+    }
+}
+
+bool check_packing(vector<int> lens, int w, int l) {
+    sort(lens.rbegin(), lens.rend());
+    sizes = lens;
+    W = w; L = l;
+    memset(grid, 0, sizeof grid);
+    found = false;
+    long long total_area = 0;
+    for (int len : lens) total_area += 1LL * len * len;
+    dfs_pack(0, 1LL * w * l);
+    return found;
+}
+
+bool can(int n, int mask, int w, int l, int f[]) {
+    if (computed_cache[n][mask][w][l]) return can_cache[n][mask][w][l];
+    vector<int> lens;
+    for (int i = 0; i < n; i++)
+        if (mask>>i & 1) lens.push_back(f[i]);
+    bool res = check_packing(lens, w, l);
+    can_cache[n][mask][w][l] = res;
+    computed_cache[n][mask][w][l] = true;
+    return res;
+}
+
+int n;
+int f[10];
+int order[10];
+vector<vector<vector<int>>> all_parts;
+vector<vector<int>> cur_part;
+vector<int> cur_maxlen;
+
+void gen_parts(int pos) {
+    if (pos == n) {
+        all_parts.push_back(cur_part);
+        return;
+    }
+    int idx = order[pos];
+    int len = f[idx];
+    for (int i = 0; i < (int)cur_part.size(); i++) {
+        int new_max = max(cur_maxlen[i], len);
+        if (i > 0 && new_max > cur_maxlen[i-1]) continue;
+        cur_part[i].push_back(idx);
+        int old_max = cur_maxlen[i];
+        cur_maxlen[i] = new_max;
+        gen_parts(pos+1);
+        cur_maxlen[i] = old_max;
+        cur_part[i].pop_back();
+    }
+    if (!cur_part.empty() && len > cur_maxlen.back()) return;
+    cur_part.push_back({idx});
+    cur_maxlen.push_back(len);
+    gen_parts(pos+1);
+    cur_maxlen.pop_back();
+    cur_part.pop_back();
+}
+
+struct PartitionInfo {
+    int minW;
+    long long minArea;
+    int totalH;
+    vector<int> masks;
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int m;
+        cin >> n >> m;
+        f[0] = 1;
+        if (n > 1) f[1] = 2;
+        for (int i = 2; i < n; i++) f[i] = f[i-1] + f[i-2];
+        for (int i = 0; i < n; i++) order[i] = i;
+        sort(order, order + n, [&](int a, int b) { return f[a] > f[b]; });
+        
+        // 生成划分
+        all_parts.clear();
+        cur_part.clear();
+        cur_maxlen.clear();
+        gen_parts(0);
+        
+        // 提取划分信息
+        vector<PartitionInfo> pinfos;
+        for (auto& part : all_parts) {
+            PartitionInfo info;
+            info.minW = 0;
+            info.minArea = 0;
+            info.totalH = 0;
+            for (auto& layer : part) {
+                int mask = 0;
+                int maxlen = 0;
+                long long sumarea = 0;
+                for (int idx : layer) {
+                    mask |= (1<<idx);
+                    int len = f[idx];
+                    if (len > maxlen) maxlen = len;
+                    sumarea += 1LL * len * len;
+                }
+                info.masks.push_back(mask);
+                if (maxlen > info.minW) info.minW = maxlen;
+                if (sumarea > info.minArea) info.minArea = sumarea;
+                info.totalH += maxlen;
+            }
+            pinfos.push_back(info);
+        }
+        
+        // 按 minW 排序
+        sort(pinfos.begin(), pinfos.end(), [](const PartitionInfo& a, const PartitionInfo& b) {
+            if (a.minW != b.minW) return a.minW < b.minW;
+            return a.minArea < b.minArea;
+        });
+        
+        // 读入盒子
+        vector<tuple<int,int,int>> boxes(m);
+        set<pair<int,int>> dims_set;
+        for (int i = 0; i < m; i++) {
+            int w, l, h;
+            cin >> w >> l >> h;
+            int W = min(w, l);
+            int L = max(w, l);
+            boxes[i] = {W, L, h};
+            if (W <= 150 && L <= 150) dims_set.insert({W, L});
+        }
+        
+        // 计算每个 dim 的最小高度
+        map<pair<int,int>, int> minH;
+        for (auto dim : dims_set) {
+            int w = dim.first, l = dim.second;
+            int best = INF;
+            // 二分找到第一个 minW > w 的位置
+            int lo = 0, hi = pinfos.size();
+            while (lo < hi) {
+                int mid = (lo + hi) / 2;
+                if (pinfos[mid].minW > w) hi = mid;
+                else lo = mid + 1;
+            }
+            int end = lo;
+            // 在这个范围内检查
+            for (int i = 0; i < end; i++) {
+                auto& info = pinfos[i];
+                if (info.minArea > 1LL * w * l) continue;
+                bool ok = true;
+                for (int mask : info.masks) {
+                    if (!can(n, mask, w, l, f)) {
+                        ok = false;
+                        break;
+                    }
+                }
+                if (ok && info.totalH < best) best = info.totalH;
+            }
+            minH[dim] = best;
+        }
+        
+        // 输出答案
+        string ans;
+        for (auto& box : boxes) {
+            int w = get<0>(box), l = get<1>(box), h = get<2>(box);
+            if (w > 150 || l > 150) {
+                ans += '0';
+                continue;
+            }
+            auto it = minH.find({w, l});
+            if (it == minH.end() || it->second == INF) ans += '0';
+            else if (h >= it->second) ans += '1';
+            else ans += '0';
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

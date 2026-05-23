@@ -1,0 +1,18 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, p, q;
+        cin >> n >> m >> p >> q;
+        // Check if a valid array exists // `total number of p-length sums = n - (p - 1)`
+        if ((n - p + 1) * q == m) {
+            cout << "YES" << endl;
+        } else {
+            cout << "NO" << endl;
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,94 @@
+#include <iostream>
+#include <cmath>
+#include <map>
+#include <tuple>
+using namespace std;
+
+using ll = long long;
+
+int simulate(ll n, ll x, ll y, ll vx, ll vy) {
+    double px = x, py = y;
+    double dx = vx, dy = vy;
+    int collisions = 0;
+    const int MAX_COLLISIONS = 1000000;
+    map<tuple<ll,ll,ll,ll>, int> visited; // 使用离散化状态检测循环
+    
+    while (collisions < MAX_COLLISIONS) {
+        // 检查是否到达顶点（允许微小误差）
+        const double eps = 1e-9;
+        if ((fabs(px) < eps && fabs(py) < eps) ||
+            (fabs(px) < eps && fabs(py - n) < eps) ||
+            (fabs(px - n) < eps && fabs(py) < eps)) {
+            return collisions;
+        }
+        
+        // 离散化状态用于检测循环
+        ll state_x = round(px * 1e6);
+        ll state_y = round(py * 1e6);
+        ll state_dx = round(dx * 1e6);
+        ll state_dy = round(dy * 1e6);
+        auto state = make_tuple(state_x, state_y, state_dx, state_dy);
+        if (visited.count(state)) {
+            // 循环，无法逃逸
+            return -1;
+        }
+        visited[state] = collisions;
+        
+        // 计算到各边界的碰撞时间
+        double tx0 = (0 - px) / dx;
+        double ty0 = (0 - py) / dy;
+        double ts = (n - px - py) / (dx + dy);
+        
+        double min_t = 1e18;
+        int side = -1;
+        
+        if (tx0 > 1e-12) {
+            min_t = tx0;
+            side = 0;
+        }
+        if (ty0 > 1e-12 && ty0 < min_t) {
+            min_t = ty0;
+            side = 1;
+        }
+        if (ts > 1e-12 && ts < min_t) {
+            min_t = ts;
+            side = 2;
+        }
+        
+        if (side == -1) {
+            return -1;
+        }
+        
+        // 移动
+        px += dx * min_t;
+        py += dy * min_t;
+        
+        // 反射
+        if (side == 0) {
+            dx = -dx;
+        } else if (side == 1) {
+            dy = -dy;
+        } else {
+            double dot = dx + dy;
+            dx = dx - dot;
+            dy = dy - dot;
+        }
+        
+        collisions++;
+    }
+    return -1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        ll n, x, y, vx, vy;
+        cin >> n >> x >> y >> vx >> vy;
+        cout << simulate(n, x, y, vx, vy) << '\n';
+    }
+    return 0;
+}

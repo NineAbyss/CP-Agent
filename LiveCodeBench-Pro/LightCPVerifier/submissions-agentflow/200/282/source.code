@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long count_cute_subarrays(const vector<int>& a) {
+    int n = a.size();
+    long long ans = 0;
+    
+    for (int l = 0; l < n; l++) {
+        vector<int> lis_tails, lds_tails;
+        
+        for (int r = l; r < n; r++) {
+            int x = a[r];
+            
+            // 更新LIS
+            auto it_lis = lower_bound(lis_tails.begin(), lis_tails.end(), x);
+            if (it_lis == lis_tails.end()) {
+                lis_tails.push_back(x);
+            } else {
+                *it_lis = x;
+            }
+            
+            // 更新LDS
+            auto it_lds = lower_bound(lds_tails.begin(), lds_tails.end(), x, greater<int>());
+            if (it_lds == lds_tails.end()) {
+                lds_tails.push_back(x);
+            } else {
+                *it_lds = x;
+            }
+            
+            int len = r - l + 1;
+            if ((int)lis_tails.size() + (int)lds_tails.size() == len + 1) {
+                ans++;
+            } else {
+                break; // 由于遗传性，后续更大的r也不会是cute的
+            }
+        }
+    }
+    
+    return ans;
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    cout << count_cute_subarrays(a) << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, x;
+        cin >> n >> x;
+        vector<int> doors(n);
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> doors[i];
+        }
+        
+        int maxClosedSequence = 0;
+        int currentClosedSequence = 0;
+        
+        for (int i = 0; i < n; ++i) {
+            if (doors[i] == 1) {
+                // Count consecutive closed doors
+                currentClosedSequence++;
+                maxClosedSequence = max(maxClosedSequence, currentClosedSequence);
+            } else {
+                // Reset count when we encounter an open door
+                currentClosedSequence = 0;
+            }
+        }
+        
+        // Check if the maximum closed sequence is less than or equal to x
+        if (maxClosedSequence <= x) {
+            cout << "YES" << endl;
+        } else {
+            cout << "NO" << endl;
+        }
+    }
+    
+    return 0;
+}

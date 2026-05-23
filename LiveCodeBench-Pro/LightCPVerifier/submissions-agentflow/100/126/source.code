@@ -1,0 +1,45 @@
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+// Function to calculate contributions dynamically over critical block
+long long calculateSumF(const string &s, int n) {
+    long long totalSum = 0;
+    int i = 0;
+
+    while (i < n) {
+        int j = i;
+        
+        // Count how long this block goes
+        while (j < n && s[i] == s[j]) {
+            j++;
+        }
+        
+        int len = j - i;
+        
+        // Calculate and add contribution from this contiguous block
+        totalSum += (long long)len * (len + 1) / 2;
+        
+        // Move to the next block
+        i = j;
+    }
+    
+    return totalSum;
+}
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+
+        cout << calculateSumF(s, n) << endl;
+    }
+
+    return 0;
+}

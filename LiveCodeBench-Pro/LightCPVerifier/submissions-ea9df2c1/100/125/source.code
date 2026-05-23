@@ -1,0 +1,236 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+const int MAXN = 305;
+int n, r, k;
+vector<vector<int>> a;
+vector<string> color_str;
+vector<vector<int>> color;
+
+// ---------- 工具函数：BFS 检查路径 ----------
+bool bfs_check(int si, int sj, int ti, int tj, int limit, const vector<vector<bool>>& blocked) {
+    if (a[si][sj] > limit) return false;
+    vector<vector<bool>> vis(n+1, vector<bool>(n+1, false));
+    queue<pair<int,int>> q;
+    q.push({si, sj});
+    vis[si][sj] = true;
+    int dr[] = {1, -1, 0, 0};
+    int dc[] = {0, 0, 1, -1};
+    while (!q.empty()) {
+        auto [x, y] = q.front(); q.pop();
+        if (x == ti && y == tj) return true;
+        for (int d = 0; d < 4; d++) {
+            int nx = x + dr[d], ny = y + dc[d];
+            if (nx < 1 || nx > n || ny < 1 || ny > n) continue;
+            if (vis[nx][ny]) continue;
+            if (a[nx][ny] > limit) continue;
+            if (blocked[nx][ny]) continue;
+            vis[nx][ny] = true;
+            q.push({nx, ny});
+        }
+    }
+    return false;
+}
+
+// ---------- Dinic 最大流 ----------
+struct Dinic {
+    struct Edge {
+        int to, cap, rev;
+    };
+    vector<vector<Edge>> g;
+    vector<int> level, iter;
+    int N;
+    Dinic(int n) : g(n), level(n), iter(n), N(n) {}
+    void add_edge(int from, int to, int cap) {
+        g[from].push_back({to, cap, (int)g[to].size()});
+        g[to].push_back({from, 0, (int)g[from].size()-1});
+    }
+    void bfs(int s) {
+        fill(level.begin(), level.end(), -1);
+        queue<int> q;
+        level[s] = 0;
+        q.push(s);
+        while (!q.empty()) {
+            int v = q.front(); q.pop();
+            for (auto& e : g[v]) {
+                if (e.cap > 0 && level[e.to] < 0) {
+                    level[e.to] = level[v] + 1;
+                    q.push(e.to);
+                }
+            }
+        }
+    }
+    int dfs(int v, int t, int f) {
+        if (v == t) return f;
+        for (int& i = iter[v]; i < (int)g[v].size(); i++) {
+            Edge& e = g[v][i];
+            if (e.cap > 0 && level[v] < level[e.to]) {
+                int d = dfs(e.to, t, min(f, e.cap));
+                if (d > 0) {
+                    e.cap -= d;
+                    g[e.to][e.rev].cap += d;
+                    return d;
+                }
+            }
+        }
+        return 0;
+    }
+    int max_flow(int s, int t) {
+        int flow = 0;
+        while (true) {
+            bfs(s);
+            if (level[t] < 0) return flow;
+            fill(iter.begin(), iter.end(), 0);
+            int f;
+            while ((f = dfs(s, t, INF)) > 0) {
+                flow += f;
+            }
+        }
+    }
+};
+
+// ---------- 检查 ansF 是否可行 ----------
+bool check(int ansF, const vector<vector<bool>>& allowed_inc) {
+    // 建图：节点数 2*n*n
+    int nodes = 2*n*n + 2;
+    int S = 2*n*n, T = S+1;
+    Dinic dinic(nodes);
+    
+    auto in_id = [&](int i, int j) { return (i-1)*n + (j-1); };
+    auto out_id = [&](int i, int j) { return in_id(i,j) + n*n; };
+    
+    // 1. 内部边 in -> out
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            int u = in_id(i,j), v = out_id(i,j);
+            if (allowed_inc[i][j]) {
+                int need = max(0, ansF - a[i][j]);
+                dinic.add_edge(u, v, need);
+            } else {
+                dinic.add_edge(u, v, INF);
+            }
+        }
+    }
+    
+    // 2. 相邻边（只连值 < ansF 的格子）
+    int dr[] = {1, -1, 0, 0};
+    int dc[] = {0, 0, 1, -1};
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (a[i][j] >= ansF) continue;
+            int u = out_id(i,j);
+            for (int d = 0; d < 4; d++) {
+                int ni = i + dr[d], nj = j + dc[d];
+                if (ni < 1 || ni > n || nj < 1 || nj > n) continue;
+                if (a[ni][nj] >= ansF) continue;
+                int v = in_id(ni, nj);
+                dinic.add_edge(u, v, INF);
+            }
+        }
+    }
+    
+    // 源汇
+    int s_id = in_id(n, 1);
+    int t_id = out_id(r, n);
+    if (a[n][1] >= ansF || a[r][n] >= ansF) {
+        return true;
+    }
+    dinic.add_edge(S, s_id, INF);
+    dinic.add_edge(t_id, T, INF);
+    
+    int min_cut = dinic.max_flow(S, T);
+    return min_cut <= k;
+}
+
+void solve() {
+    cin >> n >> r >> k;
+    a.assign(n+1, vector<int>(n+1));
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            cin >> a[i][j];
+        }
+    }
+    color_str.resize(n+1);
+    color.assign(n+1, vector<int>(n+1, 0));
+    for (int i = 1; i <= n; i++) {
+        cin >> color_str[i];
+        for (int j = 1; j <= n; j++) {
+            color[i][j] = color_str[i][j-1] - '0';
+        }
+    }
+    
+    // 1. 计算 disM
+    int low = 1, high = 1e6, disM = INF;
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        if (bfs_check(1, 1, r, n, mid, vector<vector<bool>>(n+1, vector<bool>(n+1, false)))) {
+            disM = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+    
+    // 2. 找出必经点（关键格子）
+    vector<vector<bool>> critical(n+1, vector<bool>(n+1, false));
+    // 在值 <= disM 的格子中，删除每个格子看是否还有路径
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (a[i][j] > disM) continue;
+            vector<vector<bool>> blocked(n+1, vector<bool>(n+1, false));
+            blocked[i][j] = true;
+            if (!bfs_check(1, 1, r, n, disM, blocked)) {
+                critical[i][j] = true;
+            }
+        }
+    }
+    
+    // 3. 允许增加的黑格子
+    vector<vector<bool>> allowed_inc(n+1, vector<bool>(n+1, false));
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (color[i][j] == 1 && !critical[i][j]) {
+                allowed_inc[i][j] = true;
+            }
+        }
+    }
+    
+    // 4. 原始 disF
+    low = 1, high = 1e6;
+    int orig_disF = INF;
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        if (bfs_check(n, 1, r, n, mid, vector<vector<bool>>(n+1, vector<bool>(n+1, false)))) {
+            orig_disF = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+    
+    // 5. 二分最终 disF
+    int L = orig_disF, R = 1e6, bestF = orig_disF;
+    while (L <= R) {
+        int mid = (L + R) / 2;
+        if (check(mid, allowed_inc)) {
+            bestF = mid;
+            L = mid + 1;
+        } else {
+            R = mid - 1;
+        }
+    }
+    
+    cout << disM << " " << bestF << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

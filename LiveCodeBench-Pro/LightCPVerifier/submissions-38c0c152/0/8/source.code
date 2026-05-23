@@ -1,0 +1,111 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+using namespace std;
+
+long long count_subsegments(const vector<long long>& arr, long long s, long long x) {
+    int n = arr.size();
+    long long ans = 0;
+    
+    // 按大于 x 的元素分割
+    int start = 0;
+    while (start < n) {
+        if (arr[start] > x) {
+            start++;
+            continue;
+        }
+        // 找到段的结束位置
+        int end = start;
+        while (end < n && arr[end] <= x) {
+            end++;
+        }
+        // 段为 [start, end-1] // 统计该段内满足条件的子段
+        // 先找出段内所有 x 的位置
+        vector<int> x_positions;
+        for (int i = start; i < end; i++) {
+            if (arr[i] == x) {
+                x_positions.push_back(i);
+            }
+        }
+        
+        if (x_positions.empty()) {
+            // 没有 x，则该段内没有满足条件的子段
+            start = end;
+            continue;
+        }
+        
+        // 统计整个段内所有和为 s 的子段数量
+        unordered_map<long long, int> prefix_count;
+        prefix_count[0] = 1; // 前缀和为 0 出现一次
+        long long prefix_sum = 0;
+        long long total_count = 0;
+        for (int i = start; i < end; i++) {
+            prefix_sum += arr[i];
+            // 查找 prefix_sum - s
+            if (prefix_count.find(prefix_sum - s) != prefix_count.end()) {
+                total_count += prefix_count[prefix_sum - s];
+            }
+            prefix_count[prefix_sum]++;
+        }
+        
+        // 统计不含 x 的子段内和为 s 的子段数量
+        long long exclude_count = 0;
+        // 将段按 x 的位置分割
+        int seg_start = start;
+        for (int x_pos : x_positions) {
+            // 子段为 [seg_start, x_pos-1] (不含 x)
+            if (seg_start <= x_pos - 1) {
+                // 统计该子段内和为 s 的子段数量
+                unordered_map<long long, int> seg_prefix_count;
+                seg_prefix_count[0] = 1;
+                long long seg_prefix_sum = 0;
+                for (int i = seg_start; i <= x_pos - 1; i++) {
+                    seg_prefix_sum += arr[i];
+                    if (seg_prefix_count.find(seg_prefix_sum - s) != seg_prefix_count.end()) {
+                        exclude_count += seg_prefix_count[seg_prefix_sum - s];
+                    }
+                    seg_prefix_count[seg_prefix_sum]++;
+                }
+            }
+            seg_start = x_pos + 1;
+        }
+        // 最后一个不含 x 的子段 [seg_start, end-1]
+        if (seg_start <= end - 1) {
+            unordered_map<long long, int> seg_prefix_count;
+            seg_prefix_count[0] = 1;
+            long long seg_prefix_sum = 0;
+            for (int i = seg_start; i <= end - 1; i++) {
+                seg_prefix_sum += arr[i];
+                if (seg_prefix_count.find(seg_prefix_sum - s) != seg_prefix_count.end()) {
+                    exclude_count += seg_prefix_count[seg_prefix_sum - s];
+                }
+                seg_prefix_count[seg_prefix_sum]++;
+            }
+        }
+        
+        ans += total_count - exclude_count;
+        start = end;
+    }
+    
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long s, x;
+        cin >> n >> s >> x;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        cout << count_subsegments(a, s, x) << '\n';
+    }
+    
+    return 0;
+}

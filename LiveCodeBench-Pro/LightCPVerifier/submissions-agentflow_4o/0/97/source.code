@@ -1,0 +1,30 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+string determine_winner(int n, string cards) {
+    // Direct check of special advantage:
+    if (cards[0] == 'A') return "Alice"; // Alice has card 1
+    
+    int max_alice = -1, max_bob = -1;
+    for (int i = 0; i < n; ++i) {
+        if (cards[i] == 'A') max_alice = max(max_alice, i + 1);
+        else max_bob = max(max_bob, i + 1);
+    }
+    
+    // Final comparison
+    return max_alice > max_bob ? "Alice" : "Bob"; // Compare highest cards to determine winner
+}
+
+int main() {
+    int t, n;
+    string cards;
+    
+    cin >> t;
+    while (t--) {
+        cin >> n;
+        cin >> cards;
+        cout << determine_winner(n, cards) << endl;
+    }
+    return 0;
+}

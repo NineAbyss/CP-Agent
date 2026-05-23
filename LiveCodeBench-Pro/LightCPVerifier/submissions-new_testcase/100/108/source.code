@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9+5;
+
+int solve_one(int n, int m, vector<int>& a, vector<int>& b) {
+    vector<int> pre(m+2, INF);
+    vector<int> suf(m+2, -INF);
+    
+    // pre
+    int i = 0, j = 1;
+    while (j <= m) {
+        while (i < n && a[i] < b[j-1]) i++;
+        if (i >= n) break;
+        pre[j] = i;
+        i++;
+        j++;
+    }
+    // suf
+    i = n-1, j = m;
+    while (j >= 1) {
+        while (i >= 0 && a[i] < b[j-1]) i--;
+        if (i < 0) break;
+        suf[j] = i;
+        i--;
+        j--;
+    }
+    
+    if (pre[m] != INF) return 0;
+    
+    if (m == 1) {
+        return b[0];
+    }
+    
+    int ans = INF;
+    for (int p = 1; p <= m; p++) {
+        bool ok = false;
+        if (p == 1) {
+            if (suf[2] != -INF) ok = true;
+        } else if (p == m) {
+            if (pre[m-1] != INF) ok = true;
+        } else {
+            if (pre[p-1] != INF && suf[p+1] != -INF && pre[p-1] < suf[p+1]) ok = true;
+        }
+        if (ok) {
+            ans = min(ans, b[p-1]);
+        }
+    }
+    if (ans == INF) return -1;
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<int> a(n);
+        for (int i=0; i<n; i++) cin >> a[i];
+        vector<int> b(m);
+        for (int i=0; i<m; i++) cin >> b[i];
+        cout << solve_one(n, m, a, b) << '\n';
+    }
+    return 0;
+}

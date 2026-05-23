@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int simulate(const vector<int>& a, const vector<int>& b) {
+    int n = a.size();
+    queue<int> player;
+    for (int x : a) 
+        player.push(x);
+    
+    int score = 0;
+    for (int i = 0; i < n; ++i) {
+        int p_card = player.front(); 
+        player.pop();
+        int d_card = b[i];
+        if (p_card > d_card) {
+            score++;
+        } else {
+            player.push(p_card);
+        }
+    }
+    return score;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; ++i) 
+            cin >> a[i];
+        for (int i = 0; i < n; ++i) 
+            cin >> b[i];
+
+        int max_score = simulate(a, b);
+
+        // Try every possible swap of two cards
+        for (int i = 0; i < n; ++i) {
+            for (int j = i + 1; j < n; ++j) {
+                swap(a[i], a[j]);
+                max_score = max(max_score, simulate(a, b));
+                swap(a[i], a[j]); // restore
+            }
+        }
+
+        cout << max_score << '\n';
+    }
+
+    return 0;
+}

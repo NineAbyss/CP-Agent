@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve(int l, int r) {
+    string L = to_string(l);
+    string R = to_string(r);
+    int n = L.size();
+    // memo[pos][tight_low][tight_high]
+    vector<vector<vector<int>>> memo(n+1, vector<vector<int>>(2, vector<int>(2, -1)));
+    function<int(int, bool, bool)> dfs = [&](int pos, bool tight_low, bool tight_high) -> int {
+        if (pos == n) return 0;
+        if (memo[pos][tight_low][tight_high] != -1) return memo[pos][tight_low][tight_high];
+        int lo = tight_low ? L[pos] - '0' : 0;
+        int hi = tight_high ? R[pos] - '0' : 9;
+        int res = 1e9;
+        for (int d = lo; d <= hi; ++d) {
+            int add = (d == (L[pos]-'0')) + (d == (R[pos]-'0'));
+            bool ntight_low = tight_low && (d == (L[pos]-'0'));
+            bool ntight_high = tight_high && (d == (R[pos]-'0'));
+            res = min(res, add + dfs(pos+1, ntight_low, ntight_high));
+        }
+        memo[pos][tight_low][tight_high] = res;
+        return res;
+    };
+    return dfs(0, true, true);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int l, r;
+        cin >> l >> r;
+        cout << solve(l, r) << '\n';
+    }
+    return 0;
+}

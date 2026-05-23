@@ -1,0 +1,147 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+vector<int> compute_a_from_p(const vector<int>& p) {
+    int n = p.size();
+    vector<int> a(n, -1);
+    vector<bool> alive(n, true);
+    int iteration = 1;
+    while (true) {
+        vector<int> indices;
+        for (int i = 0; i < n; i++) if (alive[i]) indices.push_back(i);
+        if (indices.size() == 1) break;
+        vector<bool> keep(n, false);
+        if (iteration % 2 == 1) { // keep local minima
+            for (int j = 0; j < indices.size(); j++) {
+                int idx = indices[j];
+                bool is_min = false;
+                if (j == 0) {
+                    if (p[idx] < p[indices[j+1]]) is_min = true;
+                } else if (j == indices.size()-1) {
+                    if (p[idx] < p[indices[j-1]]) is_min = true;
+                } else {
+                    int left = indices[j-1];
+                    int right = indices[j+1];
+                    if (p[idx] < p[left] && p[idx] < p[right]) is_min = true;
+                }
+                if (is_min) keep[idx] = true;
+            }
+        } else { // keep local maxima
+            for (int j = 0; j < indices.size(); j++) {
+                int idx = indices[j];
+                bool is_max = false;
+                if (j == 0) {
+                    if (p[idx] > p[indices[j+1]]) is_max = true;
+                } else if (j == indices.size()-1) {
+                    if (p[idx] > p[indices[j-1]]) is_max = true;
+                } else {
+                    int left = indices[j-1];
+                    int right = indices[j+1];
+                    if (p[idx] > p[left] && p[idx] > p[right]) is_max = true;
+                }
+                if (is_max) keep[idx] = true;
+            }
+        }
+        for (int i = 0; i < n; i++) {
+            if (alive[i] && !keep[i]) {
+                alive[i] = false;
+                a[i] = iteration;
+            }
+        }
+        iteration++;
+    }
+    return a;
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    
+    int max_a = 0;
+    for (int x : a) if (x > max_a) max_a = x;
+    int INF = max_a + 1;
+    // try both parities for INF
+    for (int parity = 0; parity <= 1; parity++) {
+        int INF_val = INF;
+        if (parity == 0) {
+            if (INF_val % 2 == 0) INF_val++;
+        } else {
+            if (INF_val % 2 == 1) INF_val++;
+        }
+        vector<int> a2 = a;
+        for (int i = 0; i < n; i++) if (a2[i] == -1) a2[i] = INF_val;
+        
+        vector<vector<int>> adj(n);
+        vector<int> indeg(n,0);
+        for (int i = 0; i < n-1; i++) {
+            int x = a2[i], y = a2[i+1];
+            if (x < y) {
+                if (x % 2 == 1) {
+                    adj[i].push_back(i+1);
+                    indeg[i+1]++;
+                } else {
+                    adj[i+1].push_back(i);
+                    indeg[i]++;
+                }
+            } else if (x > y) {
+                if (y % 2 == 1) {
+                    adj[i+1].push_back(i);
+                    indeg[i]++;
+                } else {
+                    adj[i].push_back(i+1);
+                    indeg[i+1]++;
+                }
+            }
+        }
+        
+        queue<int> q;
+        for (int i = 0; i < n; i++) if (indeg[i] == 0) q.push(i);
+        vector<int> topo;
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            topo.push_back(u);
+            for (int v : adj[u]) {
+                indeg[v]--;
+                if (indeg[v] == 0) q.push(v);
+            }
+        }
+        
+        if ((int)topo.size() != n) {
+            continue; // cycle, should not happen
+        }
+        
+        vector<int> p(n);
+        // try assigning decreasing values
+        for (int assign_mode = 0; assign_mode <= 1; assign_mode++) {
+            if (assign_mode == 0) {
+                int val = n;
+                for (int idx : topo) p[idx] = val--;
+            } else {
+                int val = 1;
+                for (int idx : topo) p[idx] = val++;
+            }
+            vector<int> computed_a = compute_a_from_p(p);
+            if (computed_a == a) {
+                for (int x : p) cout << x << " ";
+                cout << "\n";
+                return;
+            }
+        }
+    }
+    // fallback: should not reach here
+    for (int i = 1; i <= n; i++) cout << i << " ";
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

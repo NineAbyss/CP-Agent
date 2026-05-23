@@ -1,0 +1,32 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+int calculate_min_f(const std::string& l, const std::string& r) {
+    int n = l.size();
+    int min_f = n; // f(l, x) and f(x, r) can each be at most n
+   
+    for (int i = 0; i <= n; ++i) {
+        // Split point where we stop matching l to match r
+        // We're assuming the transition point at i
+        // f(l, x) + f(x, r) is the same as the digits that match and mismatch in both l and r
+        int f_lx = i;
+        int f_xr = 0;
+        for (int j = i; j < n; ++j) {
+            if (l[j] == r[j]) ++f_xr;
+        }
+        min_f = std::min(min_f, f_lx + f_xr);
+    }
+    return min_f;
+}
+
+int main() {
+    int t;
+    std::cin >> t;
+    while (t--) {
+        std::string l, r;
+        std::cin >> l >> r;
+        std::cout << calculate_min_f(l, r) << std::endl;
+    }
+    return 0;
+}

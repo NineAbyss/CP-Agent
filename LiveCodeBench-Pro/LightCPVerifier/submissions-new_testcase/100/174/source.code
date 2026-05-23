@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Fenwick {
+    int n;
+    vector<int> bit;
+    Fenwick(int n_) : n(n_), bit(n_+1, 0) {}
+    void add(int idx, int delta) {
+        for (; idx <= n; idx += idx & -idx)
+            bit[idx] += delta;
+    }
+    int sum(int idx) {
+        int res = 0;
+        for (; idx > 0; idx -= idx & -idx)
+            res += bit[idx];
+        return res;
+    }
+    int range_sum(int l, int r) {
+        return sum(r) - sum(l-1);
+    }
+    // find smallest index such that prefix sum >= target
+    int lower_bound(int target) {
+        int idx = 0;
+        int bit_mask = 1;
+        while (bit_mask <= n) bit_mask <<= 1;
+        bit_mask >>= 1;
+        for (; bit_mask > 0; bit_mask >>= 1) {
+            int next_idx = idx + bit_mask;
+            if (next_idx <= n && bit[next_idx] < target) {
+                target -= bit[next_idx];
+                idx = next_idx;
+            }
+        }
+        return idx + 1;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        // compute L and R for each x: L[x] = min index i (1-indexed) with a_i >= x, R[x] = max index.
+        vector<pair<int, int>> pos;
+        for (int i = 0; i < n; i++) {
+            pos.emplace_back(a[i], i);
+        }
+        sort(pos.begin(), pos.end(), greater<pair<int,int>>());
+        vector<int> L(n+1, n+1), R(n+1, -1);
+        int min_idx = n+1, max_idx = -1;
+        int idx = 0;
+        for (int x = n; x >= 1; x--) {
+            while (idx < n && pos[idx].first >= x) {
+                int i = pos[idx].second;
+                min_idx = min(min_idx, i);
+                max_idx = max(max_idx, i);
+                idx++;
+            }
+            if (min_idx <= max_idx) {
+                L[x] = min_idx + 1; // convert to 1-indexed
+                R[x] = max_idx + 1;
+            }
+        }
+        Fenwick ft(n);
+        for (int i = 1; i <= n; i++) ft.add(i, 1);
+        long long ans = 0;
+        for (int x = 1; x <= n; x++) {
+            if (L[x] > R[x]) continue;
+            int cnt = ft.range_sum(L[x], R[x]);
+            if (cnt < 2) continue;
+            int before = ft.sum(L[x]-1);
+            int first_pos = ft.lower_bound(before + 1);
+            int last_pos = ft.lower_bound(before + cnt);
+            ans += (last_pos - first_pos);
+            ft.add(first_pos, -1);
+            ft.add(last_pos, -1);
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

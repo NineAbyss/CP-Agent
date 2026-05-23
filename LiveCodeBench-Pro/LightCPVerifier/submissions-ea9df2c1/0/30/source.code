@@ -1,0 +1,72 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+const int MAX_A = 5000;
+short gcd_table[MAX_A + 1][MAX_A + 1];
+
+int gcd(int a, int b) {
+    while (b) {
+        int t = b;
+        b = a % b;
+        a = t;
+    }
+    return a;
+}
+
+void precompute_gcd() {
+    for (int i = 0; i <= MAX_A; ++i) {
+        for (int j = 0; j <= MAX_A; ++j) {
+            gcd_table[i][j] = gcd(i, j);
+        }
+    }
+}
+
+int solve_one(const vector<int>& a) {
+    int n = a.size();
+    if (n == 1) return 0;
+    int g = a[0];
+    for (int x : a) g = gcd(g, x);
+    int cnt = 0;
+    for (int x : a) if (x == g) cnt++;
+    if (cnt > 0) {
+        return n - cnt;
+    }
+    const int INF = 1e9;
+    vector<int> dp(MAX_A + 1, INF);
+    dp[0] = 0;
+    for (int val : a) {
+        vector<int> new_dp = dp;
+        for (int x = 0; x <= MAX_A; ++x) {
+            if (dp[x] != INF) {
+                int gx = gcd_table[x][val];
+                if (new_dp[gx] > dp[x] + 1) {
+                    new_dp[gx] = dp[x] + 1;
+                }
+            }
+        }
+        dp = new_dp;
+    }
+    int k = dp[g];
+    // k should be at most n
+    if (k >= INF) k = n;
+    return n + k - 2;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    precompute_gcd();
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        cout << solve_one(a) << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int MOD = 998244353;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        string s;
+        cin >> s;
+        
+        map<pair<string, int>, int> memo;
+        
+        function<int(string, int)> dfs = [&](string s, int k) -> int {
+            if (k == 0) return 1;
+            auto state = make_pair(s, k);
+            if (memo.count(state)) return memo[state];
+            
+            int res = 0;
+            for (int i = 0; i < n; i++) {
+                if (s[i] == '0') {
+                    string t = s;
+                    for (int j = 0; j <= i; j++) {
+                        t[j] ^= 1;
+                    }
+                    res = (res + dfs(t, k-1)) % MOD;
+                }
+            }
+            return memo[state] = res;
+        };
+        
+        cout << dfs(s, k) << '\n';
+    }
+    return 0;
+}

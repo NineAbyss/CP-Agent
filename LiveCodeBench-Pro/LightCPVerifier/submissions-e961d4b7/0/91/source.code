@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+using namespace std;
+
+using ll = long long;
+
+ll gcd(ll a, ll b) {
+    while (b) {
+        a %= b;
+        swap(a, b);
+    }
+    return a;
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    
+    ll val = *min_element(a.begin(), a.end());
+    
+    // 收集所有 val 的倍数
+    vector<ll> multiples;
+    for (ll x : a) {
+        if (x % val == 0) {
+            multiples.push_back(x);
+        }
+    }
+    
+    // 计算所有 val 的倍数（除了 val 本身）的 gcd
+    ll g = 0;
+    bool has_other = false;
+    for (ll x : multiples) {
+        if (x != val) {
+            g = gcd(g, x);
+            has_other = true;
+        }
+    }
+    
+    if (!has_other) {
+        // 所有 multiples 都是 val（即所有数都是 val） // 那么我们可以让 S 包含一些 val，P 包含剩下的 val
+        cout << "Yes\n";
+    } else if (g == val) {
+        cout << "Yes\n";
+    } else {
+        cout << "No\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

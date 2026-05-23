@@ -1,0 +1,53 @@
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+bool can_fill(vector<int> cnt, int start_pos) {
+    if (start_pos > 10) return true;
+    for (int pos = start_pos; pos <= 10; pos++) {
+        int min_digit = 10 - pos;
+        bool found = false;
+        for (int d = min_digit; d <= 9; d++) {
+            if (cnt[d] > 0) {
+                cnt[d]--;
+                found = true;
+                break;
+            }
+        }
+        if (!found) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        vector<int> cnt(10, 0);
+        for (char c : s) {
+            cnt[c - '0']++;
+        }
+
+        string res = "";
+        for (int i = 1; i <= 10; i++) {
+            int need = 10 - i;
+            for (int d = need; d <= 9; d++) {
+                if (cnt[d] == 0) continue;
+                cnt[d]--;
+                if (can_fill(cnt, i + 1)) {
+                    res += ('0' + d);
+                    break;
+                }
+                cnt[d]++;
+            }
+        }
+        cout << res << '\n';
+    }
+    return 0;
+}

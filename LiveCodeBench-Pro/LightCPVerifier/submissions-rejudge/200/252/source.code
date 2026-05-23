@@ -1,0 +1,98 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    // 计算前缀 ≤k 的个数
+    vector<int> pre(n + 1, 0);
+    for (int i = 1; i <= n; i++) {
+        pre[i] = pre[i-1] + (a[i-1] <= k);
+    }
+    int total = pre[n];
+    
+    // 预处理前缀是否满足中位数条件
+    vector<bool> prefix_ok(n + 1, false);
+    for (int i = 1; i <= n; i++) {
+        prefix_ok[i] = (pre[i] >= (i + 1) / 2);  // ceil(i/2) = (i+1)/2
+    }
+    
+    // 预处理后缀是否满足条件
+    vector<bool> suffix_ok(n + 2, false);
+    for (int i = 1; i <= n; i++) {
+        int cnt = total - pre[i-1];
+        suffix_ok[i] = (cnt >= (n - i + 2) / 2);  // ceil((n-i+1)/2) = (n-i+2)/2
+    }
+    
+    // 预处理：对于每个位置 i，记录 i 之后是否存在满足条件的后缀
+    vector<bool> suffix_exists(n + 3, false);
+    for (int i = n; i >= 1; i--) {
+        suffix_exists[i] = suffix_ok[i] || suffix_exists[i+1];
+    }
+    
+    // 检查前缀和后缀组合
+    for (int l = 1; l <= n-2; l++) {
+        if (prefix_ok[l] && suffix_exists[l+2]) {  // l+2 确保中间子数组至少1个元素
+            return true;
+        }
+    }
+    
+    // 检查前缀和中间部分组合 // val[i] = 2*pre[i] - i
+    vector<int> val(n + 1, 0);
+    for (int i = 0; i <= n; i++) {
+        val[i] = 2 * pre[i] - i;
+    }
+    
+    // 预处理后缀最大值（只考虑到 n-1，因为右子数组需要非空）
+    vector<int> suffix_max(n + 1, INT_MIN);
+    for (int i = n-1; i >= 0; i--) {
+        suffix_max[i] = max(val[i], suffix_max[i+1]);
+    }
+    
+    for (int l = 1; l <= n-2; l++) {
+        if (prefix_ok[l]) {
+            if (suffix_max[l+1] >= val[l]) {
+                return true;
+            }
+        }
+    }
+    
+    // 检查中间部分和后缀组合
+    vector<int> prefix_min(n + 1, INT_MAX);
+    for (int i = 0; i <= n; i++) {
+        prefix_min[i] = min(val[i], (i > 0 ? prefix_min[i-1] : INT_MAX));
+    }
+    
+    for (int r = 2; r <= n-1; r++) {
+        if (suffix_ok[r+1]) {
+            if (val[r] >= prefix_min[r-1]) {
+                return true;
+            }
+        }
+    }
+    
+    // 检查第一个和最后一个元素都 ≤ k
+    if (a[0] <= k && a[n-1] <= k) {
+        return true;
+    }
+    
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << (solve() ? "YES" : "NO") << '\n';
+    }
+    
+    return 0;
+}

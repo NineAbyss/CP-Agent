@@ -1,0 +1,129 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+const int MOD = 998244353;
+
+ll modpow(ll a, ll e) {
+    ll res = 1;
+    while (e) {
+        if (e & 1) res = res * a % MOD;
+        a = a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+// compute number of valid colorings for a component
+ll compute_coloring(const vector<int>& vert, const vector<vector<int>>& dist, int k) {
+    int s = vert.size();
+    if (s == 0) return 1;
+    // brute force only for small components
+    if (s > 15) {
+        // assume complete graph (all pairs distance > k)
+        // This is exact only if the component is complete graph.
+        // For large components, we hope it's complete or nearly complete.
+        return (modpow(2, s+1) - 1 + MOD) % MOD;
+    }
+    int n = s;
+    vector<int> color(n);
+    ll cnt = 0;
+    vector<vector<bool>> adj(s, vector<bool>(s, false));
+    for (int i = 0; i < s; i++) {
+        for (int j = i+1; j < s; j++) {
+            if (dist[vert[i]][vert[j]] > k) {
+                adj[i][j] = adj[j][i] = true;
+            }
+        }
+    }
+    function<void(int)> dfs = [&](int idx) {
+        if (idx == n) {
+            for (int i = 0; i < n; i++) {
+                for (int j = i+1; j < n; j++) {
+                    if (adj[i][j]) {
+                        if ((color[i] == 1 && color[j] == 2) || (color[i] == 2 && color[j] == 1))
+                            return;
+                    }
+                }
+            }
+            cnt++;
+            return;
+        }
+        for (int c = 0; c < 3; c++) {
+            color[idx] = c;
+            dfs(idx+1);
+        }
+    };
+    dfs(0);
+    return cnt;
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<vector<int>> g(n);
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        u--; v--;
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+    // compute all-pairs distances
+    vector<vector<int>> dist(n, vector<int>(n));
+    function<void(int,int,int,int)> dfs_dist = [&](int u, int p, int s, int d) {
+        dist[s][u] = d;
+        for (int v : g[u]) {
+            if (v == p) continue;
+            dfs_dist(v, u, s, d+1);
+        }
+    };
+    for (int i = 0; i < n; i++) {
+        dfs_dist(i, -1, i, 0);
+    }
+    
+    ll total3n = modpow(3, n);
+    vector<ll> h(n, 0);
+    // for each k, find components of graph G_k
+    for (int k = 0; k < n; k++) {
+        vector<bool> vis(n, false);
+        ll prod = 1;
+        for (int i = 0; i < n; i++) {
+            if (!vis[i]) {
+                vector<int> comp;
+                queue<int> q;
+                q.push(i);
+                vis[i] = true;
+                while (!q.empty()) {
+                    int u = q.front(); q.pop();
+                    comp.push_back(u);
+                    for (int v = 0; v < n; v++) {
+                        if (!vis[v] && dist[u][v] > k) {
+                            vis[v] = true;
+                            q.push(v);
+                        }
+                    }
+                }
+                ll ways = compute_coloring(comp, dist, k);
+                prod = prod * ways % MOD;
+            }
+        }
+        h[k] = prod;
+    }
+    
+    ll ans = (n * total3n) % MOD;
+    for (int k = 0; k < n; k++) {
+        ans = (ans - h[k] + MOD) % MOD;
+    }
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

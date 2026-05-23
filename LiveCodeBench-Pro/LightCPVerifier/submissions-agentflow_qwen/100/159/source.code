@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef pair<int, int> pii;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        int cx = (n + 1) / 2;
+        int cy = (m + 1) / 2;
+
+        vector<pii> cells;
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= m; j++) {
+                cells.push_back({i, j});
+            }
+        }
+
+        sort(cells.begin(), cells.end(), [cx, cy](const pii& a, const pii& b) {
+            int da = max(abs(a.first - cx), abs(a.second - cy));
+            int db = max(abs(b.first - cx), abs(b.second - cy));
+            if (da != db) return da < db;
+            if (a.first != b.first) return a.first < b.first;
+            return a.second < b.second;
+        });
+
+        for (auto& p : cells) {
+            cout << p.first << ' ' << p.second << '\n';
+        }
+    }
+    return 0;
+}

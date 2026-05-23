@@ -1,0 +1,93 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int i = 0; i < n; i++) cin >> b[i];
+    
+    // 检查出现次数
+    vector<int> cnt_a(m+1, 0), cnt_b(m+1, 0);
+    for (int v : a) cnt_a[v]++;
+    for (int v : b) cnt_b[v]++;
+    for (int v = 1; v <= m; v++) {
+        if (cnt_a[v] != cnt_b[v]) {
+            cout << "NO\n";
+            return;
+        }
+    }
+    
+    // 位置
+    vector<vector<int>> pos_a(m+1), pos_b(m+1);
+    for (int i = 0; i < n; i++) {
+        pos_a[a[i]].push_back(i);
+        pos_b[b[i]].push_back(i);
+    }
+    
+    // 检查间隔多重集
+    for (int v = 1; v <= m; v++) {
+        auto &pa = pos_a[v], &pb = pos_b[v];
+        int k = pa.size();
+        if (k == 0) continue;
+        sort(pa.begin(), pa.end());
+        sort(pb.begin(), pb.end());
+        vector<int> da, db;
+        for (int i = 0; i < k; i++) {
+            da.push_back((pa[(i+1)%k] - pa[i] + n) % n);
+            db.push_back((pb[(i+1)%k] - pb[i] + n) % n);
+        }
+        sort(da.begin(), da.end());
+        sort(db.begin(), db.end());
+        if (da != db) {
+            cout << "NO\n";
+            return;
+        }
+    }
+    
+    // 检查相对顺序
+    for (int x = 1; x < m; x++) {
+        vector<int> sa, sb;
+        for (int i = 0; i < n; i++) {
+            if (a[i] == x) sa.push_back(0);
+            else if (a[i] == x+1) sa.push_back(1);
+            if (b[i] == x) sb.push_back(0);
+            else if (b[i] == x+1) sb.push_back(1);
+        }
+        if (sa.size() != sb.size()) {
+            cout << "NO\n";
+            return;
+        }
+        // 检查循环相等
+        bool ok = false;
+        int k = sa.size();
+        for (int shift = 0; shift < k; shift++) {
+            bool match = true;
+            for (int i = 0; i < k; i++) {
+                if (sa[(i+shift)%k] != sb[i]) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) {
+                ok = true;
+                break;
+            }
+        }
+        if (!ok) {
+            cout << "NO\n";
+            return;
+        }
+    }
+    cout << "YES\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

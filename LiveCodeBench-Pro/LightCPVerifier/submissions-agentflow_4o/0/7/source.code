@@ -1,0 +1,106 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Graph structure
+vector<vector<int>> tree;
+
+// Function to perform BFS and calculate distances
+void bfs(int start, vector<int>& dist) {
+    fill(dist.begin(), dist.end(), -1);
+    queue<int> q;
+    q.push(start);
+    dist[start] = 0;
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        for (int v : tree[u]) {
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+}
+
+// Solve function for each test case
+int solve(int n, int m, int x, int y, vector<pair<int, int>>& edges, vector<pair<int, int>>& enemies) {
+    tree.assign(n + 1, vector<int>());
+    
+    for (auto [u, v] : edges) {
+        tree[u].push_back(v);
+        tree[v].push_back(u);
+    }
+
+    vector<int> marat_dist(n + 1, -1);
+    bfs(x, marat_dist); // Marat's path distances from x
+
+    // Create a vector to determine when each vertex is first safe
+    vector<vector<int>> enemy_occupations(n + 1);
+
+    for (auto [a_i, b_i] : enemies) {
+        vector<int> enemy_dist(n + 1, -1);
+        bfs(a_i, enemy_dist);
+        int path_time = enemy_dist[b_i];
+
+        for (int pos = 1; pos <= n; ++pos) {
+            if (enemy_dist[pos] >= 0 && enemy_dist[pos] <= path_time) {
+                enemy_occupations[pos].push_back(enemy_dist[pos] + 1);
+            }
+        }
+    }
+
+    // Ensure occupation times are sorted to ease checking
+    for (int i = 1; i <= n; ++i) {
+        sort(enemy_occupations[i].begin(), enemy_occupations[i].end());
+    }
+
+    queue<pair<int, int>> q;
+    q.push({x, 0});
+    vector<bool> visited(n + 1, false);
+    visited[x] = true;
+
+    while (!q.empty()) {
+        auto [cur_pos, cur_time] = q.front();
+        q.pop();
+
+        if (cur_pos == y) {
+            return cur_time;
+        }
+
+        for (int neighbor : tree[cur_pos]) {
+            int next_time = cur_time + 1;
+            if (!visited[neighbor] && (enemy_occupations[neighbor].empty() || next_time < enemy_occupations[neighbor][0])) {
+                visited[neighbor] = true;
+                q.push({neighbor, next_time});
+            }
+        }
+    }
+
+    return -1; // No path found
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, x, y;
+        cin >> n >> m >> x >> y;
+
+        vector<pair<int, int>> edges(n - 1);
+        for (auto& edge : edges) {
+            cin >> edge.first >> edge.second;
+        }
+        
+        vector<pair<int, int>> enemies(m);
+        for (auto& enemy : enemies) {
+            cin >> enemy.first >> enemy.second;
+        }
+
+        cout << solve(n, m, x, y, edges, enemies) << '\n';
+    }
+
+    return 0;
+}

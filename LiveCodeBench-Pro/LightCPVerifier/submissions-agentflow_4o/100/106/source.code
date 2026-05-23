@@ -1,0 +1,69 @@
+#include <iostream>
+#include <vector>
+#include <limits>
+#include <algorithm>
+using namespace std;
+
+int countComplementaryWays(const vector<int>& a, const vector<int>& b, int n, int k) {
+    int x = -1; // Initialize with -1 to indicate unset x
+    int min_x = 0;
+    int max_x = numeric_limits<int>::max();
+    
+    // Establish consistent x using known b_i
+    for (int i = 0; i < n; ++i) {
+        if (b[i] != -1) {
+            int new_x = a[i] + b[i];
+            if (x == -1) {
+                x = new_x;
+            } else if (x != new_x) {
+                return 0; // Inconsistent x values
+            }
+        }
+    }
+    
+    if (x == -1) {
+        // If no x found from known b_i, we must derive from a valid range
+        min_x = *max_element(a.begin(), a.end());
+        max_x = k + *min_element(a.begin(), a.end());
+    }
+    
+    // Calculate x range from missing b_i
+    for (int i = 0; i < n; ++i) {
+        if (b[i] == -1) {
+            min_x = max(min_x, a[i]);
+            max_x = min(max_x, k + a[i]);
+        }
+    }
+    
+    // x should be within min_x and max_x
+    if (x != -1) {
+        if (x < min_x || x > max_x) {
+            return 0;
+        }
+        min_x = max_x = x; // Fix x if assigned
+    }
+    
+    return max_x - min_x + 1; // Determine number of consistent configurations
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n), b(n);
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> b[i];
+        }
+        
+        cout << countComplementaryWays(a, b, n, k) << endl;
+    }
+    
+    return 0;
+}

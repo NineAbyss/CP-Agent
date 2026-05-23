@@ -1,0 +1,73 @@
+#include <iostream>
+#include <map>
+#include <tuple>
+#include <cstdio>
+
+using namespace std;
+
+pair<long long, long long> reflect(long long vx, long long vy, char wall) {
+    if (wall == 'x') // Reflect off x-axis parallel wall
+        return {-vy, vx};
+    else // Reflect off y-axis parallel wall
+        return {vy, -vx};
+}
+
+long long gcd(long long a, long long b) {
+    while(b) {
+        a %= b;
+        swap(a, b);
+    }
+    return a;
+}
+
+int solve(long long n, long long x, long long y, long long vx, long long vy) {
+    map<tuple<long long, long long, long long>, int> visited;
+    int hit_count = 0;
+
+    while (true) {
+        if (x == 0 && y == 0) return hit_count;
+        if (x == 0 && y == n) return hit_count;
+        if (x == n && y == 0) return hit_count;
+
+        // Record the state and check for cycles
+        auto state = make_tuple(x, y, vx, vy);
+        if (visited.count(state)) return -1;
+        visited[state] = hit_count;
+
+        long long tx = vx > 0 ? (n - x) / vx : x / -vx; // time to hit a vertical wall
+        long long ty = vy > 0 ? (n - y) / vy : y / -vy; // time to hit a horizontal wall
+
+        if (tx == ty) {
+            x = vx > 0 ? n : 0;
+            y = vy > 0 ? n : 0;
+        } else if (tx < ty) {
+            x = vx > 0 ? n : 0;
+            y += vy * tx;
+        } else {
+            y = vy > 0 ? n : 0;
+            x += vx * ty;
+        }
+
+        hit_count++;
+
+        // Reflect velocity when hitting a wall
+        if (x == 0 || x == n) {
+            tie(vx, vy) = reflect(vx, vy, 'y');
+        }
+        if (y == 0 || y == n) {
+            tie(vx, vy) = reflect(vx, vy, 'x');
+        }
+    }
+    return -1; // If we exit the loop, plane is stuck
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n, x, y, vx, vy;
+        cin >> n >> x >> y >> vx >> vy;
+        cout << solve(n, x, y, vx, vy) << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,58 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+// Utility function to check if a position is within the grid
+bool isInGrid(int x, int y, int n, int m) {
+    return x >= 0 && x < n && y >= 0 && y < m;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        
+        vector<string> grid(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> grid[i];
+        }
+
+        int max_gold = 0;
+
+        // Iterate through each empty cell to test explosion
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                if (grid[i][j] == '.') {
+                    // Explode at (i, j) and calculate gold collected
+                    int current_gold = 0;
+
+                    // Check gold on boundary of the explosion
+                    for (int dx = -k; dx <= k; ++dx) {
+                        for (int dy = -k; dy <= k; ++dy) {
+                            int nx = i + dx;
+                            int ny = j + dy;
+
+                            // Check if (nx, ny) is on the boundary
+                            if (dx == -k || dx == k || dy == -k || dy == k) {
+                                if (isInGrid(nx, ny, n, m) && grid[nx][ny] == 'g') {
+                                    current_gold++;
+                                }
+                            }
+                        }
+                    }
+
+                    // Update maximum gold collected
+                    max_gold = max(max_gold, current_gold);
+                }
+            }
+        }
+
+        cout << max_gold << endl;
+    }
+
+    return 0;
+}

@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+        
+        bool alice_wins = false;
+        
+        // 对于每个Alice的牌
+        for (int i = 0; i < n; i++) {
+            if (s[i] != 'A') continue;
+            
+            int a = i + 1;
+            bool bob_can_beat = false;
+            
+            // 检查Bob是否有能打败a的牌
+            for (int j = 0; j < n; j++) {
+                if (s[j] != 'B') continue;
+                
+                int b = j + 1;
+                if (b == 1 && a == n) {
+                    bob_can_beat = true;
+                    break;
+                }
+                if (a == 1 && b == n) {
+                    continue;
+                }
+                if (b > a) {
+                    bob_can_beat = true;
+                    break;
+                }
+            }
+            
+            if (!bob_can_beat) {
+                alice_wins = true;
+                break;
+            }
+        }
+        
+        cout << (alice_wins ? "Alice" : "Bob") << '\n';
+    }
+    
+    return 0;
+}

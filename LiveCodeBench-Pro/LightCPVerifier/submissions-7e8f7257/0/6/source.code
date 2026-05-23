@@ -1,0 +1,217 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <stack>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<vector<int>> adj(n+1);
+    vector<int> deg(n+1, 0);
+    for (int i=0; i<n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+        deg[u]++;
+        deg[v]++;
+    }
+    
+    // 找出度数大于2的顶点
+    vector<int> big;
+    for (int i=1; i<=n; i++) {
+        if (deg[i] > 2) {
+            big.push_back(i);
+        }
+    }
+    
+    if (big.size() >= 2) {
+        cout << "NO" << endl;
+        return;
+    }
+    
+    if (big.size() == 1) {
+        int v = big[0];
+        // 检查是否所有邻居度数都为1
+        bool all_leaves = true;
+        for (int u : adj[v]) {
+            if (deg[u] != 1) {
+                all_leaves = false;
+                break;
+            }
+        }
+        if (all_leaves) {
+            cout << "NO" << endl;
+            return;
+        }
+        // 否则，YES
+        cout << "YES" << endl;
+        // 以 v 为根
+        vector<int> parent(n+1, -1);
+        vector<int> depth(n+1, 0);
+        vector<bool> visited(n+1, false);
+        stack<int> st;
+        st.push(v);
+        visited[v] = true;
+        parent[v] = 0;
+        while (!st.empty()) {
+            int cur = st.top();
+            st.pop();
+            for (int nxt : adj[cur]) {
+                if (!visited[nxt]) {
+                    visited[nxt] = true;
+                    parent[nxt] = cur;
+                    depth[nxt] = depth[cur] + 1;
+                    st.push(nxt);
+                }
+            }
+        }
+        // 计算总深度和
+        long long total_depth = 0;
+        for (int i=1; i<=n; i++) {
+            total_depth += depth[i];
+        }
+        // 需要反转吗？
+        bool reverse_needed = (total_depth == n+1);
+        // 找到叶子 u，其父节点 p ≠ v
+        int target_u = -1, target_p = -1;
+        if (reverse_needed) {
+            for (int u=1; u<=n; u++) {
+                if (deg[u] == 1 && parent[u] != v) {
+                    target_u = u;
+                    target_p = parent[u];
+                    break;
+                }
+            }
+        }
+        // 输出边
+        for (int u=1; u<=n; u++) {
+            if (parent[u] == 0) continue;
+            int p = parent[u];
+            if (reverse_needed && u == target_u && p == target_p) {
+                // 反转边
+                cout << u << " " << p << endl;
+            } else {
+                cout << p << " " << u << endl;
+            }
+        }
+        return;
+    }
+    
+    // big.size() == 0，路径
+    if (n == 2) {
+        cout << "NO" << endl;
+        return;
+    }
+    cout << "YES" << endl;
+    // 找到端点
+    int start = -1;
+    for (int i=1; i<=n; i++) {
+        if (deg[i] == 1) {
+            start = i;
+            break;
+        }
+    }
+    // DFS 获取路径顺序
+    vector<int> order;
+    vector<int> parent(n+1, -1);
+    vector<bool> vis(n+1, false);
+    int cur = start;
+    vis[cur] = true;
+    order.push_back(cur);
+    while (true) {
+        int nxt = -1;
+        for (int neighbor : adj[cur]) {
+            if (!vis[neighbor]) {
+                nxt = neighbor;
+                break;
+            }
+        }
+        if (nxt == -1) break;
+        vis[nxt] = true;
+        parent[nxt] = cur;
+        cur = nxt;
+        order.push_back(cur);
+    }
+    // 现在 order 包含路径顺序 // 选择根为中间点
+    int root_idx = (n-1)/2; // 索引从0开始，中间点
+    int root = order[root_idx];
+    // 重新计算 parent 和 depth，以 root 为根
+    fill(parent.begin(), parent.end(), -1);
+    fill(vis.begin(), vis.end(), false);
+    vector<int> depth(n+1, 0);
+    stack<int> st2;
+    st2.push(root);
+    vis[root] = true;
+    parent[root] = 0;
+    while (!st2.empty()) {
+        int cur = st2.top();
+        st2.pop();
+        for (int nxt : adj[cur]) {
+            if (!vis[nxt]) {
+                vis[nxt] = true;
+                parent[nxt] = cur;
+                depth[nxt] = depth[cur] + 1;
+                st2.push(nxt);
+            }
+        }
+    }
+    // 计算总深度
+    long long total_depth = 0;
+    for (int i=1; i<=n; i++) {
+        total_depth += depth[i];
+    }
+    // 计算 delta
+    long long delta = total_depth - n;
+    // 找到叶子
+    vector<pair<int,int>> leaves_with_root; // 父节点是根
+    vector<pair<int,int>> leaves_without_root; // 父节点不是根
+    for (int u=1; u<=n; u++) {
+        if (deg[u] == 1) {
+            if (parent[u] == root) {
+                leaves_with_root.push_back({u, parent[u]});
+            } else {
+                leaves_without_root.push_back({u, parent[u]});
+            }
+        }
+    }
+    // 确定反转
+    vector<bool> reverse_flag(n+1, false); // 如果为真，表示边需要反转
+    if (delta > 0) {
+        // 需要减少 delta 个好对，反转 leaves_without_root 中的边 // 每条反转减少 depth[u] - 1 个好对
+        for (auto& [u, p] : leaves_without_root) {
+            if (delta <= 0) break;
+            reverse_flag[u] = true;
+            delta -= (depth[u] - 1);
+        }
+    } else if (delta < 0) {
+        // 需要增加 -delta 个好对，反转 leaves_with_root 中的边 // 每条反转增加 1 个好对
+        for (auto& [u, p] : leaves_with_root) {
+            if (delta >= 0) break;
+            reverse_flag[u] = true;
+            delta += 1;
+        }
+    }
+    // 输出边
+    for (int u=1; u<=n; u++) {
+        if (parent[u] == 0) continue;
+        int p = parent[u];
+        if (reverse_flag[u]) {
+            cout << u << " " << p << endl;
+        } else {
+            cout << p << " " << u << endl;
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

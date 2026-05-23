@@ -1,0 +1,27 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool solve_one(int n, const string& s, const string& t) {
+    if (n % 2 == 1) {
+        return s == t;
+    }
+    // check if both all-zero or both not all-zero
+    bool s_zero = (s.find('1') == string::npos);
+    bool t_zero = (t.find('1') == string::npos);
+    return s_zero == t_zero;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s, t;
+        cin >> s >> t;
+        cout << (solve_one(n, s, t) ? "Yes" : "No") << '\n';
+    }
+    return 0;
+}

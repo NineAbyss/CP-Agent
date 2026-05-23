@@ -1,0 +1,102 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to calculate distances from a given root using BFS
+vector<int> bfs(int root, const vector<vector<int>>& tree) {
+    int n = tree.size();
+    vector<int> distance(n, -1);
+    queue<int> q;
+    q.push(root);
+    distance[root] = 0;
+
+    while (!q.empty()) {
+        int cur = q.front();
+        q.pop();
+        for (int next : tree[cur]) {
+            if (distance[next] == -1) {
+                distance[next] = distance[cur] + 1;
+                q.push(next);
+            }
+        }
+    }
+
+    return distance;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+
+        vector<vector<int>> tree(n);
+        for (int i = 0; i < n - 1; ++i) {
+            int u, v;
+            cin >> u >> v;
+            --u; --v; // 0-based indexing
+            tree[u].push_back(v);
+            tree[v].push_back(u);
+        }
+
+        // Collect nodes where s[i] == 1
+        vector<int> ones;
+        for (int i = 0; i < n; ++i) {
+            if (s[i] == '1') {
+                ones.push_back(i);
+            }
+        }
+
+        int k = ones.size();
+        vector<vector<int>> distances;
+        for (int i = 0; i < k; ++i) {
+            distances.push_back(bfs(ones[i], tree));
+        }
+
+        vector<int> result(n, -1); // Default -1 for s[i] == 0
+        vector<vector<int>> max_nice_path_length(k);
+
+        for (int i = 0; i < k; ++i) {
+            // Start from ones[i]
+            int start = ones[i];
+            result[start] = 1; // At least the path containing only itself
+
+            vector<pair<int, int>> dist_from_i;
+            for (int j = 0; j < k; ++j) {
+                if (i != j) {
+                    dist_from_i.emplace_back(distances[i][ones[j]], ones[j]);
+                }
+            }
+
+            sort(dist_from_i.begin(), dist_from_i.end());
+            
+            // Try to build the longest "nice" path starting from this node
+            vector<int> dp(k, 1);
+            for (int j = 0; j < k; ++j) {
+                for (int l = 0; l < j; ++l) {
+                    int u = dist_from_i[l].second;
+                    int v = dist_from_i[j].second;
+                    int w_uv = distances[start][u];
+                    int w_vw = distances[start][v];
+                    if (2 * w_uv <= w_vw) {
+                        dp[j] = max(dp[j], dp[l] + 1);
+                    }
+                }
+                result[start] = max(result[start], dp[j]);
+            }
+        }
+
+        for (int i = 0; i < n; ++i) {
+            cout << result[i] << ' ';
+        }
+        
+        cout << '\n';
+    }
+
+    return 0;
+}

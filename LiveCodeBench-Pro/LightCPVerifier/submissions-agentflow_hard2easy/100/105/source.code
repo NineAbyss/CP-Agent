@@ -1,0 +1,93 @@
+#include <cstdio>
+#include <algorithm>
+using namespace std;
+
+const int MAXN = 200005;
+const int LOG = 18;
+
+int p[MAXN];
+int log2_[MAXN];
+int st_max[LOG][MAXN];
+int st_min[LOG][MAXN];
+int n;
+
+void build() {
+    log2_[1] = 0;
+    for (int i = 2; i <= n; i++) log2_[i] = log2_[i/2] + 1;
+    for (int i = 1; i <= n; i++) {
+        st_max[0][i] = i;
+        st_min[0][i] = i;
+    }
+    for (int j = 1; j < LOG; j++) {
+        for (int i = 1; i + (1 << j) - 1 <= n; i++) {
+            int a = st_max[j-1][i];
+            int b = st_max[j-1][i + (1 << (j-1))];
+            st_max[j][i] = (p[a] > p[b]) ? a : b;
+            a = st_min[j-1][i];
+            b = st_min[j-1][i + (1 << (j-1))];
+            st_min[j][i] = (p[a] < p[b]) ? a : b;
+        }
+    }
+}
+
+int query_max(int l, int r) {
+    int k = log2_[r - l + 1];
+    int a = st_max[k][l];
+    int b = st_max[k][r - (1 << k) + 1];
+    return (p[a] > p[b]) ? a : b;
+}
+
+int query_min(int l, int r) {
+    int k = log2_[r - l + 1];
+    int a = st_min[k][l];
+    int b = st_min[k][r - (1 << k) + 1];
+    return (p[a] < p[b]) ? a : b;
+}
+
+bool divisible(int l, int r) {
+    if (r - l + 1 == 2) return true;
+    int pos_max = query_max(l, r);
+    int pos_min = query_min(l, r);
+    if (pos_min < pos_max) {
+        // condition 1
+        if (pos_min + 1 <= r) {
+            int max_left = p[query_max(l, pos_min)];
+            int min_right = p[query_min(pos_min + 1, r)];
+            if (max_left < min_right) return true;
+        }
+        if (pos_max - 1 >= l) {
+            int max_left = p[query_max(l, pos_max - 1)];
+            int min_right = p[query_min(pos_max, r)];
+            if (max_left < min_right) return true;
+        }
+    } else {
+        // condition 2
+        if (pos_max + 1 <= r) {
+            int min_left = p[query_min(l, pos_max)];
+            int max_right = p[query_max(pos_max + 1, r)];
+            if (min_left > max_right) return true;
+        }
+        if (pos_min - 1 >= l) {
+            int min_left = p[query_min(l, pos_min - 1)];
+            int max_right = p[query_max(pos_min, r)];
+            if (min_left > max_right) return true;
+        }
+    }
+    return false;
+}
+
+int main() {
+    scanf("%d", &n);
+    for (int i = 1; i <= n; i++) scanf("%d", &p[i]);
+    build();
+    int q;
+    scanf("%d", &q);
+    for (int i = 0; i < q; i++) {
+        int l, r;
+        scanf("%d %d", &l, &r);
+        puts(divisible(l, r) ? "YES" : "NO");
+        if ((i + 1) % 10 == 0) fflush(stdout);
+    }
+    if (q % 10 != 0) fflush(stdout);
+    return 0;
+}

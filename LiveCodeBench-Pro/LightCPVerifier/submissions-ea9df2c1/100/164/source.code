@@ -1,0 +1,148 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = -1; // 用 -1 表示未被覆盖
+
+struct SegTree {
+    int n;
+    vector<int> mn, mx, set;
+    SegTree(int n) : n(n), mn(4*n, INF), mx(4*n, INF), set(4*n, INF) {}
+    
+    void apply(int idx, int val) {
+        mn[idx] = mx[idx] = val;
+        set[idx] = val;
+    }
+    
+    void push(int idx) {
+        if (set[idx] != INF) {
+            apply(idx*2, set[idx]);
+            apply(idx*2+1, set[idx]);
+            set[idx] = INF;
+        }
+    }
+    
+    void pull(int idx) {
+        mn[idx] = min(mn[idx*2], mn[idx*2+1]);
+        mx[idx] = max(mx[idx*2], mx[idx*2+1]);
+    }
+    
+    void update(int idx, int l, int r, int ql, int qr, int val) {
+        if (ql <= l && r <= qr) {
+            apply(idx, val);
+            return;
+        }
+        push(idx);
+        int mid = (l+r)/2;
+        if (ql <= mid) update(idx*2, l, mid, ql, qr, val);
+        if (qr > mid) update(idx*2+1, mid+1, r, ql, qr, val);
+        pull(idx);
+    }
+    
+    pair<int,int> query(int idx, int l, int r, int ql, int qr) {
+        if (ql <= l && r <= qr) {
+            return {mn[idx], mx[idx]};
+        }
+        push(idx);
+        int mid = (l+r)/2;
+        if (qr <= mid) return query(idx*2, l, mid, ql, qr);
+        if (ql > mid) return query(idx*2+1, mid+1, r, ql, qr);
+        auto left = query(idx*2, l, mid, ql, qr);
+        auto right = query(idx*2+1, mid+1, r, ql, qr);
+        return {min(left.first, right.first), max(left.second, right.second)};
+    }
+    
+    void update(int l, int r, int val) { 
+        if (l > r) return;
+        update(1, 1, n, l, r, val); 
+    }
+    pair<int,int> query(int l, int r) { 
+        if (l > r) return {INF, INF};
+        return query(1, 1, n, l, r); 
+    }
+};
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> type(m), a(m), b(m);
+    for (int i = 0; i < m; i++) {
+        cin >> type[i] >> a[i] >> b[i];
+    }
+    
+    vector<int> left(m, 0), right(m, m+1);
+    
+    // compute left[i]
+    {
+        SegTree seg(n);
+        for (int i = 0; i < m; i++) {
+            if (type[i] == 0) {
+                seg.update(a[i], b[i], i+1);
+            } else {
+                auto [mn, mx] = seg.query(a[i], b[i]);
+                if (mn == mx && mn != INF) {
+                    left[i] = mn;
+                }
+            }
+        }
+    }
+    
+    // compute right[i]
+    {
+        SegTree seg(n);
+        for (int i = m-1; i >= 0; i--) {
+            if (type[i] == 0) {
+                seg.update(a[i], b[i], i+1);
+            } else {
+                auto [mn, mx] = seg.query(a[i], b[i]);
+                if (mn == mx && mn != INF) {
+                    right[i] = mn;
+                }
+            }
+        }
+    }
+    
+    // compute fL[l] and fR[l]
+    vector<int> fL(m+2, m+2), fR(m+2, m+2);
+    for (int i = 0; i < m; i++) {
+        if (type[i] == 1) {
+            if (left[i] > 0) {
+                int L = min(i+1, left[i]);
+                int R = max(i+1, left[i]);
+                fL[L] = min(fL[L], R);
+            }
+            if (right[i] <= m) {
+                int L = min(i+1, right[i]);
+                int R = max(i+1, right[i]);
+                fR[L] = min(fR[L], R);
+            }
+        }
+    }
+    for (int l = m; l >= 1; l--) {
+        fL[l] = min(fL[l], fL[l+1]);
+        fR[l] = min(fR[l], fR[l+1]);
+    }
+    
+    int q;
+    cin >> q;
+    while (q--) {
+        int l, r;
+        cin >> l >> r;
+        bool ok = true;
+        if (fL[l] <= r) ok = false;
+        if (fR[l] <= r) ok = false;
+        cout << (ok ? "YES" : "NO") << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

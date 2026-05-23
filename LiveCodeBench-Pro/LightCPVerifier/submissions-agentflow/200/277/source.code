@@ -1,0 +1,96 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+const int N = 505;
+
+int dp[N][N];
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        string s;
+        cin >> s;
+        
+        // 将字符串转为 0/1 数组，1-indexed
+        vector<int> a(n + 1);
+        for (int i = 1; i <= n; i++) {
+            a[i] = s[i - 1] - '0';
+        }
+        
+        // 计算初始最长全1后缀长度
+        int init_len = 0;
+        for (int i = n; i >= 1; i--) {
+            if (a[i] == 1) init_len++;
+            else break;
+        }
+        
+        // 初始化 DP
+        for (int i = 0; i <= k; i++) {
+            for (int j = 0; j <= n; j++) {
+                dp[i][j] = 0;
+            }
+        }
+        dp[0][init_len] = 1;
+        
+        // 预处理每个位置后面连续1的长度
+        vector<int> suf(n + 2, 0);
+        for (int i = n; i >= 1; i--) {
+            if (a[i] == 1) suf[i] = suf[i + 1] + 1;
+            else suf[i] = 0;
+        }
+        
+        // DP 转移
+        for (int i = 0; i < k; i++) {
+            vector<vector<int>> ndp(k + 1, vector<int>(n + 1, 0));
+            
+            for (int j = 0; j <= k; j++) {
+                for (int len = 0; len <= n; len++) {
+                    if (dp[j][len] == 0) continue;
+                    
+                    // 不操作（实际上这里我们只记录操作次数，所以转移在操作时进行） // 我们直接枚举下一个操作位置
+                    
+                    // 下一个操作必须在最长全1后缀之前
+                    for (int p = 1; p <= n - len; p++) {
+                        // 需要确保位置 p 在当前状态下是 0 // 当前状态：如果 p 在最长全1后缀之前，我们需要知道它的值
+                        // 简化：假设总是可以操作（实际上需要检查） // 这里我们采用更精确的方法
+                        
+                        // 计算操作后新的最长全1后缀长度
+                        int new_len = len;
+                        if (p > len) {
+                            new_len = p + suf[p + 1];
+                        } else {
+                            new_len = len;
+                        }
+                        
+                        if (j + 1 <= k) {
+                            ndp[j + 1][new_len] = (ndp[j + 1][new_len] + dp[j][len]) % MOD;
+                        }
+                    }
+                }
+            }
+            
+            // 复制回 dp
+            for (int j = 0; j <= k; j++) {
+                for (int len = 0; len <= n; len++) {
+                    dp[j][len] = ndp[j][len];
+                }
+            }
+        }
+        
+        // 统计答案
+        int ans = 0;
+        for (int len = 0; len <= n; len++) {
+            ans = (ans + dp[k][len]) % MOD;
+        }
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

@@ -1,0 +1,82 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<string> grid(n);
+        for (int i = 0; i < n; i++) {
+            cin >> grid[i];
+        }
+
+        int total_gold = 0;
+
+        // Continue until no beneficial explosion
+        bool changed = true;
+        while (changed) {
+            changed = false;
+            int best_gain = 0;
+            int best_x = -1, best_y = -1;
+
+            // Try every empty cell as potential blast center in reverse order
+            for (int i = n-1; i >= 0; i--) {
+                for (int j = m-1; j >= 0; j--) {
+                    if (grid[i][j] != '.') continue;
+
+                    int gain = 0;
+                    // Top and bottom rows of the square boundary
+                    for (int r : {i-k, i+k}) {
+                        if (r < 0 || r >= n) continue;
+                        for (int c = j-k; c <= j+k; c++) {
+                            if (c < 0 || c >= m) continue;
+                            if (grid[r][c] == 'g') {
+                                gain++;
+                            }
+                        }
+                    }
+                    // Left and right columns (avoid corners)
+                    for (int c : {j-k, j+k}) {
+                        if (c < 0 || c >= m) continue;
+                        for (int r = i-k+1; r <= i+k-1; r++) {
+                            if (r < 0 || r >= n) continue;
+                            if (grid[r][c] == 'g') {
+                                gain++;
+                            }
+                        }
+                    }
+
+                    if (gain > best_gain) {
+                        best_gain = gain;
+                        best_x = i;
+                        best_y = j;
+                        changed = true;
+                    }
+                }
+            }
+
+            if (!changed) break;
+
+            total_gold += best_gain;
+
+            // Perform explosion: clear non-stone cells in the square
+            int x = best_x, y = best_y;
+            for (int r = x-k; r <= x+k; r++) {
+                for (int c = y-k; c <= y+k; c++) {
+                    if (r < 0 || r >= n || c < 0 || c >= m) continue;
+                    if (grid[r][c] != '#') {
+                        grid[r][c] = '.';
+                    }
+                }
+            }
+        }
+
+        cout << total_gold << '\n';
+    }
+    return 0;
+}

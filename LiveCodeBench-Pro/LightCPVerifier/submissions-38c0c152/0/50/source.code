@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        int k = (n + 1) / 2;  // ceil(n/2)
+        int abs_a0 = abs(a[0]);
+        
+        // 计算绝对值小于 |a[0]| 的元素数量
+        int cnt_less = 0;
+        for (int i = 1; i < n; i++) {
+            if (abs(a[i]) < abs_a0) {
+                cnt_less++;
+            }
+        }
+        // 排名 r = cnt_less + 1
+        int r = cnt_less + 1;
+        
+        bool possible = false;
+        
+        // 检查 T1 = a[0]
+        if (a[0] > 0) {
+            if (r <= k) possible = true;
+        } else if (a[0] < 0) {
+            if (r <= n - k + 1) possible = true;
+        } else { // a[0] == 0
+            if (r <= k) possible = true;
+        }
+        
+        // 检查 T2 = -a[0] // 注意：T2 的绝对值相同，排名 r 相同
+        if (-a[0] > 0) {
+            if (r <= k) possible = true;
+        } else if (-a[0] < 0) {
+            if (r <= n - k + 1) possible = true;
+        } else { // -a[0] == 0
+            if (r <= k) possible = true;
+        }
+        
+        cout << (possible ? "YES" : "NO") << endl;
+    }
+    return 0;
+}

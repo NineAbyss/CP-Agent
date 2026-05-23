@@ -1,0 +1,76 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <cmath>
+#include <iomanip>
+#include <algorithm>
+using namespace std;
+
+double p_global;
+map<pair<vector<int>, int>, double> memo;
+
+double dfs(vector<int> d, int rounds_left) {
+    sort(d.begin(), d.end());
+    // check if all zero
+    bool all_zero = true;
+    for (int x : d) if (x != 0) { all_zero = false; break; }
+    if (all_zero) return 1.0;
+    if (rounds_left == 0) return 0.0;
+    
+    auto key = make_pair(d, rounds_left);
+    if (memo.find(key) != memo.end()) return memo[key];
+    
+    // shine case
+    double best_shine = 0.0;
+    // option not attack
+    best_shine = max(best_shine, dfs(d, rounds_left-1));
+    // option attack if safe: all d > 0
+    bool safe = true;
+    for (int x : d) if (x <= 0) { safe = false; break; }
+    if (safe) {
+        vector<int> new_d = d;
+        for (int& x : new_d) x--;
+        best_shine = max(best_shine, dfs(new_d, rounds_left-1));
+    }
+    
+    // no shine case
+    double best_noshine = 0.0;
+    // option not attack
+    best_noshine = max(best_noshine, dfs(d, rounds_left-1));
+    // option attack one monster
+    for (size_t i = 0; i < d.size(); i++) {
+        if (d[i] > 0) {
+            vector<int> new_d = d;
+            new_d[i]--;
+            best_noshine = max(best_noshine, dfs(new_d, rounds_left-1));
+        }
+    }
+    
+    double res = p_global * best_shine + (1 - p_global) * best_noshine;
+    memo[key] = res;
+    return res;
+}
+
+double solve_one(int n, int m, double p, vector<int>& h) {
+    vector<int> d(n);
+    for (int i = 0; i < n; i++) d[i] = h[i] - 1;
+    p_global = p;
+    memo.clear();
+    return dfs(d, m);
+}
+
+int main() {
+    int t;
+    cin >> t;
+    cout << fixed << setprecision(6);
+    while (t--) {
+        int n, m, p_prime;
+        cin >> n >> m >> p_prime;
+        double p = p_prime / 100.0;
+        vector<int> h(n);
+        for (int i = 0; i < n; i++) cin >> h[i];
+        double ans = solve_one(n, m, p, h);
+        cout << ans << endl;
+    }
+    return 0;
+}

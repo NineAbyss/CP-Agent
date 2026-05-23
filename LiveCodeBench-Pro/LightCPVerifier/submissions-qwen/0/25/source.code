@@ -1,0 +1,50 @@
+#include <iostream>
+#include <string>
+#include <cmath>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        
+        // Convert string to integer (the year)
+        int year = stoi(s);
+        
+        // Find square root of the year
+        int root = sqrt(year);
+        
+        // Check if root*root == year (perfect square)
+        if (root * root != year) {
+            cout << "-1\n";
+            continue;
+        }
+        
+        // Now we need to split the 4-digit string into two parts: first k digits and last (4-k) digits // such that a = first part, b = second part, and a + b = root
+        bool found = false;
+        for (int i = 1; i <= 3; i++) { // i is the number of digits in 'a'
+            string a_str = s.substr(0, i);
+            string b_str = s.substr(i, 4 - i);
+            
+            int a = stoi(a_str);
+            int b = stoi(b_str);
+            
+            if (a + b == root) {
+                cout << a << " " << b << "\n";
+                found = true;
+                break;
+            }
+        }
+        
+        if (!found) {
+            cout << "-1\n";
+        }
+    }
+    
+    return 0;
+}

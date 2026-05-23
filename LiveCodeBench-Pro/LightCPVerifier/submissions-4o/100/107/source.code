@@ -1,0 +1,66 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int getMaxScore(vector<int> player, vector<int> dealer, int n) {
+    int maxScore = 0;
+
+    // Function to calculate score given player's and dealer's hands.
+    auto calculateScore = [&](vector<int> &player) {
+        int score = 0;
+        for (int i = 0, j = 0; i < n; ++i) {
+            // Compare top cards
+            if (player[i] > dealer[j]) {
+                ++score; // Player wins this round
+                ++j; // Dealer discards top card
+            } else {
+                // Dealer wins, player's card stays at top
+            }
+        }
+        return score;
+    };
+
+    // Calculate initial score without any swap
+    maxScore = calculateScore(player);
+
+    // Try all possible single swaps in the player's hand
+    for (int i = 0; i < n; ++i) {
+        for (int j = i + 1; j < n; ++j) {
+            // Swap player[i] and player[j]
+            swap(player[i], player[j]);
+
+            // Calculate the score with this swap
+            maxScore = max(maxScore, calculateScore(player));
+
+            // Swap back to original
+            swap(player[i], player[j]);
+        }
+    }
+
+    return maxScore;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> player(n), dealer(n);
+
+        for (int i = 0; i < n; ++i) {
+            cin >> player[i];
+        }
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> dealer[i];
+        }
+        
+        cout << getMaxScore(player, dealer, n) << endl;
+    }
+
+    return 0;
+}

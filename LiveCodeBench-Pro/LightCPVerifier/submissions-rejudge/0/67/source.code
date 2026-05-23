@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<vector<int>> g(n + 1);
+    vector<pair<int, int>> edges;
+    for (int i = 0; i < n - 1; i++) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+        g[v].push_back(u);
+        edges.emplace_back(u, v);
+    }
+    if (n == 2) {
+        cout << "NO\n";
+        return;
+    }
+    // 找一个度数>=2的顶点作为根
+    int root = 1;
+    while (g[root].size() < 2) root++;
+    int a = g[root][0], b = g[root][1];
+    
+    // BFS 建立parent和belong
+    vector<int> parent(n + 1, -1), belong(n + 1, -1);
+    queue<int> q;
+    q.push(root);
+    parent[root] = 0;
+    belong[root] = -1;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int v : g[u]) {
+            if (parent[v] == -1) {
+                parent[v] = u;
+                if (u == root) belong[v] = v;
+                else belong[v] = belong[u];
+                q.push(v);
+            }
+        }
+    }
+    
+    cout << "YES\n";
+    for (auto [u, v] : edges) {
+        // 确定方向
+        int dir_u, dir_v;
+        if ((u == root && v == a) || (v == root && u == a)) {
+            dir_u = root; dir_v = a;
+        } else if ((u == root && v == b) || (v == root && u == b)) {
+            dir_u = b; dir_v = root;
+        } else {
+            if (belong[u] == b || belong[v] == b) {
+                // b的子树内，远离b
+                if (parent[v] == u) dir_u = u, dir_v = v;
+                else dir_u = v, dir_v = u;
+            } else {
+                // 指向root
+                if (parent[v] == u) dir_u = v, dir_v = u;
+                else dir_u = u, dir_v = v;
+            }
+        }
+        cout << dir_u << " " << dir_v << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

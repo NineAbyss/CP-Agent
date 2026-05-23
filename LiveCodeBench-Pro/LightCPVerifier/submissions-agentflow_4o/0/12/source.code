@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Custom hash function for pair<int, int>
+struct pair_hash {
+    template <class T1, class T2>
+    size_t operator()(const pair<T1, T2>& p) const noexcept {
+        auto hash1 = hash<T1>{}(p.first);
+        auto hash2 = hash<T2>{}(p.second);
+        return hash1 ^ (hash2 << 1);
+    }
+};
+
+// Determine if the walker can escape the strip
+bool canEscape(int n, int k, const vector<int>& pos, const vector<int>& delay, int start) {
+    unordered_map<int, int> red_map;
+    for (int i = 0; i < n; ++i) {
+        red_map[pos[i]] = delay[i];
+    }
+
+    int current_pos = start;
+    int direction = 1;  // Start moving right
+    unordered_map<pair<int, int>, int, pair_hash> visited_states;
+
+    const int MAX_CYCLE_ITERATION = 2 * k;
+    int steps = 0;
+    
+    while (steps < MAX_CYCLE_ITERATION) {
+        // Check if there's a red light causing a direction change
+        if (red_map.count(current_pos) && (steps % k) == red_map[current_pos]) {
+            direction = -direction;
+        }
+
+        // Move in the current direction
+        current_pos += direction;
+
+        // Check for successful escape condition
+        if (current_pos < 1 || current_pos > 1e15) {
+            return true;
+        }
+
+        // Cycle detection
+        pair<int, int> state_key = {current_pos, direction};
+        visited_states[state_key]++;
+        if (visited_states[state_key] > 1) {
+            return false;
+        }
+
+        ++steps;
+    }
+    
+    return false;  // Fallback default case
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+
+        vector<int> pos(n), delay(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> pos[i];
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> delay[i];
+        }
+
+        int q;
+        cin >> q;
+        
+        while (q--) {
+            int start;
+            cin >> start;
+            if (canEscape(n, k, pos, delay, start)) {
+                cout << "YES\n";
+            } else {
+                cout << "NO\n";
+            }
+        }
+    }
+
+    return 0;
+}

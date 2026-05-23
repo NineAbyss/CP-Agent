@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> l(n), r(n);
+        for (int i = 0; i < n; i++) {
+            cin >> l[i] >> r[i];
+        }
+        const int INF = 2e9;
+        vector<int> dp(n + 2, INF);
+        dp[0] = 0;
+        int ans = 0;
+        for (int i = 0; i < n; i++) {
+            int lo = 0, hi = ans, len = 0;
+            while (lo <= hi) {
+                int mid = (lo + hi) / 2;
+                if (dp[mid] <= r[i]) {
+                    len = mid;
+                    lo = mid + 1;
+                } else {
+                    hi = mid - 1;
+                }
+            }
+            int newVal = max(l[i], dp[len]);
+            if (len == ans) {
+                dp[ans + 1] = newVal;
+                ans++;
+            } else {
+                dp[len + 1] = min(dp[len + 1], newVal);
+                if (len + 1 == ans && dp[ans] <= r[i] && l[i] <= dp[ans]) {
+                    dp[ans + 1] = max(l[i], dp[ans]);
+                    ans++;
+                }
+            }
+            cout << ans << " ";
+        }
+        cout << '\n';
+    }
+    return 0;
+}

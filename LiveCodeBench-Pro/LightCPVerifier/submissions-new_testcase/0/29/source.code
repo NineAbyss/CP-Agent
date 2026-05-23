@@ -1,0 +1,68 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <climits>
+using namespace std;
+
+const int INF = 1e9;
+const int MAX_A = 5000;
+
+int solve_one_case(const vector<int>& a) {
+    int n = a.size();
+    if (n == 0) return 0;
+    
+    int d = a[0];
+    for (int x : a) d = gcd(d, x);
+    
+    // 计算 cnt
+    int cnt = 0;
+    for (int x : a) if (x == d) cnt++;
+    
+    if (cnt > 0) {
+        return n - cnt;
+    }
+    
+    // DP 找到达到 gcd = d 所需的最少数数量
+    vector<int> dp(MAX_A + 1, INF);
+    dp[0] = 0;
+    
+    for (int x : a) {
+        vector<int> new_dp = dp;
+        for (int g = 0; g <= MAX_A; g++) {
+            if (dp[g] < INF) {
+                int new_g = gcd(g, x);
+                new_dp[new_g] = min(new_dp[new_g], dp[g] + 1);
+            }
+        }
+        new_dp[x] = min(new_dp[x], 1);
+        dp = new_dp;
+    }
+    
+    int k = dp[d];
+    // 由于 cnt=0，k 应该至少为 2，但为了安全起见
+    if (k >= INF) {
+        k = n; // 最坏情况：使用所有元素
+    }
+    return n + k - 2;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        cout << solve_one_case(a) << '\n';
+    }
+    
+    return 0;
+}

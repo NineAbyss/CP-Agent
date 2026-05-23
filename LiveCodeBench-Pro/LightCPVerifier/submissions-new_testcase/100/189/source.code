@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+vector<int> solve(const vector<int>& a) {
+    int n = a.size();
+    vector<pair<int,int>> items;
+    for (int i = 0; i < n; i++) {
+        int ai = a[i];
+        if (ai == -1) ai = n+1;
+        items.push_back({ai, i});
+    }
+    sort(items.begin(), items.end(), greater<pair<int,int>>());
+    deque<int> dq;
+    for (auto& p : items) {
+        int idx = p.second;
+        int orig_ai = a[idx];
+        if (orig_ai == -1) {
+            dq.push_front(idx);
+        } else if (orig_ai % 2 == 1) {
+            dq.push_front(idx);
+        } else {
+            dq.push_back(idx);
+        }
+    }
+    vector<int> p(n);
+    int val = n;
+    for (int idx : dq) {
+        p[idx] = val;
+        val--;
+    }
+    return p;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        vector<int> p = solve(a);
+        for (int i = 0; i < n; i++) {
+            cout << p[i] << " \n"[i==n-1];
+        }
+    }
+    return 0;
+}

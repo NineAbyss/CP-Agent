@@ -1,0 +1,95 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int solve_one(int n, int m, const vector<vector<int>>& a) {
+    int M = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            M = max(M, a[i][j]);
+        }
+    }
+    int total_max = 0;
+    vector<int> row_count(n, 0);
+    vector<int> col_count(m, 0);
+    vector<pair<int,int>> max_pos;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            if (a[i][j] == M) {
+                total_max++;
+                row_count[i]++;
+                col_count[j]++;
+                max_pos.push_back({i, j});
+            }
+        }
+    }
+    // check if all in same row
+    for (int i = 0; i < n; i++) {
+        if (row_count[i] == total_max) {
+            return M-1;
+        }
+    }
+    // check if all in same column
+    for (int j = 0; j < m; j++) {
+        if (col_count[j] == total_max) {
+            return M-1;
+        }
+    }
+    // find two cells with different row and column
+    pair<int,int> A = max_pos[0];
+    pair<int,int> B = {-1, -1};
+    for (auto& p : max_pos) {
+        if (p.first != A.first && p.second != A.second) {
+            B = p;
+            break;
+        }
+    }
+    if (B.first == -1) {
+        // all max cells share row or column with A // they must be covered by cross (A.first, A.second)
+        int r = A.first, c = A.second;
+        int covered = row_count[r] + col_count[c] - (a[r][c] == M ? 1 : 0);
+        if (covered == total_max) {
+            return M-1;
+        } else {
+            // should not happen
+            return M;
+        }
+    }
+    // candidate 1: (A.first, B.second)
+    {
+        int r = A.first, c = B.second;
+        int covered = row_count[r] + col_count[c] - (a[r][c] == M ? 1 : 0);
+        if (covered == total_max) {
+            return M-1;
+        }
+    }
+    // candidate 2: (B.first, A.second)
+    {
+        int r = B.first, c = A.second;
+        int covered = row_count[r] + col_count[c] - (a[r][c] == M ? 1 : 0);
+        if (covered == total_max) {
+            return M-1;
+        }
+    }
+    return M;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<vector<int>> a(n, vector<int>(m));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                cin >> a[i][j];
+            }
+        }
+        cout << solve_one(n, m, a) << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,120 @@
+#include <iostream>
+#include <string>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+int original_cost(const string& s) {
+    int n = s.size();
+    int diff = 0;
+    for (int i = 1; i < n; i++) 
+        if (s[i] != s[i-1]) diff++;
+    int first_one = (s[0] == '1');
+    return n + diff + first_one;
+}
+
+int solve(const string& s) {
+    int n = s.size();
+    int cost0 = original_cost(s);
+    
+    // 检查减少 2 情况 A: s[0]=='1' 且存在 "01"
+    bool reduce2_A = false;
+    if (s[0] == '1') {
+        for (int i = 0; i < n-1; i++) {
+            if (s[i] == '0' && s[i+1] == '1') {
+                reduce2_A = true;
+                break;
+            }
+        }
+    }
+    
+    // 检查减少 2 情况 B: 存在两个相同的相邻对 "xy" (x!=y) 且第二次出现在第一次之后至少间隔一个位置
+    bool reduce2_B = false;
+    map<pair<char,char>, int> first_pos;
+    for (int i = 0; i < n-1; i++) {
+        char x = s[i], y = s[i+1];
+        if (x == y) continue;
+        auto key = make_pair(x, y);
+        auto it = first_pos.find(key);
+        if (it != first_pos.end()) {
+            if (i > it->second + 1) {
+                reduce2_B = true;
+                break;
+            }
+        } else {
+            first_pos[key] = i;
+        }
+    }
+    
+    if (reduce2_A || reduce2_B) {
+        return cost0 - 2;
+    }
+    
+    // 预处理每个字符的第一个和最后一个出现位置
+    int first0 = -1, first1 = -1, last0 = -1, last1 = -1;
+    for (int i = 0; i < n; i++) {
+        if (s[i] == '0') {
+            if (first0 == -1) first0 = i;
+            last0 = i;
+        } else {
+            if (first1 == -1) first1 = i;
+            last1 = i;
+        }
+    }
+    
+    // 检查减少 1: 左边界减少
+    bool reduce1 = false;
+    for (int l = 1; l < n; l++) {
+        if (s[l] != s[l-1]) {
+            char target = s[l-1];
+            if (target == '0') {
+                if (last0 > l) reduce1 = true;
+            } else {
+                if (last1 > l) reduce1 = true;
+            }
+            if (reduce1) break;
+        }
+    }
+    
+    // 检查减少 1: 右边界减少
+    if (!reduce1) {
+        for (int r = 0; r < n-1; r++) {
+            if (s[r+1] != s[r]) {
+                char target = s[r+1];
+                if (target == '0') {
+                    if (first0 < r) reduce1 = true;
+                } else {
+                    if (first1 < r) reduce1 = true;
+                }
+                if (reduce1) break;
+            }
+        }
+    }
+    
+    // 检查减少 1: first_one 减少
+    if (!reduce1 && s[0] == '1' && first0 != -1) {
+        reduce1 = true;
+    }
+    
+    if (reduce1) {
+        return cost0 - 1;
+    }
+    
+    return cost0;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+        cout << solve(s) << '\n';
+    }
+    return 0;
+}

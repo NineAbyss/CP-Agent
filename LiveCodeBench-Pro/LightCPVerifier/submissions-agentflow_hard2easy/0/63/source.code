@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    vector<int> b(n);
+    for (int i = 0; i < n; i++) cin >> b[i];
+    
+    ll x = -1;
+    bool conflict = false;
+    for (int i = 0; i < n; i++) {
+        if (b[i] != -1) {
+            ll cur = (ll)a[i] + b[i];
+            if (x == -1) x = cur;
+            else if (x != cur) conflict = true;
+        }
+    }
+    if (conflict) {
+        cout << 0 << '\n';
+        return;
+    }
+    if (x != -1) {
+        for (int i = 0; i < n; i++) {
+            ll val = x - a[i];
+            if (val < 0 || val > k) {
+                cout << 0 << '\n';
+                return;
+            }
+        }
+        cout << 1 << '\n';
+    } else {
+        ll L = a[0], R = k + a[0];
+        for (int i = 1; i < n; i++) {
+            L = max(L, (ll)a[i]);
+            R = min(R, (ll)k + a[i]);
+        }
+        if (L > R) cout << 0 << '\n';
+        else cout << R - L + 1 << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,99 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <unordered_set>
+#include <algorithm>
+using namespace std;
+
+void solve() {
+    int n, m, x, y;
+    cin >> n >> m >> x >> y;
+    vector<vector<int>> g(n+1);
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+    
+    // BFS 获取路径
+    auto get_path = [&](int a, int b) -> vector<int> {
+        vector<int> parent(n+1, -1);
+        queue<int> q;
+        q.push(a);
+        parent[a] = a;
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            if (u == b) break;
+            for (int v : g[u]) {
+                if (parent[v] == -1) {
+                    parent[v] = u;
+                    q.push(v);
+                }
+            }
+        }
+        vector<int> path;
+        for (int cur = b; cur != a; cur = parent[cur]) {
+            path.push_back(cur);
+        }
+        path.push_back(a);
+        reverse(path.begin(), path.end());
+        return path;
+    };
+    
+    vector<unordered_set<int>> blocked(n+1);
+    int max_len = 0;
+    for (int i = 0; i < m; i++) {
+        int a, b;
+        cin >> a >> b;
+        vector<int> path = get_path(a, b);
+        int len = path.size();
+        max_len = max(max_len, len);
+        for (int t = 1; t <= len; t++) {
+            int v = path[t-1];
+            blocked[v].insert(t);
+        }
+    }
+    
+    // 时间上限：等所有敌人走完 + 从 x 到 y 的距离 + n（额外等待）
+    int time_limit = max_len + n + n;
+    
+    vector<unordered_set<int>> visited(n+1);
+    queue<pair<int, int>> q; // (vertex, time)
+    q.push({x, 1});
+    visited[x].insert(1);
+    
+    while (!q.empty()) {
+        auto [v, t] = q.front(); q.pop();
+        if (v == y) {
+            cout << t << '\n';
+            return;
+        }
+        if (t > time_limit) continue;
+        int nt = t + 1;
+        // 1. stay at v
+        if (!blocked[v].count(nt) && !visited[v].count(nt)) {
+            visited[v].insert(nt);
+            q.push({v, nt});
+        }
+        // 2. move to neighbor
+        for (int u : g[v]) {
+            if (!blocked[u].count(nt) && !visited[u].count(nt)) {
+                visited[u].insert(nt);
+                q.push({u, nt});
+            }
+        }
+    }
+    cout << -1 << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

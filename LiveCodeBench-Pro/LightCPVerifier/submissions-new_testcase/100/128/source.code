@@ -1,0 +1,98 @@
+#include <iostream>
+#include <string>
+#include <cmath>
+using namespace std;
+
+long long pow4[31]; // pow4[k] = 4^k
+
+void precompute() {
+    pow4[0] = 1;
+    for (int i = 1; i <= 30; i++) {
+        pow4[i] = pow4[i-1] * 4;
+    }
+}
+
+// 从坐标到数字
+long long coord_to_num(int n, int x, int y) {
+    if (n == 1) {
+        if (x == 1 && y == 1) return 1;
+        if (x == 2 && y == 2) return 2;
+        if (x == 2 && y == 1) return 3;
+        // (1,2)
+        return 4;
+    }
+    int mid = 1 << (n-1);
+    if (x <= mid && y <= mid) {
+        // 块 0
+        return coord_to_num(n-1, x, y);
+    } else if (x > mid && y > mid) {
+        // 块 1
+        return pow4[n-1] + coord_to_num(n-1, x - mid, y - mid);
+    } else if (x > mid && y <= mid) {
+        // 块 2
+        return 2 * pow4[n-1] + coord_to_num(n-1, x - mid, y);
+    } else {
+        // 块 3
+        return 3 * pow4[n-1] + coord_to_num(n-1, x, y - mid);
+    }
+}
+
+// 从数字到坐标
+pair<int, int> num_to_coord(int n, long long d) {
+    if (n == 1) {
+        if (d == 1) return {1, 1};
+        if (d == 2) return {2, 2};
+        if (d == 3) return {2, 1};
+        // d == 4
+        return {1, 2};
+    }
+    long long block_size = pow4[n-1];
+    if (d <= block_size) {
+        // 块 0
+        auto p = num_to_coord(n-1, d);
+        return {p.first, p.second};
+    } else if (d <= 2 * block_size) {
+        // 块 1
+        auto p = num_to_coord(n-1, d - block_size);
+        int mid = 1 << (n-1);
+        return {p.first + mid, p.second + mid};
+    } else if (d <= 3 * block_size) {
+        // 块 2
+        auto p = num_to_coord(n-1, d - 2 * block_size);
+        int mid = 1 << (n-1);
+        return {p.first + mid, p.second};
+    } else {
+        // 块 3
+        auto p = num_to_coord(n-1, d - 3 * block_size);
+        int mid = 1 << (n-1);
+        return {p.first, p.second + mid};
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    precompute();
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        while (q--) {
+            string op;
+            cin >> op;
+            if (op == "->") {
+                int x, y;
+                cin >> x >> y;
+                cout << coord_to_num(n, x, y) << '\n';
+            } else {
+                // op == "<-"
+                long long d;
+                cin >> d;
+                auto [x, y] = num_to_coord(n, d);
+                cout << x << ' ' << y << '\n';
+            }
+        }
+    }
+    return 0;
+}

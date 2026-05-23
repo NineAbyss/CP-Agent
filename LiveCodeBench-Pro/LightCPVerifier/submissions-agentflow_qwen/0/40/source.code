@@ -1,0 +1,105 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// 线段树：支持区间最大值查询和单点更新（取 max）
+struct SegmentTree {
+    int n;
+    vector<int> tree;
+
+    SegmentTree(int size) : n(size), tree(4 * size, 0) {}
+
+    void update(int idx, int l, int r, int pos, int val) {
+        if (l == r) {
+            tree[idx] = max(tree[idx], val);
+            return;
+        }
+        int mid = (l + r) / 2;
+        if (pos <= mid) update(2*idx, l, mid, pos, val);
+        else update(2*idx+1, mid+1, r, pos, val);
+        tree[idx] = max(tree[2*idx], tree[2*idx+1]);
+    }
+
+    int query(int idx, int l, int r, int ql, int qr) {
+        if (ql > qr) return 0;
+        if (ql <= l && r <= qr) return tree[idx];
+        int mid = (l + r) / 2;
+        int res = 0;
+        if (ql <= mid) res = max(res, query(2*idx, l, mid, ql, min(qr, mid)));
+        if (qr > mid) res = max(res, query(2*idx+1, mid+1, r, max(ql, mid+1), qr));
+        return res;
+    }
+
+    void update(int pos, int val) {
+        update(1, 0, n-1, pos, val);
+    }
+
+    int query(int ql, int qr) {
+        if (ql >= n || qr < 0 || ql > qr) return 0;
+        return query(1, 0, n-1, ql, min(qr, n-1));
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        // 构建离散化集合：包含每个 a[i], a[i]-1, a[i]-2
+        set<int> vals_set;
+        for (int x : a) {
+            for (int dx = 0; dx < 3; ++dx) {
+                int v = x - dx;
+                if (v >= 1) {
+                    vals_set.insert(v);
+                }
+            }
+        }
+        vector<int> comp(vals_set.begin(), vals_set.end());
+        sort(comp.begin(), comp.end());
+
+        auto get_id = [&](int x) -> int {
+            return lower_bound(comp.begin(), comp.end(), x) - comp.begin();
+        };
+
+        int m = comp.size();
+        SegmentTree st(m);
+
+        // 按顺序处理每个元素
+        for (int x : a) {
+            int left_bound = x - 2;   // 查询 [1, x-2]
+            int right_bound = x - 1;  // 查询 [x-1, MAX]
+
+            int left_max = 0, right_max = 0;
+
+            // 查询 [1, x-2]
+            auto it_left = upper_bound(comp.begin(), comp.end(), left_bound);
+            if (it_left != comp.begin()) {
+                int r_pos = prev(it_left) - comp.begin();
+                left_max = st.query(0, r_pos);
+            }
+
+            // 查询 [x-1, MAX]
+            auto it_right = lower_bound(comp.begin(), comp.end(), right_bound);
+            if (it_right != comp.end()) {
+                int l_pos = it_right - comp.begin();
+                right_max = st.query(l_pos, m-1);
+            }
+
+            int new_dp = max(left_max + 1, right_max);
+            int pos_x = get_id(x);
+            st.update(pos_x, new_dp);
+        }
+
+        cout << st.query(0, m-1) << '\n';
+    }
+    return 0;
+}

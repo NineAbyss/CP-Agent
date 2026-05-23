@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> p(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> p[i];
+        p[i]--;
+    }
+    vector<int> d(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> d[i];
+        d[i]--;
+    }
+    
+    vector<int> comp(n, -1);
+    vector<int> len;
+    for (int i = 0; i < n; ++i) {
+        if (comp[i] != -1) continue;
+        int cur = i;
+        int cnt = 0;
+        while (comp[cur] == -1) {
+            comp[cur] = len.size();
+            cur = p[cur];
+            cnt++;
+        }
+        len.push_back(cnt);
+    }
+    
+    int comps = len.size();
+    vector<int> zeroCnt(comps, 0);
+    long long ans = 0;
+    for (int i = 0; i < n; ++i) {
+        int c = comp[d[i]];
+        if (zeroCnt[c] == 0) {
+            ans += len[c];
+        }
+        zeroCnt[c]++;
+        cout << ans << " \n"[i == n-1];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

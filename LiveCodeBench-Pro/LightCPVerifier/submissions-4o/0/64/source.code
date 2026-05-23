@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+
+using namespace std;
+
+bool isSubsequence(const string &t, const vector<vector<int>> &charIndices, int n) {
+    int currentPos = -1;
+    for (char c : t) {
+        if (charIndices[c - 'a'].empty()) return false; // if there is no such character in s
+        auto it = upper_bound(charIndices[c - 'a'].begin(), charIndices[c - 'a'].end(), currentPos);
+        if (it == charIndices[c - 'a'].end()) return false;
+        currentPos = *it;
+    }
+    return true;
+}
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    string s;
+    cin >> s;
+
+    // Preprocessing: Storing indices for each character
+    vector<vector<int>> charIndices(26);
+    for (int i = 0; i < n; ++i) {
+        charIndices[s[i] - 'a'].push_back(i);
+    }
+
+    int q;
+    cin >> q;
+    vector<string> queries(q);
+    for (int i = 0; i < q; ++i) {
+        cin >> queries[i];
+    }
+
+    for (const string &t : queries) {
+        if (!isSubsequence(t, charIndices, n)) {
+            cout << 0 << endl;
+            continue;
+        }
+
+        // Use binary search to find the minimum number of chars to append
+        int left = 0;
+        int right = 1'000'000; // The constraint told us we are safe up to 1,000,000.
+        
+        while (left < right) {
+            int mid = (left + right) / 2;
+            string extended = t + string(mid, 'a'); // We only need to extend with the lowest char 'a' to test
+
+            if (isSubsequence(extended, charIndices, n)) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+
+        cout << left << endl; // After BS ends, left will be the answer
+    }
+
+    return 0;
+}

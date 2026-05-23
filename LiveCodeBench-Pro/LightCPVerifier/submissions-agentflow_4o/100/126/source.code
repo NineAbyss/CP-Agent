@@ -1,0 +1,70 @@
+#include <iostream>
+#include <vector>
+#include <utility>
+using namespace std;
+
+vector<pair<int, int>> solve(int n, vector<int>& a, vector<int>& b) {
+    vector<pair<int, int>> operations;
+    
+    // Check if `a` reversed is equal to `b`
+    bool alreadyReversed = true;
+    for (int i = 0; i < n; i++) {
+        if (a[i] != b[n - i - 1]) {
+            alreadyReversed = false;
+            break;
+        }
+    }
+    if (alreadyReversed) {
+        return operations;
+    }
+    
+    // Handle middle element for odd n
+    if(n % 2 == 1 && a[n / 2] != b[n / 2]) {
+        return {{-1, -1}};
+    }
+
+    // Proceed with swaps if not already reversed
+    for (int i = 0; i < n / 2; ++i) {
+        int target = b[n - i - 1];
+        if (a[i] != target) {
+            bool found = false;
+            for (int j = i + 1; j < n; ++j) {
+                if (a[j] == target && b[j] == a[i]) {
+                    swap(a[i], a[j]);
+                    swap(b[i], b[j]);
+                    operations.push_back({i + 1, j + 1});
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                return {{-1, -1}};
+            }
+        }
+    }
+    return operations;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        for (int i = 0; i < n; ++i) cin >> b[i];
+
+        vector<pair<int, int>> result = solve(n, a, b);
+
+        if (result.size() == 1 && result[0].first == -1) {
+            cout << "-1\n";
+        } else {
+            cout << result.size() << '\n';
+            for (auto& op : result) {
+                cout << op.first << ' ' << op.second << '\n';
+            }
+        }
+    }
+    return 0;
+}

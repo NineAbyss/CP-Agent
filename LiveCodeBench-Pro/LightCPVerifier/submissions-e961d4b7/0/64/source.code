@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    vector<int> p(n);
+    vector<int> pos_of(n+1);
+    for (int i = 0; i < n; i++) {
+        cin >> p[i];
+        pos_of[p[i]] = i+1;
+    }
+    while (q--) {
+        int l, r, k;
+        cin >> l >> r >> k;
+        int pos = pos_of[k];
+        if (pos < l || pos > r) {
+            cout << "-1\n";
+            continue;
+        }
+        int L = l, R = r;
+        int needL = 0, needR = 0;
+        int ML = 0, MR = 0;
+        while (L <= R) {
+            int m = (L+R)/2;
+            if (m == pos) break;
+            if (pos > m) {
+                // need p[m] < k
+                if (p[m-1] > k) {
+                    needL++;
+                    MR++; // p[m] > k
+                }
+                L = m+1;
+            } else {
+                // need p[m] > k
+                if (p[m-1] < k) {
+                    needR++;
+                    ML++; // p[m] < k
+                }
+                R = m-1;
+            }
+        }
+        int totalL = k-1;
+        int totalR = n-k;
+        if (needL > totalL || needR > totalR) {
+            cout << "-1\n";
+            continue;
+        }
+        int d = needL + needR + max(0, needL - ML) + max(0, needR - MR);
+        cout << d << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

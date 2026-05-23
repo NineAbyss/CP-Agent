@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool possible(const vector<int>& a) {
+    int n = a.size();
+    // dp[i][s] for i from 1 to n-1, s = winner of match i (0: player i wins, 1: player i+1 wins) // index i corresponds to match i
+    vector<vector<bool>> dp(n, vector<bool>(2, false));
+    // player 1 constraint: wins = 1 - s1
+    if (a[0] == 0) {
+        // 1 - s1 = 0 -> s1 = 1
+        dp[1][1] = true;
+    } else {
+        // 1 - s1 >= 1 -> s1 = 0
+        dp[1][0] = true;
+    }
+    // players i = 2 to n-1
+    for (int i = 2; i <= n-1; ++i) {
+        int ai = a[i-1]; // player i (0-indexed)
+        for (int prev_s = 0; prev_s < 2; ++prev_s) {
+            if (!dp[i-1][prev_s]) continue;
+            for (int cur_s = 0; cur_s < 2; ++cur_s) {
+                int wins = prev_s + (1 - cur_s);
+                if (ai == 0) {
+                    if (wins != 0) continue;
+                } else {
+                    if (wins == 0) continue;
+                }
+                dp[i][cur_s] = true;
+            }
+        }
+    }
+    // player n constraint: wins = s_{n-1}
+    int an = a[n-1];
+    for (int s = 0; s < 2; ++s) {
+        if (!dp[n-1][s]) continue;
+        if (an == 0) {
+            if (s != 0) continue;
+        } else {
+            if (s != 1) continue;
+        }
+        return true;
+    }
+    return false;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        if (possible(a)) {
+            cout << "NO\n";
+        } else {
+            cout << "YES\n";
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

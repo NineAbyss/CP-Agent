@@ -1,0 +1,375 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+// Function to simulate the path of a ball and check if it ends in a pocket
+bool goesToPocket(long long x, long long y, int dx, int dy, long long s) {
+    // Because the ball moves at 45 degrees, we can "unfold" the table. // Instead of bouncing, imagine reflecting the table each time the ball hits a wall.
+    // The ball will go into a corner (pocket) if after some reflections,  // its straight-line path lands exactly on a corner of a reflected table.
+
+    // We reduce the problem using parity. // After unfolding, the final position in the extended grid is:
+    //   X = x + k * (2*s) ± (s - x) depending on reflections
+    // But instead, note: the ball will reach a corner if and only if
+    // there exists integers m, n such that: //   x + t*dx = m*s
+    //   y + t*dy = n*s
+    // for some t > 0, and (m*s, n*s) is a corner of some reflected table.
+
+    // Actually, we can use symmetry: the ball ends in a pocket if and only if // the number of horizontal and vertical reflections needed bring it to a corner.
+
+    // Key idea: reflect the coordinate system so that the trajectory is a straight line. // The ball will end in one of the four corners after some reflections.
+    // The effective destination in the unfolded grid must be one of: //   (a*s, b*s) where a and b are integers, and the ball travels from (x,y) with direction (dx,dy).
+
+    // Time to hit a vertical wall: (s - x)/dx or (-x)/dx — but since dx = ±1, we can compute steps.
+
+    // Alternate Insight: // In problems like these, a ball shot at 45° will eventually fall into a pocket
+    // if and only if the total distance traveled in x and y directions until reaching a corner // are consistent.
+
+    // Let’s define:
+    //   tx = (dx == 1) ? (s - x) : x;   // distance to hit right or left wall first
+    //   ty = (dy == 1) ? (s - y) : y;   // distance to hit top or bottom wall first // But because speed is same and angle 45°, the path can be normalized.
+
+    // However, due to elastic collisions, we can "unfold" the table.
+    // The ball will fall into a pocket if and only if there exists some t such that:
+    //   x + dx*t = a*s  and  y + dy*t = b*s, where a and b are integers, //   and (a*s, b*s) is a corner of the original table modulo reflections.
+
+    // But note: corners are at (0,0), (0,s), (s,0), (s,s).
+    // So the ball ends in a pocket if in the unfolded grid, the ray from (x,y) in direction (dx,dy)
+    // passes through a point (k*s, l*s) for integers k,l ≥ 0, and k ≡ l (mod 2) ??? Not quite.
+
+    // Better approach: // Use reflection principle. The ball's path reflects, but we can reflect the table instead.
+    // The ball reaches a pocket if and only if in the unfolded grid, it reaches a point (a*s, b*s) // where a and b are integers, and the number of reflections (a and b mod 2) determines which pocket.
+
+    // Specifically:
+    //   Let u = (s - x) / dx if dx = 1, or x / (-dx) if dx = -1 → actually just consider parity of reflections.
+    // Instead, define:
+    //   Let mx = (dx == 1) ? (s - x) : x;
+    //   Let my = (dy == 1) ? (s - y) : y; // But this only gives first hit.
+
+    // Correct method: // After t seconds, position is (x + dx*t, y + dy*t)
+    // When it hits a wall, say at x=0 or x=s, we reflect the table and continue. // The unfolded coordinates are:
+    //   X = x + dx*t //   Y = y + dy*t
+    // The ball falls into a pocket when X = A*s and Y = B*s for integers A, B, and (A*s, B*s) corresponds to a corner in the reflected grid.
+
+    // Which corner? It depends on the parity of A and B: //   If A even, then x-coordinate maps to 0 in real table
+    //   If A odd, then x-coordinate maps to s
+    //   Similarly for B: even → 0, odd → s
+    // So the real pocket is (A%2 ? s : 0, B%2 ? s : 0)
+
+    // But we don't care which pocket, just whether it ever reaches (A*s, B*s) for some t>0.
+
+    // The equations: //   x + dx*t = A*s  => t = (A*s - x) / dx
+    //   y + dy*t = B*s  => t = (B*s - y) / dy // So: (A*s - x) / dx = (B*s - y) / dy
+    // => (A*s - x) * dy = (B*s - y) * dx // => A*s*dy - x*dy = B*s*dx - y*dx
+    // => A*(s*dy) - B*(s*dx) = x*dy - y*dx
+
+    // This is a linear Diophantine equation in A and B.
+    // But note: dx, dy ∈ {-1,1}, so we can avoid heavy math.
+
+    // Simpler: since the ball moves at 45°, the path has slope ±1. // The key invariant: after unfolding, the ball moves along a line with slope dy/dx = ±1.
+
+    // The ball will fall into a pocket if and only if there exists positive t such that: //   x + dx*t = a*s  and y + dy*t = b*s
+    // => t = (a*s - x)/dx = (b*s - y)/dy // => (a*s - x)*dy = (b*s - y)*dx
+    // => a*s*dy - b*s*dx = x*dy - y*dx // => s*(a*dy - b*dx) = x*dy - y*dx
+
+    // So we require that (x*dy - y*dx) is divisible by gcd(s, s) = s? Not exactly.
+
+    // Actually, we can solve for minimal t>0 such that both conditions are satisfied.
+
+    // Alternative known trick in programming problems:
+    // Reflect the starting point across the walls repeatedly.
+    // The ball goes to a pocket if the straight line from (x,y) in direction (dx,dy) hits a corner in the grid of reflected tables.
+
+    // The corners in the reflected grid are at (2*a*s, 2*b*s), (2*a*s, 2*b*s+s), etc. // Actually, the images of the pockets are at:
+    //   (2*a*s, 2*b*s) //   (2*a*s, 2*b*s + s)
+    //   (2*a*s + s, 2*b*s) //   (2*a*s + s, 2*b*s + s)
+    // But wait, no: reflection alternates.
+
+    // Known solution for similar problems (e.g., CodeForces "Billiard"):
+    // The ball will end in a corner if and only if the continued path hits a point (k*s, l*s) for integers k,l >= 0, and the time t = k*s - x / dx = ... is positive.
+
+    // But note: because dx, dy = ±1, we can compute the smallest t>0 such that: //   (x + dx*t) % (2*s) == 0 || (x + dx*t) % (2*s) == s
+    //   (y + dy*t) % (2*s) == 0 || (y + dy*t) % (2*s) == s
+    // and at the same t, both happen, and the resulting point is a corner.
+
+    // Actually, simpler: use the reflection count.
+
+    // Insight from known problems: 
+    // The ball will eventually fall into a pocket if and only if the following holds:
+    //   Let tx = (dx == 1) ? (s - x) : x;
+    //   Let ty = (dy == 1) ? (s - y) : y;
+    // But that's only first wall.
+
+    // Another known solution:  // Consider the movement in x and y independently.
+    // The ball hits a vertical wall at times: t_x = (s - x), (s - x) + s, (s - x) + 2*s, ... if dx=1
+    //   more precisely: t = (k*s - x)/dx for k such that k*s >= x if dx=1, or k*s <= x if dx=-1.
+    // Similarly for y.
+
+    // But note: the ball changes direction, but in the unfolded grid, it continues straight.
+
+    // Therefore, in the unfolded grid, the ball moves along the line: //   X(t) = x + dx*t
+    //   Y(t) = y + dy*t
+    // It will pass through a lattice point (a*s, b*s) if:
+    //   x + dx*t = a*s //   y + dy*t = b*s
+    // => t = (a*s - x)/dx = (b*s - y)/dy // => (a*s - x)*dy = (b*s - y)*dx
+    // => a*s*dy - b*s*dx = x*dy - y*dx // => s*(a*dy - b*dx) = x*dy - y*dx
+
+    // So we require that (x*dy - y*dx) is divisible by s? Not necessarily, but the equation must have integer solutions a,b.
+
+    // But note: a and b must be integers, so the right-hand side must be divisible by gcd(s, s)=s?  // Actually, the equation is: s * (a*dy - b*dx) = x*dy - y*dx
+    // So s must divide (x*dy - y*dx)
+
+    // However, let's test with example 1: //   x=1, y=1, dx=1, dy=1, s=2
+    //   x*dy - y*dx = 1*1 - 1*1 = 0 //   0 % 2 == 0 -> divisible -> should go to pocket -> correct.
+
+    // Example 2: first ball: 1,-1,1,1 in s=4 //   x*dy - y*dx = 1*(-1) - 1*1 = -1 -1 = -2
+    //   s=4, does 4 divide -2? No -> so not going to pocket? // But the example output says 3 out of 5 balls are potted.
+
+    // Let me trace the first ball: (1,1), direction (1,-1) // Moves: (2,0) -> hits bottom wall -> reflect to (2,0) with direction (1,1)?
+    // But (2,0) is on the edge? Wait, pockets are only at corners. (2,0) is not a corner -> bounce. // Then from (2,0) with (1,1): next step would be (3,1), then (4,2) -> hits right wall at (4,2) -> bounce to (4,2) with (-1,1)
+    // Then (3,3), (2,4) -> hits top wall -> reflect to (2,4) with (-1,-1) // Then (1,3), (0,2) -> hits left wall -> reflect to (0,2) with (1,-1)
+    // Then (1,1) -> back to start? So cycles and never pockets.
+
+    // But wait, the example says 3 balls are potted. So maybe this ball is not potted.
+
+    // Second ball: (2,2), (1,-1) // Move: (3,1), (4,0) -> (4,0) is corner! So potted.
+
+    // Third ball: (2,3), (-1,1) // Move: (1,4) -> corner (1,4)? no, (0,4)? no, (1,4) not corner. But (1,4) is on top edge -> bounce.
+    // Direction becomes (-1,-1). Then (0,3) -> left edge, bounce to (1,-1). Then (1,2), (2,1), (3,0) -> corner (3,0)? no, (4,0)? no, (3,0) not corner? s=4, corners are (0,0),(0,4),(4,0),(4,4). So (3,0) not corner -> bounce to (1,1). Then (4,1), (3,2), (2,3) -> back to start? cycle.
+
+    // Fourth ball: (1,3), (1,-1) // (2,2), (3,1), (4,0) -> (4,0) is corner! potted.
+
+    // Fifth ball: (3,1), (-1,1) // (2,2), (1,3), (0,4) -> (0,4) is corner! potted.
+
+    // So potted balls: second, fourth, fifth -> 3 balls.
+
+    // Now check condition for second ball: (2,2), (1,-1), s=4 //   x*dy - y*dx = 2*(-1) - 2*1 = -2 -2 = -4
+    //   s=4, and 4 divides -4 -> yes.
+
+    // Fourth ball: (1,3), (1,-1): 1*(-1) - 3*1 = -1-3 = -4 -> divisible by 4 -> yes.
+
+    // Fifth ball: (3,1), (-1,1): 3*1 - 1*(-1) = 3 + 1 = 4 -> divisible by 4 -> yes.
+
+    // First ball: (1,1), (1,-1): 1*(-1)-1*1 = -2 -> not divisible by 4 -> not potted.
+
+    // Third ball: (2,3), (-1,1): 2*1 - 3*(-1) = 2+3=5 -> not divisible by 4 -> not potted.
+
+    // So the condition is: the ball is potted if and only if s divides (x*dy - y*dx)?
+
+    // But wait: what about the sign and the direction?
+
+    // Let me try first example: (1,1), (1,1), s=2 //   x*dy - y*dx = 1*1 - 1*1 = 0 -> 0 divisible by 2 -> yes -> potted. Correct.
+
+    // But is this sufficient?
+
+    // We also need that the meeting happens at a corner in the future, i.e., t>0.
+
+    // From: t = (a*s - x)/dx // We need t>0.
+
+    // From the equation: s*(a*dy - b*dx) = x*dy - y*dx // Since s divides (x*dy - y*dx), let D = (x*dy - y*dx) / s
+    // Then: a*dy - b*dx = D
+
+    // We need to find integers a,b such that: //   a*dy - b*dx = D
+    // and t = (a*s - x)/dx > 0, and also (b*s - y)/dy = t > 0.
+
+    // But note: we can choose a and b arbitrarily as long as they satisfy the equation.
+
+    // Actually, we can pick the smallest positive t.
+
+    // Alternatively, note that the ball will eventually hit a corner if the above divisibility holds AND the direction leads to a positive time.
+
+    // But observe: the value (x*dy - y*dx) being divisible by s is necessary, but is it sufficient?
+
+    // Let me assume it is, based on the examples.
+
+    // However, consider a ball at (1,2) with (1,1) on table size 3. //   x*dy - y*dx = 1*1 - 2*1 = -1
+    //   s=3, 3 does not divide -1 -> not potted. // Trace: (1,2)->(2,3) -> hits top edge -> reflect to (2,3) with (1,-1)
+    //        (3,2) -> hits right edge -> reflect to (3,2) with (-1,-1) //        (2,1), (1,0) -> hits bottom edge -> reflect to (1,0) with (-1,1)
+    //        (0,1) -> hits left edge -> reflect to (0,1) with (1,1) //        (1,2) -> back to start -> cycle.
+
+    // So indeed not potted.
+
+    // Now consider a ball at (1,1) with (1,1) on table size 3. //   x*dy-y*dx = 1-1=0 -> divisible by 3 -> should be potted?
+    // Trace: (1,1)->(2,2)->(3,3) -> (3,3) is corner? if s=3, corners are (0,0),(0,3),(3,0),(3,3). Yes! (3,3) is a corner -> potted.
+
+    // So it works.
+
+    // But what about a ball at (1,1) with (1,1) on table size 4. //   value = 0 -> divisible by 4 -> should be potted?
+    //   (1,1)->(2,2)->(3,3)->(4,4) -> (4,4) is corner -> potted.
+
+    // Now a ball at (2,1) with (1,1) on table size 3. //   value = 2*1 - 1*1 = 1 -> 3 doesn't divide 1 -> not potted.
+    //   (2,1)->(3,2) -> hit right wall -> reflect to (3,2) with (-1,1) //   (2,3) -> hit top wall -> reflect to (2,3) with (-1,-1)
+    //   (1,2), (0,1) -> hit left wall -> reflect to (0,1) with (1,-1) //   (1,0) -> hit bottom wall -> reflect to (1,0) with (1,1)
+    //   (2,1) -> back to start -> cycle.
+
+    // So condition seems to hold.
+
+    // However, wait: what about the sign? The formula x*dy - y*dx might be negative.
+
+    // But divisibility by s (positive) cares about absolute value? No, in integers, -4 is divisible by 4.
+
+    // So the condition is: (x*dy - y*dx) % s == 0.
+
+    // But wait: in modular arithmetic, we need to be cautious with negative.
+
+    // In C++, (-4)%3 is -1, not 2. So we adjust.
+
+    // We want: (x*dy - y*dx) mod s == 0.
+
+    // We can do: ((x*dy - y*dx) % s == 0)
+
+    // But let me test: x=1,y=1,dx=1,dy=-1,s=4: value = 1*(-1) - 1*1 = -2 //   (-2) % 4 in C++ is -2, not 0.
+
+    // So we should do:
+    //   long long diff = (long long)x * dy - (long long)y * dx;
+    //   if (diff % s != 0) -> not potted.
+
+    // But -2 % 4 is -2, not 0.
+
+    // We can adjust:
+    //   if (diff % s == 0) -> divisible.
+
+    // But -4 % 4 == 0, -8 % 4 == 0, but -2 % 4 != 0.
+
+    // So it works for multiples.
+
+    // However, note: the equation was s divides (x*dy - y*dx), meaning (x*dy - y*dx) is a multiple of s.
+
+    // So we can check: (x*dy - y*dx) % s == 0.
+
+    // But in C++ for negative:  //   We can use:
+    //      diff % s == 0
+    //   But if diff is negative, we can adjust:
+
+    // Alternatively, we can do:
+    //   long long diff = (long long)x * dy - (long long)y * dx;
+    //   if (diff % s != 0) -> skip
+    //   But note: if diff is negative, we can do:
+    //      (diff % s + s) % s == 0  -> equivalent to diff % s == 0
+
+    // Actually, if diff is divisible by s, then (diff % s) is 0 regardless of sign? 
+    //   Only if the absolute value of the remainder is taken into account.
+
+    // Example: diff = -4, s=4: -4 % 4 = 0 in C++? Let me check:  //   In C++, the sign of modulus follows the dividend.
+    //   But -4 / 4 = -1 with remainder 0 -> so -4 % 4 = 0.
+
+    // How about -5 % 4? = -1.
+
+    // So if diff is divisible by s, then diff % s == 0, even for negative.
+
+    // Therefore, we can simply check: (x*dy - y*dx) % s == 0.
+
+    // But wait: what if s is large and the product overflows int?
+
+    // Constraints: x,y < s, and s up to 10^9, so x*dy can be up to 10^9, and we subtract two such numbers -> up to 2e9 in absolute value, which fits in long long but not in int.
+
+    // We are given x_i, y_i as int, but s up to 10^9, so we must use long long.
+
+    // So algorithm per ball:
+    //   long long diff = (long long)x * dy - (long long)y * dx;
+    //   if (diff % s == 0) then this ball will eventually be potted.
+
+    // But wait: is that sufficient? What about the time? Could it be that the solution a,b yields negative t?
+
+    // For example, could we have a solution with t<0?
+
+    // We need t = (a*s - x)/dx > 0.
+
+    // Since the ball starts inside (0<x<s, 0<y<s), and moves with dx,dy=±1, the first time it hits a wall is positive.
+
+    // But the equation might have a solution with negative t (behind the starting point).
+
+    // However, if there is a solution, then because the pattern repeats every 2*s in both directions (due to reflections), there are infinitely many solutions.
+
+    // And since the ball moves forward, we only care about the smallest positive t.
+
+    // But if there is any solution, then there is a positive solution? 
+
+    // Suppose (a,b) is a solution to a*dy - b*dx = D, where D = (x*dy-y*dx)/s. // Then general solution:
+    //   a' = a + k*dx //   b' = b + k*dy
+    // for any integer k? Let me check: //   a'*dy - b'*dx = (a + k*dx)*dy - (b + k*dy)*dx = a*dy + k*dx*dy - b*dx - k*dy*dx = a*dy - b*dx = D.
+
+    // So the general solution is periodic with period (dx, dy) in (a,b).
+
+    // Then t = (a'*s - x)/dx = (a*s + k*dx*s - x)/dx = (a*s-x)/dx + k*s.
+
+    // Since s>0, by choosing k large enough, t can be made arbitrarily large positive.
+
+    // But we need at least one positive t.
+
+    // Is it possible that all solutions have t<=0?
+
+    // Suppose the smallest t is negative. Then we can take k such that k*s > |t|, then t_new = t + k*s > 0.
+
+    // So if there is a solution, there is a positive solution.
+
+    // Therefore, the condition (x*dy - y*dx) % s == 0 is necessary and sufficient.
+
+    // But wait: what if dx or dy is zero? But the problem states dx,dy in {-1,1}.
+
+    // Therefore, we can count the number of balls for which (x*dy - y*dx) is divisible by s.
+
+    // However, let me test with the first ball in the second test case: (1,1), (1,-1), s=4
+    //   diff = 1*(-1) - 1*1 = -2
+    //   -2 % 4 = -2 (in C++), which is not 0 -> not counted -> correct.
+
+    // But wait: -2 % 4 in C++ is -2, not 0.
+
+    // We need to check if -2 is divisible by 4? No.
+
+    // But what if we do: 
+    //   if (diff % s == 0) ...
+
+    // For diff=-4, s=4: (-4)%4==0 -> true.
+    // For diff=4, s=4: 4%4==0 -> true.
+    // For diff=0: 0%s==0 -> true.
+
+    // For diff=-2: (-2)%4 is -2 -> not 0 -> false.
+
+    // So it works.
+
+    // However, note: the modulus operation for negative numbers:  //   C++ truncates toward 0, so remainder has the same sign as the dividend.
+
+    // But we only care about whether the remainder is 0.
+
+    // So if the number is divisible, remainder is 0.
+
+    // Therefore, we can safely use `%`.
+
+    // But caution: overflow in multiplication.
+
+    // x and y can be up to 10^9, so x*dy is up to 10^9 in absolute value, and we subtract two such numbers -> up to 2e9, which fits in long long (up to 9e18).
+
+    // So code:
+
+    long long diff = (long long)x * dy - (long long)y * dx;
+    return (diff % s == 0);
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        long long s;
+        cin >> n >> s;
+
+        int count = 0;
+        for (int i = 0; i < n; i++) {
+            int dx, dy, x, y;
+            cin >> dx >> dy >> x >> y;
+
+            if (goesToPocket(x, y, dx, dy, s)) {
+                count++;
+            }
+        }
+
+        cout << count << '\n';
+    }
+
+    return 0;
+}

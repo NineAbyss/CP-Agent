@@ -1,0 +1,81 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <tuple>
+using namespace std;
+
+struct DSU {
+    vector<int> parent, rank;
+    DSU(int n) {
+        parent.resize(n);
+        rank.resize(n, 0);
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+    int find(int x) {
+        while (parent[x] != x) x = parent[x];
+        return x;
+    }
+    bool unite(int x, int y) {
+        x = find(x);
+        y = find(y);
+        if (x == y) return false;
+        if (rank[x] < rank[y]) swap(x, y);
+        parent[y] = x;
+        if (rank[x] == rank[y]) rank[x]++;
+        return true;
+    }
+    bool connected(int u, int v) {
+        return find(u) == find(v);
+    }
+};
+
+long long solve_one(int n, vector<tuple<int,int,int>> edges) {
+    int m = edges.size();
+    if (m == 0) return 0;
+    sort(edges.begin(), edges.end(), [](auto& a, auto& b) {
+        return get<2>(a) < get<2>(b);
+    });
+    vector<int> w(m);
+    vector<pair<int, int>> e(m);
+    for (int i = 0; i < m; i++) {
+        w[i] = get<2>(edges[i]);
+        e[i] = {get<0>(edges[i])-1, get<1>(edges[i])-1};
+    }
+    long long ans = 1e18;
+    for (int l = 0; l < m; l++) {
+        DSU dsu(n);
+        int r = l-1;
+        while (r+1 < m) {
+            r++;
+            dsu.unite(e[r].first, e[r].second);
+            if (dsu.connected(0, n-1)) {
+                // check if edge l and edge r are in the component of vertex 1
+                if (dsu.connected(0, e[l].first) && dsu.connected(0, e[l].second) &&
+                    dsu.connected(0, e[r].first) && dsu.connected(0, e[r].second)) {
+                    ans = min(ans, (long long)w[l] + w[r]);
+                    break;
+                }
+            }
+        }
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<tuple<int,int,int>> edges(m);
+        for (int i = 0; i < m; i++) {
+            int u, v, w;
+            cin >> u >> v >> w;
+            edges[i] = {u, v, w};
+        }
+        cout << solve_one(n, edges) << '\n';
+    }
+    return 0;
+}

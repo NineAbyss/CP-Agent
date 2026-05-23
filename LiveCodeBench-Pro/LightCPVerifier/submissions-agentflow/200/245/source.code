@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool solve_case(vector<long long>& a) {
+    int n = a.size();
+    long long m = *min_element(a.begin(), a.end());
+    vector<long long> D;
+    int cnt_m = 0;
+    for (auto x : a) {
+        if (x % m == 0) {
+            D.push_back(x);
+            if (x == m) cnt_m++;
+        }
+    }
+    int k = D.size();
+    if (k == 1) return false;
+    if (cnt_m == 0) return false;
+    long long total_gcd = D[0];
+    for (int i = 1; i < k; i++) total_gcd = __gcd(total_gcd, D[i]);
+    if (total_gcd != m) return false;
+    vector<long long> pre(k), suf(k);
+    pre[0] = D[0];
+    for (int i = 1; i < k; i++) pre[i] = __gcd(pre[i-1], D[i]);
+    suf[k-1] = D[k-1];
+    for (int i = k-2; i >= 0; i--) suf[i] = __gcd(suf[i+1], D[i]);
+    for (int i = 0; i < k; i++) {
+        if (D[i] == m) {
+            long long g = 0;
+            if (i == 0) g = suf[1];
+            else if (i == k-1) g = pre[k-2];
+            else g = __gcd(pre[i-1], suf[i+1]);
+            if (g == m) return true;
+        }
+    }
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        cout << (solve_case(a) ? "Yes" : "No") << '\n';
+    }
+    return 0;
+}

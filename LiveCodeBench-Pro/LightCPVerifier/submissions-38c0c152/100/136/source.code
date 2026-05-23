@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int LIMIT = 10000000; // 1e7
+
+string get_S(int x) {
+    int cnt[10] = {0};
+    int y = x;
+    while (y) {
+        cnt[y % 10]++;
+        y /= 10;
+    }
+    y = x + 1;
+    while (y) {
+        cnt[y % 10]++;
+        y /= 10;
+    }
+    string s;
+    for (int d = 0; d <= 9; ++d) {
+        s.append(cnt[d], '0' + d);
+    }
+    return s;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    // Precompute all distinct strings and their first occurrence
+    unordered_map<string, int> first;
+    first.reserve(100000);
+    for (int x = 1; x <= LIMIT; ++x) {
+        string s = get_S(x);
+        if (first.find(s) == first.end()) {
+            first[s] = x;
+        }
+    }
+    
+    // Collect first occurrence values
+    vector<int> firsts;
+    firsts.reserve(first.size());
+    for (const auto& p : first) {
+        firsts.push_back(p.second);
+    }
+    sort(firsts.begin(), firsts.end());
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        // If n is beyond our limit, we assume all strings have been found.
+        // But to be safe, we can set n = min(n, LIMIT) for lookup?
+        // Actually, firsts contains only values <= LIMIT. // If n > LIMIT, then all strings are included because their first occurrence <= LIMIT.
+        // So answer is the total number of strings.
+        // But careful: if n < LIMIT, we need to count only those with first <= n.
+        int ans = upper_bound(firsts.begin(), firsts.end(), n) - firsts.begin();
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

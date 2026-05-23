@@ -1,0 +1,36 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        string s;
+        cin >> n >> k >> s;
+        int cnt0 = 0, cnt1 = 0;
+        for (char c : s) {
+            if (c == '0') cnt0++;
+            else cnt1++;
+        }
+        int need = n/2 - k; // number of different pairs
+        if (need < 0 || need > min(cnt0, cnt1)) {
+            cout << "NO\n";
+            continue;
+        }
+        int A = (cnt0 - need) / 2;
+        int B = (cnt1 - need) / 2;
+        int low = max(0, k - B);
+        int high = min(A, k);
+        if (low <= high) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

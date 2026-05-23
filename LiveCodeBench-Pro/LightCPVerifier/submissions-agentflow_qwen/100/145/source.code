@@ -1,0 +1,133 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+
+long long modpow(long long base, long long exp, long long mod) {
+    long long res = 1;
+    while (exp) {
+        if (exp & 1) res = res * base % mod;
+        base = base * base % mod;
+        exp >>= 1;
+    }
+    return res;
+}
+
+struct DSU {
+    vector<int> parent, size;
+    int n;
+    DSU(int n) : n(n) {
+        parent.resize(n);
+        size.resize(n, 1);
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+    int find(int x) {
+        if (parent[x] != x) parent[x] = find(parent[x]);
+        return parent[x];
+    }
+    void unite(int x, int y) {
+        x = find(x), y = find(y);
+        if (x == y) return;
+        if (size[x] < size[y]) swap(x, y);
+        parent[y] = x;
+        size[x] += size[y];
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> graph(n);
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            graph[u].push_back(v);
+            graph[v].push_back(u);
+        }
+
+        // Compute all pairs distances
+        vector<vector<int>> dist(n, vector<int>(n, -1));
+        for (int i = 0; i < n; i++) {
+            queue<int> q;
+            q.push(i);
+            dist[i][i] = 0;
+            while (!q.empty()) {
+                int u = q.front(); q.pop();
+                for (int v : graph[u]) {
+                    if (dist[i][v] == -1) {
+                        dist[i][v] = dist[i][u] + 1;
+                        q.push(v);
+                    }
+                }
+            }
+        }
+
+        // Find maximum distance
+        int maxd = 0;
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                maxd = max(maxd, dist[i][j]);
+
+        // Group pairs by distance
+        vector<vector<pair<int,int>>> at_dist(maxd+1);
+        for (int i = 0; i < n; i++) {
+            for (int j = i+1; j < n; j++) {
+                int d = dist[i][j];
+                at_dist[d].emplace_back(i, j);
+            }
+        }
+
+        // Precompute powers
+        long long pow3 = modpow(3, n, MOD);
+        vector<long long> pow2(n+10);
+        pow2[0] = 1;
+        for (int i = 1; i < n+10; i++) {
+            pow2[i] = pow2[i-1] * 2 % MOD;
+        }
+
+        DSU dsu(n);
+        long long ans = 0;
+
+        // Process k from maxd down to 1
+        for (int k = maxd; k >= 1; k--) {
+            // Add all edges with distance == k
+            for (auto &p : at_dist[k]) {
+                dsu.unite(p.first, p.second);
+            }
+
+            // Get component sizes
+            vector<int> comp_size;
+            vector<bool> root(n, false);
+            for (int i = 0; i < n; i++) {
+                int r = dsu.find(i);
+                root[r] = true;
+            }
+            for (int i = 0; i < n; i++) {
+                if (root[i]) {
+                    comp_size.push_back(dsu.size[i]);
+                }
+            }
+
+            long long g = 1;
+            for (int s : comp_size) {
+                // ways for this component: 2^(s+1) - 1
+                long long ways = (pow2[s+1] - 1 + MOD) % MOD;
+                g = g * ways % MOD;
+            }
+
+            long long hk = (pow3 - g + MOD) % MOD;
+            ans = (ans + hk) % MOD;
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

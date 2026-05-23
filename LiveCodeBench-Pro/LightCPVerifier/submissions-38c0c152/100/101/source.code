@@ -1,0 +1,213 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+int n, k;
+vector<vector<bool>> adj_mat[10];
+vector<int> comp_id[10];
+vector<bool> comp_is_clique[10];
+vector<int> comp_size[10];
+
+void solve() {
+    cin >> n >> k;
+    for (int i = 0; i < k; i++) {
+        adj_mat[i].assign(n, vector<bool>(n, false));
+        int m;
+        cin >> m;
+        for (int e = 0; e < m; e++) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            adj_mat[i][u][v] = true;
+            adj_mat[i][v][u] = true;
+        }
+    }
+    
+    // 对每个图寻找最小块数划分
+    for (int i = 0; i < k; i++) {
+        // 检查整个图是否是完全图或空图
+        int total_edges = 0;
+        for (int u = 0; u < n; u++) {
+            for (int v = u+1; v < n; v++) {
+                if (adj_mat[i][u][v]) total_edges++;
+            }
+        }
+        if (total_edges == 0) {
+            // 空图，整个作为独立集块
+            comp_id[i].assign(n, 0);
+            comp_size[i].assign(1, n);
+            comp_is_clique[i].assign(1, false);
+            continue;
+        }
+        if (total_edges == n*(n-1)/2) {
+            // 完全图，整个作为团块
+            comp_id[i].assign(n, 0);
+            comp_size[i].assign(1, n);
+            comp_is_clique[i].assign(1, true);
+            continue;
+        }
+        
+        // 否则使用 signature 方法 // 计算 signature
+        vector<string> sig(n);
+        for (int v = 0; v < n; v++) {
+            string s;
+            for (int u = 0; u < n; u++) {
+                if (u == v) continue;
+                if (adj_mat[i][v][u]) s += to_string(u) + ",";
+            }
+            sig[v] = s;
+        }
+        
+        // 按 signature 分组
+        map<string, vector<int>> groups;
+        for (int v = 0; v < n; v++) {
+            groups[sig[v]].push_back(v);
+        }
+        
+        comp_id[i].assign(n, -1);
+        int comp_cnt = 0;
+        
+        // 处理每组
+        for (auto& [s, vec] : groups) {
+            int sz = vec.size();
+            if (sz == 1) {
+                comp_id[i][vec[0]] = comp_cnt++;
+                continue;
+            }
+            
+            // 检查整个组是否是完全图或空图
+            bool all_edges = true;
+            bool no_edges = true;
+            for (int a = 0; a < sz; a++) {
+                for (int b = a+1; b < sz; b++) {
+                    if (adj_mat[i][vec[a]][vec[b]]) {
+                        no_edges = false;
+                    } else {
+                        all_edges = false;
+                    }
+                }
+            }
+            
+            if (all_edges) {
+                // 整个组作为团块
+                for (int v : vec) comp_id[i][v] = comp_cnt;
+                comp_cnt++;
+            } else if (no_edges) {
+                // 整个组作为独立集块
+                for (int v : vec) comp_id[i][v] = comp_cnt;
+                comp_cnt++;
+            } else {
+                // 需要划分成连通分量
+                vector<vector<int>> sub_adj(sz);
+                for (int a = 0; a < sz; a++) {
+                    for (int b = a+1; b < sz; b++) {
+                        int u = vec[a], v = vec[b];
+                        if (adj_mat[i][u][v]) {
+                            sub_adj[a].push_back(b);
+                            sub_adj[b].push_back(a);
+                        }
+                    }
+                }
+                
+                vector<bool> vis(sz, false);
+                for (int a = 0; a < sz; a++) {
+                    if (vis[a]) continue;
+                    vector<int> q = {a};
+                    vis[a] = true;
+                    int qptr = 0;
+                    while (qptr < q.size()) {
+                        int x = q[qptr++];
+                        for (int y : sub_adj[x]) {
+                            if (!vis[y]) {
+                                vis[y] = true;
+                                q.push_back(y);
+                            }
+                        }
+                    }
+                    // q 是一个连通分量
+                    int comp_sz = q.size();
+                    // 检查是否完全图或空图
+                    int edge_count = 0;
+                    for (int a_idx = 0; a_idx < comp_sz; a_idx++) {
+                        for (int b_idx = a_idx+1; b_idx < comp_sz; b_idx++) {
+                            if (adj_mat[i][vec[q[a_idx]]][vec[q[b_idx]]]) edge_count++;
+                        }
+                    }
+                    if (edge_count == 0) {
+                        // 空图，独立集
+                        for (int idx : q) comp_id[i][vec[idx]] = comp_cnt;
+                        comp_cnt++;
+                    } else if (edge_count == comp_sz * (comp_sz - 1) / 2) {
+                        // 完全图，团
+                        for (int idx : q) comp_id[i][vec[idx]] = comp_cnt;
+                        comp_cnt++;
+                    } else {
+                        // 无法划分
+                        cout << "No\n";
+                        return;
+                    }
+                }
+            }
+        }
+        
+        // 记录每个块的信息
+        comp_size[i].assign(comp_cnt, 0);
+        for (int v = 0; v < n; v++) {
+            comp_size[i][comp_id[i][v]]++;
+        }
+        comp_is_clique[i].assign(comp_cnt, false);
+        for (int c = 0; c < comp_cnt; c++) {
+            if (comp_size[i][c] == 1) {
+                comp_is_clique[i][c] = true; // 单点既是团又是独立集
+                continue;
+            }
+            // 找块内任意两个顶点判断类型
+            int first = -1, second = -1;
+            for (int v = 0; v < n; v++) {
+                if (comp_id[i][v] == c) {
+                    if (first == -1) first = v;
+                    else { second = v; break; }
+                }
+            }
+            if (second != -1) {
+                bool edge = adj_mat[i][first][second];
+                if (edge) comp_is_clique[i][c] = true;
+                else comp_is_clique[i][c] = false;
+            }
+        }
+    }
+    
+    // 检查跨图约束
+    vector<bool> has_indep(n, false), has_clique(n, false);
+    for (int i = 0; i < k; i++) {
+        for (int v = 0; v < n; v++) {
+            int c = comp_id[i][v];
+            if (comp_size[i][c] > 1) {
+                if (comp_is_clique[i][c]) has_clique[v] = true;
+                else has_indep[v] = true;
+            }
+        }
+    }
+    
+    for (int v = 0; v < n; v++) {
+        if (has_indep[v] && has_clique[v]) {
+            cout << "No\n";
+            return;
+        }
+    }
+    cout << "Yes\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,111 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// 计算排列奇偶性 O(n)
+int permutation_parity(const vector<int>& a) {
+    int n = a.size();
+    vector<int> pos(n + 1);
+    for(int i=0; i<n; i++) {
+        pos[a[i]] = i;
+    }
+    
+    vector<bool> visited(n + 1, false);
+    int cycles = 0;
+    
+    for(int val=1; val<=n; val++) {
+        if(!visited[val]) {
+            cycles++;
+            int cur = val;
+            while(!visited[cur]) {
+                visited[cur] = true;
+                cur = pos[cur] + 1;
+            }
+        }
+    }
+    
+    return (n - cycles) & 1;
+}
+
+vector<int> solve(const vector<int>& a) {
+    int n = a.size();
+    vector<int> odd_vals, even_vals;
+    for(int i=0; i<n; i++) {
+        if(i%2 == 0) even_vals.push_back(a[i]);
+        else odd_vals.push_back(a[i]);
+    }
+    
+    sort(odd_vals.begin(), odd_vals.end());
+    sort(even_vals.begin(), even_vals.end());
+    
+    vector<int> result(n);
+    int odd_idx = 0, even_idx = 0;
+    for(int i=0; i<n; i++) {
+        if(i%2 == 0) result[i] = even_vals[even_idx++];
+        else result[i] = odd_vals[odd_idx++];
+    }
+    
+    // 检查奇偶性是否与原始排列相同
+    int orig_parity = permutation_parity(a);
+    int result_parity = permutation_parity(result);
+    
+    if(orig_parity != result_parity) {
+        // 需要调整：交换最后两个奇数位置的元素
+        int last_odd = -1, second_last_odd = -1;
+        for(int i=n-1; i>=0; i--) {
+            if(i%2 == 1) {
+                if(last_odd == -1) last_odd = i;
+                else {
+                    second_last_odd = i;
+                    break;
+                }
+            }
+        }
+        
+        if(second_last_odd != -1) {
+            swap(result[last_odd], result[second_last_odd]);
+        } else {
+            // 如果没有两个奇数位置，交换最后两个偶数位置
+            last_odd = -1, second_last_odd = -1;
+            for(int i=n-1; i>=0; i--) {
+                if(i%2 == 0) {
+                    if(last_odd == -1) last_odd = i;
+                    else {
+                        second_last_odd = i;
+                        break;
+                    }
+                }
+            }
+            if(second_last_odd != -1) {
+                swap(result[last_odd], result[second_last_odd]);
+            }
+        }
+    }
+    
+    return result;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while(t--) {
+        int n;
+        cin >> n;
+        
+        vector<int> a(n);
+        for(int i=0; i<n; i++) {
+            cin >> a[i];
+        }
+        
+        vector<int> result = solve(a);
+        
+        for(int i=0; i<n; i++) {
+            cout << result[i] << (i == n-1 ? '\n' : ' ');
+        }
+    }
+    
+    return 0;
+}

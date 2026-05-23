@@ -1,0 +1,59 @@
+#include <iostream>
+#include <cmath>
+#include <algorithm>
+using namespace std;
+
+bool canFormSquare(int l1, int b1, int l2, int b2, int l3, int b3) {
+    int area = l1 * b1 + l2 * b2 + l3 * b3;
+    int a = sqrt(area);
+    if (a * a != area) return false;
+    
+    int l[3] = {l1, l2, l3};
+    int b[3] = {b1, b2, b3};
+    
+    // 所有6种排列顺序
+    int perm[6][3] = {{0,1,2},{0,2,1},{1,0,2},{1,2,0},{2,0,1},{2,1,0}};
+    
+    for (int p = 0; p < 6; p++) {
+        int i1 = perm[p][0], i2 = perm[p][1], i3 = perm[p][2];
+        
+        // 情况1: 三个矩形水平排列（三行）
+        if (l[i1] == a && l[i2] == a && l[i3] == a && b[i1] + b[i2] + b[i3] == a) return true;
+        
+        // 情况2: 三个矩形垂直排列（三列）
+        if (b[i1] == a && b[i2] == a && b[i3] == a && l[i1] + l[i2] + l[i3] == a) return true;
+        
+        // 情况3: 两个矩形并排在上方，第三个在下方
+        if (b[i1] == b[i2] && b[i1] + b[i3] == a) {
+            if (l[i1] + l[i2] == a && l[i3] == a) return true;
+        }
+        
+        // 情况4: 两个矩形并排在下方，第三个在上方
+        if (b[i2] == b[i3] && b[i2] + b[i1] == a) {
+            if (l[i2] + l[i3] == a && l[i1] == a) return true;
+        }
+        
+        // 情况5: 两个矩形上下堆叠在左侧，第三个在右侧
+        if (l[i1] == l[i2] && l[i1] + l[i3] == a) {
+            if (b[i1] + b[i2] == a && b[i3] == a) return true;
+        }
+        
+        // 情况6: 两个矩形上下堆叠在右侧，第三个在左侧
+        if (l[i2] == l[i3] && l[i2] + l[i1] == a) {
+            if (b[i2] + b[i3] == a && b[i1] == a) return true;
+        }
+    }
+    
+    return false;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int l1, b1, l2, b2, l3, b3;
+        cin >> l1 >> b1 >> l2 >> b2 >> l3 >> b3;
+        cout << (canFormSquare(l1, b1, l2, b2, l3, b3) ? "YES" : "NO") << endl;
+    }
+    return 0;
+}

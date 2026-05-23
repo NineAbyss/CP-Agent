@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const ll INF = 1e18;
+
+vector<ll> bottleneck_dijkstra(int start, int n, vector<vector<pair<int,ll>>> &graph) {
+    vector<ll> dist(n, INF);
+    if (n == 0) return dist;
+    priority_queue<pair<ll,int>, vector<pair<ll,int>>, greater<pair<ll,int>>> pq;
+    dist[start] = 0;
+    pq.push(make_pair(0, start));
+    while (!pq.empty()) {
+        pair<ll,int> top = pq.top(); pq.pop();
+        ll d = top.first;
+        int u = top.second;
+        if (d != dist[u]) continue;
+        for (int i = 0; i < (int)graph[u].size(); i++) {
+            int v = graph[u][i].first;
+            ll w = graph[u][i].second;
+            ll new_max = max(d, w);
+            if (new_max < dist[v]) {
+                dist[v] = new_max;
+                pq.push(make_pair(new_max, v));
+            }
+        }
+    }
+    return dist;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<tuple<int,int,ll>> edges;
+        for (int i = 0; i < m; i++) {
+            int u, v;
+            ll w;
+            cin >> u >> v >> w;
+            u--; v--;
+            edges.push_back(make_tuple(u, v, w));
+        }
+
+        ll ans = INF;
+
+        // For each edge, consider it as the minimum-enforcing edge
+        for (int idx = 0; idx < (int)edges.size(); idx++) {
+            int u = get<0>(edges[idx]);
+            int v = get<1>(edges[idx]);
+            ll w_val = get<2>(edges[idx]);
+
+            // Build graph with all edges with weight >= w_val
+            vector<vector<pair<int,ll>>> graph(n);
+            for (int i = 0; i < m; i++) {
+                int x = get<0>(edges[i]);
+                int y = get<1>(edges[i]);
+                ll w_edge = get<2>(edges[i]);
+                if (w_edge >= w_val) {
+                    graph[x].push_back(make_pair(y, w_edge));
+                    graph[y].push_back(make_pair(x, w_edge));
+                }
+            }
+
+            auto dist1 = bottleneck_dijkstra(0, n, graph);
+            auto distn = bottleneck_dijkstra(n-1, n, graph);
+
+            if (dist1[n-1] == INF) continue;
+
+            // Two directions
+            ll cand1 = w_val + max(max(dist1[u], w_val), distn[v]);
+            ll cand2 = w_val + max(max(dist1[v], w_val), distn[u]);
+            ans = min(ans, min(cand1, cand2));
+        }
+
+        cout << ans << '\n';
+    }
+    return 0;
+}

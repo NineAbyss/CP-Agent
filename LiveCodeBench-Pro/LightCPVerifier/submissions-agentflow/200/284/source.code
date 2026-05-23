@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int beauty(const vector<int>& b) {
+    int n = b.size();
+    map<int, int> first, last;
+    for (int i = 0; i < n; i++) {
+        int x = b[i];
+        if (!first.count(x)) first[x] = i;
+        last[x] = i;
+    }
+    int sum = 0;
+    for (auto& [x, f] : first) {
+        int l = last[x];
+        sum += l - f;
+    }
+    return sum;
+}
+
+int maxBeautyBrute(const vector<int>& a) {
+    int n = a.size();
+    vector<int> b(n);
+    int maxBeauty = 0;
+    function<void(int)> dfs = [&](int idx) {
+        if (idx == n) {
+            maxBeauty = max(maxBeauty, beauty(b));
+            return;
+        }
+        for (int val = 1; val <= a[idx]; val++) {
+            b[idx] = val;
+            dfs(idx+1);
+        }
+    };
+    dfs(0);
+    return maxBeauty;
+}
+
+int main() {
+    vector<int> a = {5,2,3,2,5,4};
+    cout << maxBeautyBrute(a) << endl;
+    return 0;
+}

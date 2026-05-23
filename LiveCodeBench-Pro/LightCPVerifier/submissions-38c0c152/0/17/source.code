@@ -1,0 +1,110 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<ll> p(n);
+        vector<int> d(n);
+        for (int i = 0; i < n; i++) cin >> p[i];
+        for (int i = 0; i < n; i++) cin >> d[i];
+        int q;
+        cin >> q;
+        vector<ll> a(q);
+        for (int i = 0; i < q; i++) cin >> a[i];
+
+        map<ll, int> pos_to_idx;
+        for (int i = 0; i < n; i++) pos_to_idx[p[i]] = i;
+
+        for (ll start : a) {
+            int dir = 1; // 初始方向向右
+            int t_mod = 0;
+            int i = -1; // 当前灯索引
+
+            auto it = pos_to_idx.find(start);
+            if (it != pos_to_idx.end()) {
+                // 起点正好在灯上
+                i = it->second;
+                t_mod = 0;
+            } else {
+                // 找右边第一个灯
+                it = pos_to_idx.upper_bound(start);
+                if (it == pos_to_idx.end()) {
+                    // 右边没有灯，直接离开
+                    cout << "YES\n";
+                    continue;
+                }
+                ll first_p = it->first;
+                i = it->second;
+                ll dist = first_p - start;
+                t_mod = dist % k;
+            }
+
+            // 状态模拟
+            vector<vector<vector<bool>>> visited(n, vector<vector<bool>>(2, vector<bool>(k, false)));
+            bool leave = false;
+            while (true) {
+                if (i == -1) {
+                    leave = true;
+                    break;
+                }
+                if (visited[i][dir][t_mod]) {
+                    // 进入循环，不会离开
+                    break;
+                }
+                visited[i][dir][t_mod] = true;
+
+                // 判断红灯（使用当前时间模 k）
+                if (t_mod == d[i]) {
+                    dir = 1 - dir;
+                }
+
+                // 移动一格
+                ll new_pos;
+                if (dir == 1) {
+                    new_pos = p[i] + 1;
+                } else {
+                    new_pos = p[i] - 1;
+                }
+                t_mod = (t_mod + 1) % k;
+
+                // 检查新位置是否有灯
+                auto it2 = pos_to_idx.find(new_pos);
+                if (it2 != pos_to_idx.end()) {
+                    i = it2->second;
+                } else {
+                    // 没有灯，跳跃到下一个灯或离开
+                    if (dir == 1) {
+                        auto jt = upper_bound(p.begin(), p.end(), new_pos);
+                        if (jt == p.end()) {
+                            i = -1; // 离开
+                        } else {
+                            ll dist2 = *jt - new_pos;
+                            t_mod = (t_mod + dist2) % k;
+                            i = jt - p.begin();
+                        }
+                    } else {
+                        auto jt = lower_bound(p.begin(), p.end(), new_pos);
+                        if (jt == p.begin()) {
+                            i = -1;
+                        } else {
+                            --jt;
+                            ll dist2 = new_pos - *jt;
+                            t_mod = (t_mod + dist2) % k;
+                            i = jt - p.begin();
+                        }
+                    }
+                }
+            }
+
+            cout << (leave ? "YES" : "NO") << '\n';
+        }
+    }
+    return 0;
+}

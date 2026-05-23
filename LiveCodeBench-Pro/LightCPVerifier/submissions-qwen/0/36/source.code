@@ -1,0 +1,283 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // If the array is already fashionable, no operations needed
+        int min_val = *min_element(a.begin(), a.end());
+        int max_val = *max_element(a.begin(), a.end());
+
+        if ((min_val + max_val) % 2 == 0) {
+            cout << 0 << endl;
+            continue;
+        }
+
+        // We need to remove some elements so that (min + max) becomes even // That means we want (min_new + max_new) % 2 == 0
+        // So either both min_new and max_new are even or both are odd
+
+        // Try all possible subsets by removing as few elements as possible // Since n <= 50 but values are small and n is at most 50, but we can use greedy insight
+
+        // Insight: We only care about parity of min and max. // Currently, min + max is odd => one is even, one is odd.
+
+        // To fix it, we can:
+        // Option 1: Remove all occurrences of current min (so new min has different parity)
+        // Option 2: Remove all occurrences of current max (so new max has different parity)
+
+        // But note: after removal, the new min or max might still have same parity? // Actually, we want to make min+max even. So we need both min and max to have same parity.
+
+        // So we can: // - Remove all elements with value = min_val (then new min will be greater than min_val)
+        // - Or remove all elements with value = max_val (then new max will be less than max_val)
+
+        // However, what if after removing min, the new min still has same parity as old max? // Then we may need to remove more?
+
+        // But note: we want minimum number of operations.
+
+        // Let's consider: // Case 1: Remove every occurrence of min_val
+        int count_min = 0;
+        for (int x : a) {
+            if (x == min_val) count_min++;
+        }
+
+        // After removing all min_val, what is the new min?
+        int new_min = INT_MAX;
+        for (int x : a) {
+            if (x != min_val) {
+                new_min = min(new_min, x);
+            }
+        }
+        // If all elements were min_val, then new_min remains INT_MAX -> meaning array becomes empty? Not allowed.
+        // But note: if all elements are equal, then min == max, so min+max = 2*min -> even. So it would have been caught earlier.
+        // So since (min+max)%2 != 0, not all elements are equal.
+
+        int option1 = count_min; // remove all mins
+        if (new_min != INT_MAX) {
+            int new_max1 = *max_element(a.begin(), a.end()); // max doesn't change when removing mins (unless max was min, but then all equal -> contradiction)
+            // Actually, if max_val == min_val, then all equal -> but then sum would be even -> already handled.
+            // So max_val > min_val, so max remains max_val
+            if ((new_min + max_val) % 2 == 0) {
+                // This option works
+            } else {
+                // Removing all mins didn't help? Then we might need to remove more? // But wait: maybe we should consider removing max instead?
+                // Actually, our goal is to minimize removals. We are checking two strategies.
+                // But if this strategy fails, we don't use it.
+                option1 = INT_MAX;
+            }
+        }
+
+        // Case 2: Remove all occurrences of max_val
+        int count_max = 0;
+        for (int x : a) {
+            if (x == max_val) count_max++;
+        }
+
+        int new_max = INT_MIN;
+        for (int x : a) {
+            if (x != max_val) {
+                new_max = max(new_max, x);
+            }
+        }
+        int option2 = count_max;
+        if (new_max != INT_MIN) {
+            int new_min2 = *min_element(a.begin(), a.end()); // min remains unless min==max, which isn't the case
+            if ((min_val + new_max) % 2 == 0) {
+                // works
+            } else {
+                option2 = INT_MAX;
+            }
+        }
+
+        // However, there's another possibility: remove both some mins and some maxes? // But we want minimal removals. The above two options are natural candidates.
+
+        // But note: maybe we can remove fewer elements by removing a combination? // Example: suppose we have [1,2,4,5] -> min=1, max=5, sum=6 -> even? 1+5=6 -> even -> already fashionable.
+        // Our case: sum is odd -> say [1,2,4,6]: min=1, max=6, sum=7 -> odd. // Option1: remove all 1s -> one element removed -> new array [2,4,6]: min=2, max=6, sum=8 -> even -> valid. So answer=1.
+        // Option2: remove all 6s -> one element removed -> [1,2,4]: min=1, max=4, sum=5 -> odd -> invalid. // So option1 works, option2 doesn't.
+
+        // But what if neither option1 nor option2 works? // Example: [1,3,2,4] -> min=1, max=4, sum=5 -> odd.
+        // Remove all 1s: [3,2,4] -> min=2, max=4, sum=6 -> even -> works. So option1: 1 removal. // Remove all 4s: [1,3,2] -> min=1, max=3, sum=4 -> even -> works. So option2: 1 removal.
+
+        // But consider: [1,1,4,4] -> min=1, max=4, sum=5 -> odd. // Remove all 1s: [4,4] -> min=4, max=4, sum=8 -> even -> works. Removal: 2.
+        // Remove all 4s: [1,1] -> min=1, max=1, sum=2 -> even -> works. Removal: 2.
+
+        // Is there a case where we need to remove both min and max? // Suppose: [1,2,3,4,5] -> min=1, max=5, sum=6 -> even -> already good.
+
+        // How about: [1,2,5] -> min=1, max=5, sum=6 -> even -> good.
+
+        // Let's make one: [1,4] -> min=1, max=4, sum=5 -> odd. // Remove 1: [4] -> min=4, max=4, sum=8 -> even -> works. (1 removal)
+        // Remove 4: [1] -> min=1, max=1, sum=2 -> even -> works. (1 removal)
+
+        // What if: [1,3,4] -> min=1, max=4, sum=5 -> odd. // Remove 1: [3,4] -> min=3, max=4, sum=7 -> odd -> not fixed.
+        // Remove 4: [1,3] -> min=1, max=3, sum=4 -> even -> fixed. So option2 works (1 removal). // So we don't need to remove both.
+
+        // But consider: [1,4,6] -> min=1, max=6, sum=7 -> odd. // Remove 1: [4,6] -> min=4, max=6, sum=10 -> even -> fixed. So 1 removal.
+        // Remove 6: [1,4] -> min=1, max=4, sum=5 -> odd -> not fixed. // So only option1 works.
+
+        // Now, is there a case where removing all mins doesn't work and removing all maxes doesn't work? // Try: [1,3,4,6] -> min=1, max=6, sum=7 -> odd.
+        // Remove all 1s: [3,4,6] -> min=3, max=6, sum=9 -> odd -> not fixed. // Remove all 6s: [1,3,4] -> min=1, max=4, sum=5 -> odd -> not fixed.
+
+        // So now what? We might need to remove both some mins and some maxes? // But note: we can also remove other elements? Actually, we can remove any element.
+
+        // Alternative idea: try removing one element at a time and see if we can get a fashionable array.
+
+        // Since n <= 50, but worst-case 2^n is too big. However, n is at most 50, but 2^50 is huge.
+
+        // But note: t <= 1000, so we cannot iterate over all subsets.
+
+        // However, n is at most 50, but the values are small and we care only about min and max.
+
+        // Alternate insight:  // We want (min_new + max_new) % 2 == 0.
+        // That means min_new % 2 == max_new % 2.
+
+        // So we can think: what are the possible pairs (min_parity, max_parity) we can achieve?
+
+        // We can try to remove elements until the remaining array has min and max of same parity.
+
+        // How about: try all possible numbers of removals from 1 to n-1 (since we must leave at least one element) and check if possible? // But that would be exponential.
+
+        // But note: n <= 50, but worst-case 2^50 is too much.
+
+        // However, observe: we only care about the min and max of the remaining set.  // And the values are in [1,50]. So we can try to simulate by considering candidate min and max.
+
+        // Alternate approach: 
+        // Since the array size is small (n<=50), we can try to use brute force over the number of removals: try k=0,1,2,... until we find a solution.
+
+        // But worst-case k could be up to 49, and checking all subsets of size n-k is C(50,25) which is huge.
+
+        // We need a smarter way.
+
+        // Insight:  // The final array must have min and max of same parity.
+        // So either:
+        //   - Both even: then we can only keep even numbers? Not exactly: we can keep odds as long as the min and max are even? No, because if we have an odd number, it might become min or max.
+        //   - Actually, the min and max must be even, so all numbers in between can be arbitrary, but the smallest and largest must be even.
+
+        // So one valid final array: keep only even numbers (if non-empty). Then min and max are even -> sum even. // Similarly, keep only odd numbers -> min and max are odd -> sum even.
+
+        // Are these the only possibilities?  // No: we could have mixed array, e.g., [2,3,4]: min=2 (even), max=4 (even) -> sum=6 even -> valid.
+
+        // So condition: the smallest element must be even OR the largest element must be even?  // Actually: both min and max must have same parity.
+
+        // So possibilities: //   Case 1: final min is even and final max is even.
+        //   Case 2: final min is odd and final max is odd.
+
+        // How to compute minimum removals to achieve one of these?
+
+        // We can try: //   Option A: Make the array consist only of even numbers -> then min and max are even -> valid.
+        //   Option B: Make the array consist only of odd numbers -> then min and max are odd -> valid. //   Option C: Keep a mix, but ensure that the smallest and largest are both even.
+        //   Option D: Keep a mix, but ensure that the smallest and largest are both odd.
+
+        // But note: Option A and B are special cases of C and D.
+
+        // However, we might do better by keeping a mix.
+
+        // But observe: 
+        //   In order for min to be even, we must remove all numbers smaller than the chosen min, and the chosen min must be even.
+        //   Similarly, for max to be even, we must remove all numbers larger than the chosen max, and the chosen max must be even.
+
+        // So we can iterate over all possible even numbers as candidate min, and even numbers as candidate max, with candidate_min <= candidate_max, and then check if we can form an array with min=candidate_min and max=candidate_max by removing the others, and also ensuring that there is at least one element with value candidate_min and one with candidate_max.
+
+        // Similarly for odd.
+
+        // Steps: //   For each pair (cand_min, cand_max) such that:
+        //      cand_min and cand_max are present in the array, //      cand_min <= cand_max,
+        //      cand_min % 2 == cand_max % 2,
+        //   we can form a fashionable array by keeping only the elements in [cand_min, cand_max] and making sure we keep at least one cand_min and one cand_max.
+        //   The number of removals = n - (number of elements in [cand_min, cand_max])
+
+        // But wait: we must keep at least one cand_min and one cand_max? Yes, otherwise min or max won't be that.
+
+        // However, if we keep all elements in [cand_min, cand_max], then min <= cand_min and max >= cand_max? 
+        // Actually, no: if we keep all elements in [cand_min, cand_max], then the min of the kept array is the smallest element in that range, which might be greater than cand_min? 
+        // But we require that cand_min is present and we keep it, so min will be <= cand_min. But we want min to be exactly cand_min.
+
+        // So we require that we keep at least one element equal to cand_min and one equal to cand_max.
+
+        // But if we keep all elements in [cand_min, cand_max], then the actual min of the kept array is the minimum element in the original array that lies in [cand_min, cand_max]. This might be greater than cand_min? 
+        // Only if there is no element equal to cand_min in that interval? But we are assuming cand_min is in the array and we are including it.
+
+        // Actually, we are iterating cand_min over values that are present. So if we keep all elements in [cand_min, cand_max], then the min of the kept array is the smallest element in the array that is >= cand_min and <= cand_max. But if there is an element smaller than cand_min in the array that is in [cand_min, cand_max]? That can't happen.
+
+        // [cand_min, cand_max] includes cand_min, so the smallest element in the kept array is at least cand_min. And since we are keeping at least one cand_min, the min is exactly cand_min.
+
+        // Similarly, the max is exactly cand_max.
+
+        // Therefore, the kept array will have min = cand_min and max = cand_max.
+
+        // So the number of removals for this candidate is: n - (number of elements x such that cand_min <= x <= cand_max).
+
+        // But wait: we are forced to keep all elements in [cand_min, cand_max]?  // Actually, we can also remove some elements within [cand_min, cand_max] as long as we keep at least one cand_min and one cand_max.
+        // But why would we? Removing more elements only increases the removal count. So to minimize removals, we would keep all elements in [cand_min, cand_max].
+
+        // Therefore, for a candidate (cand_min, cand_max), the removal count is n - (count of elements in [cand_min, cand_max]).
+
+        // But note: we must ensure that there is at least one element equal to cand_min and one equal to cand_max in the array? Yes, because we are iterating over values that are present.
+
+        // However, what if we choose cand_min and cand_max that are not adjacent in value? That's fine.
+
+        // But also note: we might be able to remove some elements outside [cand_min, cand_max] and also remove some inside to reduce the total removals? 
+        // No, because we want to minimize removals, so we keep as many as possible. So keeping all in [cand_min, cand_max] minimizes removals for that candidate.
+
+        // Therefore, algorithm: //   Let ans = n-1 (worst case: leave one element, which is always fashionable)
+        //   For each value i that appears in the array: //     For each value j that appears in the array, with j>=i:
+        //        If (i+j) % 2 == 0:  // same parity //           count = number of elements x in the array such that i<=x<=j
+        //           removals = n - count //           ans = min(ans, removals)
+        //
+        //   But note: we must have at least one element? Yes, and if we keep at least one element, then min=max, so min+max = 2*min -> even -> always fashionable. So leaving one element is always valid.
+
+        // However, is it possible that no candidate (i,j) yields a valid array?  // No, because we can always choose i=j=any element -> then (i+j)%2 = (2*i)%2=0 -> even. So at least the single element choices work.
+
+        // Therefore, we can do:
+
+        int ans = n - 1; // worst case: leave one element
+
+        // Get unique values that appear
+        vector<int> vals;
+        for (int x : a) {
+            bool found = false;
+            for (int v : vals) {
+                if (v == x) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                vals.push_back(x);
+            }
+        }
+
+        for (int i : vals) {
+            for (int j : vals) {
+                if (j < i) continue;
+                if ((i + j) % 2 != 0) continue;
+
+                // Count how many elements are in [i, j]
+                int count_in_range = 0;
+                for (int x : a) {
+                    if (x >= i && x <= j) {
+                        count_in_range++;
+                    }
+                }
+                // We can form an array with min=i and max=j by keeping all in [i,j] -> removals = n - count_in_range
+                if (count_in_range >= 1) { // always true since i and j are in the array
+                    ans = min(ans, n - count_in_range);
+                }
+            }
+        }
+
+        cout << ans << endl;
+    }
+
+    return 0;
+}

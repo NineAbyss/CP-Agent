@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n;
+        cin >> n;
+        // Fixed sequence to convert any x to 1
+        cout << "mul 3" << endl;
+        cout.flush();
+        string resp;
+        cin >> resp;
+        cout << "digit" << endl;
+        cout.flush();
+        cin >> resp;
+        cout << "mul 3" << endl;
+        cout.flush();
+        cin >> resp;
+        cout << "digit" << endl;
+        cout.flush();
+        cin >> resp;
+        cout << "add -8" << endl;
+        cout.flush();
+        cin >> resp;
+        // Now x should be 1, convert to n
+        cout << "mul " << n << endl;
+        cout.flush();
+        cin >> resp;
+        // Finally, answer
+        cout << "!" << endl;
+        cout.flush();
+        cin >> resp; // read the response to "!"
+    }
+    return 0;
+}

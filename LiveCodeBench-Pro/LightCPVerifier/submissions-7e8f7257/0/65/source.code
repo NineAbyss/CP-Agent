@@ -1,0 +1,103 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    vector<int> p(n);
+    for (int i = 0; i < n; i++) cin >> p[i];
+    vector<int> pos(n + 1);
+    for (int i = 0; i < n; i++) pos[p[i]] = i + 1; // 1-based
+    
+    while (q--) {
+        int l, r, k;
+        cin >> l >> r >> k;
+        int pk = pos[k];
+        if (pk < l || pk > r) {
+            cout << "-1\n";
+            continue;
+        }
+        
+        // 模拟二分查找路径
+        int L = l, R = r;
+        int need_less = 0, need_greater = 0;
+        int path_less_good = 0, path_greater_good = 0;
+        bool possible = false;
+        while (L <= R) {
+            int m = (L + R) / 2;
+            if (m == pk) {
+                possible = true;
+                break;
+            }
+            int val = p[m - 1];
+            if (m < pk) {
+                if (val < k) {
+                    path_less_good++;
+                } else if (val > k) {
+                    need_less++;
+                }
+            } else { // m > pk
+                if (val > k) {
+                    path_greater_good++;
+                } else if (val < k) {
+                    need_greater++;
+                }
+            }
+            if (pk > m) L = m + 1;
+            else R = m - 1;
+        }
+        if (!possible) {
+            cout << "-1\n";
+            continue;
+        }
+        
+        // 整个排列中值 < k 且 ≠ k 的位置数
+        int total_less = 0, total_greater = 0;
+        for (int i = 1; i <= n; i++) {
+            int val = p[i - 1];
+            if (val == k) continue;
+            if (val < k) total_less++;
+            else total_greater++;
+        }
+        
+        int avail_less = total_less - path_less_good;
+        int avail_greater = total_greater - path_greater_good;
+        
+        if (need_less > avail_less || need_greater > avail_greater) {
+            cout << "-1\n";
+            continue;
+        }
+        
+        // 重新模拟计算 c0
+        L = l, R = r;
+        int c0_less = 0, c0_greater = 0;
+        while (L <= R) {
+            int m = (L + R) / 2;
+            if (m == pk) break;
+            int val = p[m - 1];
+            if (m < pk) {
+                if (val < k) c0_less++;
+            } else {
+                if (val > k) c0_greater++;
+            }
+            if (pk > m) L = m + 1;
+            else R = m - 1;
+        }
+        
+        int extra_less = max(0, need_less - c0_less);
+        int extra_greater = max(0, need_greater - c0_greater);
+        int d = need_less + need_greater + extra_less + extra_greater;
+        cout << d << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

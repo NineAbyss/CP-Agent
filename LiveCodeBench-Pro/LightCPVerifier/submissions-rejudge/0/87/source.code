@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n = 5;
+    vector<vector<int>> a(n+1, vector<int>(n+1));
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= n; j++)
+            a[i][j] = j;
+    
+    vector<tuple<int,int,int>> ops;
+    
+    // 第1行不动 // 第i行 (i>=2) 两次反转
+    for (int i = 2; i <= n; i++) {
+        // 反转 [1, i]
+        ops.emplace_back(i, 1, i);
+        reverse(a[i].begin()+1, a[i].begin()+i+1);
+        // 反转 [i, n]
+        ops.emplace_back(i, i, n);
+        reverse(a[i].begin()+i, a[i].end());
+    }
+    
+    // 检查列
+    bool ok = true;
+    for (int j = 1; j <= n; j++) {
+        set<int> s;
+        for (int i = 1; i <= n; i++) s.insert(a[i][j]);
+        if (s.size() != n) ok = false;
+    }
+    
+    cout << "n=" << n << ", ops=" << ops.size() << endl;
+    cout << "Final matrix:" << endl;
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) cout << a[i][j] << ' ';
+        cout << endl;
+    }
+    cout << "Columns are permutations? " << (ok ? "YES" : "NO") << endl;
+    
+    return 0;
+}
+'''
+result = cpp_interpreter(cpp_code)
+print(result)
+</code>
+Calling tools:
+[{'id': 'call_51', 'type': 'function', 'function': {'name': 'python_interpreter', 'arguments': 'cpp_code = \'\'\'\n#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    int n = 5;\n    vector<vector<int>> a(n+1, vector<int>(n+1));\n    for (int i = 1; i <= n; i++)\n        for (int j = 1; j <= n; j++)\n            a[i][j] = j;\n    \n    vector<tuple<int,int,int>> ops;\n    \n    // 第1行不动\n    // 第i行 (i>=2) 两次反转\n    for (int i = 2; i <= n; i++) {\n        // 反转 [1, i]\n        ops.emplace_back(i, 1, i);\n        reverse(a[i].begin()+1, a[i].begin()+i+1);\n        // 反转 [i, n]\n        ops.emplace_back(i, i, n);\n        reverse(a[i].begin()+i, a[i].end());\n    }\n    \n    // 检查列\n    bool ok = true;\n    for (int j = 1; j <= n; j++) {\n        set<int> s;\n        for (int i = 1; i <= n; i++) s.insert(a[i][j]);\n        if (s.size() != n) ok = false;\n    }\n    \n    cout << "n=" << n << ", ops=" << ops.size() << endl;\n    cout << "Final matrix:" << endl;\n    for (int i = 1; i <= n; i++) {\n        for (int j = 1; j <= n; j++) cout << a[i][j] << \' \';\n        cout << endl;\n    }\n    cout << "Columns are permutations? " << (ok ? "YES" : "NO") << endl;\n    \n    return 0;\n}

@@ -1,0 +1,55 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+long long solve(const vector<int>& a) {
+    int n = a.size();
+    vector<pair<int, int>> intervals; // (distance, x)
+    for (int x = 1; x <= n; x++) {
+        int L = n, R = -1;
+        for (int i = 0; i < n; i++) {
+            if (a[i] >= x) {
+                if (i < L) L = i;
+                if (i > R) R = i;
+            }
+        }
+        if (L < R) {
+            intervals.push_back({R - L, x});
+        }
+    }
+    sort(intervals.begin(), intervals.end(), greater<>());
+    set<int> available;
+    for (int i = 0; i < n; i++) available.insert(i);
+    long long sum = 0;
+    for (auto& p : intervals) {
+        int x = p.second;
+        vector<int> candidates;
+        for (int pos : available) {
+            if (a[pos] >= x) candidates.push_back(pos);
+        }
+        if (candidates.size() < 2) continue;
+        int left = candidates[0];
+        int right = candidates.back();
+        available.erase(left);
+        available.erase(right);
+        sum += right - left;
+    }
+    return sum;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        cout << solve(a) << '\n';
+    }
+    return 0;
+}

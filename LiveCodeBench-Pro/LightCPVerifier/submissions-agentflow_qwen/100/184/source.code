@@ -1,0 +1,144 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <tuple>
+using namespace std;
+
+pair<vector<int>, vector<int>> bfs(int start, const vector<vector<int>>& adj, const vector<bool>& hasApple) {
+    int n = adj.size() - 1;
+    vector<int> dist(n+1, -1);
+    vector<int> parent(n+1, -1);
+    queue<int> q;
+    if (!hasApple[start]) return make_pair(dist, parent);
+    q.push(start);
+    dist[start] = 0;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int v : adj[u]) {
+            if (hasApple[v] && dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                parent[v] = u;
+                q.push(v);
+            }
+        }
+    }
+    return make_pair(dist, parent);
+}
+
+int findFarthest(const vector<int>& dist, int n) {
+    int maxDist = -1;
+    int candidate = -1;
+    for (int i = 1; i <= n; ++i) {
+        if (dist[i] < 0) continue;
+        if (dist[i] > maxDist || (dist[i] == maxDist && i > candidate)) {
+            maxDist = dist[i];
+            candidate = i;
+        }
+    }
+    return candidate;
+}
+
+vector<int> getPath(int s, int t, const vector<int>& parent) {
+    vector<int> path;
+    int cur = t;
+    while (cur != -1) {
+        path.push_back(cur);
+        cur = parent[cur];
+    }
+    reverse(path.begin(), path.end());
+    return path;
+}
+
+tuple<int, int, int, vector<int>> getDiameter(const vector<int>& component, const vector<vector<int>>& adj, const vector<bool>& hasApple) {
+    if (component.empty()) return make_tuple(0, -1, -1, vector<int>());
+    int start = component[0];
+    auto [dist1, parent1] = bfs(start, adj, hasApple);
+    int s = findFarthest(dist1, hasApple.size()-1);
+    if (s == -1) return make_tuple(0, -1, -1, vector<int>());
+    auto [dist2, parent2] = bfs(s, adj, hasApple);
+    int t = findFarthest(dist2, hasApple.size()-1);
+    if (t == -1) return make_tuple(0, -1, -1, vector<int>());
+    int d = dist2[t] + 1;
+    vector<int> path = getPath(s, t, parent2);
+    int u1 = s, v1 = t;
+    int u2 = t, v2 = s;
+    if (make_pair(u2, v2) > make_pair(u1, v1)) {
+        swap(u1, u2);
+        swap(v1, v2);
+    }
+    return make_tuple(d, u1, v1, path);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> adj(n+1);
+        for (int i = 0; i < n-1; ++i) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+
+        vector<bool> hasApple(n+1, true);
+        vector<int> result;
+
+        while (true) {
+            vector<vector<int>> components;
+            vector<bool> visited(n+1, false);
+            for (int i = 1; i <= n; ++i) {
+                if (hasApple[i] && !visited[i]) {
+                    vector<int> comp;
+                    queue<int> q;
+                    q.push(i);
+                    visited[i] = true;
+                    while (!q.empty()) {
+                        int u = q.front(); q.pop();
+                        comp.push_back(u);
+                        for (int v : adj[u]) {
+                            if (hasApple[v] && !visited[v]) {
+                                visited[v] = true;
+                                q.push(v);
+                            }
+                        }
+                    }
+                    components.push_back(comp);
+                }
+            }
+            if (components.empty()) break;
+
+            int best_d = 0, best_u = -1, best_v = -1;
+            vector<int> best_path;
+            for (const vector<int>& comp : components) {
+                auto [d, u, v, path] = getDiameter(comp, adj, hasApple);
+                if (d > best_d || (d == best_d && (u > best_u || (u == best_u && v > best_v)))) {
+                    best_d = d;
+                    best_u = u;
+                    best_v = v;
+                    best_path = path;
+                }
+            }
+            if (best_d == 0) break;
+            result.push_back(best_d);
+            result.push_back(best_u);
+            result.push_back(best_v);
+            for (int node : best_path) {
+                hasApple[node] = false;
+            }
+        }
+
+        for (int i = 0; i < result.size(); ++i) {
+            cout << result[i];
+            if (i < result.size()-1) cout << " ";
+        }
+        cout << "\n";
+    }
+    return 0;
+}

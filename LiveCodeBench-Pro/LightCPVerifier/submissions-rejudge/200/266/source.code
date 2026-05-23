@@ -1,0 +1,94 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+string mul_str(const string& a, int b) {
+    string res;
+    int carry = 0;
+    for (int i = a.size() - 1; i >= 0; i--) {
+        int d = (a[i] - '0') * b + carry;
+        res.push_back(d % 10 + '0');
+        carry = d / 10;
+    }
+    while (carry) {
+        res.push_back(carry % 10 + '0');
+        carry /= 10;
+    }
+    reverse(res.begin(), res.end());
+    return res;
+}
+
+bool less_than(const string& a, const string& b) {
+    if (a.size() != b.size()) return a.size() < b.size();
+    return a < b;
+}
+
+// 比较 (m1, len1, s1) 和 (m2, len2, s2) // 返回 true 如果 状态1 成本更小，或成本相同但 len1 更大
+bool better(const string& m1, int len1, int s1, const string& m2, int len2, int s2) {
+    // 去掉前导零
+    int p1 = 0;
+    while (p1 < m1.size() && m1[p1] == '0') p1++;
+    int p2 = 0;
+    while (p2 < m2.size() && m2[p2] == '0') p2++;
+    if (p1 == m1.size() && p2 == m2.size()) return len1 > len2;
+    if (p1 == m1.size()) return false;
+    if (p2 == m2.size()) return true;
+    string clean1 = m1.substr(p1);
+    string clean2 = m2.substr(p2);
+    // 比较 clean1/s1 和 clean2/s2 // 即 clean1 * s2 和 clean2 * s1
+    string left = mul_str(clean1, s2);
+    string right = mul_str(clean2, s1);
+    if (left != right) {
+        return less_than(left, right);
+    }
+    return len1 > len2;
+}
+
+int solve_one(const string& str) {
+    int L = str.size();
+    vector<vector<pair<string, int>>> dp(L+1, vector<pair<string, int>>(901, {"", 0}));
+    dp[0][0] = {"", 0};
+    for (int i = 1; i <= L; i++) {
+        int d = str[i-1] - '0';
+        for (int s = 0; s <= 900; s++) {
+            // 不选第 i 位
+            if (dp[i-1][s].second > 0 || s == 0) {
+                if (dp[i][s].second == 0 || better(dp[i-1][s].first, dp[i-1][s].second, s,
+                                                   dp[i][s].first, dp[i][s].second, s)) {
+                    dp[i][s] = dp[i-1][s];
+                }
+            }
+            // 选第 i 位
+            if (s >= d && (dp[i-1][s-d].second > 0 || s-d == 0)) {
+                string new_m = dp[i-1][s-d].first + char('0' + d);
+                int new_len = dp[i-1][s-d].second + 1;
+                if (dp[i][s].second == 0 || better(new_m, new_len, s,
+                                                   dp[i][s].first, dp[i][s].second, s)) {
+                    dp[i][s] = {new_m, new_len};
+                }
+            }
+        }
+    }
+    // 找到最佳状态
+    int best_s = 0;
+    for (int s = 1; s <= 900; s++) {
+        if (dp[L][s].second == 0) continue;
+        if (best_s == 0 || better(dp[L][s].first, dp[L][s].second, s,
+                                  dp[L][best_s].first, dp[L][best_s].second, best_s)) {
+            best_s = s;
+        }
+    }
+    return L - dp[L][best_s].second;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        string n;
+        cin >> n;
+        cout << solve_one(n) << '\n';
+    }
+    return 0;
+}

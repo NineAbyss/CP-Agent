@@ -1,0 +1,145 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MAX_BITS = 60;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<long long> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        
+        string c;
+        cin >> c;
+        
+        // 计算 A = XOR of all a_i
+        long long A = 0;
+        vector<long long> d(n);
+        for (int i = 0; i < n; i++) {
+            A ^= a[i];
+            d[i] = a[i] ^ b[i];
+        }
+        
+        // 构建两个线性基：Gellyfish的和Flower的
+        vector<long long> basis_g(MAX_BITS + 1, 0), basis_f(MAX_BITS + 1, 0);
+        
+        for (int i = 0; i < n; i++) {
+            long long x = d[i];
+            if (c[i] == '0') { // Gellyfish
+                for (int bit = MAX_BITS; bit >= 0; bit--) {
+                    if (!(x >> bit)) continue;
+                    if (!basis_g[bit]) {
+                        basis_g[bit] = x;
+                        break;
+                    }
+                    x ^= basis_g[bit];
+                }
+            } else { // Flower
+                for (int bit = MAX_BITS; bit >= 0; bit--) {
+                    if (!(x >> bit)) continue;
+                    if (!basis_f[bit]) {
+                        basis_f[bit] = x;
+                        break;
+                    }
+                    x ^= basis_f[bit];
+                }
+            }
+        }
+        
+        // 合并两个基，决定控制权
+        vector<long long> basis(MAX_BITS + 1, 0);
+        vector<int> controller(MAX_BITS + 1, 0); // 0: none, 1: Gellyfish, 2: Flower, 3: both
+        
+        // 首先插入Gellyfish的基
+        for (int bit = MAX_BITS; bit >= 0; bit--) {
+            if (!basis_g[bit]) continue;
+            long long x = basis_g[bit];
+            for (int b = MAX_BITS; b >= 0; b--) {
+                if (!(x >> b)) continue;
+                if (!basis[b]) {
+                    basis[b] = x;
+                    controller[b] = 1;
+                    break;
+                }
+                x ^= basis[b];
+            }
+        }
+        
+        // 然后插入Flower的基，更新控制权
+        for (int bit = MAX_BITS; bit >= 0; bit--) {
+            if (!basis_f[bit]) continue;
+            long long x = basis_f[bit];
+            for (int b = MAX_BITS; b >= 0; b--) {
+                if (!(x >> b)) continue;
+                if (!basis[b]) {
+                    basis[b] = x;
+                    controller[b] = 2;
+                    break;
+                }
+                if (controller[b] == 1) {
+                    controller[b] = 3;
+                }
+                x ^= basis[b];
+            }
+        }
+        
+        // 标准化基向量：行最简形
+        for (int i = MAX_BITS; i >= 0; i--) {
+            if (!basis[i]) continue;
+            // 消去更高位的1
+            for (int j = i+1; j <= MAX_BITS; j++) {
+                if (basis[i] >> j & 1) {
+                    if (basis[j]) {
+                        basis[i] ^= basis[j];
+                    }
+                }
+            }
+            // 用当前向量消去其他向量的第i位
+            for (int j = i-1; j >= 0; j--) {
+                if (basis[j] >> i & 1) {
+                    basis[j] ^= basis[i];
+                }
+            }
+        }
+        
+        // 从高位到低位决策
+        long long result = A;
+        for (int bit = MAX_BITS; bit >= 0; bit--) {
+            if (!basis[bit]) continue;
+            
+            bool current_bit = (result >> bit) & 1;
+            int ctrl = controller[bit];
+            
+            if (ctrl == 1) { // 只有Gellyfish可以控制
+                if (current_bit) {
+                    result ^= basis[bit];
+                }
+            } else if (ctrl == 2) { // 只有Flower可以控制
+                if (!current_bit) {
+                    result ^= basis[bit];
+                }
+            } else if (ctrl == 3) { // 两者都可以控制 // 根据目标决定：如果当前位是1，Gellyfish想翻转；如果是0，Flower想翻转
+                if (current_bit) {
+                    result ^= basis[bit];
+                } else {
+                    result ^= basis[bit];
+                }
+            }
+        }
+        
+        cout << result << '\n';
+    }
+    
+    return 0;
+}

@@ -1,0 +1,119 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX_BITS = 30; // 10^9 < 2^30
+
+struct TrieNode {
+    int cnt;
+    TrieNode* child[2];
+    TrieNode() : cnt(0) {
+        child[0] = child[1] = nullptr;
+    }
+};
+
+void insert(TrieNode* root, int x) {
+    root->cnt++;
+    TrieNode* cur = root;
+    for (int b = MAX_BITS; b >= 0; --b) {
+        int bit = (x >> b) & 1;
+        if (!cur->child[bit]) {
+            cur->child[bit] = new TrieNode();
+        }
+        cur = cur->child[bit];
+        cur->cnt++;
+    }
+}
+
+void remove(TrieNode* root, int x) {
+    root->cnt--;
+    TrieNode* cur = root;
+    for (int b = MAX_BITS; b >= 0; --b) {
+        int bit = (x >> b) & 1;
+        cur = cur->child[bit];
+        cur->cnt--;
+    }
+}
+
+// 查询 Trie 中是否存在某个数 y，使得 x xor y >= k
+bool query_ge(TrieNode* root, int x, int k) {
+    if (root->cnt == 0) return false;
+    TrieNode* cur = root;
+    for (int b = MAX_BITS; b >= 0; --b) {
+        int x_bit = (x >> b) & 1;
+        int k_bit = (k >> b) & 1;
+        if (k_bit == 0) {
+            // 如果这一位为0，我们可以选择与 x_bit 相反的位，使得异或结果这一位为1，这样已经大于k了
+            int want = x_bit ^ 1;
+            if (cur->child[want] && cur->child[want]->cnt > 0) {
+                return true;
+            }
+            // 否则只能走相同的位
+            if (!cur->child[x_bit] || cur->child[x_bit]->cnt == 0) {
+                return false;
+            }
+            cur = cur->child[x_bit];
+        } else {
+            // k_bit=1，我们必须让异或的这一位也为1，所以只能走与 x_bit 相反的位
+            int need = x_bit ^ 1;
+            if (!cur->child[need] || cur->child[need]->cnt == 0) {
+                return false;
+            }
+            cur = cur->child[need];
+        }
+    }
+    // 走到叶子，说明异或值恰好等于k
+    return true;
+}
+
+int solve_one(int n, int k, vector<int>& a) {
+    if (k == 0) return 1;
+    TrieNode* root = new TrieNode();
+    int ans = n + 1;
+    int l = 0;
+    bool ok = false;
+    for (int r = 0; r < n; ++r) {
+        insert(root, a[r]);
+        if (!ok) {
+            if (query_ge(root, a[r], k)) {
+                ok = true;
+            }
+        }
+        if (ok) {
+            ans = min(ans, r - l + 1);
+            // 尝试移动 l 缩小区间
+            while (ok && l <= r) {
+                remove(root, a[l]);
+                l++;
+                if (l > r) {
+                    ok = false;
+                    break;
+                }
+                if (query_ge(root, a[r], k)) {
+                    ans = min(ans, r - l + 1);
+                } else {
+                    ok = false;
+                }
+            }
+        }
+    }
+    // 清理 Trie 内存（可选） // 这里简单起见，不递归删除，因为总节点数不大
+    delete root;
+    return (ans == n + 1) ? -1 : ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        cout << solve_one(n, k, a) << '\n';
+    }
+    return 0;
+}

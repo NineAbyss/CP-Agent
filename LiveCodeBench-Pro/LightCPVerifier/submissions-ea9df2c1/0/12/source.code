@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve_one(int n, int m, vector<vector<int>>& a) {
+    int M = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            M = max(M, a[i][j]);
+        }
+    }
+    vector<pair<int,int>> max_cells;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            if (a[i][j] == M) {
+                max_cells.push_back({i, j});
+            }
+        }
+    }
+    if (max_cells.empty()) {
+        return M - 1;
+    }
+    set<int> rows_set, cols_set;
+    for (auto& p : max_cells) {
+        rows_set.insert(p.first);
+        cols_set.insert(p.second);
+    }
+    if (rows_set.size() == 1 || cols_set.size() == 1) {
+        return M - 1;
+    }
+    // 预处理每列
+    vector<int> cnt_col(m, 0);
+    vector<int> row_of_col(m, -1);
+    for (auto& p : max_cells) {
+        int i = p.first, j = p.second;
+        cnt_col[j]++;
+        if (cnt_col[j] == 1) {
+            row_of_col[j] = i;
+        } else {
+            row_of_col[j] = -2; // 表示多行
+        }
+    }
+    int a_cnt = 0; // cnt_col[j] >= 2
+    int b_cnt = 0; // cnt_col[j] == 1
+    for (int j = 0; j < m; j++) {
+        if (cnt_col[j] >= 2) a_cnt++;
+        else if (cnt_col[j] == 1) b_cnt++;
+    }
+    vector<int> cnt_row_unique(n, 0);
+    for (int j = 0; j < m; j++) {
+        if (cnt_col[j] == 1) {
+            int r = row_of_col[j];
+            cnt_row_unique[r]++;
+        }
+    }
+    for (int r : rows_set) {
+        int count = a_cnt + (b_cnt - cnt_row_unique[r]);
+        if (count == 1) {
+            return M - 1;
+        }
+    }
+    return M;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<vector<int>> a(n, vector<int>(m));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                cin >> a[i][j];
+            }
+        }
+        cout << solve_one(n, m, a) << '\n';
+    }
+    return 0;
+}

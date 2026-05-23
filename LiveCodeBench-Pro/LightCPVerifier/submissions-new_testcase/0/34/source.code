@@ -1,0 +1,30 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, s;
+        cin >> n >> s;
+        int mn = 1000, mx = -1; // x_i up to 100, but safe
+        for (int i = 0; i < n; i++) {
+            int x;
+            cin >> x;
+            if (i == 0) mn = x;
+            if (i == n-1) mx = x;
+        }
+        // Since x is sorted, mn is first, mx is last
+        int ans;
+        if (s < mn) {
+            ans = mx - s;
+        } else if (s > mx) {
+            ans = s - mn;
+        } else {
+            ans = (mx - mn) + min(s - mn, mx - s);
+        }
+        cout << ans << endl;
+    }
+    return 0;
+}

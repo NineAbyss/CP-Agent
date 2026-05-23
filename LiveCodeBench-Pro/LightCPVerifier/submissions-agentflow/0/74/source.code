@@ -1,0 +1,45 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;  // Read number of test cases
+    while (t--) {
+        int n;
+        cin >> n;  // The target number
+        int commandsUsed = 0;
+        string response;
+
+        // Apply "digit" for initial size reduction if necessary
+        cout << "digit" << endl;
+        cout.flush();
+        commandsUsed++;
+        cin >> response;
+
+        // Optimize with "add" or logical operation based on feedback
+        while (commandsUsed < 7) {
+            if (response == "1") {
+                cout << "!" << endl;
+                cout.flush();
+                break;  // Achievement
+            }
+
+            int diff = n - 1;
+            if (diff > 0) {
+                cout << "add " << diff << endl;
+                cout.flush();
+                commandsUsed++;
+
+                cin >> response;
+                if (response == "-1") return 1;  // Disruptive command error
+                if (response == "1") {
+                    cout << "!" << endl;
+                    cout.flush();
+                    break;  // Condition achieved
+                }
+            }
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,65 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int n, m, k;
+vector<string> grid;
+
+bool inside(int x, int y) {
+    return x>=0 && x<n && y>=0 && y<m;
+}
+
+// 返回边界金矿数和内部金矿数
+pair<int,int> count_golds(int cx, int cy, const vector<string>& g) {
+    int b=0, i=0;
+    for (int dx=-k; dx<=k; dx++) for (int dy=-k; dy<=k; dy++) {
+        int x=cx+dx, y=cy+dy;
+        if (!inside(x,y)) continue;
+        if (g[x][y]=='g') {
+            if (abs(dx)==k || abs(dy)==k) b++;
+            else i++;
+        }
+    }
+    return {b, i};
+}
+
+void explode(int cx, int cy, vector<string>& g) {
+    for (int dx=-k; dx<=k; dx++) for (int dy=-k; dy<=k; dy++) {
+        int x=cx+dx, y=cy+dy;
+        if (inside(x,y) && g[x][y]!='#') g[x][y]='.';
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        cin >> n >> m >> k;
+        grid.resize(n);
+        for (int i=0; i<n; i++) cin >> grid[i];
+        
+        int total=0;
+        while (true) {
+            // 找出所有空单元格
+            vector<pair<int,int>> empties;
+            for (int i=0; i<n; i++) for (int j=0; j<m; j++) if (grid[i][j]=='.') empties.push_back({i,j});
+            
+            int best_x=-1, best_y=-1, best_b=0, best_i=1e9;
+            for (auto& e: empties) {
+                auto [b, i] = count_golds(e.first, e.second, grid);
+                if (b>0 && (i<best_i || (i==best_i && b>best_b))) {
+                    best_b=b;
+                    best_i=i;
+                    best_x=e.first;
+                    best_y=e.second;
+                }
+            }
+            if (best_b==0) break;
+            total += best_b;
+            explode(best_x, best_y, grid);
+        }
+        cout << total << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,27 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, x;
+        cin >> n >> x;
+        vector<int> a(n);
+        vector<int> closed_times;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            if (a[i] == 1) {
+                closed_times.push_back(i+1);
+            }
+        }
+        int first = *min_element(closed_times.begin(), closed_times.end());
+        int last = *max_element(closed_times.begin(), closed_times.end());
+        if (last - first + 1 <= x) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

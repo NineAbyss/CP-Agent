@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+// Precompute Fibonacci sequence up to the 10th term
+vector<int> precomputeFibonacci() {
+    vector<int> fib(11);
+    fib[1] = 1;  // f1
+    fib[2] = 2;  // f2
+    for (int i = 3; i <= 10; ++i) {
+        fib[i] = fib[i - 1] + fib[i - 2];
+    }
+    return fib;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    const vector<int> fibonacci = precomputeFibonacci();
+    
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+
+        int max_side = fibonacci[n];
+        int total_height = 0;
+        for (int i = 1; i <= n; ++i) {
+            total_height += fibonacci[i];
+        }
+
+        string results(m, '0');
+        for (int i = 0; i < m; ++i) {
+            vector<int> box(3);
+            cin >> box[0] >> box[1] >> box[2];
+            sort(box.begin(), box.end());
+
+            if (box[0] >= max_side && box[1] >= max_side && box[2] >= total_height) {
+                results[i] = '1';
+            }
+        }
+        cout << results << endl;
+    }
+
+    return 0;
+}

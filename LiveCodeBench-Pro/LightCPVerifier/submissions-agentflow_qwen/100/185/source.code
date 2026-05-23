@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, l;
+        cin >> n >> m >> l;
+        vector<int> A(l);
+        for (int i = 0; i < l; ++i) {
+            cin >> A[i];
+        }
+
+        vector<vector<int>> adj(n+1);
+        for (int i = 0; i < m; ++i) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+
+        // Compute all-pairs shortest paths
+        vector<vector<int>> dist_all(n+1, vector<int>(n+1, -1));
+        for (int i = 1; i <= n; ++i) {
+            queue<int> q;
+            dist_all[i][i] = 0;
+            q.push(i);
+            while (!q.empty()) {
+                int u = q.front(); q.pop();
+                for (int v : adj[u]) {
+                    if (dist_all[i][v] == -1) {
+                        dist_all[i][v] = dist_all[i][u] + 1;
+                        q.push(v);
+                    }
+                }
+            }
+        }
+
+        // Check if the graph is bipartite
+        bool is_bipartite = true;
+        vector<int> color(n+1, -1);
+        queue<int> qc;
+        color[1] = 0;
+        qc.push(1);
+        while (!qc.empty() && is_bipartite) {
+            int u = qc.front(); qc.pop();
+            for (int v : adj[u]) {
+                if (color[v] == -1) {
+                    color[v] = color[u] ^ 1;
+                    qc.push(v);
+                } else if (color[v] == color[u]) {
+                    is_bipartite = false;
+                    break;
+                }
+            }
+        }
+
+        vector<bool> reachable(n+1, false);
+        reachable[1] = true;
+
+        // Process each move in A
+        for (int k : A) {
+            vector<bool> new_reach = reachable;
+            for (int u = 1; u <= n; ++u) {
+                if (!reachable[u]) continue;
+                for (int v = 1; v <= n; ++v) {
+                    int d_uv = dist_all[u][v];
+                    if (d_uv == -1) continue;
+                    if (k < d_uv) continue;
+                    if (is_bipartite) {
+                        if ((k - d_uv) % 2 != 0) continue;
+                    }
+                    // If not bipartite, any k >= d_uv is fine
+                    new_reach[v] = true;
+                }
+            }
+            reachable = new_reach;
+        }
+
+        string ans;
+        for (int i = 1; i <= n; ++i) {
+            ans += (reachable[i] ? '1' : '0');
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

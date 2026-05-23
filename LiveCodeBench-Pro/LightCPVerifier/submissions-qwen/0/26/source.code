@@ -1,0 +1,270 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<pair<ll, ll>> monsters(n);
+    for (int i = 0; i < n; i++) {
+        cin >> monsters[i].first >> monsters[i].second;
+    }
+
+    if (n == 1) {
+        cout << 1 << '\n';
+        return;
+    }
+
+    // Try all possible ways: either don't move any monster, or move one to reduce cost
+    auto get_cost = [&](ll x1, ll y1, ll x2, ll y2) {
+        return (x2 - x1 + 1) * (y2 - y1 + 1);
+    };
+
+    // Without moving: find bounding box of all monsters
+    ll min_x = monsters[0].first, max_x = monsters[0].first;
+    ll min_y = monsters[0].second, max_y = monsters[0].second;
+    for (auto [x, y] : monsters) {
+        min_x = min(min_x, x);
+        max_x = max(max_x, x);
+        min_y = min(min_y, y);
+        max_y = max(max_y, y);
+    }
+    ll ans = get_cost(min_x, min_y, max_x, max_y);
+
+    // Try removing each monster by moving it outside the rectangle
+    for (int skip = 0; skip < n; skip++) {
+        ll new_min_x = LLONG_MAX, new_max_x = LLONG_MIN;
+        ll new_min_y = LLONG_MAX, new_max_y = LLONG_MIN;
+
+        for (int i = 0; i < n; i++) {
+            if (i == skip) continue;
+            auto [x, y] = monsters[i];
+            new_min_x = min(new_min_x, x);
+            new_max_x = max(new_max_x, x);
+            new_min_y = min(new_min_y, y);
+            new_max_y = max(new_max_y, y);
+        }
+
+        if (new_min_x == LLONG_MAX) {
+            // Only one monster was there, we moved it -> cost is 0? but we must destroy it... // Actually, we can just not select any rectangle? But problem says we must select one.
+            // But we destroyed all by moving one out and selecting empty rect? No, we must destroy all in rectangle.
+            // So if we move the only monster, we still need a 1x1 rectangle somewhere? But it's already gone.
+            // Actually, we can choose an empty rectangle? But then no monster is destroyed. // So we cannot skip the last monster. Thus this case won't happen since n>=2 here.
+        } else {
+            ans = min(ans, get_cost(new_min_x, new_min_y, new_max_x, new_max_y));
+        }
+    }
+
+    // Also try moving a monster inside to fill a gap? Actually, better idea: // Instead of removing a corner monster, maybe we can move a monster to allow shrinking from multiple sides?
+
+    // Alternate approach: try all combinations of boundaries that exclude exactly one point // We consider cases where the final rectangle excludes one monster via moving it away,
+    // but also cases where we move a monster into the rectangle to allow tighter bounds.
+
+    // Actually, key insight: we are allowed to move **one** monster arbitrarily. // So optimal strategy:
+    // Option 1: Move one monster out, then take bounding box of remaining -> we did above. // Option 2: Move one monster in to "fill" a gap so that the bounding box becomes smaller?
+    // But note: moving a monster in cannot shrink the bounding box unless it was on the boundary.
+
+    // However, consider: maybe we can move a non-corner monster to become a corner, allowing us to shrink opposite side? // Example: monsters at (1,1), (1,3), (3,1). Bounding box is 3x3 = 9.
+    // If we move (1,3) to (2,2), we still need to cover (1,1) to (3,1) and (2,2) -> x:1..3, y:1..2 -> area=6. // But wait, we could instead move (1,3) to (3,3)? That doesn't help.
+    // Or move (1,3) to (1,2): now points are (1,1),(1,2),(3,1). Box is 3x2=6.
+
+    // But note: we don't have to keep the moved monster inside! We can move it outside and remove it from consideration.
+
+    // Actually, the best is to remove a corner monster (one that defines the bounding box).
+    // Because if we remove a non-corner, the bounding box stays the same.
+
+    // So our previous loop already considers removing any one monster.
+
+    // But wait: what if we move a monster from outside the current bounding box?  // No, all monsters are within the bounding box by definition.
+
+    // However, there's another possibility: move a monster to bridge two clusters, allowing smaller area? // Actually, no: the rectangle must be axis-aligned and contiguous.
+
+    // But consider: maybe we can split the set into two groups, move one monster to connect them, and get a smaller total span?
+
+    // Let's think differently: we can always achieve cost = min( original_bounding_box_area,  // min over i of bounding_box_of_others )
+
+    // And that's exactly what we computed.
+
+    // However, look at example 5:  // Input:
+    // 5 // 1 2
+    // 4 2 // 4 3
+    // 3 1 // 3 2
+    // Output: 6
+
+    // Our method: // Original bounding box: x in [1,4], y in [1,3] -> area = 4*3 = 12.
+    // Now try removing each: // Remove (1,2): remaining x[3,4], y[1,3] -> 2*3=6 -> candidate.
+    // Remove (4,2): x[1,4] -> but 3 and 4 still present? x: min=1, max=4? because (3,1) and (3,2) and (4,3) -> x=4 still there -> 4-1+1=4, y=3-1+1=3 -> 12 // Similarly, removing (4,3): still have x=4 from (4,2) -> 12
+    // Removing (3,1): x[1,4], y[2,3] -> 4*2=8 // Removing (3,2): x[1,4], y[1,3] -> 12
+    // So minimum is 6 -> matches.
+
+    // But why example 2 gives 32? // 5 monsters: (1,1), (2,6), (6,4), (3,3), (8,2)
+    // Bounding box: x[1,8] -> width=8, y[1,6] -> height=6, area=48. // Try removing each:
+    // Remove (1,1): x[2,8] -> 7, y[2,6] -> 5, area=35 // Remove (2,6): x[1,8] -> 8, y[1,4] -> 4, area=32 -> candidate
+    // Remove (6,4): x[1,8] -> 8, y[1,6] -> 6, area=48 // Remove (3,3): x[1,8] -> 8, y[1,6] -> 6, area=48
+    // Remove (8,2): x[1,6] -> 6, y[1,6] -> 6, area=36 // So min is 32 -> matches.
+
+    // Example 3: four corners of big square -> area = (1e9)^2 = 1e18 // Remove any one: the bounding box becomes (1e9-1) * (1e9) ???
+    // Wait: if we remove (1,1): remaining: (1,1e9), (1e9,1), (1e9,1e9) // Then x: [1,1e9], y: [1,1e9] -> still 1e18
+    // Same for any single removal -> still full bounding box. // But answer is 1e18? but expected output is 1000000000000000000 which is 1e18 -> matches.
+
+    // But wait: the example output says 1000000000000000000 -> that's 1e18.
+
+    // However, let me check: 10^9 * 10^9 = 10^18 -> yes.
+
+    // But why can't we do better? Because after removing one corner, the other three still form a bounding box of full size.
+
+    // So our algorithm works.
+
+    // However, note: we might be able to move a monster not to remove it from the bounding box, but to allow a non-contiguous coverage with a smarter rectangle?  // But the rectangle is one contiguous block.
+
+    // Another idea: move a monster to reduce both dimensions simultaneously? // Example: monsters at (1,1), (1,10), (10,1), (5,5).
+    // Original box: 10x10 = 100. // Remove (1,1): box becomes [1,10]x[1,10] -> still 100? because (1,10) and (10,1) are there.
+    // But if we move (1,1) to (2,2), then we have (2,2), (1,10), (10,1), (5,5).  // Box: x[1,10], y[1,10] -> still 100.
+    // What if we move (1,10) to (2,2)? Then points: (1,1), (10,1), (5,5), (2,2).  // x: [1,10], y: [1,5]? y: min=1, max=5? (5,5) has y=5, (1,1) has y=1 -> y:1..5 -> height=5, x:1..10 -> width=10 -> area=50.
+    // But wait: we moved (1,10) to (2,2), so we don't have a monster at (1,10) anymore, but we have one at (2,2). // The bounding box is determined by all monsters:
+    //   x: min=min(1,10,5,2)=1, max=10 //   y: min=min(1,1,5,2)=1, max=5
+    // -> area=10*5=50. // But is this better than removing (1,10)?
+    // Removing (1,10): remaining: (1,1), (10,1), (5,5) -> x[1,10], y[1,5] -> same 50. // So same effect.
+
+    // Therefore, moving a monster to inside doesn't help more than removing it (by moving outside) when it's on the boundary.
+
+    // But what if we move a boundary monster to a position that reduces both dimensions? // Suppose we have (1,1), (1,100), (100,1), (50,50).
+    // Original: 100x100 = 10000. // Removing any corner: still 100x100? because opposite corner remains -> 10000.
+    // But if we move (1,100) to (2,2): then points: (1,1), (100,1), (50,50), (2,2) // x: [1,100], y: [1,50] -> area=100*50=5000.
+    // But if we remove (1,100) entirely (move it far away), then we have (1,1), (100,1), (50,50):  // x: [1,100], y: [1,50] -> same 5000.
+    // So again, same.
+
+    // Hence, the operation of moving a monster is equivalent to either:
+    // - removing it from the set (if we move it outside the future bounding box), or 
+    // - replacing its coordinate with a new one. // But replacing with a new one inside cannot yield a smaller bounding box than simply removing it, because:
+    //   The bounding box without the monster is contained within the bounding box with the monster (at any position).
+    //   Specifically, if we denote B(S) as the bounding box of set S, then B(S \ {m}) ⊆ B(S ∪ {any point}).
+    //   So the area of B(S \ {m}) is ≤ area of B((S \ {m}) ∪ {p}) for any p.
+    // Therefore, the minimal area we can achieve by moving monster m is the area of B(S \ {m}).
+
+    // Thus, our solution is complete: 
+    //   ans = min( area(all), min_{i} area(all except i) )
+
+    // But wait: what if we don't move any monster? Then we use area(all). 
+    // And if we move one, we can achieve area(all except that one).
+
+    // Therefore, we just need to compute: //   base = bounding box of all
+    //   for each i: candidate = bounding box of all except i //   ans = min(base, all candidates)
+
+    // However, note: we might be able to move a monster to a location that allows a bounding box smaller than both base and any single-removal? // Let me try to construct a counterexample.
+
+    // Suppose three monsters: A=(1,1), B=(3,3), C=(2,100).  // Base: x[1,3], y[1,100] -> area=3*100=300.
+    // Remove A: x[2,3], y[3,100] -> 2*98=196 // Remove B: x[1,3], y[1,100] -> 300
+    // Remove C: x[1,3], y[1,3] -> 3*3=9 // So best is 9.
+
+    // Can we do better than 9 by moving?  // Suppose we move C to (2,2). Then monsters: (1,1), (3,3), (2,2).
+    // Bounding box: x[1,3], y[1,3] -> area=9 -> same as removing C.
+
+    // What if we move C to (1,2)? Then (1,1), (3,3), (1,2): box x[1,3], y[1,3] -> 9.
+
+    // So no improvement.
+
+    // Another example: A=(1,1), B=(1,3), C=(3,1), D=(3,3), E=(2,5) // Base: x[1,3], y[1,5] -> 3*5=15
+    // Remove E: box becomes 3*3=9 // Remove any corner: still have the other three corners and E -> x[1,3], y[1,5] -> 15
+    // So best by removal is 9. // Can we move E to (2,2)? Then we have five points: including (2,2). Box still x[1,3], y[1,3] -> 9.
+    // Same.
+
+    // Therefore, the answer is simply: //   ans = min( area(all), min_i area(all without i) )
+
+    // But note: when n==1, removing the only monster leaves no monsters -> then the bounding box is undefined. // In that case, we don't need to destroy any monster in the rectangle? But we must destroy all.
+    // However, if we move the only monster to some cell, then we have one monster at a new location. // Then we must cover that new location with a rectangle -> minimum 1x1 = 1.
+    // Alternatively, we could not move it, and cover the original location -> 1. // So cost=1.
+
+    // Our code above handles n==1 separately.
+
+    // But wait: what if we move the monster and then choose a rectangle that does not include it? Then it wouldn't be destroyed. // We must destroy all monsters. The ones in the rectangle are destroyed. The moved monster must be in the rectangle.
+    // So wherever we move it, we must include that cell in the rectangle.
+
+    // Therefore, the rectangle must cover the final position of every monster.
+
+    // For n=1: we can move it to any cell, then we must cover that cell -> minimum area=1.
+
+    // So our answer for n=1 is 1.
+
+    // Now, how to compute the bounding box of all except one efficiently? // We can precompute:
+    //   prefix_min_x[i] = min(x_0, ..., x_i) //   prefix_max_x[i] = max(x_0, ..., x_i)
+    // similarly for y, and suffix arrays.
+
+    // Since n <= 200000 and total n across test cases <= 200000, we can do O(n) per test case.
+
+    if (n == 2) {
+        // We can remove one, then the other forms a 1x1 box -> cost=1, or not move and use 1x? or ?x1 or ?x? // Example: (1,1) and (2,2): base area = 2*2=4.
+        // Remove first: second alone -> 1 // Remove second: first alone -> 1
+        // So answer=1? but let's see: we move one monster (say first) to anywhere, then we have one monster left. // Then we choose a rectangle containing that one monster -> area=1.
+        // So yes. // But our general method will work.
+    }
+
+    // Precompute prefix and suffix arrays
+    vector<ll> px(n), py(n);
+    for (int i = 0; i < n; i++) {
+        px[i] = monsters[i].first;
+        py[i] = monsters[i].second;
+    }
+
+    vector<ll> pre_min_x(n), pre_max_x(n), pre_min_y(n), pre_max_y(n);
+    vector<ll> suf_min_x(n), suf_max_x(n), suf_min_y(n), suf_max_y(n);
+
+    pre_min_x[0] = px[0]; pre_max_x[0] = px[0];
+    pre_min_y[0] = py[0]; pre_max_y[0] = py[0];
+    for (int i = 1; i < n; i++) {
+        pre_min_x[i] = min(pre_min_x[i-1], px[i]);
+        pre_max_x[i] = max(pre_max_x[i-1], px[i]);
+        pre_min_y[i] = min(pre_min_y[i-1], py[i]);
+        pre_max_y[i] = max(pre_max_y[i-1], py[i]);
+    }
+
+    suf_min_x[n-1] = px[n-1]; suf_max_x[n-1] = px[n-1];
+    suf_min_y[n-1] = py[n-1]; suf_max_y[n-1] = py[n-1];
+    for (int i = n-2; i >= 0; i--) {
+        suf_min_x[i] = min(suf_min_x[i+1], px[i]);
+        suf_max_x[i] = max(suf_max_x[i+1], px[i]);
+        suf_min_y[i] = min(suf_min_y[i+1], py[i]);
+        suf_max_y[i] = max(suf_max_y[i+1], py[i]);
+    }
+
+    // Try removing each monster
+    for (int i = 0; i < n; i++) {
+        ll min_x_val, max_x_val, min_y_val, max_y_val;
+
+        if (i == 0) {
+            min_x_val = suf_min_x[1];
+            max_x_val = suf_max_x[1];
+            min_y_val = suf_min_y[1];
+            max_y_val = suf_max_y[1];
+        } else if (i == n-1) {
+            min_x_val = pre_min_x[n-2];
+            max_x_val = pre_max_x[n-2];
+            min_y_val = pre_min_y[n-2];
+            max_y_val = pre_max_y[n-2];
+        } else {
+            min_x_val = min(pre_min_x[i-1], suf_min_x[i+1]);
+            max_x_val = max(pre_max_x[i-1], suf_max_x[i+1]);
+            min_y_val = min(pre_min_y[i-1], suf_min_y[i+1]);
+            max_y_val = max(pre_max_y[i-1], suf_max_y[i+1]);
+        }
+
+        ll cost = (max_x_val - min_x_val + 1) * (max_y_val - min_y_val + 1);
+        ans = min(ans, cost);
+    }
+
+    cout << ans << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

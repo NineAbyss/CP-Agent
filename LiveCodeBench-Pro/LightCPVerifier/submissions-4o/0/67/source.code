@@ -1,0 +1,70 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+bool canCollectWithFlower(int n, int m, vector<int>& a, vector<int>& b, int flowerBeauty) {
+    // Include the new flower and sort the gems
+    a.push_back(flowerBeauty);
+    sort(a.begin(), a.end());
+    
+    int flowerIndex = 0, requirementIndex = 0;
+    int count = 0;
+    
+    while (flowerIndex < (int)a.size() && requirementIndex < m) {
+        if (a[flowerIndex] >= b[requirementIndex]) {
+            count++;
+            requirementIndex++;
+        }
+        flowerIndex++;
+    }
+    
+    // Remove the newly added flower
+    a.pop_back();
+    
+    return count >= m;
+}
+
+int minBeautyNeededToGrow(int n, int m, vector<int>& a, vector<int>& b) {
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+    
+    int lo = 0, hi = 1e9 + 1, result = -1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;
+        if (canCollectWithFlower(n, m, a, b, mid)) {
+            result = mid;
+            hi = mid - 1;
+        } else {
+            lo = mid + 1;
+        }
+    }
+    return result;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<int> a(n), b(m);
+        for (int &x : a) cin >> x;
+        for (int &x : b) cin >> x;
+        
+        // First, check if it is already possible to collect the flowers
+        if (canCollectWithFlower(n, m, a, b, 0)) {
+            cout << 0 << '\n';
+        }
+        else {
+            int result = minBeautyNeededToGrow(n, m, a, b);
+            cout << result << '\n';
+        }
+    }
+    
+    return 0;
+}

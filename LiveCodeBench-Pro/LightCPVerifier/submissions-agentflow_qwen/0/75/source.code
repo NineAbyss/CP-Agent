@@ -1,0 +1,93 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const ll INF = 1LL << 60;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<ll>> h(n, vector<ll>(n));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                cin >> h[i][j];
+            }
+        }
+
+        vector<ll> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+
+        // DP for columns: satisfy horizontal constraints
+        // dp[j][c_j] = minimum cost for first j+1 columns with c_j choice
+        vector<vector<ll>> dp_col(n, vector<ll>(2, INF));
+        dp_col[0][0] = 0;
+        dp_col[0][1] = b[0];
+
+        for (int j = 1; j < n; j++) {
+            for (int prev = 0; prev < 2; prev++) {
+                if (dp_col[j-1][prev] >= INF) continue;
+                for (int curr = 0; curr < 2; curr++) {
+                    // check all rows i: h[i][j-1] + prev != h[i][j] + curr
+                    bool valid = true;
+                    for (int i = 0; i < n; i++) {
+                        if (h[i][j-1] + prev == h[i][j] + curr) {
+                            valid = false;
+                            break;
+                        }
+                    }
+                    if (valid) {
+                        ll cost = dp_col[j-1][prev] + (curr ? b[j] : 0);
+                        if (cost < dp_col[j][curr]) {
+                            dp_col[j][curr] = cost;
+                        }
+                    }
+                }
+            }
+        }
+
+        ll col_cost = min(dp_col[n-1][0], dp_col[n-1][1]);
+
+        // DP for rows: satisfy vertical constraints
+        vector<vector<ll>> dp_row(n, vector<ll>(2, INF));
+        dp_row[0][0] = 0;
+        dp_row[0][1] = a[0];
+
+        for (int i = 1; i < n; i++) {
+            for (int prev = 0; prev < 2; prev++) {
+                if (dp_row[i-1][prev] >= INF) continue;
+                for (int curr = 0; curr < 2; curr++) {
+                    // check all cols j: h[i-1][j] + prev != h[i][j] + curr
+                    bool valid = true;
+                    for (int j = 0; j < n; j++) {
+                        if (h[i-1][j] + prev == h[i][j] + curr) {
+                            valid = false;
+                            break;
+                        }
+                    }
+                    if (valid) {
+                        ll cost = dp_row[i-1][prev] + (curr ? a[i] : 0);
+                        if (cost < dp_row[i][curr]) {
+                            dp_row[i][curr] = cost;
+                        }
+                    }
+                }
+            }
+        }
+
+        ll row_cost = min(dp_row[n-1][0], dp_row[n-1][1]);
+
+        if (col_cost >= INF || row_cost >= INF) {
+            cout << -1 << '\n';
+        } else {
+            cout << col_cost + row_cost << '\n';
+        }
+    }
+    return 0;
+}

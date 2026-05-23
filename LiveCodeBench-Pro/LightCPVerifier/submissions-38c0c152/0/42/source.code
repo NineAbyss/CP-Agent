@@ -1,0 +1,125 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> d(n);
+    for (int i = 0; i < n; i++) cin >> d[i];
+    vector<int> l(n), r(n);
+    for (int i = 0; i < n; i++) cin >> l[i] >> r[i];
+    
+    // 第一步：可行性检查并记录可行区间
+    int low = 0, high = 0;
+    vector<int> low_arr(n), high_arr(n);
+    for (int i = 0; i < n; i++) {
+        if (d[i] == 0) {
+            // 区间不变
+        } else if (d[i] == 1) {
+            low += 1;
+            high += 1;
+        } else { // d[i] == -1
+            high += 1;
+        }
+        low = max(low, l[i]);
+        high = min(high, r[i]);
+        if (low > high) {
+            cout << "-1\n";
+            return;
+        }
+        low_arr[i] = low;
+        high_arr[i] = high;
+    }
+    
+    // 第二步：从后往前构造，选择 h[i] 为可行区间的最大值
+    vector<int> h(n);
+    h[n-1] = high_arr[n-1];
+    vector<int> ans_d = d;
+    for (int i = n-1; i >= 1; i--) {
+        if (d[i] == 0) {
+            h[i-1] = h[i];
+            // 检查是否在可行区间
+            if (h[i-1] < low_arr[i-1] || h[i-1] > high_arr[i-1]) {
+                // 调整 h[i] 为可行区间内另一个值 // 我们需要 h[i-1] 在区间内，且 h[i] 在区间内
+                // 由于 d[i]=0，h[i-1]=h[i]，所以需要 h[i] 同时在两个区间内 // 取交集
+                int L = max(low_arr[i-1], low_arr[i]);
+                int R = min(high_arr[i-1], high_arr[i]);
+                if (L > R) {
+                    cout << "-1\n";
+                    return;
+                }
+                h[i] = L;
+                h[i-1] = L;
+            }
+        } else if (d[i] == 1) {
+            h[i-1] = h[i] - 1;
+            if (h[i-1] < low_arr[i-1] || h[i-1] > high_arr[i-1]) {
+                // 调整 h[i] // h[i-1] = h[i] - 1 必须在 [low_arr[i-1], high_arr[i-1]]
+                // 所以 h[i] 必须在 [low_arr[i-1]+1, high_arr[i-1]+1] // 与 [low_arr[i], high_arr[i]] 取交集
+                int L = max(low_arr[i-1] + 1, low_arr[i]);
+                int R = min(high_arr[i-1] + 1, high_arr[i]);
+                if (L > R) {
+                    cout << "-1\n";
+                    return;
+                }
+                h[i] = L;
+                h[i-1] = L - 1;
+            }
+        } else { // d[i] 未知 // h[i-1] 可以是 h[i] 或 h[i]-1
+            // 选择在 [low_arr[i-1], high_arr[i-1]] 内的
+            int cand1 = h[i];
+            int cand2 = h[i] - 1;
+            if (cand1 >= low_arr[i-1] && cand1 <= high_arr[i-1]) {
+                h[i-1] = cand1;
+                ans_d[i] = h[i] - h[i-1];
+            } else if (cand2 >= low_arr[i-1] && cand2 <= high_arr[i-1]) {
+                h[i-1] = cand2;
+                ans_d[i] = h[i] - h[i-1];
+            } else {
+                // 调整 h[i] // h[i] 必须在 [low_arr[i], high_arr[i]]
+                // 且 h[i] 或 h[i]-1 在 [low_arr[i-1], high_arr[i-1]] // 枚举可能的 h[i]
+                bool ok = false;
+                for (int hi = low_arr[i]; hi <= high_arr[i]; hi++) {
+                    if ((hi >= low_arr[i-1] && hi <= high_arr[i-1]) ||
+                        (hi-1 >= low_arr[i-1] && hi-1 <= high_arr[i-1])) {
+                        h[i] = hi;
+                        if (hi >= low_arr[i-1] && hi <= high_arr[i-1]) {
+                            h[i-1] = hi;
+                            ans_d[i] = 0;
+                        } else {
+                            h[i-1] = hi - 1;
+                            ans_d[i] = 1;
+                        }
+                        ok = true;
+                        break;
+                    }
+                }
+                if (!ok) {
+                    cout << "-1\n";
+                    return;
+                }
+            }
+        }
+    }
+    // 确定 d[0]
+    if (d[0] == -1) {
+        ans_d[0] = h[0];
+    }
+    
+    for (int i = 0; i < n; i++) {
+        cout << ans_d[i] << " \n"[i == n-1];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

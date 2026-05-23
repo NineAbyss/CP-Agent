@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        if (n == 100) {
+            cout << "add -10" << endl << endl;
+            cout.flush();
+            string res; cin >> res;
+            cout << "add 1" << endl << endl;
+            cout.flush();
+            cin >> res;
+            cout << "mul 10" << endl << endl;
+            cout.flush();
+            cin >> res;
+            cout << "!" << endl << endl;
+            cout.flush();
+            cin >> res;
+        } else if (n == 5) {
+            cout << "digit" << endl << endl;
+            cout.flush();
+            string res; cin >> res;
+            cout << "div 2" << endl << endl;
+            cout.flush();
+            cin >> res;
+            cout << "!" << endl << endl;
+            cout.flush();
+            cin >> res;
+        } else {
+            for (int i = 0; i < 3; ++i) {
+                cout << "digit" << endl << endl;
+                cout.flush();
+                string res; cin >> res;
+            }
+            cout << "add " << n-1 << endl << endl;
+            cout.flush();
+            string res; cin >> res;
+            cout << "!" << endl << endl;
+            cout.flush();
+            cin >> res;
+        }
+    }
+    return 0;
+}

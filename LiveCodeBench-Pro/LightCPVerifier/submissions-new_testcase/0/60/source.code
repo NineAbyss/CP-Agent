@@ -1,0 +1,55 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+const long long MOD = 1e9+7;
+
+long long modpow(long long a, long long e) {
+    long long res = 1;
+    while (e) {
+        if (e & 1) res = res * a % MOD;
+        a = a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+long long modinv(long long a) {
+    return modpow(a, MOD-2);
+}
+
+int main() {
+    // 预计算阶乘直到 100000（因为 a,b,k <= 1e5，且所有测试用例的 max 总和 <= 1e5）
+    const int MAX = 100000;
+    vector<long long> fact(MAX+1, 1), invfact(MAX+1, 1);
+    for (int i = 1; i <= MAX; i++) {
+        fact[i] = fact[i-1] * i % MOD;
+    }
+    invfact[MAX] = modinv(fact[MAX]);
+    for (int i = MAX-1; i >= 0; i--) {
+        invfact[i] = invfact[i+1] * (i+1) % MOD;
+    }
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        long long a, b, k;
+        cin >> a >> b >> k;
+        long long n_val = k * (a-1) + 1;
+        long long n = n_val % MOD;
+        // 计算 C(n_val, a) mod MOD
+        long long comb = 0;
+        if (n_val < a) {
+            comb = 0;
+        } else {
+            long long num = 1;
+            // 计算分子 (n_val)*(n_val-1)*...*(n_val-a+1) mod MOD // 注意：n_val 可能很大，但我们需要 (n_val - i) mod MOD
+            for (long long i = 0; i < a; i++) {
+                num = num * ((n_val - i) % MOD) % MOD;
+            }
+            comb = num * invfact[a] % MOD;
+        }
+        long long m = (k % MOD * ((b-1) % MOD) % MOD * comb % MOD + 1) % MOD;
+        cout << n << " " << m << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,156 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+
+struct LCA {
+    int n, LOG;
+    vector<vector<int>> adj;
+    vector<vector<int>> up;
+    vector<int> depth;
+    
+    LCA(int n, const vector<vector<int>>& adj) : n(n), adj(adj) {
+        LOG = 0;
+        while ((1 << LOG) <= n) LOG++;
+        up.assign(n+1, vector<int>(LOG));
+        depth.assign(n+1, 0);
+        dfs(1, 0);
+    }
+    
+    void dfs(int u, int p) {
+        up[u][0] = p;
+        for (int i = 1; i < LOG; i++) {
+            up[u][i] = up[up[u][i-1]][i-1];
+        }
+        for (int v : adj[u]) {
+            if (v == p) continue;
+            depth[v] = depth[u] + 1;
+            dfs(v, u);
+        }
+    }
+    
+    int lca(int u, int v) {
+        if (depth[u] < depth[v]) swap(u, v);
+        int diff = depth[u] - depth[v];
+        for (int i = 0; i < LOG; i++) {
+            if (diff & (1 << i)) {
+                u = up[u][i];
+            }
+        }
+        if (u == v) return u;
+        for (int i = LOG-1; i >= 0; i--) {
+            if (up[u][i] != up[v][i]) {
+                u = up[u][i];
+                v = up[v][i];
+            }
+        }
+        return up[u][0];
+    }
+    
+    vector<int> get_path(int a, int b) {
+        int l = lca(a, b);
+        vector<int> path;
+        int cur = a;
+        while (cur != l) {
+            path.push_back(cur);
+            cur = up[cur][0];
+        }
+        path.push_back(l);
+        vector<int> right;
+        cur = b;
+        while (cur != l) {
+            right.push_back(cur);
+            cur = up[cur][0];
+        }
+        reverse(right.begin(), right.end());
+        path.insert(path.end(), right.begin(), right.end());
+        return path;
+    }
+};
+
+bool is_safe(const vector<int>& blocked, int t) {
+    auto it = lower_bound(blocked.begin(), blocked.end(), t);
+    return (it == blocked.end() || *it != t);
+}
+
+int solve() {
+    int n, m, x, y;
+    cin >> n >> m >> x >> y;
+    vector<vector<int>> adj(n+1);
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    LCA lca(n, adj);
+    
+    vector<vector<int>> blocked(n+1);
+    for (int i = 0; i < m; i++) {
+        int a, b;
+        cin >> a >> b;
+        vector<int> path = lca.get_path(a, b);
+        for (int j = 0; j < (int)path.size(); j++) {
+            int v = path[j];
+            int t = j+1;
+            blocked[v].push_back(t);
+        }
+    }
+    
+    for (int v = 1; v <= n; v++) {
+        sort(blocked[v].begin(), blocked[v].end());
+        blocked[v].erase(unique(blocked[v].begin(), blocked[v].end()), blocked[v].end());
+    }
+    
+    // Dijkstra: each vertex has a map of arrival times
+    vector<map<int, int>> dist(n+1);
+    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<pair<int,int>>> pq;
+    
+    if (is_safe(blocked[x], 1)) {
+        dist[x][1] = 1;
+        pq.push({1, x});
+    }
+    
+    while (!pq.empty()) {
+        auto [t, v] = pq.top(); pq.pop();
+        auto it = dist[v].find(t);
+        if (it == dist[v].end() || it->second != t) continue;
+        if (v == y) {
+            return t;
+        }
+        // stay
+        if (is_safe(blocked[v], t+1)) {
+            auto it2 = dist[v].find(t+1);
+            if (it2 == dist[v].end() || t+1 < it2->second) {
+                dist[v][t+1] = t+1;
+                pq.push({t+1, v});
+            }
+        }
+        // move
+        for (int u : adj[v]) {
+            if (is_safe(blocked[u], t+1)) {
+                auto it2 = dist[u].find(t+1);
+                if (it2 == dist[u].end() || t+1 < it2->second) {
+                    dist[u][t+1] = t+1;
+                    pq.push({t+1, u});
+                }
+            }
+        }
+    }
+    
+    return -1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << solve() << '\n';
+    }
+    
+    return 0;
+}

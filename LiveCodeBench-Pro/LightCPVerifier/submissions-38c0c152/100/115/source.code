@@ -1,0 +1,53 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    vector<int> b(n);
+    for (int i = 0; i < n; i++) cin >> b[i];
+    
+    vector<int> x(q), y(q), z(q);
+    for (int i = 0; i < q; i++) {
+        cin >> x[i] >> y[i] >> z[i];
+        x[i]--; y[i]--; z[i]--;
+    }
+    
+    vector<int> cur = b;
+    // 逆向处理操作
+    for (int i = q - 1; i >= 0; i--) {
+        if (cur[z[i]] > min(cur[x[i]], cur[y[i]])) {
+            if (cur[x[i]] < cur[z[i]]) {
+                cur[x[i]] = cur[z[i]];
+            }
+            if (cur[y[i]] < cur[z[i]]) {
+                cur[y[i]] = cur[z[i]];
+            }
+        }
+    }
+    
+    // 正向验证
+    vector<int> sim = cur;
+    for (int i = 0; i < q; i++) {
+        sim[z[i]] = min(sim[x[i]], sim[y[i]]);
+    }
+    if (sim != b) {
+        cout << "-1\n";
+        return;
+    }
+    
+    for (int i = 0; i < n; i++) {
+        cout << cur[i] << (i == n - 1 ? "\n" : " ");
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

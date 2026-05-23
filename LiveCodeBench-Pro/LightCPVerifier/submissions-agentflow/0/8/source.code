@@ -1,0 +1,34 @@
+#include <iostream>
+using namespace std;
+
+/**
+ * Function to determine if a ball will be potted
+ */
+bool is_potted(int s, int x, int y, int dx, int dy) {
+    int x_steps = dx == 1 ? s - x : x;
+    int y_steps = dy == 1 ? s - y : y;
+    return (x_steps % s == y_steps % s);
+}
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, s;
+        cin >> n >> s;
+        int potted_count = 0;
+
+        for (int i = 0; i < n; ++i) {
+            int dx, dy, x, y;
+            cin >> dx >> dy >> x >> y;
+            if (is_potted(s, x, y, dx, dy)) {
+                potted_count++;
+            }
+        }
+
+        cout << potted_count << endl;
+    }
+
+    return 0;
+}

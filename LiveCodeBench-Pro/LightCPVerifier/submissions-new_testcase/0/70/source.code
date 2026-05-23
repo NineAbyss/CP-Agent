@@ -1,0 +1,15 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int x;
+        cin >> x;
+        int l = 0;
+        while ((1LL << (l+1)) <= x) l++;
+        cout << 2 * l + 3 << '\n';
+    }
+    return 0;
+}

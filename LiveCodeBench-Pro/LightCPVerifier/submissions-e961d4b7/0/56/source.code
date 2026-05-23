@@ -1,0 +1,72 @@
+#include <iostream>
+using namespace std;
+
+long long solve(int n, int x) {
+    if (n == 1) {
+        if (x == 0) return -1;
+        else return x;
+    }
+    // 计算 popcount
+    int pop = 0;
+    for (int k = 0; k < 31; ++k) {
+        if ((x >> k) & 1) pop++;
+    }
+    if (pop >= n) {
+        return x;
+    }
+    long long need = n - pop;
+    long long inc_needed = (need + 1) / 2; // ceil(need/2) // 计算总可用操作数
+    long long total_ops_available = 0;
+    for (int k = 0; k < 31; ++k) {
+        int bit = (x >> k) & 1;
+        long long max_c_k;
+        if (bit == (n & 1)) {
+            max_c_k = n;
+        } else {
+            max_c_k = n - 1;
+        }
+        int current_c = bit;
+        long long max_add = max_c_k - current_c;
+        if (max_add < 0) max_add = 0;
+        total_ops_available += max_add / 2;
+    }
+    if (total_ops_available < inc_needed) {
+        return -1;
+    }
+    // 贪心选择操作
+    long long extra_cost = 0;
+    long long ops_done = 0;
+    for (int k = 0; k < 31 && ops_done < inc_needed; ++k) {
+        int bit = (x >> k) & 1;
+        long long max_c_k;
+        if (bit == (n & 1)) {
+            max_c_k = n;
+        } else {
+            max_c_k = n - 1;
+        }
+        int current_c = bit;
+        long long max_add = max_c_k - current_c;
+        if (max_add < 0) max_add = 0;
+        long long max_ops = max_add / 2;
+        long long take = max_ops;
+        if (ops_done + take > inc_needed) {
+            take = inc_needed - ops_done;
+        }
+        extra_cost += take * (2LL * (1LL << k));
+        ops_done += take;
+    }
+    return x + extra_cost;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, x;
+        cin >> n >> x;
+        cout << solve(n, x) << '\n';
+    }
+    return 0;
+}

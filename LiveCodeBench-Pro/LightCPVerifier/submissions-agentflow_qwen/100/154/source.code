@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n; 
+        ll k;
+        cin >> n >> k;
+        vector<ll> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        ll sum = accumulate(a.begin(), a.end(), 0LL);
+        ll x = sum / n;
+        ll r = sum % n;
+        vector<ll> b(n);
+        for (int i = 0; i < r; i++) {
+            b[i] = x + 1;
+        }
+        for (int i = r; i < n; i++) {
+            b[i] = x;
+        }
+        sort(a.begin(), a.end(), greater<ll>());
+        sort(b.begin(), b.end(), greater<ll>());
+        
+        ll base_angry = 0;
+        for (ll len : b) {
+            base_angry += len * (len + 1) / 2;
+        }
+        ll kept = 0;
+        for (int i = 0; i < n; i++) {
+            kept += min(a[i], b[i]);
+        }
+        ll moved = sum - kept;
+        ll ans = base_angry + moved * k;
+        cout << ans << '\n';
+    }
+    return 0;
+}

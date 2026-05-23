@@ -1,0 +1,66 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        for (int i = 0; i < n; ++i) cin >> b[i];
+
+        // Edge case for odd-length permutations
+        if (n % 2 == 1 && a[n/2] != b[n/2]) {
+            cout << "-1" << endl;
+            continue;
+        }
+
+        vector<pair<int, int>> operations;
+        bool possible = true;
+
+        for (int i = 0; i < n/2; ++i) {
+            int j = n - 1 - i;
+            if (a[i] == b[j] && a[j] == b[i]) continue;
+
+            bool swapped = false;
+            for (int k = i + 1; k < n; ++k) {
+                if ((a[i] == b[k] && a[j] == b[n - k - 1]) || 
+                    (a[i] == b[n - k - 1] && a[j] == b[k])) {
+                    while (k > i) {
+                        swap(a[k], a[k - 1]);
+                        swap(b[k], b[k - 1]);
+                        operations.emplace_back(k + 1, k);
+                        k--;
+                    }
+                    swapped = true;
+                    break;
+                }
+            }
+
+            if (!swapped) {
+                possible = false;
+                break;
+            }
+        }
+
+        if (possible) {
+            cout << operations.size() << endl;
+            for (const auto &op : operations) {
+                cout << op.first << " " << op.second << endl;
+            }
+        } else {
+            cout << "-1" << endl;
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+    return 0;
+}

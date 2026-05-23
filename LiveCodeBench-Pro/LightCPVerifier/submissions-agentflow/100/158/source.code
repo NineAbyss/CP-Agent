@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int MOD = 1e9+7;
+
+long long pow_mod(long long base, long long exp, long long mod) {
+    long long res = 1;
+    base %= mod;
+    while (exp > 0) {
+        if (exp & 1) res = res * base % mod;
+        base = base * base % mod;
+        exp >>= 1;
+    }
+    return res;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long a, b, k;
+        cin >> a >> b >> k;
+        if (a == 1) {
+            cout << 1 << " " << (k * (b-1) + 1) % MOD << "\n";
+        } else if (b == 1) {
+            cout << (k * (a-1) + 1) % MOD << " " << 1 << "\n";
+        } else {
+            long long exp = (a-1) * (b-1);
+            long long t_val = pow_mod(k, exp, MOD);
+            long long n = ((t_val - 1 + MOD) % MOD * ((a-1) % MOD) % MOD + a) % MOD;
+            long long m = ((t_val - 1 + MOD) % MOD * ((b-1) % MOD) % MOD + b) % MOD;
+            cout << n << " " << m << "\n";
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

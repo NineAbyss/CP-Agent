@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) cin >> a[i];
+    
+    vector<int> pos;
+    for (int i = 0; i < n; ++i) {
+        if (a[i] <= k) pos.push_back(i);
+    }
+    if (pos.size() < 2) {
+        cout << "NO\n";
+        return;
+    }
+    if (n == 3) {
+        int cnt = 0;
+        for (int x : a) if (x <= k) cnt++;
+        cout << (cnt >= 2 ? "YES" : "NO") << "\n";
+        return;
+    }
+    // 检查连续块长度 >=3
+    int block_len = 0;
+    for (int i = 0; i < n; ++i) {
+        if (a[i] <= k) {
+            block_len++;
+            if (block_len >= 3) {
+                cout << "YES\n";
+                return;
+            }
+        } else {
+            block_len = 0;
+        }
+    }
+    // 检查位置差 >=2
+    for (int i = 1; i < pos.size(); ++i) {
+        if (pos[i] - pos[i-1] >= 2) {
+            cout << "YES\n";
+            return;
+        }
+    }
+    cout << "NO\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

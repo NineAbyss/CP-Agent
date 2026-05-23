@@ -1,0 +1,49 @@
+#include <cstdio>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    // Precompute Fibonacci numbers up to 11 (since n ≤ 10)
+    int fib[12] = {0};
+    fib[1] = 1;
+    fib[2] = 2;
+    for (int i = 3; i <= 11; i++) {
+        fib[i] = fib[i-1] + fib[i-2];
+    }
+    
+    int t;
+    scanf("%d", &t);
+    
+    // Buffer for output (enough for worst case: 2e5 chars per test case)
+    char buffer[400000]; 
+    char *bufptr = buffer;
+    
+    while (t--) {
+        int n, m;
+        scanf("%d %d", &n, &m);
+        
+        int fn = fib[n];
+        int fn1 = fib[n+1];
+        
+        for (int i = 0; i < m; i++) {
+            int w, l, h;
+            scanf("%d %d %d", &w, &l, &h);
+            
+            // Find minimum and maximum dimension
+            int dmin = w, dmax = w;
+            if (l < dmin) dmin = l;
+            if (l > dmax) dmax = l;
+            if (h < dmin) dmin = h;
+            if (h > dmax) dmax = h;
+            
+            // Check condition
+            *(bufptr++) = (dmin >= fn && dmax >= fn1) ? '1' : '0';
+        }
+        *(bufptr++) = '\n';
+    }
+    
+    // Write all output at once
+    fwrite(buffer, 1, bufptr - buffer, stdout);
+    
+    return 0;
+}

@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+const int MAXN = 100000;
+
+// Precompute powers of 2 modulo MOD up to n (max 10^5)
+vector<long long> precompute_powers(int max_power) {
+    vector<long long> pow2(max_power + 1);
+    pow2[0] = 1;
+    for (int i = 1; i <= max_power; ++i) {
+        pow2[i] = (pow2[i-1] * 2) % MOD;
+    }
+    return pow2;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    // Since maximum n across test cases is <= 10^5, and total sum of n <= 10^5, // we can precompute powers up to 100000
+    vector<long long> pow2 = precompute_powers(MAXN);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> p(n), q(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> p[i];
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> q[i];
+        }
+
+        vector<long long> r(n);
+        long long current_max = 0;
+
+        // For each i from 0 to n-1, compute r[i] = max_{j=0}^{i} (2^p[j] + 2^q[i-j])
+        for (int i = 0; i < n; ++i) {
+            long long best = 0;
+            // Check all j from 0 to i
+            for (int j = 0; j <= i; ++j) {
+                int val = (pow2[p[j]] + pow2[q[i - j]]) % MOD;
+                if (val > best) {
+                    best = val;
+                }
+            }
+            r[i] = best;
+        }
+
+        // Output result
+        for (int i = 0; i < n; ++i) {
+            cout << r[i];
+            if (i < n-1) cout << " ";
+        }
+        cout << "\n";
+    }
+
+    return 0;
+}

@@ -1,0 +1,112 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <bitset>
+#include <algorithm>
+#include <map>
+using namespace std;
+
+const int MAX_SUM = 300005; // 200000 + 10000 + 5，再大一点
+
+void solve() {
+    int n, m, l;
+    cin >> n >> m >> l;
+    map<int, int> freq;
+    int max_A = 0;
+    for (int i = 0; i < l; i++) {
+        int a;
+        cin >> a;
+        freq[a]++;
+        max_A = max(max_A, a);
+    }
+    vector<vector<int>> adj(n+1);
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    // BFS from 1
+    vector<int> dist(n+1, -1);
+    vector<int> color(n+1, -1);
+    queue<int> q;
+    dist[1] = 0;
+    color[1] = 0;
+    q.push(1);
+    bool is_bipartite = true;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int v : adj[u]) {
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                color[v] = color[u] ^ 1;
+                q.push(v);
+            } else if (color[v] == color[u]) {
+                is_bipartite = false;
+            }
+        }
+    }
+    int max_d = 0;
+    for (int i = 1; i <= n; i++) {
+        max_d = max(max_d, dist[i]);
+    }
+    int limit = max_d + max_A + 1;
+    if (limit > MAX_SUM) limit = MAX_SUM;
+    bitset<MAX_SUM> dp;
+    dp[0] = 1;
+    for (auto& p : freq) {
+        int a = p.first;
+        int cnt = p.second;
+        // 二进制拆分
+        int k = 1;
+        while (cnt > 0) {
+            int take = min(k, cnt);
+            dp |= dp << (take * a);
+            cnt -= take;
+            k *= 2;
+        }
+    }
+    string ans(n, '0');
+    for (int i = 1; i <= n; i++) {
+        int d = dist[i];
+        int upper = d + max_A;
+        if (upper >= limit) upper = limit - 1;
+        bool ok = false;
+        if (is_bipartite) {
+            // 确保 d 和 upper 同奇偶性调整
+            if (d % 2 == 0) {
+                for (int s = d; s <= upper; s += 2) {
+                    if (dp[s]) {
+                        ok = true;
+                        break;
+                    }
+                }
+            } else {
+                for (int s = d; s <= upper; s += 2) {
+                    if (dp[s]) {
+                        ok = true;
+                        break;
+                    }
+                }
+            }
+        } else {
+            int pos = dp._Find_next(d-1);
+            if (pos <= upper) {
+                ok = true;
+            }
+        }
+        if (ok) ans[i-1] = '1';
+    }
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

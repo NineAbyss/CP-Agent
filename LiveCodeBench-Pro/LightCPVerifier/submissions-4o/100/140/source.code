@@ -1,0 +1,53 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+vector<vector<int>> tree; // adjacency list representation
+vector<int> nodeValues; // stores final values of nodes
+
+void solve() {
+    int n;
+    cin >> n;
+    
+    tree.assign(n + 1, vector<int>());
+    nodeValues.assign(n + 1, 0);
+
+    for (int i = 0; i < n - 1; ++i) {
+        int u, v;
+        cin >> u >> v;
+        tree[u].push_back(v);
+        tree[v].push_back(u);
+    }
+
+    // This example doesn't follow an optimal strategy for detecting the root // and deducing all values but outlines how queries could be implemented.
+
+    // Query example to get sum f(u) for a single node
+    cout << "? 1 1 1" << endl;
+    cout.flush();
+
+    int response;
+    cin >> response;
+    nodeValues[1] = response; // Example assignment, actual logic will differ.
+
+    // More queries to identify the full tree structure and node values should be made here
+
+    // Output the deduced final values for the nodes
+    cout << "! ";
+    for (int i = 1; i <= n; ++i) {
+        cout << nodeValues[i] << " ";
+    }
+    cout << endl;
+    cout.flush();
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

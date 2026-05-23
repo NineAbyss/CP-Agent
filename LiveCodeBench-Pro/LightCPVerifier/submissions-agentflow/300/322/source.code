@@ -1,0 +1,26 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int a, x, y;
+        cin >> a >> x >> y;
+        
+        // 检查 a 是否在 x 和 y 之间（严格在中间）
+        bool between = false;
+        if (x < a && a < y) between = true;
+        if (y < a && a < x) between = true;
+        
+        // 如果 a 在 x 和 y 之间，Bob 无法保证获胜 // 否则，Bob 可以选择一个点保证获胜
+        if (between) {
+            cout << "NO" << endl;
+        } else {
+            cout << "YES" << endl;
+        }
+    }
+    
+    return 0;
+}

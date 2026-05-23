@@ -1,0 +1,321 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// We cannot simulate the entire array for large q due to performance, // so we need to track rizziness without storing the full array.
+// // Instead, we can keep track of:
+// - current rizziness value // - the actual array (but only when necessary)
+// However, note: cyclic shift and reverse change indexing drastically. //
+// But note: total q across test cases <= 200,000, so we can simulate with a deque?
+// But worst-case we do many shifts/reversals and appending, and computing rizziness naively is O(n).
+// Worst-case total operations: 200,000, but if each time we compute rizziness in O(n), total cost O(q^2) ~ 40e9, too slow.
+
+// Alternate idea: maintain the array as a deque or vector, but avoid recalculating rizziness from scratch every time.
+
+// Let’s analyze: // Operation 3: append k at end -> new rizziness = old_rizziness + k * (n+1)
+// Operation 1: cyclic shift: [a1, a2, ..., an] -> [an, a1, a2, ..., a_{n-1}] //   Old rizziness = a1*1 + a2*2 + ... + an*n
+//   New rizziness = an*1 + a1*2 + a2*3 + ... + a_{n-1}*n
+//                 = (old_rizziness - an*n) + an*1 + (sum of others shifted right by one index)
+//                 = old_rizziness - an*n + an*1 + (sum of a1 to a_{n-1})  //                 = old_rizziness - an*(n-1) + (total_sum - an)
+//                 = old_rizziness + total_sum - an*n // Wait: let's recompute:
+//   new_rizziness = an*1 + sum_{i=1}^{n-1} a_i*(i+1)
+//                 = an + sum_{i=1}^{n-1} a_i*(i+1)
+//                 = an + sum_{i=1}^{n-1} (a_i*i + a_i)
+//                 = an + (sum_{i=1}^{n-1} a_i*i) + (sum_{i=1}^{n-1} a_i)
+//                 = an + (old_rizziness - an*n) + (total_sum - an) //                 = old_rizziness - an*n + total_sum
+// So: new_rizziness = old_rizziness + total_sum - an * n
+
+// Operation 2: reverse: [a1, a2, ..., an] -> [an, ..., a1] //   Old rizziness = sum a_i * i
+//   New rizziness = sum a_i * (n+1-i) = (n+1)*sum a_i - sum a_i*i = (n+1)*total_sum - old_rizziness
+
+// So we can maintain: // - current rizziness
+// - total_sum
+// - the array (to know last element for shift, and also after reversal the "last" changes)
+// BUT: after reversal, the meaning of "last" for next shift changes.
+
+// However, note: we also have to support multiple operations. The issue is that after a reversal,
+// the order is reversed, and then a cyclic shift means moving the last element (which was first before reversal) to front.
+
+// We can use a deque and maintain:
+// - whether the array is currently "reversed" (a flag) — but cyclic shift breaks symmetry.
+
+// Alternatively, we can store the array in a deque and always maintain it in the correct logical order.
+
+// Since total q <= 200,000 over all test cases, and each operation we can do in O(1) or O(n) but worst-case total O(q^2) might be borderline?
+
+// But worst-case: 200,000 operations, and if we do 100,000 appends and 100,000 shifts, and each time we compute rizziness by iterating, O(n^2) = 10^10, which might be borderline in C++.
+
+// But note: the sum of q over test cases is <= 200,000, so worst-case one test case with q=200,000.
+
+// We need an efficient solution.
+
+// Let's try to maintain: // - rizziness
+// - total_sum
+// - the array as a deque (so we can efficiently do cyclic shift and reverse? but reverse on deque is O(n))
+// Actually, we don't want to reverse the whole deque every time (O(n)), because we might have many reversals.
+
+// Instead, we can use a deque and maintain a "direction" flag.
+
+// Idea: maintain: // - a deque that stores the elements
+// - a boolean `reversed` that tells us the current orientation
+// But cyclic shift: 
+//   If not reversed: cyclic shift means pop back, push front
+//   If reversed: cyclic shift means pop front, push back? 
+//     Because the array is reversed, so the "end" is actually the front of the deque.
+
+// Actually, let's define:
+// We always store the array in the order as if no reversal has been applied, but we have a flag `rev` that indicates whether the current logical array is reversed relative to stored.
+
+// But then cyclic shift depends on rev.
+
+// Alternatively, we can avoid storing the flag and just update the deque appropriately.
+
+// Better: maintain the array in a deque, and simulate:
+// - For op1 (cyclic shift): take last element and put it in front.
+// - For op2 (reverse): reverse the entire deque. // - For op3: push_back(k)
+
+// But reversing a deque is O(n). And we might have many reversals.
+
+// However, total q <= 200,000, and each reversal O(n), worst-case if we reverse after every append, total cost O(q^2) = 40e9, too slow.
+
+// We need to avoid physically reversing.
+
+// Use a double-ended queue with a reversal flag.
+
+// Let `rev` be a flag: if false, the deque is in normal order: front = first element, back = last.
+// if true, the deque is in reversed order: front = last element of original, back = first.
+
+// Then: // - Append k:
+//     if not rev: push_back(k)
+//     if rev: push_front(k)
+//   But wait: we want the new element to be appended to the end of the current logical array. //   When rev=true, the logical array is reversed, so the "end" of the logical array corresponds to the front of the physical deque?
+//   Actually, no:  //     Logical array: [a1, a2, ..., an] -> stored in deque: a1 ... an (rev=false)
+//     After reverse: logical becomes [an, ..., a1], so we set rev = true, and the physical deque remains a1...an, but now: //         logical front = an = physical back
+//         logical back = a1 = physical front //   So to append to logical back, we need to add to physical front?
+//   But that would make the new element at the front of physical deque, so logical array becomes [an,...,a1,k]?  //   But we want [an,...,a1] + [k] = [an,...,a1,k] -> so yes, we push to physical front when rev=true.
+
+//   Alternatively, we can think:  //     We want the new element to be at the end of the current logical array.
+//     When rev=false: push_back //     When rev=true: push_front
+
+// - Cyclic shift: move last element to front. //     Last element of logical array:
+//         if rev=false: last = back of deque
+//         if rev=true: last = front of deque
+//     Remove it and put it at the front of logical array:
+//         if rev=false: remove from back, insert at front -> pop_back, push_front
+//         if rev=true: remove from front, insert at back?  //             Because in logical array, moving last to front:
+//                 [a_n, ..., a_1] -> [a_1, a_n, ..., a_2] ???  //             But wait:
+//                 Original logical: [x1, x2, ..., xn] -> after cyclic shift: [xn, x1, x2, ..., x_{n-1}] //             So regardless of internal storage, we are doing: take last element and put at front.
+//         In physical deque:
+//             if rev=false: last = back -> pop_back, then push_front(that element)
+//             if rev=true: last = front -> pop_front, then push_back(that element) //         But note: after this, the logical array is updated, and the reversal flag remains.
+
+// - Reverse: simply flip the `rev` flag.
+
+// Now, how to compute rizziness?
+// We cannot avoid iterating through the deque every time? 
+// But total q up to 200,000, and the sum of lengths over all operations is about O(q^2) if we iterate each time -> 200,000 operations, average length 100,000 -> 20e9 operations, too slow.
+
+// We must update rizziness incrementally.
+
+// So we go back to formulas.
+
+// Let's maintain: // - rizziness: current rizziness value
+// - total_sum: sum of all elements // - n: size of array
+// - and the deque to know the last element (for shift) and also to know individual elements? 
+//   But after reversal, the "last" element for next shift is different.
+
+// However, with the reversal flag and deque, we can get the last element quickly.
+
+// But for cyclic shift, we need to know the last element.
+
+// So plan: // Maintain:
+//   deque<int> dq;
+//   bool rev = false;
+//   long long rizziness = 0;
+//   long long total_sum = 0;
+//   int n = 0;
+
+// But when we do operations, we update rizziness using formulas:
+
+// Operation 3: append k //   n_new = n+1
+//   total_sum_new = total_sum + k //   rizziness_new = rizziness + k * (n+1)
+//   Then update: dq: if rev==false -> push_back(k); else -> push_front(k)
+
+// Operation 1: cyclic shift //   We need the last element of the current logical array.
+//   if rev==false: last = dq.back()
+//   if rev==true: last = dq.front()
+//   Let last_val = that value. //   Then:
+//      rizziness = rizziness + total_sum - (long long)last_val * n; //   Also, we update the deque:
+//      if rev==false: 
+//          dq.pop_back();
+//          dq.push_front(last_val);
+//      if rev==true:
+//          dq.pop_front();
+//          dq.push_back(last_val);
+//   Note: n and total_sum remain same.
+
+// Operation 2: reverse
+//   rizziness = (long long)(n+1) * total_sum - rizziness;   // because new_rizziness = (n+1)*S - old_rizziness
+//   rev = !rev;
+
+// But wait: is the formula for reversal independent of storage? Yes, mathematically.
+
+// However, note: after reversal, the array is reversed, so the rizziness becomes sum a_i*(n+1-i) = (n+1)*S - sum a_i*i = (n+1)*S - rizziness.
+
+// But we must be cautious: does the formula hold even if we have done previous operations with the flag?  // Yes, because rizziness is computed based on the current logical array, regardless of how we stored it.
+
+// However, we are updating rizziness using the formula, so it should be fine.
+
+// But what about the deque? We don't physically reverse, so we rely on the flag for future operations.
+
+// This approach works.
+
+// Steps for each operation:
+
+// Initialize for each test case:
+//   deque<int> dq;
+//   bool rev = false;
+//   long long rizziness = 0;
+//   long long total_sum = 0;
+//   int n = 0;
+
+// For each operation:
+//   if s == 3:
+//       read k //       n = n+1
+//       total_sum += k //       rizziness += (long long)k * n
+//       if rev == false: dq.push_back(k)
+//       else: dq.push_front(k)
+//       output rizziness //
+//   if s == 1:
+//       if n==0: skip (but guaranteed first op is 3, and n>=1 when shift)
+//       int last_val;
+//       if rev == false: last_val = dq.back(); dq.pop_back(); dq.push_front(last_val);
+//       else: last_val = dq.front(); dq.pop_front(); dq.push_back(last_val);
+//       rizziness = rizziness + total_sum - (long long)last_val * n;
+//       output rizziness //
+//   if s == 2:
+//       rizziness = (long long)(n+1) * total_sum - rizziness;
+//       rev = !rev; //       output rizziness
+
+// Let's test with example:
+
+// Start: n=0, rizziness=0, total_sum=0, rev=false, dq=empty
+
+// op: 3 1 //   n=1, total_sum=1, rizziness=1*1=1 -> dq: push_back(1) -> dq=[1]
+//   output: 1
+
+// op: 3 2 //   n=2, total_sum=3, rizziness=1 + 2*2 = 1+4=5 -> dq: push_back(2) -> dq=[1,2]
+//   output: 5
+
+// op: 3 3 //   n=3, total_sum=6, rizziness=5 + 3*3 = 5+9=14 -> dq=[1,2,3]
+//   output:14
+
+// op: 1 (cyclic shift) //   rev=false -> last_val = dq.back() = 3
+//   pop_back, push_front(3) -> dq=[3,1,2] //   rizziness = 14 + 6 - 3*3 = 14+6-9 = 11
+//   output:11 -> matches
+
+// op: 3 4 //   n=4, total_sum=6+4=10, rizziness=11 + 4*4 = 11+16=27
+//   rev=false -> push_back(4) -> dq=[3,1,2,4] //   output:27 -> matches
+
+// op: 2 (reverse) //   rizziness = (4+1)*10 - 27 = 50-27=23
+//   rev = true //   dq remains [3,1,2,4] but now rev=true, so logical array is reversed: [4,2,1,3] -> which matches note
+//   output:23 -> matches
+
+// op: 3 5 //   n=5, total_sum=15, rizziness=23 + 5*5 = 23+25=48
+//   rev=true -> push_front(5) -> dq=[5,3,1,2,4] 
+//   But wait: logical array before: [4,2,1,3] -> after append 5: [4,2,1,3,5] -> but we pushed 5 to front of physical deque -> physical: [5,3,1,2,4] 
+//   Now, with rev=true:  //        logical front = physical back = 4
+//        logical second = physical back-1 = 2 //        ... logical last = physical front = 5
+//   So logical array: [4,2,1,3,5] -> correct. //   output:48 -> matches
+
+// op: 1 (cyclic shift) //   rev=true -> last element of logical array = physical front = 5
+//   pop_front(5), push_back(5) -> dq=[3,1,2,4,5] //   rizziness = 48 + 15 - 5*5 = 48+15-25 = 38
+//   output:38 -> matches
+
+// op: 3 6 //   n=6, total_sum=21, rizziness=38 + 6*6 = 38+36=74
+//   rev=true -> push_front(6) -> dq=[6,3,1,2,4,5] //   logical array: from back to front: 5,4,2,1,3,6 -> so logical: [5,4,2,1,3,6]?
+//   But we want: [3,1,2,4,5] -> becomes [3,1,2,4,5,6] after append? 
+//   Wait: after previous step: logical array was [3,1,2,4,5] -> then we did cyclic shift? 
+//   Let me trace: //     After op:3 5 -> logical: [4,2,1,3,5]
+//     Then op:1 -> cyclic shift: take last (5) and put at front -> [5,4,2,1,3] //     Then op:3 6 -> append 6 -> [5,4,2,1,3,6]
+//   But our method: after cyclic shift, we had dq=[3,1,2,4,5] and rev=true -> so logical: from back to front: 5,4,2,1,3 -> [5,4,2,1,3] -> correct. //   Then append 6: rev=true -> push_front(6) -> dq=[6,3,1,2,4,5] -> then logical: from back to front: 5,4,2,1,3,6 -> [5,4,2,1,3,6] -> but we want [5,4,2,1,3,6] -> correct.
+//   So output:74 -> matches.
+
+// op:2 (reverse) //   rizziness = (6+1)*21 - 74 = 147 - 74 = 73
+//   rev = false //   dq=[6,3,1,2,4,5] -> now rev=false: logical array = [6,3,1,2,4,5]
+//   output:73 -> matches
+
+// op:3 7 //   n=7, total_sum=28, rizziness=73 + 7*7 = 73+49=122
+//   rev=false -> push_back(7) -> dq=[6,3,1,2,4,5,7] //   output:122 -> matches
+
+// op:2 (reverse) //   rizziness = (7+1)*28 - 122 = 224 - 122 = 102
+//   rev = true //   output:102 -> matches
+
+// op:1 (cyclic shift) //   rev=true -> last element = front of dq = 6
+//   pop_front(6), push_back(6) -> dq=[3,1,2,4,5,7,6] //   rizziness = 102 + 28 - 6*7 = 102+28-42 = 88
+//   output:88 -> matches
+
+// Perfect.
+
+// Implementation:
+
+#include <deque>
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int q;
+        cin >> q;
+
+        deque<int> dq;
+        bool rev = false;
+        long long rizziness = 0;
+        long long total_sum = 0;
+        int n = 0;
+
+        while (q--) {
+            int s;
+            cin >> s;
+
+            if (s == 3) {
+                int k;
+                cin >> k;
+                n++;
+                total_sum += k;
+                rizziness += (long long)k * n;
+                if (!rev) {
+                    dq.push_back(k);
+                } else {
+                    dq.push_front(k);
+                }
+                cout << rizziness << '\n';
+            } else if (s == 1) {
+                // cyclic shift: move last element to front
+                int last_val;
+                if (!rev) {
+                    last_val = dq.back();
+                    dq.pop_back();
+                    dq.push_front(last_val);
+                } else {
+                    last_val = dq.front();
+                    dq.pop_front();
+                    dq.push_back(last_val);
+                }
+                rizziness = rizziness + total_sum - (long long)last_val * n;
+                cout << rizziness << '\n';
+            } else if (s == 2) {
+                // reverse
+                rizziness = (long long)(n + 1) * total_sum - rizziness;
+                rev = !rev;
+                cout << rizziness << '\n';
+            }
+        }
+    }
+
+    return 0;
+}

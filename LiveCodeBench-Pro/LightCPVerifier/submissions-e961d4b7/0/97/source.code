@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct DSU {
+    vector<int> parent, size;
+    DSU(int n) {
+        parent.resize(n+1);
+        size.resize(n+1,1);
+        for (int i=1; i<=n; i++) parent[i]=i;
+    }
+    int find(int x) {
+        while (parent[x]!=x) x=parent[x]=parent[parent[x]];
+        return x;
+    }
+    void unite(int a, int b) {
+        a=find(a), b=find(b);
+        if (a==b) return;
+        if (size[a]<size[b]) swap(a,b);
+        parent[b]=a;
+        size[a]+=size[b];
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> p(n+1), d(n+1);
+        for (int i=1; i<=n; i++) cin >> p[i];
+        for (int i=1; i<=n; i++) cin >> d[i];
+        
+        // 初始环
+        DSU dsu(n);
+        for (int i=1; i<=n; i++) {
+            dsu.unite(i, p[i]);
+        }
+        vector<int> compSize(n+1,0), compZero(n+1,0);
+        for (int i=1; i<=n; i++) {
+            compSize[dsu.find(i)]++;
+        }
+        int ans = 0;
+        // 初始答案：每个环长>1 贡献1，自环贡献0
+        for (int i=1; i<=n; i++) {
+            if (dsu.find(i)==i) {
+                if (compSize[i]>1) ans++;
+            }
+        }
+        vector<bool> isZero(n+1,false);
+        vector<int> res;
+        for (int q=1; q<=n; q++) {
+            int pos = d[q];
+            int root = dsu.find(pos);
+            if (!isZero[pos]) {
+                isZero[pos]=true;
+                compZero[root]++;
+                if (compSize[root]==1) {
+                    // 自环
+                    ans++; // 自环变为零，增加1
+                } else {
+                    // 非自环
+                    if (compZero[root]==1) {
+                        // 第一次出现零，减少1（因为不再需要额外操作）
+                        ans--;
+                    }
+                }
+            }
+            res.push_back(ans);
+        }
+        for (int i=0; i<n; i++) {
+            cout << res[i] << (i==n-1?'\n':' ');
+        }
+    }
+    return 0;
+}

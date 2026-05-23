@@ -1,0 +1,85 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const ll INF = 1e18;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n, m;
+    cin >> n >> m;
+    
+    vector<vector<ll>> dist(n, vector<ll>(n, INF));
+    for (int i = 0; i < n; i++) dist[i][i] = 0;
+    
+    for (int i = 0; i < m; i++) {
+        int x, y, z;
+        cin >> x >> y >> z;
+        x--; y--;
+        dist[y][x] = min(dist[y][x], (ll)z);
+    }
+    
+    // Floyd-Warshall
+    for (int k = 0; k < n; k++) {
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (dist[i][k] < INF && dist[k][j] < INF) {
+                    dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]);
+                }
+            }
+        }
+    }
+    
+    // 零环检测：存在从 i 到 i 的长度为0的环（边数≥1）
+    vector<bool> zero_cycle(n, false);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (i != j && dist[i][j] == 0 && dist[j][i] == 0) {
+                zero_cycle[i] = zero_cycle[j] = true;
+            }
+        }
+    }
+    
+    int q;
+    cin >> q;
+    while (q--) {
+        int k;
+        cin >> k;
+        vector<ll> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        
+        string ans(n, '0');
+        for (int i = 0; i < n; i++) {
+            // 计算 g[i] = min_j (a[j] + dist[j][i])
+            ll gi = INF;
+            for (int j = 0; j < n; j++) {
+                if (dist[j][i] < INF) {
+                    gi = min(gi, a[j] + dist[j][i]);
+                }
+            }
+            // 检查是否存在 j 使得差值 ≤ k 且路径经过零环
+            bool ok = false;
+            for (int j = 0; j < n; j++) {
+                if (dist[j][i] < INF) {
+                    ll diff = a[j] + dist[j][i] - gi;
+                    if (diff <= k) {
+                        // 检查是否存在零环节点 v 在 j->i 路径上
+                        for (int v = 0; v < n; v++) {
+                            if (zero_cycle[v] && dist[j][v] < INF && dist[v][i] < INF) {
+                                ok = true;
+                                break;
+                            }
+                        }
+                        if (ok) break;
+                    }
+                }
+            }
+            if (ok) ans[i] = '1';
+        }
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

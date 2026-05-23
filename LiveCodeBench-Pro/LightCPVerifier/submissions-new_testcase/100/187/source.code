@@ -1,0 +1,84 @@
+#include <iostream>
+#include <cmath>
+#include <algorithm>
+using namespace std;
+
+using ld = long double;
+const ld EPS = 1e-12;
+
+bool eq(ld a, ld b) {
+    return fabs(a-b) < EPS;
+}
+
+bool can_escape(int n, int x, int y, int vx, int vy) {
+    long long two_n = 2LL * n;
+    // type 0: (0,0)
+    if ((x * vy - y * vx) % two_n == 0) return true;
+    // type 1: (0,n)
+    if ((x * vy + (n - y) * vx) % two_n == 0) return true;
+    // type 2: (n,0)
+    if (((n - x) * vy + y * vx) % two_n == 0) return true;
+    return false;
+}
+
+int solve_case(int n, int x, int y, int vx, int vy) {
+    if (!can_escape(n, x, y, vx, vy)) return -1;
+    
+    ld px = x, py = y;
+    ld dx = vx, dy = vy;
+    int collisions = 0;
+    // limit steps
+    for (int step = 0; step < 1000000; ++step) {
+        // check if at vertex
+        if (eq(px,0) && eq(py,0)) return collisions;
+        if (eq(px,0) && eq(py,n)) return collisions;
+        if (eq(px,n) && eq(py,0)) return collisions;
+        
+        ld t_x0 = (0 - px) / dx;
+        ld t_y0 = (0 - py) / dy;
+        ld t_diag = (n - px - py) / (dx + dy);
+        ld t = 1e18;
+        int which = -1;
+        int cnt = 0;
+        if (t_x0 > EPS) { t = t_x0; which = 1; cnt=1; }
+        if (t_y0 > EPS) {
+            if (eq(t_y0, t)) cnt++;
+            else if (t_y0 < t) { t = t_y0; which = 2; cnt=1; }
+        }
+        if (t_diag > EPS) {
+            if (eq(t_diag, t)) cnt++;
+            else if (t_diag < t) { t = t_diag; which = 3; cnt=1; }
+        }
+        if (cnt > 1) return collisions;
+        if (which == -1) return -1;
+        
+        px += dx * t;
+        py += dy * t;
+        
+        if (which == 1) dx = -dx;
+        else if (which == 2) dy = -dy;
+        else {
+            ld a=1, b=1;
+            ld d = a*a + b*b;
+            ld vx_new = dx - 2*a*(a*dx + b*dy)/d;
+            ld vy_new = dy - 2*b*(a*dx + b*dy)/d;
+            dx = vx_new;
+            dy = vy_new;
+        }
+        collisions++;
+    }
+    return -1; // not escaped within steps (should not happen if can_escape true)
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, x, y, vx, vy;
+        cin >> n >> x >> y >> vx >> vy;
+        cout << solve_case(n, x, y, vx, vy) << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+map<pair<int, vector<int>>, double> memo;
+
+double dp(int round, vector<int> deficits, double p_val) {
+    if (memo.count({round, deficits})) return memo[{round, deficits}];
+    
+    // Base cases
+    if (round == 0) {
+        for (int d : deficits) if (d > 0) return memo[{round, deficits}] = 0.0;
+        return memo[{round, deficits}] = 1.0;
+    }
+    
+    bool all_zero = true;
+    for (int d : deficits) if (d > 0) { all_zero = false; break; }
+    if (all_zero) return memo[{round, deficits}] = 1.0;
+    
+    double res = 0.0;
+    
+    // Case 1: sword shines (prob p_val)
+    vector<int> new_deficits = deficits;
+    bool can_attack_shine = true;
+    for (int d : deficits) if (d == 0) can_attack_shine = false;
+    
+    if (can_attack_shine) {
+        for (int& d : new_deficits) d--;
+    }
+    
+    res += p_val * dp(round - 1, new_deficits, p_val);
+    
+    // Case 2: sword doesn't shine (prob 1-p_val) // Option 1: skip
+    double best = dp(round - 1, deficits, p_val);
+    
+    // Option 2: attack each possible monster
+    for (int i = 0; i < deficits.size(); i++) {
+        if (deficits[i] > 0) {
+            vector<int> temp = deficits;
+            temp[i]--;
+            sort(temp.begin(), temp.end());
+            best = max(best, dp(round - 1, temp, p_val));
+        }
+    }
+    
+    res += (1 - p_val) * best;
+    return memo[{round, deficits}] = res;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m, p_prime;
+        cin >> n >> m >> p_prime;
+        vector<int> h(n);
+        for (int& x : h) cin >> x;
+        
+        // Convert to deficits (reductions needed)
+        vector<int> deficits;
+        for (int x : h) deficits.push_back(x - 1);
+        sort(deficits.begin(), deficits.end());
+        
+        double p_val = p_prime / 100.0;
+        memo.clear();
+        
+        double ans = dp(m, deficits, p_val);
+        cout << fixed << setprecision(12) << ans << "\n";
+    }
+    
+    return 0;
+}

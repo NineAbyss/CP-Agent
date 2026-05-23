@@ -1,0 +1,44 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+int mismatch(const string& s) {
+    int cnt = 0;
+    int n = s.size();
+    for (int i = 0; i < n/2; i++) {
+        if (s[i] != s[n-1-i]) cnt++;
+    }
+    return cnt;
+}
+
+int main() {
+    string t = "";
+    char c;
+    while (cin >> c) {
+        if (c == '0') break;
+        t += c;
+        int n = t.size();
+        int best = mismatch(t);
+        int bestL = 0, bestR = 0;
+        // 尝试所有交换
+        for (int i = 0; i < n; i++) {
+            for (int j = i; j < n; j++) {
+                string tmp = t;
+                swap(tmp[i], tmp[j]);
+                int cur = mismatch(tmp);
+                if (cur < best) {
+                    best = cur;
+                    bestL = i+1;
+                    bestR = j+1;
+                }
+            }
+        }
+        cout << bestL << " " << bestR << endl;
+        cout.flush();
+        if (bestL != 0) {
+            swap(t[bestL-1], t[bestR-1]);
+        }
+    }
+    return 0;
+}

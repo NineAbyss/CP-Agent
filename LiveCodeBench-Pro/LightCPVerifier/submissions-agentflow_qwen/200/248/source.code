@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        int min_val = *min_element(a.begin(), a.end());
+        int max_val = *max_element(a.begin(), a.end());
+        if ((min_val + max_val) % 2 == 0) {
+            cout << 0 << '\n';
+            continue;
+        }
+
+        int max_keep = 0;
+        for (int x : a) {
+            for (int y : a) {
+                if (y < x) continue;
+                if ((x + y) % 2 != 0) continue;
+                int count = 0;
+                for (int val : a) {
+                    if (val >= x && val <= y) {
+                        count++;
+                    }
+                }
+                max_keep = max(max_keep, count);
+            }
+        }
+
+        cout << n - max_keep << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int ceil_log2(long long x) {
+    if (x <= 1) return 0;
+    return 64 - __builtin_clzll((unsigned long long)(x - 1));
+}
+
+long long solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n, m, a, b;
+        cin >> n >> m >> a >> b;
+        long long L = min(a, n - a + 1);
+        long long R = min(b, m - b + 1);
+        long long hor = ceil_log2(L) + ceil_log2(m);
+        long long ver = ceil_log2(n) + ceil_log2(R);
+        long long ans = 1 + min(hor, ver);
+        cout << ans << '\n';
+    }
+    return 0;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    return solve();
+}

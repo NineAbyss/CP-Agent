@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool solve() {
+    int n;
+    string s;
+    cin >> n >> s;
+    
+    if (n < 3) return false;
+    
+    vector<int> left(26, 0);
+    vector<int> right(26, 0);
+    
+    for (char c : s) {
+        right[c - 'a']++;
+    }
+    
+    left[s[0] - 'a']++;
+    right[s[0] - 'a']--;
+    
+    for (int i = 1; i <= n-2; i++) {
+        int idx = s[i] - 'a';
+        right[idx]--;
+        
+        if (left[idx] > 0 || right[idx] > 0) {
+            return true;
+        }
+        
+        left[idx]++;
+    }
+    
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        cout << (solve() ? "Yes" : "No") << '\n';
+    }
+    
+    return 0;
+}

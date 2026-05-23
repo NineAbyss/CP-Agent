@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <unordered_map>
+#include <string>
+
+using namespace std;
+
+// Function to determine the required number of appends
+vector<int> min_letters_to_unpleasant(int n, int k, const string& s, int q, const vector<string>& queries) {
+    unordered_map<char, vector<int>> pos_map;
+
+    // Populate position map for each character in `s`
+    for (int i = 0; i < n; ++i) {
+        pos_map[s[i]].push_back(i);
+    }
+
+    vector<int> results; // Store results for each query
+
+    for (const auto& t : queries) {
+        int current_pos = -1; // Previous occurence position initially set outside range
+        bool full_match = true; // Placeholder flag to identify full subsequence
+
+        for (char c : t) {
+            const vector<int>& positions = pos_map[c];
+            // Find the next occurrence of `c` in `s` that appears after `current_pos`
+            auto it = upper_bound(positions.begin(), positions.end(), current_pos);
+            if (it == positions.end()) {
+                full_match = false; // Can't match `t` as a subsequence fully
+                break;
+            }
+            current_pos = *it;
+        }
+
+        // If it is a full match, append calculation to disrupt subsequence
+        if (full_match) {
+            results.push_back(1); // Needs at least one letter to break the sequence
+        } else {
+            int required_unpleasant_length = t.size() - (full_match ? 0 : current_pos);
+            results.push_back(required_unpleasant_length);
+        }
+    }
+
+    return results; // Return the results for each query
+}
+
+int main() {
+    int n = 7, k = 3, q = 3;
+    string s = "abacaba";
+    vector<string> queries = {"cc", "bcb", "b"};
+
+    vector<int> result = min_letters_to_unpleasant(n, k, s, q, queries);
+
+    for (int r : result) {
+        cout << r << endl;
+    }
+
+    return 0;
+}

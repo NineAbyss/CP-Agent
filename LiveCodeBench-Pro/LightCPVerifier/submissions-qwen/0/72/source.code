@@ -1,0 +1,173 @@
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+        
+        vector<int> res;
+        // We'll use numbers from 1 to n. We can greedily assign based on the pattern.
+        
+        int low = 1, high = n;
+        
+        // We process the string and decide whether to place a small or large number
+        // The idea: if we have a '<', then next element must be smaller than all previous -> so it must be the smallest unused
+        // But wait: actually, condition is: a_{i+1} < min(a_1, ..., a_i)
+        // Similarly, for '>', a_{i+1} > max(a_1, ..., a_i)
+        
+        // So we can simulate:
+        // Start with an empty sequence. At each step, if we need a new element smaller than all previous, pick the smallest available.
+        // If we need larger than all previous, pick the largest available.
+        
+        // However, note: we don't know the future. But we can show greedy works.
+        
+        // Actually, let's try greedy: // - If s[i] == '<', then a[i+1] must be less than min of first i elements.
+        //   So we should assign the smallest remaining number. // - If s[i] == '>', then a[i+1] must be greater than max of first i elements.
+        //   So we should assign the largest remaining number.
+        
+        // But wait: what about the first element? We can choose arbitrarily. // Let's start by considering the whole sequence.
+        
+        // Alternate idea: traverse backwards.
+        // Insight: whenever we see a '<', the next number is very small; when we see '>', the next is very large.
+        // We can group consecutive same characters.
+        
+        // Simpler: reverse the string and build from right to left. // Known trick in similar problems (e.g., DI String Match):
+        // But note: here condition is stronger: not just relative to immediate predecessor, but to *all* previous.
+        
+        // Let's simulate the second example: n=5, s="<<><" // We want: a2 < a1
+        //         a3 < min(a1,a2) => a3 < a2 (since a2 < a1) //         a4 > max(a1,a2,a3) => a4 > a1
+        //         a5 < min(a1,a2,a3,a4) => a5 < a3 (since a3 is smallest among first three, and a4 > a1 > a2 > a3, so min is a3)
+        
+        // So constraints: a3 < a2 < a1 < a4, and a5 < a3. // So overall: a5 < a3 < a2 < a1 < a4.
+        // Then one solution: a5=1, a3=2, a2=3, a1=4, a4=5 -> [4,3,2,5,1] as expected.
+        
+        // Pattern: we can count the length of consecutive '<' and '>' segments. // Another known solution:
+        // Use two pointers: low=1, high=n. // Traverse s from left to right:
+        //   For each segment of consecutive '<', we will eventually need to assign increasing small values? // Actually, consider processing from left:
+        //   Instead, think: whenever we have a '>', we know that the current run of decreasing will end, so we can assign large numbers.
+        
+        // Standard solution for such "mountain" problems:  // Count the number of consecutive '>' starting at each position.
+        // Or: traverse from right to left.
+        
+        // Alternate approach (common in stack-based solutions): // We can do:
+        //   Append a dummy character to s to trigger final output. //   Use a stack or just simulate.
+        
+        // Actually, simpler: 
+        // We can note that the condition forces a strict ordering.
+        // We can assign values based on the number of consecutive '>' that follow.
+        
+        // Known trick:  // Let ans be the result array.
+        // We can do: //   Let res = empty.
+        //   Let count = 0. //   For i from 0 to n-2:
+        //      if s[i] == '>', count++
+        //      else:
+        //          then we are at a '<', so we can place (n - count) and reset? // This is getting messy.
+        
+        // Better idea from known problems (like "DI String Match", Leetcode 942): // But note: in DI String, condition is only with previous element.
+        // Here it's with *all* previous — much stronger.
+        
+        // Let's reframe: // Suppose we have placed some elements. The next element must be either:
+        //   - smaller than the minimum so far → so it must be the smallest unused number //   - larger than the maximum so far → so it must be the largest unused number
+        // // So greedy algorithm:
+        //   Let low = 1, high = n. //   We haven't placed any element yet. So we cannot apply condition to first.
+        //   But we can start by choosing any number? Not exactly. //
+        // However, note: the condition applies only from position 2 onward. // So we can choose the first element arbitrarily? But our choice affects future options.
+        // // Instead, we can work backwards:
+        //   Consider the last character of s:
+        //     If s[n-2] == '<', then a_n < min(a_1..a_{n-1}) → so a_n must be the smallest number used.
+        //     If s[n-2] == '>', then a_n > max(a_1..a_{n-1}) → so a_n must be the largest number used. //
+        // Then remove that number and recurse. //
+        // Algorithm: //   Let available = sorted list of numbers 1..n.
+        //   res = [] //   For i from n-2 down to 0:
+        //      if s[i] == '<': then the next element (in backward) must be the smallest available → because at that point it was smaller than all before
+        //      if s[i] == '>': then the next element must be the largest available
+        //   Then finally add the last remaining number. //   Then reverse the result? Or build from back.
+        // // Example: n=2, s="<"
+        //   i=0: s[0]=='<' → take smallest available: 1 //   Then remaining: [2] → add 2
+        //   Sequence built: [1,2] → but then we want a2 < a1 → 2<1? no. //   We are building from the end: so we are deciding a2 first.
+        //   So we put a2 = 1, then a1 = 2 → [2,1] → correct. //   So we build the answer in reverse order: push_front or reverse at end.
+        // // Steps:
+        //   res = deque or we can build vector backwards. //   Let ans be a vector, we will push to front.
+        // //   available: we don't need to maintain explicitly, we can use low and high.
+        //   Actually, we can use two pointers: low=1, high=n. //   Traverse s from right to left:
+        //      if s[i] == '<': then the element at position i+1 (0-indexed) must be smaller than all before → so it must be the smallest available → so assign low, then low++
+        //      if s[i] == '>': then assign high, then high--
+        //   Then after processing all s, one number remains: assign it to the first position. //
+        // But wait: when we go backwards, we are assigning positions: 
+        //   We are going to assign a_n, a_{n-1}, ..., a_2, then finally a_1.
+        //   The condition for a_{i+1} depends on a_1..a_i, which are not yet assigned in this backward pass?  //   But we are using the fact:
+        //      if s[i] = '<', then a_{i+1} < min(a_1..a_i) → since a_1..a_i are chosen from the remaining set, and we are going to assign the smallest available to a_{i+1}, then indeed a_{i+1} will be smaller than any future (in forward) assignment?  //   Actually, no: because a_1..a_i are assigned later (in backward time) and could be smaller?
+        // // Let me try with n=2, s="<":
+        //   i = 0 (last char of s, index 0): s[0]=='<' → assign low=1 to a_2, then low=2. //   Then assign remaining: a_1 = 2.
+        //   Result: [2,1] → correct. //
+        // Example: n=2, s=">" //   i=0: s[0]=='>' → assign high=2 to a_2, then high=1.
+        //   a_1 = 1 → [1,2] → but we need a_2 > a_1 → 2>1 → correct? 
+        //   But expected output in sample: "1 2" for input ">", but wait sample input:
+        //       2 //       >
+        //   Output: "1 2"?  //   But sample says:
+        //       2 //       >
+        //       Output: 1 2 //   But wait, the third test case:
+        //       2 //       >
+        //       Output: 1 2 //   But check: a2 must be greater than a1 → 2>1 → yes.
+        //   However, the sample output shown is: //       2 1
+        //       4 3 2 5 1 //       1 2
+        //       2 1 3 //       3 4 2 5 6 7 1
+        //   Third line: "1 2" for s=">" → correct. //
+        // Example: n=3, s="<>":  //   s[1] = '>' (i=1): assign high=3 to a_3, high=2.
+        //   s[0] = '<': assign low=1 to a_2, low=2. //   Then a_1 = 2.
+        //   Result: [2,1,3] //   Check:
+        //      a2=1 < a1=2 → true. //      a3=3 > max(a1,a2)=max(2,1)=2 → true.
+        //   Matches expected output: "2 1 3" //
+        // Example: n=5, s="<<><" //   Process backwards:
+        //      i=3: s[3]='<' → assign low=1 to a5, low=2. //      i=2: s[2]='>' → assign high=5 to a4, high=4.
+        //      i=1: s[1]='<' → assign low=2 to a3, low=3. //      i=0: s[0]='<' → assign low=3 to a2, low=4.
+        //      Then a1 = 4. //   Result: [4,3,2,5,1] → matches.
+        // // Example: n=7, s="><>>><"
+        //   s: index 0:'>', 1:'<', 2:'>', 3:'>', 4:'>', 5:'<' //   Process backwards:
+        //      i=5: '<' → a7 = low=1, low=2. //      i=4: '>' → a6 = high=7, high=6.
+        //      i=3: '>' → a5 = 6, high=5. //      i=2: '>' → a4 = 5, high=4.
+        //      i=1: '<' → a3 = 2, low=3. //      i=0: '>' → a2 = 4, high=3.
+        //      Then a1 = 3. //   Result: [3,4,2,5,6,7,1] → matches expected output.
+        // // So algorithm:
+        //   low = 1, high = n. //   res = vector of size n, we will fill from the end: indices n-1 down to 1, then index 0.
+        //   for i from n-2 down to 0:
+        //      if s[i] == '<': 
+        //          res[i+1] = low;
+        //          low++;
+        //      else: // '>'
+        //          res[i+1] = high;
+        //          high--;
+        //   res[0] = low;  // or high, they should be equal
+        // // But note: after n-1 steps, low should equal high, so we can assign either.
+
+        vector<int> ans(n);
+        int low = 1, high = n;
+        
+        // Process the string from last character to first
+        for (int i = n - 2; i >= 0; i--) {
+            if (s[i] == '<') {
+                ans[i + 1] = low++;
+            } else { // s[i] == '>'
+                ans[i + 1] = high--;
+            }
+        }
+        ans[0] = low; // low == high at this point
+        
+        // Output the answer
+        for (int i = 0; i < n; i++) {
+            cout << ans[i];
+            if (i < n - 1) cout << " ";
+        }
+        cout << endl;
+    }
+    
+    return 0;
+}

@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    int k = (n + 1) / 2; // ceil(n/2)
+    int x = abs(a[0]);
+    int L = 0;
+    for (int i = 1; i < n; i++) {
+        if (abs(a[i]) < x) L++;
+    }
+    int R = n - 1 - L;
+    // case 1: a[1] = +x
+    int need = k - 1 - L;
+    if (0 <= need && need <= R) {
+        cout << "YES\n";
+        return;
+    }
+    // case 2: a[1] = -x // number of elements smaller than -x must be k-1
+    // those can only come from elements with absolute value > x and assigned negative
+    int b = k - 1;
+    if (0 <= b && b <= R) {
+        cout << "YES\n";
+        return;
+    }
+    cout << "NO\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

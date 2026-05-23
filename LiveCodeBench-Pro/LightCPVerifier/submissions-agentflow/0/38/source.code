@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        long long n, m;
+        cin >> n >> m;
+
+        long long minSum = n * (n + 1) / 2;
+        long long maxSum = n + (n - 1) * (n - 2) / 2;
+
+        if (m < minSum || m > maxSum) {
+            cout << "-1\n";
+            continue;
+        }
+
+        vector<pair<int, int>> edges;
+        cout << 1 << '\n'; // The root is node 1
+
+        for (int i = 2; i <= n; ++i) {
+            edges.push_back({i - 1, i}); // Initially assume a linear path
+        }
+
+        long long surplus = m - minSum;
+
+        for (int i = n - 1; i > 0 && surplus > 0; --i) {
+            long long shift = min(surplus, static_cast<long long>(i - 1));
+            edges[i - 1].first -= shift;
+            surplus -= shift;
+        }
+
+        for (const auto& edge : edges) {
+            cout << edge.first << ' ' << edge.second << '\n';
+        }
+    }
+
+    return 0;
+}

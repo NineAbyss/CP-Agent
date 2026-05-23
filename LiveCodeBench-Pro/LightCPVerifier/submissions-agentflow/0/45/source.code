@@ -1,0 +1,32 @@
+#include <iostream>
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long k, a, b, x, y;
+        cin >> k >> a >> b >> x >> y;
+
+        int totalPortions = 0;
+
+        // Cooking logic as validated
+        while (k >= min(a, b)) {
+            if (k >= a && (x <= y || k < b)) {
+                k -= x;
+            } else if (k >= b) {
+                k -= y;
+            } else {
+                break;
+            }
+            totalPortions++;
+        }
+
+        cout << totalPortions << endl;
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

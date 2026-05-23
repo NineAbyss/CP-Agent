@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct BIT {
+    vector<int> tree;
+    int n;
+    BIT(int n_) : n(n_), tree(n_ + 2, 0) {}
+    void update(int idx, int val) {
+        while (idx <= n) {
+            tree[idx] = max(tree[idx], val);
+            idx += idx & -idx;
+        }
+    }
+    int query(int idx) {
+        int res = 0;
+        while (idx > 0) {
+            res = max(res, tree[idx]);
+            idx -= idx & -idx;
+        }
+        return res;
+    }
+};
+
+int solve_case(vector<int>& a) {
+    int n = a.size();
+    vector<int> vals;
+    for (int x : a) {
+        vals.push_back(x);
+        if (x - 1 >= 1) vals.push_back(x - 1);
+        if (x - 2 >= 1) vals.push_back(x - 2);
+    }
+    sort(vals.begin(), vals.end());
+    vals.erase(unique(vals.begin(), vals.end()), vals.end());
+    int m = vals.size();
+    // 映射函数
+    auto id = [&](int x) -> int {
+        if (x < 1) return 0;
+        auto it = lower_bound(vals.begin(), vals.end(), x);
+        if (it != vals.end() && *it == x) return it - vals.begin() + 1;
+        else return 0;
+    };
+    // 前缀查询：找到最后一个 ≤ limit 的索引
+    auto prefix_id = [&](int limit) -> int {
+        if (limit < 1) return 0;
+        auto it = upper_bound(vals.begin(), vals.end(), limit);
+        if (it == vals.begin()) return 0;
+        --it;
+        return it - vals.begin() + 1;
+    };
+    vector<int> f(m + 2, 0);
+    BIT bit(m);
+    int ans = 0;
+    for (int i = 0; i < n; i++) {
+        int val = a[i];
+        int dp = 1;
+        int idx_val = id(val);
+        int idx_val_1 = id(val - 1);
+        if (idx_val) dp = max(dp, f[idx_val]);
+        if (idx_val_1) dp = max(dp, f[idx_val_1]);
+        int limit = val - 2;
+        int pid = prefix_id(limit);
+        if (pid > 0) {
+            dp = max(dp, bit.query(pid) + 1);
+        }
+        if (idx_val) {
+            f[idx_val] = max(f[idx_val], dp);
+            bit.update(idx_val, dp);
+        }
+        ans = max(ans, dp);
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        cout << solve_case(a) << '\n';
+    }
+    return 0;
+}

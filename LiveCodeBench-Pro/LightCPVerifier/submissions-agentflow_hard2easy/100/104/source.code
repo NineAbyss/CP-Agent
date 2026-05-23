@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    string s;
+    cin >> s;
+    vector<pair<char,char>> ops(q);
+    for(int i=0;i<q;i++){
+        cin >> ops[i].first >> ops[i].second;
+    }
+    
+    // 维护每个字符的位置集合（有序）
+    vector<set<int>> pos(3);
+    for(int i=0;i<n;i++){
+        pos[s[i]-'a'].insert(i);
+    }
+    vector<char> cur(n);
+    for(int i=0;i<n;i++) cur[i] = s[i];
+    
+    for(auto& op : ops){
+        int x = op.first - 'a';
+        int y = op.second - 'a';
+        // 只有变小时才执行
+        if(y < x && !pos[x].empty()){
+            int idx = *pos[x].begin();
+            pos[x].erase(idx);
+            cur[idx] = y + 'a';
+            pos[y].insert(idx);
+        }
+    }
+    
+    cout << string(cur.begin(), cur.end()) << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while(t--){
+        solve();
+    }
+    return 0;
+}

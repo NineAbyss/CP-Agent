@@ -1,0 +1,166 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 150005;
+const int LOG = 18;
+
+struct Triple {
+    int d, u, v;
+    bool operator<(const Triple& other) const {
+        if (d != other.d) return d < other.d;
+        if (u != other.u) return u < other.u;
+        return v < other.v;
+    }
+};
+
+vector<int> adj[MAXN];
+int parent[MAXN][LOG];
+int depth[MAXN];
+bool removed[MAXN];
+int dist[MAXN];
+int vis[MAXN];
+int curVis;
+int n;
+
+void dfs_lca(int u, int p) {
+    parent[u][0] = p;
+    for (int k = 1; k < LOG; k++) {
+        parent[u][k] = parent[parent[u][k-1]][k-1];
+    }
+    for (int v : adj[u]) {
+        if (v == p) continue;
+        depth[v] = depth[u] + 1;
+        dfs_lca(v, u);
+    }
+}
+
+int lca(int u, int v) {
+    if (depth[u] < depth[v]) swap(u, v);
+    int diff = depth[u] - depth[v];
+    for (int k = 0; k < LOG; k++) {
+        if (diff & (1 << k)) {
+            u = parent[u][k];
+        }
+    }
+    if (u == v) return u;
+    for (int k = LOG-1; k >= 0; k--) {
+        if (parent[u][k] != parent[v][k]) {
+            u = parent[u][k];
+            v = parent[v][k];
+        }
+    }
+    return parent[u][0];
+}
+
+vector<int> get_path(int u, int v) {
+    int w = lca(u, v);
+    vector<int> path;
+    int cur = u;
+    while (cur != w) {
+        path.push_back(cur);
+        cur = parent[cur][0];
+    }
+    path.push_back(w);
+    vector<int> tail;
+    cur = v;
+    while (cur != w) {
+        tail.push_back(cur);
+        cur = parent[cur][0];
+    }
+    reverse(tail.begin(), tail.end());
+    path.insert(path.end(), tail.begin(), tail.end());
+    return path;
+}
+
+pair<int,int> bfs_farthest(int start) {
+    curVis++;
+    static int q[MAXN];
+    int qh = 0, qt = 0;
+    dist[start] = 0;
+    vis[start] = curVis;
+    q[qt++] = start;
+    int farthest = start, maxDist = 0;
+    while (qh < qt) {
+        int u = q[qh++];
+        for (int v : adj[u]) {
+            if (removed[v]) continue;
+            if (vis[v] != curVis) {
+                dist[v] = dist[u] + 1;
+                vis[v] = curVis;
+                q[qt++] = v;
+                if (dist[v] > maxDist || (dist[v] == maxDist && v > farthest)) {
+                    maxDist = dist[v];
+                    farthest = v;
+                }
+            }
+        }
+    }
+    return {farthest, maxDist};
+}
+
+Triple compute_diameter(int start) {
+    auto [far1, _] = bfs_farthest(start);
+    auto [far2, d] = bfs_farthest(far1);
+    int diameter = d + 1;
+    int u = max(far1, far2);
+    int v = min(far1, far2);
+    return {diameter, u, v};
+}
+
+void solve() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        scanf("%d", &n);
+        for (int i = 1; i <= n; i++) {
+            adj[i].clear();
+            removed[i] = false;
+        }
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            scanf("%d %d", &u, &v);
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+        // preprocess LCA with root 1
+        depth[1] = 0;
+        dfs_lca(1, 1);
+        
+        priority_queue<pair<Triple,int>> pq;
+        
+        Triple init = compute_diameter(1);
+        pq.push({init, 1});
+        
+        vector<int> ans;
+        ans.reserve(3*n);
+        while (!pq.empty()) {
+            auto [triple, start] = pq.top(); pq.pop();
+            if (removed[start]) continue;
+            ans.push_back(triple.d);
+            ans.push_back(triple.u);
+            ans.push_back(triple.v);
+            vector<int> path = get_path(triple.u, triple.v);
+            for (int node : path) {
+                removed[node] = true;
+            }
+            for (int node : path) {
+                for (int nei : adj[node]) {
+                    if (!removed[nei]) {
+                        Triple newTriple = compute_diameter(nei);
+                        pq.push({newTriple, nei});
+                    }
+                }
+            }
+        }
+        for (size_t i = 0; i < ans.size(); i++) {
+            if (i > 0) printf(" ");
+            printf("%d", ans[i]);
+        }
+        printf("\n");
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

@@ -1,0 +1,167 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 150005;
+vector<int> g[N];
+bool removed[N];
+int n;
+
+int dist[N], parent[N], vis[N], cur_vis;
+int q[N];
+
+int bfs(int s, bool record_dist = true) {
+    int l = 0, r = 0;
+    q[r++] = s;
+    vis[s] = cur_vis;
+    dist[s] = 0;
+    parent[s] = -1;
+    int far = s;
+    while (l < r) {
+        int u = q[l++];
+        for (int v : g[u]) {
+            if (!removed[v] && vis[v] != cur_vis) {
+                vis[v] = cur_vis;
+                dist[v] = record_dist ? dist[u] + 1 : 0;
+                parent[v] = u;
+                q[r++] = v;
+                if (record_dist && dist[v] > dist[far]) far = v;
+            }
+        }
+    }
+    return far;
+}
+
+vector<int> solve(int start) {
+    if (removed[start]) return {};
+    cur_vis++;
+    int a = bfs(start, false);
+    // 此时队列 q[0..r-1] 存储了当前分量的所有节点，r 是队列大小 // 我们需要知道 r，但 bfs 没有返回 r。我们可以用全局变量，但为了简单，我们重新收集。
+    // 实际上，我们可以用 vis 标记，然后遍历所有节点，但效率低。 // 修改 bfs 返回 r？但函数签名已定。我们可以用另一个数组。
+    // 简单方法：在 bfs 后，我们知道所有 alive 节点都被标记为 cur_vis，我们可以遍历 1..n 收集。
+    vector<int> comp;
+    for (int i = 1; i <= n; i++) {
+        if (!removed[i] && vis[i] == cur_vis) comp.push_back(i);
+    }
+    // 重新进行 BFS 计算距离
+    cur_vis++;
+    a = bfs(start, true);
+    cur_vis++;
+    int b = bfs(a, true);
+    int L = dist[b];
+    // 记录 dist_a
+    vector<int> dist_a(n+1);
+    for (int i = 1; i <= n; i++) dist_a[i] = dist[i];
+    // 从 b BFS
+    cur_vis++;
+    bfs(b, true);
+    vector<int> dist_b(n+1);
+    for (int i = 1; i <= n; i++) dist_b[i] = dist[i];
+    // 找到所有直径端点
+    int u = 0;
+    for (int i = 1; i <= n; i++) {
+        if (!removed[i] && (dist_a[i] == L || dist_b[i] == L)) {
+            if (i > u) u = i;
+        }
+    }
+    // 从 u BFS 找最远点 v
+    cur_vis++;
+    bfs(u, true);
+    int max_dist = 0;
+    for (int i = 1; i <= n; i++) if (!removed[i]) max_dist = max(max_dist, dist[i]);
+    int v = 0;
+    for (int i = 1; i <= n; i++) if (!removed[i] && dist[i] == max_dist && i > v) v = i;
+    int d = max_dist + 1;
+    // 获取路径 u-v
+    cur_vis++;
+    // BFS 找路径
+    int l = 0, r = 0;
+    q[r++] = u;
+    vis[u] = cur_vis;
+    dist[u] = 0;
+    parent[u] = -1;
+    while (l < r) {
+        int cur = q[l++];
+        if (cur == v) break;
+        for (int nxt : g[cur]) {
+            if (!removed[nxt] && vis[nxt] != cur_vis) {
+                vis[nxt] = cur_vis;
+                dist[nxt] = dist[cur] + 1;
+                parent[nxt] = cur;
+                q[r++] = nxt;
+            }
+        }
+    }
+    vector<int> path;
+    int cur = v;
+    while (cur != -1) {
+        path.push_back(cur);
+        cur = parent[cur];
+    }
+    // 移除路径节点
+    for (int node : path) removed[node] = true;
+    // 收集子分量
+    vector<vector<int>> subseqs;
+    cur_vis++;
+    for (int node : path) {
+        for (int nb : g[node]) {
+            if (!removed[nb] && vis[nb] != cur_vis) {
+                // 收集子分量
+                int l = 0, r = 0;
+                q[r++] = nb;
+                vis[nb] = cur_vis;
+                vector<int> comp;
+                while (l < r) {
+                    int x = q[l++];
+                    comp.push_back(x);
+                    for (int y : g[x]) {
+                        if (!removed[y] && vis[y] != cur_vis) {
+                            vis[y] = cur_vis;
+                            q[r++] = y;
+                        }
+                    }
+                }
+                vector<int> seq = solve(comp[0]);
+                subseqs.push_back(seq);
+            }
+        }
+    }
+    // 排序子序列
+    sort(subseqs.begin(), subseqs.end(), [](const vector<int>& A, const vector<int>& B) {
+        int i = 0;
+        while (i < (int)A.size() + (int)B.size()) {
+            int a_val = (i < (int)A.size()) ? A[i] : B[i - (int)A.size()];
+            int b_val = (i < (int)B.size()) ? B[i] : A[i - (int)B.size()];
+            if (a_val != b_val) return a_val > b_val;
+            i++;
+        }
+        return false;
+    });
+    vector<int> res = {d, u, v};
+    for (auto& seq : subseqs) res.insert(res.end(), seq.begin(), seq.end());
+    return res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        cin >> n;
+        for (int i = 1; i <= n; i++) g[i].clear();
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            g[u].push_back(v);
+            g[v].push_back(u);
+        }
+        fill(removed+1, removed+n+1, false);
+        fill(vis+1, vis+n+1, 0);
+        cur_vis = 0;
+        vector<int> ans = solve(1);
+        for (size_t i = 0; i < ans.size(); i++) {
+            cout << ans[i] << " \n"[i == ans.size()-1];
+        }
+    }
+    return 0;
+}

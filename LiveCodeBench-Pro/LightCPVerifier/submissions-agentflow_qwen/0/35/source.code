@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n+1);
+        for (int i = 1; i <= n; i++) {
+            cin >> a[i];
+        }
+
+        vector<vector<int>> adj(n+1);
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+
+        vector<int> parent(n+1, -1);
+        vector<long long> f(n+1);
+        vector<int> order;
+        queue<int> q;
+        q.push(1);
+        parent[1] = -1;
+
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            order.push_back(u);
+            for (int v : adj[u]) {
+                if (v == parent[u]) continue;
+                parent[v] = u;
+                q.push(v);
+            }
+        }
+
+        // Process nodes in BFS order (depth increasing)
+        for (int u : order) {
+            f[u] = a[u];
+            if (parent[u] != -1) {
+                int p = parent[u];
+                int gp = parent[p];
+                long long candidate = a[u] - a[p];
+                if (gp != -1) {
+                    candidate += f[gp];
+                }
+                if (candidate > f[u]) {
+                    f[u] = candidate;
+                }
+            }
+        }
+
+        for (int i = 1; i <= n; i++) {
+            cout << f[i] << " \n"[i==n];
+        }
+    }
+    return 0;
+}

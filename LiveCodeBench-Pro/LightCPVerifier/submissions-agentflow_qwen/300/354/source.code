@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int nor_op(int a, int b, int k) {
+    return (~a & ~b) & ((1 << k) - 1);
+}
+
+vector<int> solve(vector<int>& a, int n, int k) {
+    vector<int> ans(n, 0);
+    
+    for (int l = 0; l < n; l++) {
+        int current = a[l];
+        ans[l] = max(ans[l], current);
+        
+        for (int r = l + 1; r < n; r++) {
+            current = nor_op(current, a[r], k);
+            for (int i = l; i <= r; i++) {
+                ans[i] = max(ans[i], current);
+            }
+        }
+    }
+    
+    return ans;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        vector<int> ans = solve(a, n, k);
+        for (int i = 0; i < n; i++) {
+            cout << ans[i];
+            if (i < n-1) cout << " ";
+        }
+        cout << "\n";
+    }
+    return 0;
+}

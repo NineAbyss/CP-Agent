@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<ll> l(n), r(n);
+    for (int i = 0; i < n; i++) cin >> l[i];
+    for (int i = 0; i < n; i++) cin >> r[i];
+    
+    ll S_M = 0;
+    vector<ll> m(n);
+    for (int i = 0; i < n; i++) {
+        S_M += max(l[i], r[i]);
+        m[i] = min(l[i], r[i]);
+    }
+    
+    sort(m.begin(), m.end(), greater<ll>());
+    ll need = 0;
+    for (int i = 0; i < k-1; i++) {
+        need += m[i];
+    }
+    
+    ll ans = S_M + need + 1;
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

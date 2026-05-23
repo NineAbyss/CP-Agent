@@ -1,0 +1,58 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    vector<char> t;
+    char c;
+    while (cin >> c) {
+        if (c == '0') {
+            break;
+        }
+        t.push_back(c);
+        int k = t.size();
+        // For k=1, just output 0 0
+        if (k == 1) {
+            cout << "0 0" << endl;
+        } else {
+            int left = 0;
+            int right = k - 1;
+            if (t[left] == t[right]) {
+                cout << "0 0" << endl;
+            } else {
+                bool found = false;
+                // Try to find j in [1, k-2] such that t[j] == t[right], swap with t[0]
+                for (int j = 1; j <= k-2; j++) {
+                    if (t[j] == t[right]) {
+                        swap(t[j], t[0]);
+                        cout << j+1 << " " << 1 << endl;
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    cout.flush();
+                    continue;
+                }
+                // Try to find j in [1, k-2] such that t[j] == t[left], swap with t[k-1]
+                for (int j = 1; j <= k-2; j++) {
+                    if (t[j] == t[left]) {
+                        swap(t[j], t[right]);
+                        cout << j+1 << " " << k << endl;
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    cout.flush();
+                    continue;
+                }
+                // Last resort: swap the two ends
+                swap(t[0], t[right]);
+                cout << 1 << " " << k << endl;
+            }
+        }
+        cout.flush();
+    }
+    return 0;
+}

@@ -1,0 +1,70 @@
+#include <iostream>
+using namespace std;
+
+const long long MOD = 1000000007;
+
+long long modpow(long long base, long long exp, long long mod) {
+    long long result = 1;
+    base %= mod;
+    while (exp > 0) {
+        if (exp & 1) result = (result * base) % mod;
+        base = (base * base) % mod;
+        exp >>= 1;
+    }
+    return result;
+}
+
+long long inv(long long a, long long mod) {
+    return modpow(a, mod - 2, mod);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        long long a, b, k;
+        cin >> a >> b >> k;
+
+        long long n_mod, m_mod;
+
+        if (a == 1) {
+            n_mod = 1;
+            m_mod = (k * (b - 1)) % MOD;
+            m_mod = (m_mod + 1) % MOD;
+        } else {
+            long long min_n = k * (a - 1) + 1;
+            n_mod = max(a, min_n);
+            n_mod %= MOD;
+
+            if (b == 1) {
+                m_mod = 1;
+            } else {
+                long long n_total = max(a, k * (a - 1) + 1);
+                long long num = 1;
+                for (int i = 0; i < a; ++i) {
+                    long long term = (n_total - i) % MOD;
+                    if (term < 0) term += MOD;
+                    num = (num * term) % MOD;
+                }
+
+                long long den = 1;
+                for (int i = 1; i <= a; ++i) {
+                    den = (den * i) % MOD;
+                }
+
+                long long comb = num * inv(den, MOD) % MOD;
+                m_mod = comb * k % MOD;
+                m_mod = m_mod * ((b - 1) % MOD) % MOD;
+                m_mod = (m_mod + 1) % MOD;
+            }
+        }
+
+        cout << n_mod << ' ' << m_mod << '\n';
+    }
+
+    return 0;
+}

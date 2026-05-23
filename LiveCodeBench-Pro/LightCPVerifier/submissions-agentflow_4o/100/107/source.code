@@ -1,0 +1,41 @@
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+// Function to find the smallest beautiful phone number
+string findSmallestBeautifulNumber(const string &s) {
+    vector<int> digit_count(10, 0);
+    
+    // Increment digit counts
+    for (char ch : s) {
+        digit_count[ch - '0']++;
+    }
+
+    vector<int> required_digits = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+    string result(10, ' ');
+
+    for (int i = 0; i < 10; ++i) {
+        for (int digit = required_digits[i]; digit < 10; ++digit) {
+            if (digit_count[digit] > 0) {
+                result[i] = '0' + digit;
+                digit_count[digit]--;
+                break;
+            }
+        }
+    }
+
+    return result;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        cout << findSmallestBeautifulNumber(s) << endl;
+    }
+
+    return 0;
+}

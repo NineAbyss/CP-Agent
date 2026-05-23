@@ -1,0 +1,163 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+using ll = long long;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<pair<int, int>> pts(n);
+        vector<int> xs(n), ys(n);
+        for (int i = 0; i < n; i++) {
+            cin >> pts[i].first >> pts[i].second;
+            xs[i] = pts[i].first;
+            ys[i] = pts[i].second;
+        }
+        
+        if (n == 1) {
+            cout << "1\n";
+            continue;
+        }
+        
+        sort(xs.begin(), xs.end());
+        sort(ys.begin(), ys.end());
+        
+        int x_min = xs[0], x_max = xs[n-1];
+        int y_min = ys[0], y_max = ys[n-1];
+        
+        int x_min2 = xs[1], x_max2 = xs[n-2];
+        int y_min2 = ys[1], y_max2 = ys[n-2];
+        
+        // 统计每个极值点出现的次数
+        int cnt_xmin = 0, cnt_xmax = 0, cnt_ymin = 0, cnt_ymax = 0;
+        for (int i = 0; i < n; i++) {
+            if (pts[i].first == x_min) cnt_xmin++;
+            if (pts[i].first == x_max) cnt_xmax++;
+            if (pts[i].second == y_min) cnt_ymin++;
+            if (pts[i].second == y_max) cnt_ymax++;
+        }
+        
+        ll ans = (ll)(x_max - x_min + 1) * (y_max - y_min + 1);
+        
+        // 尝试移动 x_min 点
+        {
+            int new_xmin = (cnt_xmin == 1) ? x_min2 : x_min;
+            int new_xmax = x_max;
+            int new_ymin = y_min;
+            int new_ymax = y_max;
+            int idx = -1;
+            for (int i = 0; i < n; i++) {
+                if (pts[i].first == x_min) {
+                    idx = i;
+                    break;
+                }
+            }
+            if (pts[idx].second == y_min) {
+                new_ymin = (cnt_ymin == 1) ? y_min2 : y_min;
+            }
+            if (pts[idx].second == y_max) {
+                new_ymax = (cnt_ymax == 1) ? y_max2 : y_max;
+            }
+            ll w = new_xmax - new_xmin + 1;
+            ll h = new_ymax - new_ymin + 1;
+            if (w * h > n-1) {
+                ans = min(ans, w * h);
+            } else {
+                ans = min(ans, min((w+1)*h, w*(h+1)));
+            }
+        }
+        
+        // 尝试移动 x_max 点
+        {
+            int new_xmin = x_min;
+            int new_xmax = (cnt_xmax == 1) ? x_max2 : x_max;
+            int new_ymin = y_min;
+            int new_ymax = y_max;
+            int idx = -1;
+            for (int i = 0; i < n; i++) {
+                if (pts[i].first == x_max) {
+                    idx = i;
+                    break;
+                }
+            }
+            if (pts[idx].second == y_min) {
+                new_ymin = (cnt_ymin == 1) ? y_min2 : y_min;
+            }
+            if (pts[idx].second == y_max) {
+                new_ymax = (cnt_ymax == 1) ? y_max2 : y_max;
+            }
+            ll w = new_xmax - new_xmin + 1;
+            ll h = new_ymax - new_ymin + 1;
+            if (w * h > n-1) {
+                ans = min(ans, w * h);
+            } else {
+                ans = min(ans, min((w+1)*h, w*(h+1)));
+            }
+        }
+        
+        // 尝试移动 y_min 点
+        {
+            int new_xmin = x_min;
+            int new_xmax = x_max;
+            int new_ymin = (cnt_ymin == 1) ? y_min2 : y_min;
+            int new_ymax = y_max;
+            int idx = -1;
+            for (int i = 0; i < n; i++) {
+                if (pts[i].second == y_min) {
+                    idx = i;
+                    break;
+                }
+            }
+            if (pts[idx].first == x_min) {
+                new_xmin = (cnt_xmin == 1) ? x_min2 : x_min;
+            }
+            if (pts[idx].first == x_max) {
+                new_xmax = (cnt_xmax == 1) ? x_max2 : x_max;
+            }
+            ll w = new_xmax - new_xmin + 1;
+            ll h = new_ymax - new_ymin + 1;
+            if (w * h > n-1) {
+                ans = min(ans, w * h);
+            } else {
+                ans = min(ans, min((w+1)*h, w*(h+1)));
+            }
+        }
+        
+        // 尝试移动 y_max 点
+        {
+            int new_xmin = x_min;
+            int new_xmax = x_max;
+            int new_ymin = y_min;
+            int new_ymax = (cnt_ymax == 1) ? y_max2 : y_max;
+            int idx = -1;
+            for (int i = 0; i < n; i++) {
+                if (pts[i].second == y_max) {
+                    idx = i;
+                    break;
+                }
+            }
+            if (pts[idx].first == x_min) {
+                new_xmin = (cnt_xmin == 1) ? x_min2 : x_min;
+            }
+            if (pts[idx].first == x_max) {
+                new_xmax = (cnt_xmax == 1) ? x_max2 : x_max;
+            }
+            ll w = new_xmax - new_xmin + 1;
+            ll h = new_ymax - new_ymin + 1;
+            if (w * h > n-1) {
+                ans = min(ans, w * h);
+            } else {
+                ans = min(ans, min((w+1)*h, w*(h+1)));
+            }
+        }
+        
+        cout << ans << endl;
+    }
+    return 0;
+}

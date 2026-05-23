@@ -1,0 +1,44 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+void constructPermutation(int n, int x) {
+    vector<int> p(n);
+    
+    if (x < n) {
+        // Place elements from 0 to x - 1 first
+        for (int i = 0; i < x; ++i) {
+            p[i] = i;
+        }
+        // Place the remaining elements, ensuring x can appear as MEX maximized times
+        for (int i = x, j = x; j < n; ++i, ++j) {
+            p[j] = i;
+        }
+    } else {
+        // If x == n, simply return the natural order permutation
+        for (int i = 0; i < n; ++i) {
+            p[i] = i;
+        }
+    }
+    
+    for (auto num : p) {
+        cout << num << " ";
+    }
+    cout << endl;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, x;
+        cin >> n >> x;
+        
+        constructPermutation(n, x);
+    }
+    
+    return 0;
+}

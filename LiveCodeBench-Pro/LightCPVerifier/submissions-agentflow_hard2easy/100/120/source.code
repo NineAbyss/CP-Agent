@@ -1,0 +1,248 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+vector<vector<int>> adj;
+vector<bool> removed;
+
+// 找到包含start的连通分量中编号最大的节点
+int find_max_node(int start, int n) {
+    int max_node = 0;
+    vector<bool> visited(n+1, false);
+    queue<int> q;
+    q.push(start);
+    visited[start] = true;
+    
+    while(!q.empty()) {
+        int u = q.front(); q.pop();
+        if(u > max_node) max_node = u;
+        
+        for(int v : adj[u]) {
+            if(!removed[v] && !visited[v]) {
+                visited[v] = true;
+                q.push(v);
+            }
+        }
+    }
+    return max_node;
+}
+
+// 从start出发，找到最远节点中编号最大的
+int find_farthest_max(int start, int n) {
+    vector<int> dist(n+1, -1);
+    queue<int> q;
+    q.push(start);
+    dist[start] = 0;
+    
+    int max_dist = 0;
+    vector<int> farthest_nodes;
+    
+    while(!q.empty()) {
+        int u = q.front(); q.pop();
+        
+        if(dist[u] > max_dist) {
+            max_dist = dist[u];
+            farthest_nodes.clear();
+            farthest_nodes.push_back(u);
+        } else if(dist[u] == max_dist) {
+            farthest_nodes.push_back(u);
+        }
+        
+        for(int v : adj[u]) {
+            if(!removed[v] && dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+    
+    int result = 0;
+    for(int node : farthest_nodes) {
+        if(node > result) result = node;
+    }
+    return result;
+}
+
+// 获取u到v的路径
+vector<int> get_path(int u, int v, int n) {
+    vector<int> parent(n+1, -1);
+    queue<int> q;
+    q.push(u);
+    parent[u] = u;
+    
+    while(!q.empty()) {
+        int cur = q.front(); q.pop();
+        if(cur == v) break;
+        
+        for(int nxt : adj[cur]) {
+            if(removed[nxt] || parent[nxt] != -1) continue;
+            parent[nxt] = cur;
+            q.push(nxt);
+        }
+    }
+    
+    vector<int> path;
+    int cur = v;
+    while(cur != u) {
+        path.push_back(cur);
+        cur = parent[cur];
+    }
+    path.push_back(u);
+    reverse(path.begin(), path.end());
+    return path;
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    
+    adj.assign(n+1, {});
+    removed.assign(n+1, false);
+    
+    for(int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    vector<int> result;
+    
+    // 优先队列存储(d,u,v,start)，按字典序排序
+    auto cmp = [](const tuple<int,int,int,int>& a, const tuple<int,int,int,int>& b) {
+        if(get<0>(a) != get<0>(b)) return get<0>(a) < get<0>(b);
+        if(get<1>(a) != get<1>(b)) return get<1>(a) < get<1>(b);
+        return get<2>(a) < get<2>(b);
+    };
+    
+    priority_queue<tuple<int,int,int,int>, vector<tuple<int,int,int,int>>, decltype(cmp)> pq(cmp);
+    
+    // 初始连通分量
+    vector<bool> visited_init(n+1, false);
+    for(int i = 1; i <= n; i++) {
+        if(!removed[i] && !visited_init[i]) {
+            queue<int> q;
+            q.push(i);
+            visited_init[i] = true;
+            
+            while(!q.empty()) {
+                int u = q.front(); q.pop();
+                for(int v : adj[u]) {
+                    if(!removed[v] && !visited_init[v]) {
+                        visited_init[v] = true;
+                        q.push(v);
+                    }
+                }
+            }
+            
+            int u = find_max_node(i, n);
+            int v = find_farthest_max(u, n);
+            vector<int> path = get_path(u, v, n);
+            int d = path.size();
+            
+            pq.push({d, u, v, i});
+        }
+    }
+    
+    while(!pq.empty()) {
+        auto [d, u, v, start] = pq.top();
+        pq.pop();
+        
+        if(removed[start]) continue;
+        
+        // 重新计算连通分量（状态可能已改变）
+        vector<int> comp_nodes;
+        queue<int> q;
+        vector<bool> visited(n+1, false);
+        q.push(start);
+        visited[start] = true;
+        
+        while(!q.empty()) {
+            int cur = q.front(); q.pop();
+            comp_nodes.push_back(cur);
+            
+            for(int nxt : adj[cur]) {
+                if(!removed[nxt] && !visited[nxt]) {
+                    visited[nxt] = true;
+                    q.push(nxt);
+                }
+            }
+        }
+        
+        // 找到最大节点
+        int max_u = 0;
+        for(int node : comp_nodes) {
+            if(node > max_u) max_u = node;
+        }
+        
+        int max_v = find_farthest_max(max_u, n);
+        vector<int> path = get_path(max_u, max_v, n);
+        d = path.size();
+        
+        result.push_back(d);
+        result.push_back(max_u);
+        result.push_back(max_v);
+        
+        // 移除路径上的节点
+        for(int node : path) removed[node] = true;
+        
+        // 收集新的连通分量
+        vector<int> new_starts;
+        for(int node : path) {
+            for(int neighbor : adj[node]) {
+                if(!removed[neighbor]) {
+                    new_starts.push_back(neighbor);
+                }
+            }
+        }
+        
+        sort(new_starts.begin(), new_starts.end());
+        new_starts.erase(unique(new_starts.begin(), new_starts.end()), new_starts.end());
+        
+        // 将新连通分量加入优先队列
+        for(int new_start : new_starts) {
+            if(removed[new_start]) continue;
+            
+            vector<bool> visited_comp(n+1, false);
+            queue<int> q_comp;
+            q_comp.push(new_start);
+            visited_comp[new_start] = true;
+            
+            while(!q_comp.empty()) {
+                int cur = q_comp.front(); q_comp.pop();
+                for(int nxt : adj[cur]) {
+                    if(!removed[nxt] && !visited_comp[nxt]) {
+                        visited_comp[nxt] = true;
+                        q_comp.push(nxt);
+                    }
+                }
+            }
+            
+            int comp_u = find_max_node(new_start, n);
+            int comp_v = find_farthest_max(comp_u, n);
+            vector<int> comp_path = get_path(comp_u, comp_v, n);
+            int comp_d = comp_path.size();
+            
+            pq.push({comp_d, comp_u, comp_v, new_start});
+        }
+    }
+    
+    // 输出结果
+    for(int i = 0; i < (int)result.size(); i++) {
+        cout << result[i];
+        if(i < (int)result.size() - 1) cout << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while(t--) {
+        solve();
+    }
+    
+    return 0;
+}

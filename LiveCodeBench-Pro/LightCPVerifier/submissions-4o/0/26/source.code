@@ -1,0 +1,47 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+using namespace std;
+
+int maxCoolPartition(vector<int>& a, int n) {
+    unordered_map<int, int> elementCount;
+    int segmentCount = 0;
+    int start = 0;
+
+    for (int end = 0; end < n; ++end) {
+        ++elementCount[a[end]];  // add current element to the map
+
+        // Check if we can make a valid segment from start to end
+        bool canCut = true;
+        for (auto& [num, count] : elementCount) {
+            if (count > 0 && end + 1 < n && elementCount[num] != 0) {
+                canCut = false;
+                break;
+            }
+        }
+
+        // If we can make a cut or we are at the end of the array
+        if (canCut || end == n - 1) {
+            ++segmentCount;
+            elementCount.clear();  // start a new segment
+            start = end + 1;  // move start to the next possible segment
+        }
+    }
+
+    return segmentCount;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        cout << maxCoolPartition(a, n) << endl;
+    }
+    return 0;
+}

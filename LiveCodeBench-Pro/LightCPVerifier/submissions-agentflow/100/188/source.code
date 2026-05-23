@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+
+bool compare_pair(int x1, int y1, int x2, int y2) {
+    int a1 = max(x1, y1), b1 = min(x1, y1);
+    int a2 = max(x2, y2), b2 = min(x2, y2);
+    if (a1 != a2) return a1 > a2;
+    return b1 > b2;
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> p(n), q(n);
+    for (int i = 0; i < n; i++) cin >> p[i];
+    for (int i = 0; i < n; i++) cin >> q[i];
+    
+    vector<long long> pow2(n);
+    pow2[0] = 1;
+    for (int i = 1; i < n; i++) {
+        pow2[i] = (pow2[i-1] * 2) % MOD;
+    }
+    
+    vector<long long> r(n);
+    int j_max = 0, k_max = 0;
+    
+    for (int i = 0; i < n; i++) {
+        if (p[i] > p[j_max]) j_max = i;
+        if (q[i] > q[k_max]) k_max = i;
+        
+        int x1 = p[j_max], y1 = q[i - j_max];
+        int x2 = p[i - k_max], y2 = q[k_max];
+        
+        int best_x, best_y;
+        if (compare_pair(x1, y1, x2, y2)) {
+            best_x = x1; best_y = y1;
+        } else {
+            best_x = x2; best_y = y2;
+        }
+        
+        r[i] = (pow2[best_x] + pow2[best_y]) % MOD;
+    }
+    
+    for (int i = 0; i < n; i++) {
+        cout << r[i] << " \n"[i==n-1];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

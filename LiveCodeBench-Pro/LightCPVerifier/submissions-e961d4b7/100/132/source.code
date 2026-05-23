@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    
+    // 如果 n == 2k，那么 p 必须为 k
+    if (n == 2 * k) {
+        cout << "! " << k << " " << k << endl;
+        return;
+    }
+    
+    // 查询位置 1..min(250, n)
+    int queries = min(250, n);
+    vector<int> pos[51]; // 值从1到k，存储位置（1-indexed）
+    
+    for (int i = 1; i <= queries; i++) {
+        cout << "? " << i << endl;
+        int val;
+        cin >> val;
+        pos[val].push_back(i);
+    }
+    
+    // 收集约束
+    int L = k, R = n - k; // 初始区间
+    
+    for (int val = 1; val <= k; val++) {
+        vector<int>& positions = pos[val];
+        for (int i = 0; i < (int)positions.size(); i++) {
+            for (int j = i + 1; j < (int)positions.size(); j++) {
+                int p1 = positions[i], p2 = positions[j];
+                if (p2 - p1 < k) {
+                    // 冲突：p1 和 p2 必须在不同数组中 // 约束：p1 < p <= p2
+                    L = max(L, p1 + 1);
+                    R = min(R, p2);
+                    if (L > R) {
+                        // 不可能，但题目保证有解
+                        cout << "! -1" << endl;
+                        return;
+                    }
+                }
+            }
+        }
+    }
+    
+    if (L == R) {
+        cout << "! " << L << " " << n - L << endl;
+    } else {
+        cout << "! -1" << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

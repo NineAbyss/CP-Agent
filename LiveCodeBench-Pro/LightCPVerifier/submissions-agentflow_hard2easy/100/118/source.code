@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// 计算LIS的O(m log m)算法
+int compute_lis(const vector<int>& arr) {
+    vector<int> tails;
+    for (int x : arr) {
+        auto it = lower_bound(tails.begin(), tails.end(), x);
+        if (it == tails.end()) tails.push_back(x);
+        else *it = x;
+    }
+    return tails.size();
+}
+
+int compute_lds(const vector<int>& arr) {
+    vector<int> tails;
+    for (int x : arr) {
+        int neg = -x;
+        auto it = lower_bound(tails.begin(), tails.end(), neg);
+        if (it == tails.end()) tails.push_back(neg);
+        else *it = neg;
+    }
+    return tails.size();
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        
+        long long total_cute = 0;
+        // 对于每个左端点
+        for (int l = 0; l < n; l++) {
+            vector<int> sub;
+            // 找到第一个非cute的右端点
+            int r = l;
+            for (; r < n; r++) {
+                sub.push_back(a[r]);
+                int m = sub.size();
+                // 快速检查：对于m=1或2，总是cute
+                if (m <= 2) {
+                    total_cute++;
+                    continue;
+                }
+                int lis_val = compute_lis(sub);
+                int lds_val = compute_lds(sub);
+                if (lis_val + lds_val == m + 1) {
+                    total_cute++;
+                } else {
+                    // 一旦非cute，停止
+                    break;
+                }
+            }
+            // 对于这个左端点，从r开始的所有子数组都是非cute的 // 所以我们可以继续下一个左端点
+        }
+        cout << total_cute << '\n';
+    }
+    return 0;
+}

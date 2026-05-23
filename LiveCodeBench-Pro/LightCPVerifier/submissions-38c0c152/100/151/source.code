@@ -1,0 +1,105 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <set>
+using namespace std;
+
+map<pair<vector<int>, int>, int> memo;
+
+int F(vector<int> seq, int turn) {
+    int len = seq.size();
+    if (len == 1) return seq[0];
+    auto key = make_pair(seq, turn);
+    if (memo.count(key)) return memo[key];
+    int res;
+    if (turn == 0) { // Turtle, maximize
+        res = -1e9;
+        for (int i = 0; i < len-1; i++) {
+            vector<int> new_seq;
+            for (int j = 0; j < len; j++) {
+                if (j == i) {
+                    new_seq.push_back(min(seq[j], seq[j+1]));
+                } else if (j == i+1) {
+                    // skip
+                } else {
+                    new_seq.push_back(seq[j]);
+                }
+            }
+            int val = F(new_seq, 1);
+            if (val > res) res = val;
+        }
+    } else { // Piggy, minimize
+        res = 1e9;
+        for (int i = 0; i < len-1; i++) {
+            vector<int> new_seq;
+            for (int j = 0; j < len; j++) {
+                if (j == i) {
+                    new_seq.push_back(max(seq[j], seq[j+1]));
+                } else if (j == i+1) {
+                    // skip
+                } else {
+                    new_seq.push_back(seq[j]);
+                }
+            }
+            int val = F(new_seq, 0);
+            if (val < res) res = val;
+        }
+    }
+    memo[key] = res;
+    return res;
+}
+
+int f(const vector<int>& c) {
+    memo.clear();
+    return F(c, 0);
+}
+
+int beauty(const vector<int>& p) {
+    int n = p.size();
+    int total = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = i; j < n; j++) {
+            vector<int> sub(p.begin()+i, p.begin()+j+1);
+            total += f(sub);
+        }
+    }
+    return total;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        set<int> present;
+        vector<int> missing;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            if (a[i] != 0) present.insert(a[i]);
+        }
+        for (int i = 1; i <= n; i++) {
+            if (!present.count(i)) missing.push_back(i);
+        }
+        vector<int> empty_pos;
+        for (int i = 0; i < n; i++) {
+            if (a[i] == 0) empty_pos.push_back(i);
+        }
+        int m = missing.size();
+        int max_beauty = 0;
+        // generate all permutations of missing numbers
+        sort(missing.begin(), missing.end());
+        do {
+            vector<int> b = a;
+            for (int i = 0; i < m; i++) {
+                b[empty_pos[i]] = missing[i];
+            }
+            int bty = beauty(b);
+            if (bty > max_beauty) max_beauty = bty;
+        } while (next_permutation(missing.begin(), missing.end()));
+        cout << max_beauty << endl;
+    }
+    return 0;
+}

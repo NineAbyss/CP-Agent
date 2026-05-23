@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int BITS = 30;
+
+struct TrieNode {
+    int cnt;
+    TrieNode* child[2];
+    TrieNode() : cnt(0) {
+        child[0] = child[1] = nullptr;
+    }
+};
+
+void insert(TrieNode* root, int x) {
+    TrieNode* cur = root;
+    for (int b = BITS-1; b >= 0; --b) {
+        int bit = (x >> b) & 1;
+        if (!cur->child[bit]) cur->child[bit] = new TrieNode();
+        cur = cur->child[bit];
+        cur->cnt++;
+    }
+}
+
+void remove(TrieNode* root, int x) {
+    TrieNode* cur = root;
+    for (int b = BITS-1; b >= 0; --b) {
+        int bit = (x >> b) & 1;
+        TrieNode* nxt = cur->child[bit];
+        nxt->cnt--;
+        cur = nxt;
+    }
+}
+
+int queryMaxXor(TrieNode* root, int x) {
+    TrieNode* cur = root;
+    int res = 0;
+    for (int b = BITS-1; b >= 0; --b) {
+        int bit = (x >> b) & 1;
+        int want = 1 - bit;
+        if (cur->child[want] && cur->child[want]->cnt > 0) {
+            res |= (1 << b);
+            cur = cur->child[want];
+        } else {
+            cur = cur->child[bit];
+        }
+    }
+    return res;
+}
+
+int solve_one(int n, int k, vector<int>& a) {
+    if (k == 0) return 1;
+    TrieNode* root = new TrieNode();
+    int ans = n+1;
+    int l = 0;
+    for (int r = 0; r < n; ++r) {
+        insert(root, a[r]);
+        // 如果当前窗口长度已经大于 ans，收缩左指针
+        while (r - l + 1 > ans) {
+            remove(root, a[l]);
+            l++;
+        }
+        while (l <= r) {
+            int curMax = 0;
+            for (int i = l; i <= r; ++i) {
+                curMax = max(curMax, queryMaxXor(root, a[i]));
+            }
+            if (curMax >= k) {
+                ans = min(ans, r - l + 1);
+                if (ans == 1) {
+                    delete root;
+                    return 1;
+                }
+                remove(root, a[l]);
+                l++;
+            } else {
+                break;
+            }
+        }
+    }
+    delete root;
+    return ans == n+1 ? -1 : ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        cout << solve_one(n, k, a) << '\n';
+    }
+    return 0;
+}

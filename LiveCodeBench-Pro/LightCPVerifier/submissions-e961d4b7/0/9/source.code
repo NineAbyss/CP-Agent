@@ -1,0 +1,103 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        ll n, m;
+        cin >> n >> m;
+
+        // Absolute bounds
+        if (m < n || m > n * (n + 1) / 2) {
+            cout << "-1\n";
+            continue;
+        }
+
+        ll r_found = -1;
+        ll E_found = 0;
+        for (ll r = 1; r <= n; ++r) {
+            ll Min = n + r - 1;
+            if (m < Min) continue;
+            ll Max = r * (2 * n - r + 1) / 2;
+            if (m > Max) continue;
+            ll E = m - Min;
+            if (r == 1) {
+                if (E == 0) {
+                    r_found = r;
+                    E_found = E;
+                    break;
+                }
+            } else {
+                ll G = n - r;
+                ll S_small = (r - 2) * (r - 1) / 2;
+                ll S_big = G * (r - 1);
+                if (E <= S_small + S_big) {
+                    r_found = r;
+                    E_found = E;
+                    break;
+                }
+            }
+        }
+
+        if (r_found == -1) {
+            cout << "-1\n";
+            continue;
+        }
+
+        ll r = r_found;
+        ll E = E_found;
+        cout << r << '\n';
+
+        // Nodes that will be connected directly to root (including node 1)
+        vector<int> to_root;
+        to_root.push_back(1); // node 1 always connected to root
+
+        if (r > 1) {
+            ll G = n - r;
+            ll k = min(G, E / (r - 1));
+            ll R = E - k * (r - 1);
+            // Add k nodes greater than r
+            for (ll i = r + 1; i <= r + k; ++i) {
+                to_root.push_back(i);
+            }
+            // Add smaller nodes to cover R
+            for (ll i = r - 1; i >= 2 && R > 0; --i) {
+                ll contrib = i - 1;
+                if (contrib <= R) {
+                    to_root.push_back(i);
+                    R -= contrib;
+                }
+            }
+        } else {
+            // r == 1: connect all other nodes to root
+            for (ll i = 2; i <= n; ++i) {
+                to_root.push_back(i);
+            }
+        }
+
+        // Mark nodes connected to root
+        vector<bool> is_to_root(n + 1, false);
+        for (int v : to_root) is_to_root[v] = true;
+
+        // Output edges from root to its children (except root itself)
+        for (int v : to_root) {
+            if (v != r) {
+                cout << r << ' ' << v << '\n';
+            }
+        }
+
+        // All other nodes connect to node 1
+        for (int i = 2; i <= n; ++i) {
+            if (i != r && !is_to_root[i]) {
+                cout << 1 << ' ' << i << '\n';
+            }
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,49 @@
+# =============================================================================
+# CP-Agent Agent Configuration - Full Tools Version
+# This config enables all available tools and features
+# =============================================================================
+
+# Global Service Configuration
+global:
+  phoenix_collector_endpoint: "http://localhost:6006"
+  phoenix_project_name: "CP-Agent"
+  work_dir: YOUR_WORK_DIR
+  sandbox_url: YOUR_SANDBOX_URL
+# Model Configuration
+
+
+model: #You can change the model here 
+  model_id: "deepseek-chat" 
+  api_base: "https://api.deepseek.com/v1"
+  api_key: YOUR_API_KEY
+  temperature: 0.6
+  max_tokens: 8192
+
+# Tool Configuration
+tools:
+  # All tools enabled
+  enabled:
+    - cpp_validation
+    - cpp_interpreter
+
+
+  # All preprocessing tools enabled
+  preprocess_enabled:
+    - info_extractor
+
+features:
+  unit_test_cases_on: true
+  long_term_exp_enabled: true
+  memory_store_path: DIR_TO_SAVE_MEMORY
+  enable_experience_dedup: true  
+# Resource Paths
+resources:
+  amp_retrieval_top_k: 5
+  bf_solution_sample_n: 16
+  bf_solution_temperature: 1.0
+
+agent:
+  max_steps: 30
+  verbosity_level: 5
+  prompt_path: agentflow/prompts/code_agent_with_memory.yaml  
+  agent_type: "code"

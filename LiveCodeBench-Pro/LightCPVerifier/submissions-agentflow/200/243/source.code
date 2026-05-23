@@ -1,0 +1,30 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve_one(const string& s) {
+    int n = s.size();
+    int cnt0 = 0;
+    int max_keep = 0;
+    for (int i = 0; i < n; i++) {
+        if (s[i] != '0') {
+            max_keep = max(max_keep, cnt0 + 1);
+        } else {
+            cnt0++;
+        }
+    }
+    return n - max_keep;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        cout << solve_one(s) << '\n';
+    }
+    return 0;
+}

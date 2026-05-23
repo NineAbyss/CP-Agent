@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve_one(int n, vector<int> a, vector<int> b) {
+    int ans = 0;
+    // 枚举移除位置 k，-1表示不移除
+    for (int k = -1; k < n; k++) {
+        vector<int> na, nb;
+        for (int i = 0; i < n; i++) {
+            if (i == k) continue;
+            na.push_back(a[i]);
+            nb.push_back(b[i]);
+        }
+        int m = na.size();
+        int match = 0;
+        // 检查每个位置是否可能匹配
+        for (int i = 0; i < m; i++) {
+            bool ok = false;
+            // 只需检查是否存在 j1, j2 使得条件满足 // 优化：提前退出
+            for (int j1 = i; j1 < m && !ok; j1++) {
+                int dist1 = j1 - i;
+                int val_a = (dist1 % 2 == 0) ? na[j1] : nb[j1];
+                for (int j2 = i; j2 < m; j2++) {
+                    int dist2 = j2 - i;
+                    int val_b = (dist2 % 2 == 0) ? nb[j2] : na[j2];
+                    if (val_a == val_b) {
+                        ok = true;
+                        break;
+                    }
+                }
+            }
+            if (ok) match++;
+        }
+        ans = max(ans, match);
+    }
+    return ans;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        cout << solve_one(n, a, b) << '\n';
+    }
+    return 0;
+}

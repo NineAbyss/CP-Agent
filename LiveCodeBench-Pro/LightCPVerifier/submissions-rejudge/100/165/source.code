@@ -1,0 +1,135 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+ll exgcd(ll a, ll b, ll& x, ll& y) {
+    if (b == 0) { x = 1; y = 0; return a; }
+    ll g = exgcd(b, a % b, y, x);
+    y -= a / b * x;
+    return g;
+}
+
+ll simulate(ll n, ll x, ll y, ll vx, ll vy, ll K, ll M) {
+    double X = x, Y = y;
+    double Vx = vx, Vy = vy;
+    ll hits = 0;
+    double T = (K * n - x) * 1.0 / vx;
+    double eps = 1e-12;
+    while (true) {
+        double t1 = 1e30, t2 = 1e30, t3 = 1e30;
+        if (Vx < -eps) t1 = -X / Vx;
+        if (Vy < -eps) t2 = -Y / Vy;
+        if (Vx + Vy > eps) t3 = (n - X - Y) / (Vx + Vy);
+        double tmin = 1e30;
+        int side = 0;
+        if (t1 > eps && t1 < tmin) { tmin = t1; side = 1; }
+        if (t2 > eps && t2 < tmin) { tmin = t2; side = 2; }
+        if (t3 > eps && t3 < tmin) { tmin = t3; side = 3; }
+        if (tmin > 1e29) break;
+        if (tmin > T + eps) break;
+        X += Vx * tmin;
+        Y += Vy * tmin;
+        T -= tmin;
+        if (fabs(X - 0) < 1e-9 && fabs(Y - 0) < 1e-9) return hits;
+        if (fabs(X - n) < 1e-9 && fabs(Y - 0) < 1e-9) return hits;
+        if (fabs(X - 0) < 1e-9 && fabs(Y - n) < 1e-9) return hits;
+        hits++;
+        if (side == 1) Vx = -Vx;
+        else if (side == 2) Vy = -Vy;
+        else if (side == 3) {
+            double nx = 1, ny = 1;
+            double dot = Vx * nx + Vy * ny;
+            Vx = Vx - 2 * dot / (nx * nx + ny * ny) * nx;
+            Vy = Vy - 2 * dot / (nx * nx + ny * ny) * ny;
+        }
+    }
+    return -1;
+}
+
+void solve() {
+    ll n, x, y, vx, vy;
+    cin >> n >> x >> y >> vx >> vy;
+    ll D = vy * x - vx * y;
+    if (D % n != 0) {
+        cout << "-1\n";
+        return;
+    }
+    ll R = D / n;
+    // 解 vy*k - vx*m = R // 即 vy*k + (-vx)*m = R
+    ll a = vy, b = -vx;
+    ll k0, m0;
+    ll g = exgcd(a, b, k0, m0);
+    if (R % g != 0) {
+        cout << "-1\n";
+        return;
+    }
+    k0 *= R / g;
+    m0 *= R / g;
+    // 通解: k = k0 + (-b/g)*t, m = m0 - (a/g)*t
+    ll step_k = -b / g; // vx/g
+    ll step_m = -a / g; // -vy/g // 调整t使k,m非负
+    // k0 + step_k*t >=0, m0 + step_m*t >=0 // step_k>0, step_m<0
+    // t >= ceil((-k0)/step_k), t <= floor((-m0)/step_m)
+    ll t_low = ceil((-k0) * 1.0 / step_k - 1e-12);
+    ll t_high = floor((-m0) * 1.0 / step_m + 1e-12);
+    if (t_low > t_high) {
+        cout << "-1\n";
+        return;
+    }
+    // 在[t_low, t_high]中找最小正时间的解
+    ll best_k = -1, best_m = -1;
+    double best_time = 1e30;
+    // 枚举附近一些t值
+    for (ll d = -5; d <= 5; d++) {
+        ll t = t_low + d;
+        if (t < t_low || t > t_high) continue;
+        ll k = k0 + step_k * t;
+        ll m = m0 + step_m * t;
+        if (k < 0 || m < 0) continue;
+        bool ke = (k % 2 == 0), me = (m % 2 == 0);
+        if (!( (ke && me) || (!ke && me) || (ke && !me) )) continue;
+        double time = (k * n - x) * 1.0 / vx;
+        if (time <= 1e-12) continue;
+        double time2 = (m * n - y) * 1.0 / vy;
+        if (fabs(time - time2) > 1e-12) continue;
+        if (time < best_time) {
+            best_time = time;
+            best_k = k;
+            best_m = m;
+        }
+    }
+    // 如果没找到，再枚举更多t值（安全措施）
+    if (best_time > 1e29) {
+        for (ll t = t_low; t <= t_high && t <= t_low + 1000; t++) {
+            ll k = k0 + step_k * t;
+            ll m = m0 + step_m * t;
+            if (k < 0 || m < 0) continue;
+            bool ke = (k % 2 == 0), me = (m % 2 == 0);
+            if (!( (ke && me) || (!ke && me) || (ke && !me) )) continue;
+            double time = (k * n - x) * 1.0 / vx;
+            if (time <= 1e-12) continue;
+            double time2 = (m * n - y) * 1.0 / vy;
+            if (fabs(time - time2) > 1e-12) continue;
+            if (time < best_time) {
+                best_time = time;
+                best_k = k;
+                best_m = m;
+            }
+        }
+    }
+    if (best_time > 1e29) {
+        cout << "-1\n";
+        return;
+    }
+    ll hits = simulate(n, x, y, vx, vy, best_k, best_m);
+    cout << hits << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

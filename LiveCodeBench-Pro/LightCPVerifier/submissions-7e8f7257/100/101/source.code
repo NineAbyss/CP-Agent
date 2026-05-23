@@ -1,0 +1,218 @@
+#include <iostream>
+#include <vector>
+#include <bitset>
+#include <cstring>
+#include <tuple>
+#include <algorithm>
+using namespace std;
+
+const int MAXN = 305;
+const int MAXK = 12;
+
+int n, k;
+vector<int> parent;
+
+int find(int x) {
+    if (parent[x] != x) parent[x] = find(parent[x]);
+    return parent[x];
+}
+
+void unite(int a, int b) {
+    a = find(a), b = find(b);
+    if (a != b) parent[a] = b;
+}
+
+tuple<vector<int>, vector<int>, vector<int>> compute_components(const vector<bitset<300>>& g, int n) {
+    parent.assign(n, 0);
+    for (int i = 0; i < n; i++) parent[i] = i;
+    
+    for (int u = 0; u < n; u++) {
+        for (int v = u + 1; v < n; v++) {
+            bitset<300> nu = g[u];
+            bitset<300> nv = g[v];
+            nu.reset(u); nu.reset(v);
+            nv.reset(u); nv.reset(v);
+            if (nu == nv) {
+                unite(u, v);
+            }
+        }
+    }
+    
+    vector<int> comp_id(n, -1);
+    int comp_cnt = 0;
+    for (int i = 0; i < n; i++) {
+        if (find(i) == i) {
+            comp_id[i] = comp_cnt++;
+        }
+    }
+    for (int i = 0; i < n; i++) {
+        if (comp_id[i] == -1) {
+            comp_id[i] = comp_id[find(i)];
+        }
+    }
+    
+    vector<int> type(comp_cnt, 2);
+    vector<int> size(comp_cnt, 0);
+    for (int i = 0; i < n; i++) {
+        size[comp_id[i]]++;
+    }
+    
+    for (int c = 0; c < comp_cnt; c++) {
+        if (size[c] == 1) {
+            type[c] = 2;
+            continue;
+        }
+        vector<int> verts;
+        for (int i = 0; i < n; i++) {
+            if (comp_id[i] == c) verts.push_back(i);
+        }
+        bool all_edges = true, no_edges = true;
+        for (int i = 0; i < verts.size(); i++) {
+            for (int j = i + 1; j < verts.size(); j++) {
+                int u = verts[i], v = verts[j];
+                if (g[u][v]) no_edges = false;
+                else all_edges = false;
+            }
+        }
+        if (all_edges) type[c] = 1;
+        else if (no_edges) type[c] = 0;
+        else type[c] = -1;
+    }
+    
+    return make_tuple(comp_id, type, size);
+}
+
+struct TwoSAT {
+    int n;
+    vector<vector<int>> g, gr;
+    vector<int> comp, order, assignment;
+    vector<bool> used;
+    
+    TwoSAT(int nvar) : n(nvar), g(2*nvar), gr(2*nvar), comp(2*nvar, -1), assignment(nvar, false) {}
+    
+    void add_implication(int a, bool aval, int b, bool bval) {
+        int na = a*2 + (aval ? 1 : 0);
+        int nb = b*2 + (bval ? 1 : 0);
+        g[na].push_back(nb);
+        gr[nb].push_back(na);
+    }
+    
+    void add_or(int a, bool aval, int b, bool bval) {
+        add_implication(a, !aval, b, bval);
+        add_implication(b, !bval, a, aval);
+    }
+    
+    void add_fixed(int a, bool aval) {
+        add_implication(a, !aval, a, aval);
+    }
+    
+    void dfs1(int v) {
+        used[v] = true;
+        for (int to : g[v]) if (!used[to]) dfs1(to);
+        order.push_back(v);
+    }
+    
+    void dfs2(int v, int cl) {
+        comp[v] = cl;
+        for (int to : gr[v]) if (comp[to] == -1) dfs2(to, cl);
+    }
+    
+    bool solve() {
+        used.assign(2*n, false);
+        for (int i = 0; i < 2*n; i++) if (!used[i]) dfs1(i);
+        reverse(order.begin(), order.end());
+        int cl = 0;
+        for (int v : order) if (comp[v] == -1) dfs2(v, cl++);
+        
+        for (int i = 0; i < n; i++) {
+            if (comp[2*i] == comp[2*i+1]) return false;
+            assignment[i] = comp[2*i] > comp[2*i+1];
+        }
+        return true;
+    }
+};
+
+bool solve_case() {
+    cin >> n >> k;
+    vector<vector<bitset<300>>> graphs(k);
+    for (int gi = 0; gi < k; gi++) {
+        graphs[gi].resize(n);
+        int m;
+        cin >> m;
+        for (int e = 0; e < m; e++) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            graphs[gi][u].set(v);
+            graphs[gi][v].set(u);
+        }
+    }
+    
+    vector<vector<int>> comp_ids(k), comp_types(k), comp_sizes(k);
+    for (int gi = 0; gi < k; gi++) {
+        auto [ids, ty, sz] = compute_components(graphs[gi], n);
+        comp_ids[gi] = ids;
+        comp_types[gi] = ty;
+        comp_sizes[gi] = sz;
+    }
+    
+    // 变量索引: v * k + gi
+    TwoSAT tsat(n * k);
+    
+    // 固定约束
+    for (int gi = 0; gi < k; gi++) {
+        for (int v = 0; v < n; v++) {
+            int c = comp_ids[gi][v];
+            if (comp_types[gi][c] == 0) {
+                tsat.add_fixed(v * k + gi, 0);
+            } else if (comp_types[gi][c] == 1) {
+                tsat.add_fixed(v * k + gi, 1);
+            }
+        }
+    }
+    
+    // 跨图约束
+    for (int v = 0; v < n; v++) {
+        vector<int> indep, clique;
+        for (int gi = 0; gi < k; gi++) {
+            int c = comp_ids[gi][v];
+            if (comp_sizes[gi][c] > 1) {
+                if (comp_types[gi][c] == 0) indep.push_back(gi);
+                else if (comp_types[gi][c] == 1) clique.push_back(gi);
+            }
+        }
+        if (!indep.empty() && !clique.empty()) {
+            return false;
+        }
+        if (!indep.empty()) {
+            for (int gi = 0; gi < k; gi++) {
+                int c = comp_ids[gi][v];
+                if (comp_sizes[gi][c] > 1 && comp_types[gi][c] == 2) {
+                    tsat.add_fixed(v * k + gi, 0);
+                }
+            }
+        }
+        if (!clique.empty()) {
+            for (int gi = 0; gi < k; gi++) {
+                int c = comp_ids[gi][v];
+                if (comp_sizes[gi][c] > 1 && comp_types[gi][c] == 2) {
+                    tsat.add_fixed(v * k + gi, 1);
+                }
+            }
+        }
+    }
+    
+    return tsat.solve();
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << (solve_case() ? "Yes" : "No") << '\n';
+    }
+    return 0;
+}

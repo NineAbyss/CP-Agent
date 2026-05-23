@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+ll gcd(ll a, ll b) {
+    while (b) {
+        a %= b;
+        swap(a, b);
+    }
+    return a;
+}
+
+bool solve() {
+    int n;
+    cin >> n;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+    ll m = *min_element(a.begin(), a.end());
+    vector<ll> multiples;
+    int cnt_m = 0;
+    for (ll x : a) {
+        if (x % m == 0) {
+            multiples.push_back(x);
+            if (x == m) cnt_m++;
+        }
+    }
+    // compute gcd of all multiples
+    ll g_all = multiples[0];
+    for (size_t i = 1; i < multiples.size(); ++i) {
+        g_all = gcd(g_all, multiples[i]);
+    }
+    if (g_all != m) return false;
+    if (cnt_m >= 2) return true;
+    // cnt_m == 1 // compute gcd of multiples excluding one m
+    ll g_rest = 0;
+    bool first = true;
+    // we need to exclude exactly one m
+    bool excluded = false;
+    for (ll x : multiples) {
+        if (x == m && !excluded) {
+            excluded = true;
+            continue;
+        }
+        if (first) {
+            g_rest = x;
+            first = false;
+        } else {
+            g_rest = gcd(g_rest, x);
+        }
+    }
+    if (g_rest == 0) return false; // no other multiples
+    return g_rest == m;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << (solve() ? "Yes" : "No") << '\n';
+    }
+    return 0;
+}

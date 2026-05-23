@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>  // 包含<climits>以定义INT_MIN和INT_MAX
+using namespace std;
+
+int main() {
+    int t; 
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<vector<int>> matrix(n, vector<int>(m));
+
+        for (int i = 0; i < n; ++i)
+            for (int j = 0; j < m; ++j)
+                cin >> matrix[i][j];
+
+        vector<int> rowMax(n, 0), colMax(m, 0);
+
+        // 计算每一行和每一列的最大值
+        for (int i = 0; i < n; ++i)
+            for (int j = 0; j < m; ++j) {
+                rowMax[i] = max(rowMax[i], matrix[i][j]);
+                colMax[j] = max(colMax[j], matrix[i][j]);
+            }
+
+        int result = INT_MAX;
+
+        // 通过减少每个行和列计算可能的最大效果
+        for (int r = 0; r < n; ++r) {
+            for (int c = 0; c < m; ++c) {
+                int reducedMax = INT_MIN;
+
+                // 影响该行
+                for (int j = 0; j < m; ++j)
+                    reducedMax = max(reducedMax, matrix[r][j] - 1);
+
+                // 影响该列
+                for (int i = 0; i < n; ++i)
+                    reducedMax = max(reducedMax, matrix[i][c] - 1);
+
+                result = min(result, reducedMax);
+            }
+        }
+
+        cout << result << endl;
+    }
+    return 0;
+}

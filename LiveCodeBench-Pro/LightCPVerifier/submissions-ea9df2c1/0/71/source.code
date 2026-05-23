@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    map<int, int> cnt;
+    for (int i = 0; i < n; i++) {
+        int x = a[i] + 1;
+        cnt[x]++;
+    }
+    vector<int> keys;
+    for (auto& p : cnt) {
+        keys.push_back(p.first);
+    }
+    sort(keys.begin(), keys.end());
+    int m = keys.size();
+    for (int i = 0; i < m; ) {
+        int j = i;
+        while (j + 1 < m && keys[j+1] == keys[j] + 1) {
+            j++;
+        }
+        int cnt_ge4 = 0, cnt_ge2 = 0;
+        for (int k = i; k <= j; k++) {
+            int c = cnt[keys[k]];
+            if (c >= 4) cnt_ge4++;
+            if (c >= 2) cnt_ge2++;
+        }
+        if (cnt_ge4 > 0 || cnt_ge2 >= 2) {
+            cout << "Yes" << endl;
+            return;
+        }
+        i = j + 1;
+    }
+    cout << "No" << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

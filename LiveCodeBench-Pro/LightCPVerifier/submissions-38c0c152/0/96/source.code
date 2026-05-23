@@ -1,0 +1,158 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <cassert>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int i = 0; i < n; i++) cin >> b[i];
+    
+    // 统计每个配对的出现位置
+    map<pair<int, int>, vector<int>> pos_map;
+    for (int i = 0; i < n; i++) {
+        pos_map[{a[i], b[i]}].push_back(i);
+    }
+    
+    // 检查可行性
+    bool possible = true;
+    // 检查非自环配对
+    for (auto& entry : pos_map) {
+        auto p = entry.first;
+        if (p.first == p.second) continue;
+        auto it = pos_map.find({p.second, p.first});
+        if (it == pos_map.end() || it->second.size() != entry.second.size()) {
+            possible = false;
+            break;
+        }
+    }
+    // 检查自环
+    map<int, int> self_cnt;
+    for (auto& entry : pos_map) {
+        if (entry.first.first == entry.first.second) {
+            self_cnt[entry.first.first] += entry.second.size();
+        }
+    }
+    if (n % 2 == 0) {
+        for (auto& kv : self_cnt) {
+            if (kv.second % 2 != 0) {
+                possible = false;
+                break;
+            }
+        }
+    } else {
+        int odd_count = 0;
+        for (auto& kv : self_cnt) {
+            if (kv.second % 2 != 0) odd_count++;
+        }
+        if (odd_count != 1) possible = false;
+    }
+    
+    if (!possible) {
+        cout << -1 << '\n';
+        return;
+    }
+    
+    // 构造目标位置映射 target[initial_pos] = target_pos
+    vector<int> target(n, -1);
+    int left = 0, right = n - 1;
+    
+    // 分配非自环配对：收集无序对，按任意顺序排序（这里按字典序）
+    vector<pair<int, int>> unordered_pairs;
+    for (auto& entry : pos_map) {
+        auto p = entry.first;
+        if (p.first == p.second) continue;
+        if (p.first < p.second) {
+            unordered_pairs.push_back(p);
+        }
+    }
+    // 排序以保证确定性
+    sort(unordered_pairs.begin(), unordered_pairs.end());
+    
+    for (auto& p : unordered_pairs) {
+        int x = p.first, y = p.second;
+        auto& list1 = pos_map[{x, y}];
+        auto& list2 = pos_map[{y, x}];
+        int k = list1.size();
+        for (int t = 0; t < k; t++) {
+            int pos1 = list1.back(); list1.pop_back();
+            target[pos1] = left;
+            int pos2 = list2.back(); list2.pop_back();
+            target[pos2] = right;
+            left++;
+            right--;
+        }
+    }
+    
+    // 分配自环 // 收集所有自环位置，按值排序
+    vector<int> self_vals;
+    for (auto& kv : self_cnt) self_vals.push_back(kv.first);
+    sort(self_vals.begin(), self_vals.end());
+    if (n % 2 == 1) {
+        // 找到奇数个自环的值作为中间
+        int mid_val = -1;
+        for (auto& kv : self_cnt) {
+            if (kv.second % 2 == 1) {
+                mid_val = kv.first;
+                break;
+            }
+        }
+        assert(mid_val != -1);
+        int pos = pos_map[{mid_val, mid_val}].back(); 
+        pos_map[{mid_val, mid_val}].pop_back();
+        int mid = n / 2;
+        target[pos] = mid;
+    }
+    // 剩余自环成对分配（相同值）
+    for (int val : self_vals) {
+        auto& list = pos_map[{val, val}];
+        while (!list.empty()) {
+            int pos1 = list.back(); list.pop_back();
+            int pos2 = list.back(); list.pop_back();
+            target[pos1] = left;
+            target[pos2] = right;
+            left++;
+            right--;
+        }
+    }
+    
+    // 现在 target 是一个排列，我们需要通过交换实现它 // 构建排列 perm: perm[i] = target[i]
+    vector<int> perm = target;
+    vector<pair<int, int>> ops;
+    vector<bool> vis(n, false);
+    for (int i = 0; i < n; i++) {
+        if (!vis[i]) {
+            vector<int> cycle;
+            int cur = i;
+            while (!vis[cur]) {
+                vis[cur] = true;
+                cycle.push_back(cur);
+                cur = perm[cur];
+            }
+            if (cycle.size() > 1) {
+                for (int j = 1; j < cycle.size(); j++) {
+                    ops.push_back({cycle[0], cycle[j]});
+                }
+            }
+        }
+    }
+    
+    // 输出操作数
+    cout << ops.size() << '\n';
+    for (auto& op : ops) {
+        cout << op.first + 1 << ' ' << op.second + 1 << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

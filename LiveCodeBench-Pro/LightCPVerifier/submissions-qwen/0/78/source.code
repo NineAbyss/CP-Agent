@@ -1,0 +1,63 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+bool canProduce(const string& p, const string& s) {
+    int i = 0; // pointer for p
+    int j = 0; // pointer for s
+
+    while (i < p.size() && j < s.size()) {
+        char expected = p[i];
+        
+        // If the current character in s doesn't match the expected drum hit
+        if (s[j] != expected) {
+            return false;
+        }
+        
+        // Count how many times this hit appears consecutively in s
+        int count_s = 0;
+        while (j < s.size() && s[j] == expected) {
+            count_s++;
+            j++;
+        }
+        
+        // In p, we can only have 1 or 2 hits produced as 1 or 2 in s // So any occurrence in s must be at least 1 and we can simulate it
+        // But more importantly: we cannot have fewer hits in p than in s interpretation // However, each hit in p can produce 1 or 2 characters
+        // So we need to check if the number of characters in s for this segment
+        // can be formed by one or more hits from p
+        
+        // Actually, we process one character from p at a time // Each p[i] produces either 1 or 2 of the same character
+        // So we already matched one 'expected' with s[j], now see how many were there
+        // But we can only use one hit from p for this group of 1 or 2 in s
+        // So if we have more than 2 consecutive same characters in s, that's invalid
+        if (count_s > 2) {
+            return false;
+        }
+        
+        i++; // consume one hit from p
+    }
+    
+    // If we haven't consumed all of p or all of s, it's invalid
+    return i == p.size() && j == s.size();
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        string p, s;
+        cin >> p >> s;
+        
+        if (canProduce(p, s)) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    
+    return 0;
+}

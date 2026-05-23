@@ -1,0 +1,24 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, l, r;
+        cin >> n >> m >> l >> r;
+        int low = max(0, n - m - r);
+        int high = min(n - m, -l);
+        int a;
+        if (n - m >= 2 && high - 1 >= low) {
+            a = high - 1;
+        } else {
+            a = high;
+        }
+        int b = n - m - a;
+        int L = l + a;
+        int R = r - b;
+        cout << L << " " << R << endl;
+    }
+    return 0;
+}

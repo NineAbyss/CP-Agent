@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+vector<int> solve_case(int n, const string& s) {
+    vector<int> b(n, 0);
+    b[0] = 0;
+    int min_b = 0, max_b = 0;
+    
+    for (int i = 0; i < n-1; i++) {
+        if (s[i] == '<') {
+            b[i+1] = min_b - 1;
+            min_b = b[i+1];
+        } else {
+            b[i+1] = max_b + 1;
+            max_b = b[i+1];
+        }
+    }
+    
+    // 将b映射到1..n
+    int min_val = *min_element(b.begin(), b.end());
+    for (int i = 0; i < n; i++) {
+        b[i] = b[i] - min_val + 1;
+    }
+    
+    return b;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        
+        vector<int> ans = solve_case(n, s);
+        
+        for (int i = 0; i < n; i++) {
+            cout << ans[i];
+            if (i < n-1) cout << ' ';
+        }
+        cout << '\n';
+    }
+    
+    return 0;
+}

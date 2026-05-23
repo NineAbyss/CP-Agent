@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Precompute the beautiful colorings count for different tree sizes.
+vector<int> beautifulColorings;
+
+// Precompute the minimum vertices required for exact m beautiful colorings.
+void precompute() {
+    int n = 1;
+    beautifulColorings.push_back(1); // n = 1
+    while (true) {
+        int colorings = (1 << n) - n; // 2^n - n
+        beautifulColorings.push_back(colorings);
+        if (colorings >= 500000) break;
+        ++n;
+    }
+}
+
+int findMinVertices(int m) {
+    int n = beautifulColorings.size();
+    for (int i = 0; i < n; ++i) {
+        if (beautifulColorings[i] == m) {
+            return i + 1; // tree with i+1 vertices has exactly m beautiful colorings
+        }
+    }
+    return -1; // if no such tree configuration matches m
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    precompute();
+
+    while (t--) {
+        int m;
+        cin >> m;
+        cout << findMinVertices(m) << '\n';
+    }
+
+    return 0;
+}

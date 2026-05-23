@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 200000;
+
+vector<int> adj[N+1];
+int col[N+1];
+
+void dfs(int u, int p, int &c) {
+    for (int v : adj[u]) {
+        if (v == p) continue;
+        dfs(v, u, c);
+    }
+    if (p != 0) {
+        if (col[u] == 0 && col[p] == 0) {
+            col[u] = col[p] = c++;
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        for (int i = 1; i <= n; i++) {
+            adj[i].clear();
+            col[i] = 0;
+        }
+        vector<array<int,2>> edges;
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+            edges.push_back({u, v});
+        }
+        // Find a leaf
+        int u = 1;
+        while (adj[u]. size() == 1) {
+            u++;
+        }
+        u--;
+        int v = adj[u][0];
+        if (u > v) swap(u, v);
+        cout << u << " " << v << "\n";
+        // Remove v
+        // But for the tree, we need to rebuild without v, and attach its children to u
+        // But for coloring, we can do a DFS on the new tree // First, create new adjacency
+        for (int i = 1; i <= n; i++) {
+            adj[i].clear();
+        }
+        for (auto &e : edges) {
+            int x = e[0], y = e[1];
+            if (x == v || y == v) continue;
+            adj[x].push_back(y);
+            adj[y].push_back(x);
+        }
+        // Add edges from u to every neighbor of v except u
+        for (int w : edges[v]) {  // wait, we don't have edges[v]
+        }
+        // We need to store the neighbors of v // Better to save
+        // Let's restart
+    }
+}

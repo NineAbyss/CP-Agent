@@ -1,0 +1,20 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        long long n;
+        cin >> n;
+        // Each 3kg jar requires 2kg of berries.
+        // So for n jars, we need 2 * n kg of berries.
+        cout << 2 * n << '\n';
+    }
+
+    return 0;
+}

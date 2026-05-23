@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <deque>
+#include <algorithm>
+using namespace std;
+
+int simulate(vector<int> a, vector<int> b) {
+    deque<int> p(a.begin(), a.end());
+    deque<int> d(b.begin(), b.end());
+    int score = 0;
+    for (int i = 0; i < a.size(); i++) {
+        int pc = p.front(); p.pop_front();
+        int dc = d.front(); d.pop_front();
+        if (pc > dc) {
+            score++;
+            d.push_front(dc); // dealer returns his losing card
+        } else {
+            p.push_front(pc); // player returns his losing card
+        }
+    }
+    return score;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+
+        int best = simulate(a, b);
+
+        if (n <= 300) {  // increase threshold slightly
+            for (int i = 0; i < n; i++) {
+                for (int j = i + 1; j < n; j++) {
+                    swap(a[i], a[j]);
+                    best = max(best, simulate(a, b));
+                    swap(a[i], a[j]);
+                }
+            }
+        }
+
+        cout << best << '\n';
+    }
+
+    return 0;
+}

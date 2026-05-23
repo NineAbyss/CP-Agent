@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<ll> L(n);
+        for (int i = 0; i < n; i++) {
+            cin >> L[i];
+        }
+
+        for (int day = 0; day < m; day++) {
+            vector<ll> a(n), b(n), c(n);
+            for (int i = 0; i < n; i++) cin >> a[i];
+            for (int i = 0; i < n; i++) cin >> b[i];
+            for (int i = 0; i < n; i++) cin >> c[i];
+
+            vector<ll> x(n), y(n);  // amounts sent
+
+            // Decide z_j = x_j + y_j for each airport
+            for (int j = 0; j < n; j++) {
+                ll l = L[j];
+                ll cap_a = a[j];
+                ll cap_c = c[j];
+                ll threshold = b[j];
+
+                ll total_send = min(cap_a + cap_c, l);
+                ll needed_to_keep_full = (l > threshold) ? (l - threshold) : 0;
+
+                if (l <= threshold || total_send >= needed_to_keep_full) {
+                    // Can preserve full contribution // We only need to send at least 'needed_to_keep_full'
+                    // But to minimize movement, send minimum required
+                    ll z = needed_to_keep_full;
+                    // Distribute z to x and y within caps
+                    x[j] = min(z, cap_a);
+                    y[j] = z - x[j];
+                    if (y[j] > cap_c) {
+                        y[j] = cap_c;
+                        x[j] = z - y[j];
+                        // Since z <= cap_a+cap_c, x[j] <= cap_a
+                    }
+                } else {
+                    // Cannot avoid reduction, send as much as possible
+                    ll z = total_send;
+                    x[j] = min(z, cap_a);
+                    y[j] = z - x[j];
+                    if (y[j] > cap_c) {
+                        y[j] = cap_c;
+                        x[j] = z - y[j];
+                    }
+                }
+            }
+
+            // Compute new state
+            vector<ll> newL(n);
+            for (int j = 0; j < n; j++) {
+                ll held = min(L[j] - x[j] - y[j], b[j]);
+                int prev_cw = (j - 1 + n) % n;      // sender of clockwise flight to j
+                int next_ccw = (j + 1) % n;         // sender of counterclockwise flight to j
+                newL[j] = held + x[next_ccw] + y[prev_cw];
+            }
+            L = move(newL);
+
+            // Output the total after this day
+            ll total = accumulate(L.begin(), L.end(), 0LL);
+            cout << total << '\n';
+        }
+    }
+    return 0;
+}

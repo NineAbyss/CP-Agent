@@ -1,0 +1,22 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        cout << "digit\n";
+        string s;
+        cin >> s;
+        cout << "digit\n";
+        cin >> s;
+        cout << "add " << (n - 1) << "\n";
+        cin >> s;
+        cout << "!\n";
+        cin >> s;
+    }
+    return 0;
+}

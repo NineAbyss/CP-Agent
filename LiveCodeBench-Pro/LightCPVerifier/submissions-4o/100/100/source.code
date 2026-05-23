@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while(t--) {
+        int n;
+        cin >> n;
+        
+        vector<int> p(n);
+        vector<int> d(n);
+        
+        vector<int> position(n + 1);
+        
+        for (int i = 0; i < n; i++) {
+            cin >> p[i];
+            position[p[i]] = i;  // Track the position of each element (1-indexed)
+        }
+        
+        for (int i = 0; i < n; i++) {
+            cin >> d[i];
+            d[i]--;  // Zero-indexing the queries for 0-indexed arrays
+        }
+        
+        vector<bool> is_zero(n, false);  // Array to keep track of which positions are zeroed
+        int max_removed_position = -1;  // Track the farthest affected original position
+
+        for (int i = 0; i < n; i++) {
+            int pos = d[i];
+            is_zero[pos] = true;  // Mark the position as zeroed
+            
+            // Compute the current maximum unzeroed position in a valid permutation
+            while (max_removed_position + 1 < n && is_zero[position[max_removed_position + 1]]) {
+                max_removed_position++;
+            }
+            
+            // The number of replacements needed is the number of unzeroed positions
+            int answer = (max_removed_position + 1);
+            cout << answer << " ";
+        }
+        cout << endl;
+    }
+    
+    return 0;
+}

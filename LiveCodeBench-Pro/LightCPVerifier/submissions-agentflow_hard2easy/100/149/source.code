@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, q;
+    cin >> n >> q;
+    
+    vector<set<int>> sets(n+1);
+    vector<int> ans(q+1, 0);
+    ans[0] = 0;
+    
+    for(int i=1; i<=q; i++) {
+        int a, b, c;
+        cin >> a >> b >> c;
+        
+        int r, x, p;
+        if(a == 1 || a == 2) {
+            r = (b + ans[i-1] - 1) % n + 1;
+            p = (c + ans[i-1] - 1) % n + 1;
+        } else {
+            x = (b + ans[i-1] - 1) % q + 1;
+            p = (c + ans[i-1] - 1) % n + 1;
+        }
+        
+        if(a == 1) {
+            for(int j=1; j<=r; j++) sets[j].insert(i);
+        } else if(a == 2) {
+            reverse(sets.begin()+1, sets.begin()+r+1);
+        } else if(a == 3) {
+            for(int j=1; j<=n; j++) sets[j].erase(x);
+        }
+        
+        if(sets[p].empty()) ans[i] = 0;
+        else ans[i] = *sets[p].begin();
+        
+        cout << ans[i] << '\n';
+    }
+    
+    return 0;
+}

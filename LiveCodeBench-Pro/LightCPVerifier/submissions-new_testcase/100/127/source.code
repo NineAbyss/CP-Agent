@@ -1,0 +1,111 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+long long solve_one(int n, vector<vector<long long>>& h, vector<long long>& a, vector<long long>& b) {
+    // 计算行边可行赋值
+    vector<vector<vector<bool>>> row_ok(n-1, vector<vector<bool>>(2, vector<bool>(2, true)));
+    for (int i = 0; i < n-1; i++) {
+        for (int s = 0; s < 2; s++) {
+            for (int t = 0; t < 2; t++) {
+                bool ok = true;
+                for (int j = 0; j < n; j++) {
+                    if (h[i][j] + s == h[i+1][j] + t) {
+                        ok = false;
+                        break;
+                    }
+                }
+                row_ok[i][s][t] = ok;
+            }
+        }
+    }
+    
+    // 计算列边可行赋值
+    vector<vector<vector<bool>>> col_ok(n-1, vector<vector<bool>>(2, vector<bool>(2, true)));
+    for (int j = 0; j < n-1; j++) {
+        for (int s = 0; s < 2; s++) {
+            for (int t = 0; t < 2; t++) {
+                bool ok = true;
+                for (int i = 0; i < n; i++) {
+                    if (h[i][j] + s == h[i][j+1] + t) {
+                        ok = false;
+                        break;
+                    }
+                }
+                col_ok[j][s][t] = ok;
+            }
+        }
+    }
+    
+    // 行 DP
+    const long long INF = 1e18;
+    vector<vector<long long>> dp_row(n, vector<long long>(2, INF));
+    dp_row[0][0] = a[0] * 0;
+    dp_row[0][1] = a[0] * 1;
+    for (int i = 0; i < n-1; i++) {
+        for (int s = 0; s < 2; s++) {
+            if (dp_row[i][s] >= INF) continue;
+            for (int t = 0; t < 2; t++) {
+                if (row_ok[i][s][t]) {
+                    dp_row[i+1][t] = min(dp_row[i+1][t], dp_row[i][s] + a[i+1] * t);
+                }
+            }
+        }
+    }
+    long long min_row = min(dp_row[n-1][0], dp_row[n-1][1]);
+    
+    // 列 DP
+    vector<vector<long long>> dp_col(n, vector<long long>(2, INF));
+    dp_col[0][0] = b[0] * 0;
+    dp_col[0][1] = b[0] * 1;
+    for (int j = 0; j < n-1; j++) {
+        for (int s = 0; s < 2; s++) {
+            if (dp_col[j][s] >= INF) continue;
+            for (int t = 0; t < 2; t++) {
+                if (col_ok[j][s][t]) {
+                    dp_col[j+1][t] = min(dp_col[j+1][t], dp_col[j][s] + b[j+1] * t);
+                }
+            }
+        }
+    }
+    long long min_col = min(dp_col[n-1][0], dp_col[n-1][1]);
+    
+    if (min_row >= INF || min_col >= INF) {
+        return -1;
+    } else {
+        return min_row + min_col;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<long long>> h(n, vector<long long>(n));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                cin >> h[i][j];
+            }
+        }
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        vector<long long> b(n);
+        for (int i = 0; i < n; i++) {
+            cin >> b[i];
+        }
+        
+        long long ans = solve_one(n, h, a, b);
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

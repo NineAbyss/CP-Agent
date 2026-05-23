@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, q;
+    cin >> n >> q;
+    vector<set<int>> sets(n + 1);
+    vector<int> id(n + 1);
+    iota(id.begin(), id.end(), 0);
+    vector<vector<int>> contain(q + 1);
+    int prev_ans = 0;
+    for (int i = 1; i <= q; i++) {
+        int a, b, c;
+        cin >> a >> b >> c;
+        int r, x, p;
+        if (a == 1 || a == 2) {
+            r = (b + prev_ans - 1) % n + 1;
+        } else {
+            x = (b + prev_ans - 1) % q + 1;
+        }
+        p = (c + prev_ans - 1) % n + 1;
+        if (a == 1) {
+            for (int pos = 1; pos <= r; pos++) {
+                int sid = id[pos];
+                if (sets[sid].insert(i).second) {
+                    contain[i].push_back(sid);
+                }
+            }
+        } else if (a == 2) {
+            for (int pos = 1; pos <= r / 2; pos++) {
+                swap(id[pos], id[r - pos + 1]);
+            }
+        } else if (a == 3) {
+            for (int sid : contain[x]) {
+                sets[sid].erase(x);
+            }
+            contain[x].clear();
+        }
+        int sid = id[p];
+        if (sets[sid].empty()) {
+            prev_ans = 0;
+        } else {
+            prev_ans = *sets[sid].begin();
+        }
+        cout << prev_ans << '\n';
+    }
+    return 0;
+}

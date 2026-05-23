@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Comparator to sort cells by distance from a given center (cx, cy)
+bool cmp_by_distance(int x1, int y1, int x2, int y2, int cx, int cy) {
+    auto dist = [](int x, int y, int cx, int cy) {
+        int chess = max(abs(x - cx), abs(y - cy));
+        int manhattan = abs(x - cx) + abs(y - cy);
+        return make_pair(chess, manhattan);
+    };
+    auto d1 = dist(x1, y1, cx, cy);
+    auto d2 = dist(x2, y2, cx, cy);
+    return d1 > d2; // greater distance comes first
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+
+        int cx = (n + 1) / 2; // center row (1-indexed)
+        int cy = (m + 1) / 2; // center col (1-indexed)
+
+        vector<pair<int, int>> cells;
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= m; j++) {
+                cells.emplace_back(i, j);
+            }
+        }
+
+        // Sort cells: furthest from center first, using chessboard then Manhattan
+        sort(cells.begin(), cells.end(), [cx, cy](const pair<int, int>& a, const pair<int, int>& b) {
+            return cmp_by_distance(a.first, a.second, b.first, b.second, cx, cy);
+        });
+
+        // Output the order
+        for (auto& p : cells) {
+            cout << p.first << " " << p.second << "\n";
+        }
+    }
+
+    return 0;
+}

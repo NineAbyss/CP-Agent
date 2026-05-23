@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // suffixSum[i] = sum of last i elements
+        vector<long long> suffixSum(n + 1, 0);
+        for (int i = 1; i <= n; i++) {
+            suffixSum[i] = suffixSum[i - 1] + a[n - i];
+        }
+
+        // prefixMax[i] = max(a[0..i])
+        vector<long long> prefixMax(n);
+        if (n > 0) {
+            prefixMax[0] = a[0];
+            for (int i = 1; i < n; i++) {
+                prefixMax[i] = max(prefixMax[i - 1], a[i]);
+            }
+        }
+
+        // For each k from 1 to n
+        for (int k = 1; k <= n; k++) {
+            long long s = suffixSum[k - 1];
+            long long m = prefixMax[n - k];
+            cout << s + m;
+            if (k < n) cout << ' ';
+        }
+        cout << '\n';
+    }
+    return 0;
+}

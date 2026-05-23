@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Fenwick {
+    int n;
+    vector<int> bit;
+    Fenwick(int n_) : n(n_), bit(n_ + 1, 0) {}
+    void update(int idx, int val) {
+        while (idx <= n) {
+            if (val > bit[idx]) bit[idx] = val;
+            idx += idx & -idx;
+        }
+    }
+    int query(int idx) {
+        int res = 0;
+        while (idx > 0) {
+            if (bit[idx] > res) res = bit[idx];
+            idx -= idx & -idx;
+        }
+        return res;
+    }
+};
+
+void solve() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        // 离散化
+        vector<int> vals = a;
+        sort(vals.begin(), vals.end());
+        vals.erase(unique(vals.begin(), vals.end()), vals.end());
+        int m = vals.size();
+        Fenwick fenw(m);
+        int ans = 0;
+        for (int i = 0; i < n; i++) {
+            int x = a[i];
+            // 找到 <= x-2 的最大下标
+            int target = upper_bound(vals.begin(), vals.end(), x - 2) - vals.begin();
+            // target 是数量
+            int best = 0;
+            if (target > 0) best = fenw.query(target);
+            int dp = best + 1;
+            int pos = lower_bound(vals.begin(), vals.end(), x) - vals.begin() + 1;
+            fenw.update(pos, dp);
+            if (dp > ans) ans = dp;
+        }
+        cout << ans << '\n';
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

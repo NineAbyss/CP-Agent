@@ -1,0 +1,140 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+using namespace std;
+
+struct Edge {
+    int to;
+    int idx;
+};
+
+vector<int> path;
+vector<int> used;
+vector<vector<Edge>> adj;
+vector<size_t> ptr;
+
+void dfs(int u) {
+    while (ptr[u] < adj[u].size()) {
+        Edge& e = adj[u][ptr[u]++];
+        if (used[e.idx]) continue;
+        used[e.idx] = true;
+        dfs(e.to);
+        path.push_back(e.idx);
+    }
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<pair<int,int>> sounds(n);
+    for (int i = 0; i < n; i++) {
+        cin >> sounds[i].first >> sounds[i].second;
+    }
+    // compress
+    map<int,int> vid, pid;
+    for (auto& pr : sounds) {
+        vid[pr.first];
+        pid[pr.second];
+    }
+    int L = 0, R = 0;
+    for (auto& kv : vid) kv.second = L++;
+    for (auto& kv : pid) kv.second = R++;
+    int totalV = L + R;
+    adj.assign(totalV, {});
+    for (int i = 0; i < n; i++) {
+        int v = vid[sounds[i].first];
+        int p = pid[sounds[i].second];
+        int left = v;
+        int right = L + p;
+        adj[left].push_back({right, i});
+        adj[right].push_back({left, i});
+    }
+    // Check connectivity of edges
+    vector<bool> vis(totalV, false);
+    int start = 0;
+    while (start < totalV && adj[start].empty()) start++;
+    if (start == totalV) {
+        // no edges, only possible if n==1
+        if (n == 1) {
+            cout << "YES\n1\n";
+            return;
+        } else {
+            cout << "NO\n";
+            return;
+        }
+    }
+    vector<int> stack = {start};
+    vis[start] = true;
+    while (!stack.empty()) {
+        int u = stack.back(); stack.pop_back();
+        for (Edge& e : adj[u]) {
+            int v = e.to;
+            if (!vis[v]) {
+                vis[v] = true;
+                stack.push_back(v);
+            }
+        }
+    }
+    for (int i = 0; i < totalV; i++) {
+        if (!adj[i].empty() && !vis[i]) {
+            cout << "NO\n";
+            return;
+        }
+    }
+    // Check odd degrees
+    int odd = 0;
+    for (int i = 0; i < totalV; i++) {
+        if (adj[i].size() % 2) odd++;
+    }
+    if (odd != 0 && odd != 2) {
+        cout << "NO\n";
+        return;
+    }
+    // Find start vertex for Euler path
+    int start_euler = 0;
+    if (odd == 2) {
+        for (int i = 0; i < totalV; i++) {
+            if (adj[i].size() % 2) { start_euler = i; break; }
+        }
+    } else {
+        while (start_euler < totalV && adj[start_euler].empty()) start_euler++;
+    }
+    // Hierholzer algorithm
+    used.assign(n, false);
+    ptr.assign(totalV, 0);
+    path.clear();
+    dfs(start_euler);
+    // path is in reverse order
+    reverse(path.begin(), path.end());
+    // Check boredom condition (should always hold for Eulerian graphs, but verify)
+    if (n >= 3) {
+        for (int i = 0; i + 2 < n; i++) {
+            int a = path[i], b = path[i+1], c = path[i+2];
+            if (sounds[a].first == sounds[b].first && sounds[b].first == sounds[c].first) {
+                // This should not happen, but if it does, output NO
+                cout << "NO\n";
+                return;
+            }
+            if (sounds[a].second == sounds[b].second && sounds[b].second == sounds[c].second) {
+                cout << "NO\n";
+                return;
+            }
+        }
+    }
+    cout << "YES\n";
+    for (int i = 0; i < n; i++) {
+        cout << path[i] + 1 << (i == n-1 ? "\n" : " ");
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

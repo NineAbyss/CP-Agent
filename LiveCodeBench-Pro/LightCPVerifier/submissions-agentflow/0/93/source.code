@@ -1,0 +1,71 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+// Check if k can be located using binary search in a range
+bool isKReachable(const vector<int>& p, int l, int r, int k_pos) {
+    int k = p[k_pos];
+    while (l <= r) {
+        int mid = (l + r) / 2;
+        if (mid == k_pos) return true;
+        if (p[mid] < k) l = mid + 1;
+        else r = mid - 1;
+    }
+    return false;
+}
+
+// Calculate swap indirection to facilitate discovery
+int calculateMinimumSwaps(vector<int>& p, int l, int r, int k_pos) {
+    int swaps_count = 0;
+    std::vector<int> indices;
+
+    // Collect only those causing binary-mismatch 
+    for (int i = l; i <= r; ++i) {
+        if (!isKReachable(p, l, r, i) && i != k_pos) {
+            indices.push_back(i);
+        }
+    }
+    swaps_count = indices.size();
+    return swaps_count;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        
+        vector<int> p(n);
+        vector<int> pos(n + 1);
+        for (int i = 0; i < n; ++i) {
+            cin >> p[i];
+            pos[p[i]] = i;
+        }
+        
+        while (q--) {
+            int l, r, k;
+            cin >> l >> r >> k;
+            --l; --r;  // zero-based index for calculation
+            
+            int posK = pos[k];
+            if (posK < l || posK > r) {
+                cout << "-1\n";  // k can move only within l and r
+                continue;
+            }
+
+            if (isKReachable(p, l, r, posK)) {
+                cout << "0\n";
+            } else {
+                int swaps = calculateMinimumSwaps(p, l, r, posK);
+                cout << swaps << '\n';
+            }
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,99 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long gi(int a, int k, long long lam) {
+    if (lam >= a + 1) {
+        return lam;
+    } else if (lam >= a - k) {
+        return a;
+    } else {
+        long long val = lam + k;
+        if (val < 0) return 0;
+        return val;
+    }
+}
+
+void solve() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        int n, k;
+        scanf("%d %d", &n, &k);
+        vector<int> a(n);
+        long long S = 0;
+        int max_a = 0;
+        for (int i = 0; i < n; i++) {
+            scanf("%d", &a[i]);
+            S += a[i];
+            if (a[i] > max_a) max_a = a[i];
+        }
+        
+        long long lo = -k;
+        long long hi = S + max_a + k;
+        while (lo < hi) {
+            long long mid = lo + (hi - lo) / 2;
+            long long sumg = 0;
+            for (int i = 0; i < n; i++) {
+                sumg += gi(a[i], k, mid);
+            }
+            if (sumg >= S) {
+                hi = mid;
+            } else {
+                lo = mid + 1;
+            }
+        }
+        long long lam = lo;
+        
+        vector<long long> b(n);
+        long long sumb = 0;
+        for (int i = 0; i < n; i++) {
+            b[i] = gi(a[i], k, lam);
+            sumb += b[i];
+        }
+        
+        if (sumb > S) {
+            long long diff = sumb - S;
+            vector<pair<long long, int>> dec;
+            for (int i = 0; i < n; i++) {
+                if (b[i] == 0) continue;
+                long long delta;
+                if (b[i] - 1 < a[i]) delta = b[i] - k;
+                else delta = b[i];
+                dec.push_back({delta, i});
+            }
+            sort(dec.rbegin(), dec.rend());
+            for (int d = 0; d < diff; d++) {
+                int idx = dec[d].second;
+                b[idx]--;
+            }
+        } else if (sumb < S) {
+            long long diff = S - sumb;
+            vector<pair<long long, int>> inc;
+            for (int i = 0; i < n; i++) {
+                long long delta;
+                if (b[i] < a[i]) delta = b[i] + 1 - k;
+                else delta = b[i] + 1;
+                inc.push_back({delta, i});
+            }
+            sort(inc.begin(), inc.end());
+            for (int d = 0; d < diff; d++) {
+                int idx = inc[d].second;
+                b[idx]++;
+            }
+        }
+        
+        long long ans = 0;
+        for (int i = 0; i < n; i++) {
+            long long bi = b[i];
+            ans += bi * (bi + 1) / 2;
+            ans -= (long long)k * min((long long)a[i], bi);
+        }
+        ans += (long long)k * S;
+        printf("%lld\n", ans);
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

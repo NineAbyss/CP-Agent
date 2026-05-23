@@ -1,0 +1,36 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Function to compute f(k, a, l, r)
+long long f(int k, const vector<int>& a, int l, int r) {
+    long long ans = 0;
+    for (int i = l; i <= r; ++i) {
+        while (k % a[i] == 0) {
+            k /= a[i];
+        }
+        ans += k;
+    }
+    return ans;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        vector<int> a(n + 1);  // 1-based index
+        for (int i = 1; i <= n; ++i) {
+            cin >> a[i];
+        }
+        while (q--) {
+            int k, l, r;
+            cin >> k >> l >> r;
+            // Get the answer for this query using function f()
+            long long result = f(k, a, l, r);
+            cout << result << endl;
+        }
+    }
+    return 0;
+}

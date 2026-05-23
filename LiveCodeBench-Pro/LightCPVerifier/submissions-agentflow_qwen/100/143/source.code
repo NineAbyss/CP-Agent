@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+vector<ll> z;
+void init() {
+    ll x = 1;
+    while (x <= (ll)1e18) {
+        z.push_back(x);
+        if (x > (ll)1e18 / 4) break;
+        x = 4*x + 1;
+    }
+    sort(z.begin(), z.end(), greater<ll>());
+}
+
+ll dfs(int idx, ll n, int k) {
+    if (k < 0 || n < 0) return 0;
+    if (k == 0) return n == 0;
+    if (idx >= (int)z.size()) return 0;
+    if (k > 60) return 0;
+    if (n == 0) return k == 0;
+
+    ll res = 0;
+    ll coin = z[idx];
+    for (int c = 0; c <= k && (ll)c * coin <= n; ++c) {
+        res += dfs(idx + 1, n - c * coin, k - c);
+    }
+    return res;
+}
+
+ll solve(ll n, int k) {
+    if (n < 0) return 0;
+    if (k > 60) return 0;
+    return dfs(0, n, k);
+}
+
+int main() {
+    ios::sync_with_stdio(false); cin.tie(nullptr);
+    init();
+    int t; cin >> t;
+    while (t--) {
+        ll l, r, k;
+        cin >> l >> r >> k;
+        cout << solve(r, k) - solve(l-1, k) << '\n';
+    }
+    return 0;
+}

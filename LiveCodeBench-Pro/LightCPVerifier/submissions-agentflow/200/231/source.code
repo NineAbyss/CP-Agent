@@ -1,0 +1,19 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, l, r;
+        cin >> n >> m >> l >> r;
+        int left_ext = -l; // |l|
+        int right_ext = r;
+        int x = min(left_ext, max(m - right_ext, m/2));
+        int y = m - x;
+        int l_prime = -x;
+        int r_prime = y;
+        cout << l_prime << " " << r_prime << endl;
+    }
+    return 0;
+}

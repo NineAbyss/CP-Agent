@@ -1,0 +1,52 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+// Function to determine minimal cost through selective digit retention
+int minimalRemovalsForOptimalCost(const string &n) {
+    int len = n.size();
+    int min_removals = len - 1; // Initial worst case: remove all but one digit
+
+    vector<int> digit_weights; // Provide simplified formation
+    for (char ch : n) {
+        digit_weights.push_back(ch - '0');
+    }
+
+    // Sorting digits descending aids viewing minimal options efficiently
+    sort(digit_weights.rbegin(), digit_weights.rend());
+    
+    for (int retain = 1; retain <= len; ++retain) {
+        long long num_value = 0;
+        int digit_sum = 0;
+        
+        for (int i = 0; i < retain; ++i) {
+            num_value = num_value * 10 + digit_weights[i];
+            digit_sum += digit_weights[i];
+        }
+
+        if (digit_sum > 0) {
+            double cost = static_cast<double>(num_value) / digit_sum;
+            min_removals = min(min_removals, len - retain);
+        }
+    }
+
+    return min_removals;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int test_cases;
+    cin >> test_cases;
+
+    while (test_cases--) {
+        string number;
+        cin >> number;
+        cout << minimalRemovalsForOptimalCost(number) << '\n';
+    }
+
+    return 0;
+}

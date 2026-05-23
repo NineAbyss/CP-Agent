@@ -1,0 +1,80 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstdlib>
+#include <ctime>
+using namespace std;
+
+int compute_score(const vector<int>& player, const vector<int>& dealer) {
+    int n = player.size();
+    int i = 0, j = 0;
+    for (int round = 0; round < n; round++) {
+        if (i < n && player[i] > dealer[j]) {
+            i++;
+        } else {
+            j++;
+        }
+    }
+    return i;
+}
+
+int solve_one_case(const vector<int>& player, const vector<int>& dealer) {
+    int n = player.size();
+    int base = compute_score(player, dealer);
+    int best = base;
+    
+    // 如果n <= 1000，使用暴力
+    if (n <= 1000) {
+        for (int x = 0; x < n; x++) {
+            for (int y = x+1; y < n; y++) {
+                vector<int> swapped = player;
+                swap(swapped[x], swapped[y]);
+                int s = compute_score(swapped, dealer);
+                if (s > best) best = s;
+            }
+        }
+        return best;
+    }
+    
+    // 对于大n，使用随机搜索
+    srand(12345);
+    for (int iter = 0; iter < 100000; iter++) {
+        int x = rand() % n;
+        int y = rand() % n;
+        if (x == y) continue;
+        if (x > y) swap(x, y);
+        vector<int> swapped = player;
+        swap(swapped[x], swapped[y]);
+        int s = compute_score(swapped, dealer);
+        if (s > best) best = s;
+    }
+    
+    return best;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<int> player(n);
+        for (int i = 0; i < n; i++) {
+            cin >> player[i];
+        }
+        
+        vector<int> dealer(n);
+        for (int i = 0; i < n; i++) {
+            cin >> dealer[i];
+        }
+        
+        cout << solve_one_case(player, dealer) << '\n';
+    }
+    
+    return 0;
+}

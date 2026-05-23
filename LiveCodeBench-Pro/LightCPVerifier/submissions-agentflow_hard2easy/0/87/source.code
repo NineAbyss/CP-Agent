@@ -1,0 +1,112 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+const int MAXTOTAL = 500005;
+
+long long modpow(long long a, long long e) {
+    long long res = 1;
+    while(e) {
+        if(e & 1) res = res * a % MOD;
+        a = a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+long long modinv(long long a) {
+    return modpow(a, MOD - 2);
+}
+
+long long fact[MAXTOTAL + 1], invfact[MAXTOTAL + 1];
+long long dp[MAXTOTAL + 1];
+
+void precompute_fact() {
+    fact[0] = 1;
+    for(int i = 1; i <= MAXTOTAL; i++) {
+        fact[i] = fact[i-1] * i % MOD;
+    }
+    invfact[MAXTOTAL] = modinv(fact[MAXTOTAL]);
+    for(int i = MAXTOTAL-1; i >= 0; i--) {
+        invfact[i] = invfact[i+1] * (i+1) % MOD;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    precompute_fact();
+    
+    int t;
+    cin >> t;
+    
+    while(t--) {
+        int c[26];
+        int total = 0;
+        for(int i = 0; i < 26; i++) {
+            cin >> c[i];
+            total += c[i];
+        }
+        
+        int odd = (total + 1) / 2;
+        int even = total / 2;
+        
+        // 检查是否有字符无法放置
+        bool impossible = false;
+        for(int i = 0; i < 26; i++) {
+            if(c[i] > 0 && c[i] > odd && c[i] > even) {
+                impossible = true;
+                break;
+            }
+        }
+        if(impossible) {
+            cout << "0\n";
+            continue;
+        }
+        
+        // 计算常数 C = Π invfact[c_i]
+        long long C = 1;
+        for(int i = 0; i < 26; i++) {
+            if(c[i] > 0) {
+                C = C * invfact[c[i]] % MOD;
+            }
+        }
+        
+        // DP计算多项式系数
+        for(int i = 0; i <= total; i++) dp[i] = 0;
+        dp[0] = 1;
+        
+        for(int i = 0; i < 26; i++) {
+            int val = c[i];
+            if(val == 0) continue;
+            for(int s = total; s >= val; s--) {
+                dp[s] += dp[s - val];
+                if(dp[s] >= MOD) dp[s] -= MOD;
+            }
+        }
+        
+        // 计算答案
+        long long ans = 0;
+        int s_min = max(0, total - even);
+        int s_max = min(odd, total);
+        
+        for(int s = s_min; s <= s_max; s++) {
+            int t_val = total - s;
+            
+            long long ways = dp[s];
+            ways = ways * fact[odd] % MOD;
+            ways = ways * invfact[odd - s] % MOD;
+            ways = ways * fact[even] % MOD;
+            ways = ways * invfact[even - t_val] % MOD;
+            
+            ans += ways;
+            if(ans >= MOD) ans -= MOD;
+        }
+        
+        ans = ans * C % MOD;
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n;
+        cin >> n;
+        
+        // 通用序列：3步 // 这个序列对任意初始x都能得到n
+        // 原理：先digit得到a，然后mul M，然后add K，使得a*M + K = n // 但需要M=0，不可能。所以实际上需要更多步。
+        
+        // 根据官方题解，f(n) <= 5 // 序列：
+        cout << "digit" << endl;
+        cout.flush();
+        int r1; cin >> r1;
+        
+        cout << "mul " << 1000000000 << endl;
+        cout.flush();
+        int r2; cin >> r2;
+        
+        cout << "add " << n*1000000000LL << endl;
+        cout.flush();
+        int r3; cin >> r3;
+        
+        cout << "div " << 1000000000 << endl;
+        cout.flush();
+        int r4; cin >> r4;
+        
+        // 现在 x = a + n，其中a是原始x的数字和 // 再用digit得到S(a+n)
+        cout << "digit" << endl;
+        cout.flush();
+        int r5; cin >> r5;
+        
+        // 现在x是个位数，直接加到n // 但我们需要固定序列，所以不能依赖当前值
+        // 所以这里需要另一种方法
+        
+        // 实际上，官方解法这里用了一个技巧： // 再次mul 10^9，add (n*10^9)，div 10^9
+        // 这样得到 S(a+n) + n // 然后digit，再加...
+        // 这会导致无限循环。
+        
+        // 因此，我决定采用一个更简单的方案： // 对于n<=81，可以直接用add (n-x)
+        // 但x未知，不行。
+        
+        // 经过思考，我决定采用以下方案： // 1. digit
+        // 2. mul 1 // 3. add (n-1)
+        // 但这样得到a + n-1，不是n。
+        
+        // 所以这个代码不能AC。 // 我需要找到正确的解法。
+    }
+    return 0;
+}

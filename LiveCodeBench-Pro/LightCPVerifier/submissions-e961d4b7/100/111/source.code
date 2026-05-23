@@ -1,0 +1,138 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        vector<int> a(n + 1);
+        map<int, set<pair<int, int>>> segs; // value -> intervals [l, r]
+        map<int, multiset<int>> lens; // value -> lengths of intervals
+        multiset<int> global_halves;
+        
+        // helper to get max length for a value
+        auto get_max_len = [&](int val) -> int {
+            auto it = lens.find(val);
+            if (it == lens.end() || it->second.empty()) return 0;
+            return *it->second.rbegin();
+        };
+        
+        // helper to update global multiset when max length of val changes
+        auto update_global = [&](int val, int old_max_len) {
+            int new_max_len = get_max_len(val);
+            if (old_max_len == new_max_len) return;
+            if (old_max_len > 0) {
+                auto it = global_halves.find(old_max_len / 2);
+                if (it != global_halves.end()) global_halves.erase(it);
+            }
+            if (new_max_len > 0) {
+                global_halves.insert(new_max_len / 2);
+            }
+        };
+        
+        // build initial intervals
+        map<int, vector<int>> pos;
+        for (int i = 1; i <= n; ++i) {
+            cin >> a[i];
+            pos[a[i]].push_back(i);
+        }
+        for (auto &p : pos) {
+            int val = p.first;
+            vector<int> &v = p.second;
+            int m = v.size();
+            int l = v[0], r = v[0];
+            for (int i = 1; i < m; ++i) {
+                if (v[i] == r + 1) {
+                    r = v[i];
+                } else {
+                    segs[val].insert({l, r});
+                    lens[val].insert(r - l + 1);
+                    l = r = v[i];
+                }
+            }
+            segs[val].insert({l, r});
+            lens[val].insert(r - l + 1);
+        }
+        // initial global halves
+        for (auto &p : lens) {
+            int val = p.first;
+            int max_len = get_max_len(val);
+            if (max_len > 0) global_halves.insert(max_len / 2);
+        }
+        
+        vector<int> ans;
+        while (q--) {
+            int i, x;
+            cin >> i >> x;
+            int old = a[i];
+            if (old != x) {
+                // remove old
+                int old_max_len = get_max_len(old);
+                set<pair<int, int>> &s_old = segs[old];
+                multiset<int> &len_set_old = lens[old];
+                // find interval containing i
+                auto it = s_old.lower_bound({i, i});
+                if (it == s_old.end() || it->first > i) {
+                    if (it != s_old.begin()) --it;
+                }
+                if (it != s_old.end() && it->first <= i && i <= it->second) {
+                    int l = it->first, r = it->second;
+                    // remove old interval
+                    len_set_old.erase(len_set_old.find(r - l + 1));
+                    s_old.erase(it);
+                    // split
+                    if (l <= i - 1) {
+                        s_old.insert({l, i - 1});
+                        len_set_old.insert(i - l);
+                    }
+                    if (i + 1 <= r) {
+                        s_old.insert({i + 1, r});
+                        len_set_old.insert(r - i);
+                    }
+                }
+                update_global(old, old_max_len);
+                
+                // add new
+                int new_max_len = get_max_len(x);
+                set<pair<int, int>> &s_new = segs[x];
+                multiset<int> &len_set_new = lens[x];
+                // find intervals to merge
+                auto it2 = s_new.lower_bound({i, i});
+                int new_l = i, new_r = i;
+                // merge left
+                if (it2 != s_new.begin()) {
+                    auto left = prev(it2);
+                    if (left->second == i - 1) {
+                        new_l = left->first;
+                        len_set_new.erase(len_set_new.find(left->second - left->first + 1));
+                        s_new.erase(left);
+                    }
+                }
+                // merge right
+                if (it2 != s_new.end() && it2->first == i + 1) {
+                    new_r = it2->second;
+                    len_set_new.erase(len_set_new.find(it2->second - it2->first + 1));
+                    s_new.erase(it2);
+                }
+                s_new.insert({new_l, new_r});
+                len_set_new.insert(new_r - new_l + 1);
+                update_global(x, new_max_len);
+                
+                a[i] = x;
+            }
+            int cur = 0;
+            if (!global_halves.empty()) cur = *global_halves.rbegin();
+            ans.push_back(cur);
+        }
+        for (int j = 0; j < (int)ans.size(); ++j) {
+            if (j) cout << ' ';
+            cout << ans[j];
+        }
+        cout << '\n';
+    }
+    return 0;
+}

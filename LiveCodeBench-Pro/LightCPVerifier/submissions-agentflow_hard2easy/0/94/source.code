@@ -1,0 +1,102 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+ll solve(vector<int> a, int k) {
+    int n = a.size();
+    ll S = 0;
+    for (int x : a) S += x;
+    
+    // 二分搜索 lambda
+    ll low = 0, high = 2e12;
+    while (low < high) {
+        ll mid = (low + high) / 2;
+        ll sum_b = 0;
+        for (int x : a) {
+            if (mid <= x + 1 - k) {
+                sum_b += min((ll)x, mid + k - 1);
+            } else {
+                sum_b += max(0LL, mid - 1);
+            }
+        }
+        if (sum_b >= S) high = mid;
+        else low = mid + 1;
+    }
+    
+    ll lambda = low;
+    // 计算 b_i
+    vector<ll> b(n);
+    ll sum_b = 0;
+    for (int i=0; i<n; i++) {
+        if (lambda <= a[i] + 1 - k) {
+            b[i] = min((ll)a[i], lambda + k - 1);
+        } else {
+            b[i] = max(0LL, lambda - 1);
+        }
+        sum_b += b[i];
+    }
+    
+    // 调整到 S
+    if (sum_b < S) {
+        ll need = S - sum_b;
+        // 增加 need 辆车，优先增加边际成本小的
+        vector<pair<ll, int>> candidates;
+        for (int i=0; i<n; i++) {
+            if (lambda <= a[i] + 1 - k) {
+                if (b[i] < a[i]) candidates.push_back({b[i] + 1 - k, i});
+                else candidates.push_back({b[i] + 1, i});
+            } else {
+                candidates.push_back({b[i] + 1, i});
+            }
+        }
+        sort(candidates.begin(), candidates.end());
+        for (int j=0; j<need && j<(int)candidates.size(); j++) {
+            int i = candidates[j].second;
+            b[i]++;
+        }
+    } else if (sum_b > S) {
+        ll need = sum_b - S;
+        // 减少 need 辆车，优先减少边际节省大的
+        vector<pair<ll, int>> candidates;
+        for (int i=0; i<n; i++) {
+            if (b[i] > 0) {
+                ll saving;
+                if (b[i] <= a[i]) {
+                    saving = b[i] - k;
+                } else {
+                    saving = b[i];
+                }
+                candidates.push_back({saving, i});
+            }
+        }
+        sort(candidates.rbegin(), candidates.rend());
+        for (int j=0; j<need && j<(int)candidates.size(); j++) {
+            int i = candidates[j].second;
+            b[i]--;
+        }
+    }
+    
+    // 计算总成本
+    ll ans = 0;
+    for (int i=0; i<n; i++) {
+        ans += b[i]*(b[i]+1)/2;
+        if (a[i] > b[i]) ans += k * (a[i] - b[i]);
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i=0; i<n; i++) cin >> a[i];
+        cout << solve(a, k) << '\n';
+    }
+    return 0;
+}

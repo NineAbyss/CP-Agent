@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, k;
+    cin >> n >> k;
+    string s;
+    cin >> s;
+    
+    // Preprocess next positions
+    // nxt[i*k + c] = first occurrence of character c in s[i..] (or n if not found)
+    vector<int> nxt((n+1) * k, n);
+    for (int i = n-1; i >= 0; --i) {
+        for (int c = 0; c < k; ++c) {
+            nxt[i*k + c] = nxt[(i+1)*k + c];
+        }
+        nxt[i*k + (s[i]-'a')] = i;
+    }
+    
+    // dp[i] = minimum number of letters to append starting from position i
+    vector<int> dp(n+1);
+    dp[n] = 1; // empty suffix: any single letter is not a subsequence
+    for (int i = n-1; i >= 0; --i) {
+        int best = 1e9;
+        for (int c = 0; c < k; ++c) {
+            int pos = nxt[i*k + c];
+            if (pos == n) {
+                best = 1;
+                break; // can't find this letter, so one letter suffices
+            } else {
+                best = min(best, 1 + dp[pos+1]);
+            }
+        }
+        dp[i] = best;
+    }
+    
+    int q;
+    cin >> q;
+    while (q--) {
+        string t;
+        cin >> t;
+        int pos = 0;
+        bool pleasant = true;
+        for (char ch : t) {
+            int c = ch - 'a';
+            if (nxt[pos*k + c] == n) {
+                pleasant = false;
+                break;
+            }
+            pos = nxt[pos*k + c] + 1;
+        }
+        if (!pleasant) {
+            cout << "0\n";
+        } else {
+            cout << dp[pos] << '\n';
+        }
+    }
+    
+    return 0;
+}

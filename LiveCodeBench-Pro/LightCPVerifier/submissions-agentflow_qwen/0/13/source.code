@@ -1,0 +1,102 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long LL;
+typedef tuple<LL, int, int> State;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+
+        vector<LL> p(n);
+        for (int i = 0; i < n; i++) {
+            cin >> p[i];
+        }
+
+        map<LL, int> delay_map;
+        for (int i = 0; i < n; i++) {
+            int d;
+            cin >> d;
+            delay_map[p[i]] = d;
+        }
+
+        int q;
+        cin >> q;
+        vector<LL> queries(q);
+        for (int i = 0; i < q; i++) {
+            cin >> queries[i];
+        }
+
+        sort(p.begin(), p.end());
+
+        for (LL start : queries) {
+            LL pos = start;
+            int dir = 1;
+            LL time = 0;
+            set<State> seen;
+
+            if (delay_map.find(pos) != delay_map.end()) {
+                if (time % k == delay_map[pos]) {
+                    dir = -dir;
+                }
+                State state = make_tuple(pos, dir, time % k);
+                if (seen.count(state)) {
+                    cout << "NO\n";
+                    continue;
+                }
+                seen.insert(state);
+            }
+
+            bool exited = false;
+            while (true) {
+                LL next_p = -1;
+                if (dir == 1) {
+                    auto it = upper_bound(p.begin(), p.end(), pos);
+                    if (it != p.end()) {
+                        next_p = *it;
+                    }
+                } else {
+                    auto it = lower_bound(p.begin(), p.end(), pos);
+                    if (it != p.begin()) {
+                        --it;
+                        next_p = *it;
+                    }
+                }
+
+                if (next_p == -1) {
+                    exited = true;
+                    break;
+                }
+
+                LL dist = abs(next_p - pos);
+                time += dist;
+                pos = next_p;
+
+                if (time % k == delay_map[pos]) {
+                    dir = -dir;
+                }
+
+                State state = make_tuple(pos, dir, time % k);
+                if (seen.count(state)) {
+                    break;
+                }
+                seen.insert(state);
+            }
+
+            if (exited) {
+                cout << "YES\n";
+            } else {
+                cout << "NO\n";
+            }
+        }
+    }
+
+    return 0;
+}

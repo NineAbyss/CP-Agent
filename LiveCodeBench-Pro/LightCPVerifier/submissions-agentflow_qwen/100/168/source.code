@@ -1,0 +1,98 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <iomanip>
+using namespace std;
+
+// Global variables
+int n_global;
+int m_global;
+double p_global;
+map<vector<int>, double> memo[4005]; // memo[round][state]
+
+double dp(int round, vector<int> state) {
+    if (round == m_global) {
+        return state.empty() ? 1.0 : 0.0;
+    }
+    
+    sort(state.begin(), state.end());
+    if (memo[round].find(state) != memo[round].end()) {
+        return memo[round][state];
+    }
+    
+    double best_choice_shine = 0.0;
+    // Option: do nothing when shining
+    double option_do_nothing = dp(round + 1, state);
+    best_choice_shine = option_do_nothing;
+    
+    // Option: attack if safe (only if all monsters are still above 1)
+    if ((int)state.size() == n_global) {
+        vector<int> new_state;
+        for (int x : state) {
+            if (x > 1) {
+                new_state.push_back(x - 1);
+            }
+        }
+        sort(new_state.begin(), new_state.end());
+        double option_attack = dp(round + 1, new_state);
+        if (option_attack > best_choice_shine) {
+            best_choice_shine = option_attack;
+        }
+    }
+
+    double best_choice_not_shine = option_do_nothing;
+    // If there are monsters that need reduction, we can attack one
+    if (!state.empty()) {
+        vector<int> new_state = state;
+        new_state.back()--; // reduce the largest one
+        if (new_state.back() == 0) {
+            new_state.pop_back();
+        }
+        sort(new_state.begin(), new_state.end());
+        double option_attack = dp(round + 1, new_state);
+        if (option_attack > best_choice_not_shine) {
+            best_choice_not_shine = option_attack;
+        }
+    }
+
+    double res = p_global * best_choice_shine + (1 - p_global) * best_choice_not_shine;
+    return memo[round][state] = res;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        double p_prime;
+        cin >> n >> m >> p_prime;
+        p_global = p_prime / 100.0;
+
+        vector<int> h(n);
+        for (int i = 0; i < n; i++) {
+            cin >> h[i];
+        }
+
+        // Build initial state: only monsters with h[i] > 1 need reduction
+        vector<int> d;
+        for (int i = 0; i < n; i++) {
+            if (h[i] > 1) {
+                d.push_back(h[i] - 1);
+            }
+        }
+        sort(d.begin(), d.end());
+
+        n_global = n;
+        m_global = m;
+
+        // Clear memoization table
+        for (int i = 0; i <= m; i++) {
+            memo[i].clear();
+        }
+
+        double ans = dp(0, d);
+        cout << fixed << setprecision(6) << ans << '\n';
+    }
+    return 0;
+}

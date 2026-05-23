@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<int> a(n), b(m);
+
+        for (int &x : a) cin >> x;
+        for (int &x : b) cin >> x;
+
+        sort(a.begin(), a.end());
+        sort(b.begin(), b.end());
+
+        int j = 0;
+        for (int i = 0; i < n && j < m; ++i) {
+            if (a[i] >= b[j]) {
+                ++j;
+            }
+        }
+
+        if (j == m) {
+            cout << "0\n"; // All requirements are met without adding a new flower
+        } else {
+            // Determine the minimum `k`
+            int k = b[j]; // Start with the first unmet requirement
+            for (int k2 = j; k2 < m; ++k2) {
+                if (b[k2] > k) {
+                    k = b[k2]; // `k` must cover all unmet `b`
+                }
+            }
+            cout << k << "\n"; 
+        }
+    }
+
+    return 0;
+}

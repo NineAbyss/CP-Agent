@@ -1,0 +1,57 @@
+#include <iostream>
+#include <deque>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int q;
+        cin >> q;
+        deque<int> d;
+        bool rev = false;
+        long long R = 0, S = 0;
+        int n = 0;
+        
+        while (q--) {
+            int s;
+            cin >> s;
+            if (s == 1) {
+                // cyclic shift
+                long long last;
+                if (!rev) {
+                    last = d.back();
+                    d.push_front(last);
+                    d.pop_back();
+                } else {
+                    last = d.front();
+                    d.push_back(last);
+                    d.pop_front();
+                }
+                R = R + S - last * n;
+                // n, S unchanged
+            } else if (s == 2) {
+                // reverse
+                rev = !rev;
+                R = (n + 1) * S - R;
+            } else {
+                // append
+                int k;
+                cin >> k;
+                if (!rev) {
+                    d.push_back(k);
+                } else {
+                    d.push_front(k);
+                }
+                n++;
+                R += (long long)k * n;
+                S += k;
+            }
+            cout << R << '\n';
+        }
+    }
+    return 0;
+}

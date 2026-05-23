@@ -1,0 +1,100 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        vector<int> p(n+1);
+        vector<int> pos(n+1);
+        for (int i = 1; i <= n; i++) {
+            cin >> p[i];
+            pos[p[i]] = i;
+        }
+
+        vector<int> answers;
+        for (int i = 0; i < q; i++) {
+            int l, r, k;
+            cin >> l >> r >> k;
+            int pos_k = pos[k];
+
+            // Check if k is in range [l, r]
+            if (pos_k < l || pos_k > r) {
+                answers.push_back(-1);
+                continue;
+            }
+
+            int cur_l = l, cur_r = r;
+            vector<int> repair_points;
+            int need_small = 0; // need p[mid] < k
+            int need_large = 0; // need p[mid] > k
+
+            while (cur_l <= cur_r) {
+                int mid = (cur_l + cur_r) / 2;
+                if (mid == pos_k) {
+                    break;
+                }
+
+                bool target_left = (pos_k < mid);
+                bool target_right = (pos_k > mid);
+
+                bool go_left = (p[mid] > k);
+                bool go_right = (p[mid] < k);
+
+                bool need_repair = false;
+                if (target_left && go_right) {
+                    // Must go left, but would go right -> repair to make p[mid] > k
+                    need_repair = true;
+                    need_large++;
+                } else if (target_right && go_left) {
+                    // Must go right, but would go left -> repair to make p[mid] < k
+                    need_repair = true;
+                    need_small++;
+                }
+
+                if (need_repair) {
+                    repair_points.push_back(mid);
+                }
+
+                if (target_left) {
+                    cur_r = mid - 1;
+                } else {
+                    cur_l = mid + 1;
+                }
+            }
+
+            // Critical: if we need values that don't exist
+            if ((need_small > 0 && k == 1) || (need_large > 0 && k == n)) {
+                answers.push_back(-1);
+                continue;
+            }
+
+            // Count available small and large values among repair_points
+            int avail_small = 0, avail_large = 0;
+            for (int idx : repair_points) {
+                if (p[idx] < k) avail_small++;
+                else if (p[idx] > k) avail_large++;
+            }
+
+            int deficit = max(0, need_small - avail_small) + max(0, need_large - avail_large);
+            int ans = (int)repair_points.size() + deficit;
+            answers.push_back(ans);
+        }
+
+        // Output all answers for this test case in one line
+        for (int i = 0; i < answers.size(); i++) {
+            if (i > 0) cout << ' ';
+            cout << answers[i];
+        }
+        cout << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

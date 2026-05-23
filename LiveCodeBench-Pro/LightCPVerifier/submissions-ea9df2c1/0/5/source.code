@@ -1,0 +1,36 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, s;
+        cin >> n >> s;
+        long long mod = 2LL * s;
+        int ans = 0;
+        // 四个角落的偏移量
+        int rx[4] = {0, 0, s, s};
+        int ry[4] = {0, s, 0, s};
+        for (int i = 0; i < n; ++i) {
+            int dx, dy, x, y;
+            cin >> dx >> dy >> x >> y;
+            long long C = 1LL * dx * y - 1LL * dy * x;
+            bool potted = false;
+            for (int j = 0; j < 4; ++j) {
+                long long R = 1LL * dx * ry[j] - 1LL * dy * rx[j];
+                long long diff = C - R;
+                if (diff % mod == 0) {
+                    potted = true;
+                    break;
+                }
+            }
+            if (potted) ans++;
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

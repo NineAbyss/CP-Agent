@@ -1,0 +1,31 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        string s;
+        cin >> n >> k >> s;
+        int cnt0 = 0, cnt1 = 0;
+        for (char c : s) {
+            if (c == '0') cnt0++;
+            else cnt1++;
+        }
+        int need_diff = n/2 - k; // number of 0-1 pairs needed
+        bool ok = true;
+        if (cnt0 < need_diff || cnt1 < need_diff) {
+            ok = false;
+        } else {
+            int rem0 = cnt0 - need_diff;
+            int rem1 = cnt1 - need_diff;
+            if (rem0 % 2 != 0 || rem1 % 2 != 0) {
+                ok = false;
+            }
+        }
+        cout << (ok ? "YES" : "NO") << endl;
+    }
+    return 0;
+}

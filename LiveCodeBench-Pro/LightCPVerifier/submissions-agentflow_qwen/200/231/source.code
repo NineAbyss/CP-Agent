@@ -1,0 +1,76 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <cstdlib>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<string> grid(n);
+        for (int i = 0; i < n; i++) {
+            cin >> grid[i];
+        }
+
+        vector<vector<bool>> visited(n, vector<bool>(m, false));
+        // Use a priority queue to process cells with high i first, then high j
+        auto cmp = [](const pair<int,int>& a, const pair<int,int>& b) {
+            if (a.first != b.first) {
+                return a.first < b.first; // max-heap for i
+            }
+            return a.second < b.second; // then for j
+        };
+        priority_queue<pair<int, int>, vector<pair<int, int>>, decltype(cmp)> q(cmp);
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (grid[i][j] == '.') {
+                    visited[i][j] = true;
+                    q.push({i, j});
+                }
+            }
+        }
+
+        int collected = 0;
+        while (!q.empty()) {
+            auto [i, j] = q.top();
+            q.pop();
+
+            for (int di = -k; di <= k; di++) {
+                for (int dj = -k; dj <= k; dj++) {
+                    int ni = i + di;
+                    int nj = j + dj;
+                    if (ni >= 0 && ni < n && nj >= 0 && nj < m) {
+                        if (grid[ni][nj] == 'g') {
+                            if (abs(di) == k || abs(dj) == k) {
+                                collected++;
+                            }
+                        }
+                        grid[ni][nj] = '.';
+                    }
+                }
+            }
+
+            for (int di = -k; di <= k; di++) {
+                for (int dj = -k; dj <= k; dj++) {
+                    int ni = i + di;
+                    int nj = j + dj;
+                    if (ni >= 0 && ni < n && nj >= 0 && nj < m && !visited[ni][nj]) {
+                        visited[ni][nj] = true;
+                        q.push({ni, nj});
+                    }
+                }
+            }
+        }
+
+        cout << collected << '\n';
+    }
+    return 0;
+}

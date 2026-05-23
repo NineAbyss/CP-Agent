@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // x = a_i + 1
+        map<long long, int> cnt;
+        for (int i = 0; i < n; i++) {
+            cnt[a[i] + 1]++;
+        }
+
+        bool ans = false;
+        for (auto &[day, count] : cnt) {
+            if (count >= 4) {
+                ans = true;
+                break;
+            }
+        }
+
+        if (ans) {
+            cout << "Yes\n";
+            continue;
+        }
+
+        for (auto &[day, count] : cnt) {
+            if (count >= 2) {
+                if (cnt.count(day-1) && cnt.count(day+1)) {
+                    ans = true;
+                    break;
+                }
+                if (cnt.count(day-1) && cnt.count(day-2)) {
+                    ans = true;
+                    break;
+                }
+                if (cnt.count(day+1) && cnt.count(day+2)) {
+                    ans = true;
+                    break;
+                }
+            }
+        }
+
+        cout << (ans ? "Yes" : "No") << '\n';
+    }
+}

@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    string s;
+    cin >> s;
+    
+    vector<pair<char, char>> ops(q);
+    for (int i = 0; i < q; i++) {
+        cin >> ops[i].first >> ops[i].second;
+    }
+    
+    // 计算 best[i][c]
+    vector<array<char, 3>> best(q + 1);
+    for (int c = 0; c < 3; c++) {
+        best[q][c] = 'a' + c;
+    }
+    
+    for (int i = q - 1; i >= 0; i--) {
+        char x = ops[i].first, y = ops[i].second;
+        for (int c = 0; c < 3; c++) {
+            best[i][c] = best[i + 1][c];
+        }
+        if (best[i + 1][y - 'a'] < best[i][x - 'a']) {
+            best[i][x - 'a'] = best[i + 1][y - 'a'];
+        }
+    }
+    
+    string result = s;
+    vector<bool> used(q, false);
+    
+    // 对于每个位置
+    for (int pos = 0; pos < n; pos++) {
+        char cur = result[pos];
+        
+        // 尝试所有可能的目标字符，从最小开始
+        for (char target = 'a'; target < cur; target++) {
+            // 检查是否可能
+            vector<bool> temp_used = used;
+            vector<int> path;
+            char current = cur;
+            bool possible = true;
+            
+            while (current != target) {
+                int op_idx = -1;
+                for (int i = 0; i < q; i++) {
+                    if (!temp_used[i] && ops[i].first == current) {
+                        if (best[i + 1][ops[i].second - 'a'] == target) {
+                            op_idx = i;
+                            break;
+                        }
+                    }
+                }
+                
+                if (op_idx == -1) {
+                    possible = false;
+                    break;
+                }
+                
+                temp_used[op_idx] = true;
+                path.push_back(op_idx);
+                current = ops[op_idx].second;
+            }
+            
+            if (possible) {
+                // 应用转换
+                for (int idx : path) used[idx] = true;
+                result[pos] = target;
+                break;
+            }
+        }
+    }
+    
+    cout << result << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

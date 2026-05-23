@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+
+        vector<string> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        vector<vector<string>> b(m, vector<string>(n));
+        vector<set<int>> valid_positions(n); // Stores indices of neural networks providing valid output at position j
+
+        for (int i = 0; i < m; ++i) {
+            for (int j = 0; j < n; ++j) {
+                cin >> b[i][j];
+                if (b[i][j] == a[j]) {
+                    valid_positions[j].insert(i);
+                }
+            }
+        }
+
+        // Check feasibility: if any position is not covered by any network, print -1
+        if (any_of(valid_positions.begin(), valid_positions.end(), [](const set<int>& s) { return s.empty(); })) {
+            cout << -1 << "\n";
+            continue;
+        }
+
+        vector<int> dp(n + 1, INT_MAX);
+        dp[0] = 0; // Starting from the blank array
+
+        for (int j = 0; j < n; ++j) {
+            if (dp[j] != INT_MAX) {
+                for (int i : valid_positions[j]) {
+                    int k = j;
+                    while (k < n && b[i][k] == a[k]) {
+                        dp[k + 1] = min(dp[k + 1], dp[j] + 1);
+                        k++;
+                    }
+                }
+            }
+        }
+
+        cout << (dp[n] == INT_MAX ? -1 : dp[n]) << "\n";
+    }
+
+    return 0;
+}

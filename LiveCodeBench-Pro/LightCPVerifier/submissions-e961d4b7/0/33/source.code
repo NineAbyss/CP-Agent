@@ -1,0 +1,46 @@
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <iomanip>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        bool found = false;
+        for (int x = 0; x <= 99; ++x) {
+            int sq = x * x;
+            ostringstream oss;
+            oss << setw(4) << setfill('0') << sq;
+            if (oss.str() == s) {
+                int a0 = stoi(s.substr(0, 2));
+                int b0 = stoi(s.substr(2, 2));
+                if (a0 + b0 == x) {
+                    cout << a0 << ' ' << b0 << '\n';
+                } else {
+                    if (x % 2 == 0 && x >= 2) {
+                        int a = x / 2 - 1;
+                        int b = x / 2 + 1;
+                        cout << a << ' ' << b << '\n';
+                    } else {
+                        int a = x / 2;
+                        int b = x - a;
+                        cout << a << ' ' << b << '\n';
+                    }
+                }
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            cout << "-1\n";
+        }
+    }
+    return 0;
+}

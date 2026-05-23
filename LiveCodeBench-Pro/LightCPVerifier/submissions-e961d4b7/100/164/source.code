@@ -1,0 +1,87 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cassert>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        // 计算 q 使得 2^{q-1} >= n
+        int q = 0;
+        long long p = 1;
+        while (p < n) {
+            p *= 2;
+            q++;
+        }
+        q++; // 因为 q-1 位信息，1位奇偶校验 // 但需要 q <= 20，保证成立
+        if (q > 20) q = 20; // 应该不会发生 // 生成二进制偶数重量码：所有长度为 q 的二进制字符串，其中1的个数为偶数
+        // 但我们需要 n 个字符串，所以选择前 n 个 // 映射：0 -> L, 1 -> R
+        // 对于每个查询 i，左半部分是符号为 L 的数字，右半部分是符号为 R 的数字 // 由于每个位置0和1的数量相等（因为偶数重量码的性质），所以左右大小相等
+        // 首先生成字符串
+        vector<vector<int>> codes;
+        // 我们只需要 n 个字符串，可以按顺序生成 // 对于数字 x，令其二进制表示为 x-1，然后添加奇偶校验位使得1的个数为偶数
+        for (int x = 1; x <= n; ++x) {
+            int t = x - 1;
+            vector<int> bits(q, 0);
+            int cnt1 = 0;
+            for (int i = 0; i < q-1; ++i) {
+                bits[i] = (t >> i) & 1;
+                cnt1 += bits[i];
+            }
+            // 设置校验位
+            bits[q-1] = cnt1 % 2;
+            codes.push_back(bits);
+        }
+        // 输出查询数量
+        cout << q << endl;
+        // 对于每个查询 i
+        for (int i = 0; i < q; ++i) {
+            vector<int> left, right;
+            for (int j = 0; j < n; ++j) {
+                if (codes[j][i] == 0) left.push_back(j+1);
+                else right.push_back(j+1);
+            }
+            // 确保大小相等
+            assert(left.size() == right.size());
+            int k = left.size() + right.size();
+            cout << k;
+            for (int x : left) cout << ' ' << x;
+            for (int x : right) cout << ' ' << x;
+            cout << endl;
+        }
+        cout.flush();
+        // 读取响应
+        string s;
+        cin >> s;
+        // 解码
+        int ans = -1;
+        for (int x = 1; x <= n; ++x) {
+            for (int j = 0; j < q; ++j) {
+                bool ok = true;
+                for (int i = 0; i < q; ++i) {
+                    if (i == j) {
+                        if (s[i] != '?') ok = false;
+                    } else {
+                        char expected = (codes[x-1][i] == 0 ? 'L' : 'R');
+                        if (s[i] != expected) {
+                            ok = false;
+                            break;
+                        }
+                    }
+                }
+                if (ok) {
+                    ans = x;
+                    break;
+                }
+            }
+            if (ans != -1) break;
+        }
+        assert(ans != -1);
+        cout << ans << endl;
+    }
+    return 0;
+}

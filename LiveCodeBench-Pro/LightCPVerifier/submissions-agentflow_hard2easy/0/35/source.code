@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        int ans = n;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                int minv = a[i];
+                int maxv = a[j];
+                if (minv > maxv) continue;
+                if ((minv + maxv) % 2 != 0) continue;
+                int need_remove = 0;
+                for (int x : a) {
+                    if (x < minv || x > maxv) need_remove++;
+                }
+                ans = min(ans, need_remove);
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

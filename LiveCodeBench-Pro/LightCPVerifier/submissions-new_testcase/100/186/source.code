@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int nor(int a, int b, int k) {
+    int res = 0;
+    for (int i = 0; i < k; i++) {
+        int bit_a = (a >> i) & 1;
+        int bit_b = (b >> i) & 1;
+        int bit_res = !(bit_a | bit_b);
+        res |= (bit_res << i);
+    }
+    return res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        vector<int> ans(n, 0);
+        // For each i, brute force over subarrays containing i with limited length
+        const int LIMIT = 500; // adjust as needed
+        for (int i = 0; i < n; i++) {
+            int best = a[i];
+            for (int l = max(0, i - LIMIT); l <= i; l++) {
+                int cur = a[l];
+                if (cur > best) best = cur;
+                for (int r = i; r < min(n, i + LIMIT); r++) {
+                    if (r == l) continue;
+                    cur = nor(cur, a[r], k);
+                    if (l <= i && i <= r && cur > best) best = cur;
+                }
+            }
+            ans[i] = best;
+        }
+        for (int i = 0; i < n; i++) cout << ans[i] << " \n"[i==n-1];
+    }
+    return 0;
+}

@@ -1,0 +1,39 @@
+#include <iostream>
+using namespace std;
+
+// Key observation:
+// We need to determine for which k, every integer n >= k can be expressed as 
+// the sum of a palindromic array of exactly k positive integers.
+
+// Let's analyze: // - For k = 1: [n] is always palindromic -> YES
+// - For k = 2: Array must be [a, a], so sum = 2a. Only even numbers >= 2 can be formed.
+//   But odd numbers like 3 cannot be formed -> NO
+// - For odd k (k = 2m+1): We can construct a symmetric array where middle element is x, //   and pairs around it are y. Total sum = x + 2*(sum of m values).
+//   We can set all outer elements to 1 except possibly the center. //   Minimum sum is k (all ones). To get any n >= k:
+//     Let base array be all 1s: sum = k //     We can increase the center element to adjust total sum by any amount.
+//     So we can achieve any n >= k -> YES for odd k. // - For even k (k = 2m): Array is symmetric: [a1, a2, ..., am, am, ..., a2, a1]
+//   Sum = 2*(a1 + a2 + ... + am) → always even. //   So only even sums >= k can be achieved.
+//   But we need to represent ALL n >= k, including odd ones.
+//   Therefore, even k > 1 cannot be ideal generators -> NO
+
+// Conclusion:
+// k is an ideal generator if and only if k is odd.
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int k;
+        cin >> k;
+        
+        // k is ideal generator iff k is odd
+        if (k % 2 == 1) {
+            cout << "YES" << endl;
+        } else {
+            cout << "NO" << endl;
+        }
+    }
+    
+    return 0;
+}

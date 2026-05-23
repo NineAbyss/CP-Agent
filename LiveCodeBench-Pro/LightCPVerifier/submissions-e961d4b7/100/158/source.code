@@ -1,0 +1,193 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <random>
+#include <algorithm>
+using namespace std;
+
+const int MAXN = 300005;
+
+struct Node {
+    int left, right;
+    int priority;
+    int size;
+    bool rev;
+    
+    vector<int> lazyInsert;
+    priority_queue<int, vector<int>, greater<int>> pq;
+    
+    Node() : left(0), right(0), priority(rand()), size(1), rev(false) {}
+};
+
+Node nodes[MAXN];
+int nodeCount = 0;
+
+int newNode() {
+    if (nodeCount >= MAXN) return 0;
+    nodes[++nodeCount] = Node();
+    return nodeCount;
+}
+
+int getSize(int idx) {
+    return idx ? nodes[idx].size : 0;
+}
+
+void updateSize(int idx) {
+    if (idx) {
+        nodes[idx].size = 1 + getSize(nodes[idx].left) + getSize(nodes[idx].right);
+    }
+}
+
+void pushRev(int idx) {
+    if (idx && nodes[idx].rev) {
+        nodes[idx].rev = false;
+        swap(nodes[idx].left, nodes[idx].right);
+        if (nodes[idx].left) nodes[nodes[idx].left].rev ^= 1;
+        if (nodes[idx].right) nodes[nodes[idx].right].rev ^= 1;
+    }
+}
+
+void pushInsert(int idx) {
+    if (!idx || nodes[idx].lazyInsert.empty()) return;
+    
+    vector<int> toInsert = nodes[idx].lazyInsert;
+    nodes[idx].lazyInsert.clear();
+    
+    for (int x : toInsert) {
+        nodes[idx].pq.push(x);
+    }
+    
+    if (nodes[idx].left) {
+        for (int x : toInsert) {
+            nodes[nodes[idx].left].lazyInsert.push_back(x);
+        }
+    }
+    if (nodes[idx].right) {
+        for (int x : toInsert) {
+            nodes[nodes[idx].right].lazyInsert.push_back(x);
+        }
+    }
+}
+
+void pushAll(int idx) {
+    if (!idx) return;
+    pushRev(idx);
+    pushInsert(idx);
+}
+
+void split(int root, int k, int& left, int& right) {
+    if (!root) {
+        left = right = 0;
+        return;
+    }
+    pushAll(root);
+    int leftSize = getSize(nodes[root].left);
+    if (k <= leftSize) {
+        split(nodes[root].left, k, left, nodes[root].left);
+        right = root;
+    } else {
+        split(nodes[root].right, k - leftSize - 1, nodes[root].right, right);
+        left = root;
+    }
+    updateSize(root);
+}
+
+int merge(int left, int right) {
+    if (!left) return right;
+    if (!right) return left;
+    
+    pushAll(left);
+    pushAll(right);
+    
+    if (nodes[left].priority > nodes[right].priority) {
+        nodes[left].right = merge(nodes[left].right, right);
+        updateSize(left);
+        return left;
+    } else {
+        nodes[right].left = merge(left, nodes[right].left);
+        updateSize(right);
+        return right;
+    }
+}
+
+int getKth(int root, int k) {
+    if (!root) return 0;
+    pushAll(root);
+    int leftSize = getSize(nodes[root].left);
+    if (k == leftSize + 1) {
+        return root;
+    } else if (k <= leftSize) {
+        return getKth(nodes[root].left, k);
+    } else {
+        return getKth(nodes[root].right, k - leftSize - 1);
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    srand(12345);
+    
+    int n, q;
+    cin >> n >> q;
+    
+    int root = 0;
+    for (int i = 0; i < n; i++) {
+        root = merge(root, newNode());
+    }
+    
+    vector<int> ans(q + 1, 0);
+    vector<bool> deleted(q + 1, false);
+    
+    for (int i = 1; i <= q; i++) {
+        int a, b, c;
+        cin >> a >> b >> c;
+        
+        int r, x, p;
+        if (a == 1 || a == 2) {
+            r = (b + ans[i-1] - 1) % n + 1;
+            p = (c + ans[i-1] - 1) % n + 1;
+        } else { // a == 3
+            x = (b + ans[i-1] - 1) % q + 1;
+            p = (c + ans[i-1] - 1) % n + 1;
+        }
+        
+        if (a == 1) {
+            int left, right;
+            split(root, r, left, right);
+            if (left) {
+                nodes[left].lazyInsert.push_back(i);
+            }
+            root = merge(left, right);
+        } else if (a == 2) {
+            int left, right;
+            split(root, r, left, right);
+            if (left) {
+                nodes[left].rev ^= 1;
+            }
+            root = merge(left, right);
+        } else if (a == 3) {
+            deleted[x] = true;
+        }
+        
+        int node = getKth(root, p);
+        if (node) {
+            pushAll(node);
+            while (!nodes[node].pq.empty() && deleted[nodes[node].pq.top()]) {
+                nodes[node].pq.pop();
+            }
+            if (!nodes[node].pq.empty()) {
+                ans[i] = nodes[node].pq.top();
+            } else {
+                ans[i] = 0;
+            }
+        } else {
+            ans[i] = 0;
+        }
+        
+        cout << ans[i] << '\n';
+    }
+    
+    return 0;
+}

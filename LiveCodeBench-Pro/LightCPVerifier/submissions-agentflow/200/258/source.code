@@ -1,0 +1,49 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        
+        int cx = (n + 1) / 2;
+        int cy = (m + 1) / 2;
+        
+        vector<pair<int, int>> cells;
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= m; j++) {
+                cells.push_back({i, j});
+            }
+        }
+        
+        // 排序：先按曼哈顿距离（小的先），再按切比雪夫距离（小的先）
+        sort(cells.begin(), cells.end(), [&](const pair<int, int>& a, const pair<int, int>& b) {
+            int ma = abs(a.first - cx) + abs(a.second - cy);
+            int mb = abs(b.first - cx) + abs(b.second - cy);
+            if (ma != mb) return ma < mb;
+            
+            int ca = max(abs(a.first - cx), abs(a.second - cy));
+            int cb = max(abs(b.first - cx), abs(b.second - cy));
+            if (ca != cb) return ca < cb;
+            
+            if (a.first != b.first) return a.first < b.first;
+            return a.second < b.second;
+        });
+        
+        for (auto& p : cells) {
+            cout << p.first << " " << p.second << "\n";
+        }
+        
+        if (t > 0) {
+            cout << "\n";
+        }
+    }
+    
+    return 0;
+}

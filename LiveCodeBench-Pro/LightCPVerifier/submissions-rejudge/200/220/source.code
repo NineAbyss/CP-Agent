@@ -1,0 +1,169 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    
+    vector<int> b(n);
+    for (int i = 0; i < n; i++) {
+        cin >> b[i];
+    }
+    
+    vector<vector<pair<int, int>>> g(n+1);
+    for (int i = 0; i < m; i++) {
+        int s, t, w;
+        cin >> s >> t >> w;
+        g[s].push_back({t, w});
+    }
+    
+    // 检查是否可以从点1到达点n
+    vector<bool> can_reach(n+1, false);
+    can_reach[n] = true;
+    
+    // 反向拓扑
+    vector<int> order;
+    {
+        vector<int> indeg(n+1, 0);
+        for (int u = 1; u <= n; u++) {
+            for (auto [v, w] : g[u]) {
+                indeg[v]++;
+            }
+        }
+        
+        queue<int> q;
+        for (int i = 1; i <= n; i++) {
+            if (indeg[i] == 0) q.push(i);
+        }
+        
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            order.push_back(u);
+            for (auto [v, w] : g[u]) {
+                indeg[v]--;
+                if (indeg[v] == 0) q.push(v);
+            }
+        }
+    }
+    
+    reverse(order.begin(), order.end());
+    for (int u : order) {
+        for (auto [v, w] : g[u]) {
+            if (can_reach[v]) {
+                can_reach[u] = true;
+            }
+        }
+    }
+    
+    if (!can_reach[1]) {
+        cout << -1 << endl;
+        return;
+    }
+    
+    // 计算每个点的最小需求
+    vector<long long> req(n+1, LLONG_MAX);
+    req[n] = 0;
+    
+    // 构建反向图
+    vector<vector<pair<int, int>>> rg(n+1);
+    for (int u = 1; u <= n; u++) {
+        for (auto [v, w] : g[u]) {
+            rg[v].push_back({u, w});
+        }
+    }
+    
+    // 按逆拓扑顺序更新req
+    for (int v : order) {
+        if (req[v] == LLONG_MAX) continue;
+        
+        for (auto [u, w] : rg[v]) {
+            if (!can_reach[u]) continue;
+            
+            long long need = max((long long)w, req[v]);
+            // 检查是否可能
+            if (need <= b[u-1]) {
+                if (need < req[u]) {
+                    req[u] = need;
+                }
+            }
+        }
+    }
+    
+    if (req[1] == LLONG_MAX) {
+        cout << -1 << endl;
+        return;
+    }
+    
+    // 现在使用Dijkstra计算最小最终电池数
+    vector<long long> dist(n+1, LLONG_MAX);
+    dist[1] = req[1];
+    
+    using State = pair<long long, int>;
+    priority_queue<State, vector<State>, greater<State>> pq;
+    pq.push({dist[1], 1});
+    
+    while (!pq.empty()) {
+        auto [batt, u] = pq.top();
+        pq.pop();
+        
+        if (batt != dist[u]) continue;
+        if (u == n) break;
+        
+        for (auto [v, w] : g[u]) {
+            if (!can_reach[v]) continue;
+            
+            // 通过边需要至少w个电池
+            if (batt < w) {
+                long long need = w - batt;
+                if (need > b[u-1]) continue;
+                long long new_batt = w;
+                
+                // 确保new_batt足够从v出发
+                if (new_batt < req[v]) {
+                    long long need2 = req[v] - new_batt;
+                    if (need2 > b[v-1]) continue;
+                    new_batt = req[v];
+                }
+                
+                if (new_batt < dist[v]) {
+                    dist[v] = new_batt;
+                    pq.push({new_batt, v});
+                }
+            } else {
+                long long new_batt = batt;
+                
+                // 确保new_batt足够从v出发
+                if (new_batt < req[v]) {
+                    long long need2 = req[v] - new_batt;
+                    if (need2 > b[v-1]) continue;
+                    new_batt = req[v];
+                }
+                
+                if (new_batt < dist[v]) {
+                    dist[v] = new_batt;
+                    pq.push({new_batt, v});
+                }
+            }
+        }
+    }
+    
+    if (dist[n] == LLONG_MAX) {
+        cout << -1 << endl;
+    } else {
+        cout << dist[n] << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

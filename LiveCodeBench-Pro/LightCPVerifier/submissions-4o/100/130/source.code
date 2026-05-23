@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+void dfs(int node, int parent, vector<int>& parentTrack, vector<vector<int>>& adjList, vector<tuple<int, int, int>>& result) {
+    parentTrack.push_back(node);
+
+    // Sort neighbours in descending order to ensure largest lexicographical
+    sort(adjList[node].rbegin(), adjList[node].rend());
+
+    for (int neighbor : adjList[node]) {
+        if (neighbor != parent) {
+            dfs(neighbor, node, parentTrack, adjList, result);
+        }
+    }
+
+    // If we're backtracking, take this path and capture the biggest
+    if (parentTrack.size() > 1) {
+        int f = parentTrack.front();
+        int b = parentTrack.back();
+        result.push_back({parentTrack.size(), f, b});
+    }
+
+    parentTrack.pop_back();
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+
+        vector<vector<int>> adjList(n + 1); // adjacency list representing the tree
+
+        for (int i = 0; i < n - 1; ++i) {
+            int u, v;
+            cin >> u >> v;
+            adjList[u].push_back(v);
+            adjList[v].push_back(u);
+        }
+
+        vector<tuple<int, int, int>> result;
+        vector<int> parentTrack;
+
+        // Start DFS from node 1 (assuming 1 is in the tree, given 1 <= u,v <= n)
+        dfs(1, -1, parentTrack, adjList, result);
+
+        // Print the result
+        for (auto& entry : result) {
+            cout << get<0>(entry) << ' ' << get<1>(entry) << ' ' << get<2>(entry) << '\n';
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,94 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+ll count_subsegments(const vector<ll>& a, ll s, ll x) {
+    int n = a.size();
+    ll ans = 0;
+    int i = 0;
+    while (i < n) {
+        // 跳过大于 x 的元素
+        if (a[i] > x) {
+            i++;
+            continue;
+        }
+        int start = i;
+        while (i < n && a[i] <= x) {
+            i++;
+        }
+        int end = i - 1;
+        // 检查块内是否有 x
+        bool has_x = false;
+        for (int j = start; j <= end; j++) {
+            if (a[j] == x) {
+                has_x = true;
+                break;
+            }
+        }
+        if (!has_x) continue;
+        // 统计整个块内和为 s 的子段数量
+        unordered_map<ll, int> cnt;
+        cnt.reserve(end - start + 2);
+        cnt[0] = 1;
+        ll pre = 0;
+        ll total = 0;
+        for (int j = start; j <= end; j++) {
+            pre += a[j];
+            total += cnt[pre - s];
+            cnt[pre]++;
+        }
+        // 找出所有 x 的位置
+        vector<int> x_pos;
+        for (int j = start; j <= end; j++) {
+            if (a[j] == x) x_pos.push_back(j);
+        }
+        // 不含 x 的区间
+        vector<pair<int, int>> no_x;
+        if (start <= x_pos[0] - 1) {
+            no_x.emplace_back(start, x_pos[0] - 1);
+        }
+        for (size_t k = 0; k + 1 < x_pos.size(); k++) {
+            int l = x_pos[k] + 1;
+            int r = x_pos[k + 1] - 1;
+            if (l <= r) no_x.emplace_back(l, r);
+        }
+        if (x_pos.back() + 1 <= end) {
+            no_x.emplace_back(x_pos.back() + 1, end);
+        }
+        // 减去不含 x 的区间中的子段
+        ll subtract = 0;
+        for (auto& [l, r] : no_x) {
+            unordered_map<ll, int> local;
+            local.reserve(r - l + 2);
+            local[0] = 1;
+            ll local_pre = 0;
+            for (int j = l; j <= r; j++) {
+                local_pre += a[j];
+                subtract += local[local_pre - s];
+                local[local_pre]++;
+            }
+        }
+        ans += total - subtract;
+    }
+    return ans;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        ll s, x;
+        cin >> n >> s >> x;
+        vector<ll> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        cout << count_subsegments(a, s, x) << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

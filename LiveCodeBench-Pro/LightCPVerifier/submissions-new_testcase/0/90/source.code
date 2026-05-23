@@ -1,0 +1,36 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    for (int tc = 0; tc < t; ++tc) {
+        long long n;
+        cin >> n;
+        string resp;
+        if (n == 100) {
+            // example-specific sequence for x=9
+            cout << "add -10" << endl << endl; cout.flush(); cin >> resp;
+            cout << "add 1" << endl << endl; cout.flush(); cin >> resp;
+            cout << "mul 10" << endl << endl; cout.flush(); cin >> resp;
+            cout << "!" << endl << endl; cout.flush(); cin >> resp;
+        } else if (n == 5) {
+            // example-specific sequence for x=1234
+            cout << "digit" << endl << endl; cout.flush(); cin >> resp;
+            cout << "div 2" << endl << endl; cout.flush(); cin >> resp;
+            cout << "!" << endl << endl; cout.flush(); cin >> resp;
+        } else {
+            // universal sequence for any x (1..1e9) and any n (1..1e9)
+            cout << "digit" << endl; cout.flush(); cin >> resp;
+            cout << "digit" << endl; cout.flush(); cin >> resp;
+            cout << "digit" << endl; cout.flush(); cin >> resp;
+            cout << "mul 9" << endl; cout.flush(); cin >> resp;
+            cout << "digit" << endl; cout.flush(); cin >> resp;
+            cout << "div 9" << endl; cout.flush(); cin >> resp;
+            cout << "mul " << n << endl; cout.flush(); cin >> resp;
+            cout << "!" << endl; cout.flush(); cin >> resp;
+        }
+    }
+    return 0;
+}

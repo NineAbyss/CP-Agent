@@ -1,0 +1,47 @@
+#include <iostream>
+#include <string>
+#include <cstring>
+#include <climits>
+#include <cmath>
+using namespace std;
+
+int dp[10][2][2];
+string L, R;
+int n;
+
+int solve(int i, int tl, int tr) {
+    if (i == n) return 0;
+    if (dp[i][tl][tr] != -1) return dp[i][tl][tr];
+    int lo = 0, hi = 9;
+    if (tl) lo = L[i] - '0';
+    if (tr) hi = R[i] - '0';
+    int res = INT_MAX;
+    for (int d = lo; d <= hi; d++) {
+        int cnt = (d == L[i]-'0') + (d == R[i]-'0');
+        int ntl = tl && (d == L[i]-'0');
+        int ntr = tr && (d == R[i]-'0');
+        int sub = solve(i+1, ntl, ntr);
+        if (sub != INT_MAX) {
+            res = min(res, cnt + sub);
+        }
+    }
+    return dp[i][tl][tr] = res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int l, r;
+        cin >> l >> r;
+        L = to_string(l);
+        R = to_string(r);
+        n = L.size();
+        memset(dp, -1, sizeof dp);
+        int ans = solve(0, 1, 1);
+        cout << ans << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,55 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    cout.flush();
+
+    while (t--) {
+        int n;
+        cin >> n;
+        cout.flush();
+
+        // Start with "digit" operation
+        cout << "digit" << endl;
+        cout.flush();
+        int response;
+        cin >> response;
+
+        // Assume we have a mock current value for x.
+        int current_x = 0;
+
+        // While the current_x doesn't equal n
+        while (current_x != n) {
+            if (current_x < n) {
+                // If current_x is smaller, we should increase it
+                int diff = n - current_x;
+                if (diff <= 100) {
+                    cout << "add " << diff << endl; // Direct addition to reach
+                } else {
+                    cout << "mul 10" << endl; // Use multiplication for large jumps
+                }
+            } else if (current_x > n) {
+                // Reduce current_x when overshoot
+                int div_factor = current_x / n;
+                cout << "div " << div_factor << endl;
+            }
+            cout.flush();
+            cin >> response;
+
+            // This decision-making process should generally adapt based on feedback
+            if (response == 1) {
+                cout << "!" << endl;
+                cout.flush();
+                cin >> response;
+                if (response == 1) break;
+            }
+        }
+    }
+
+    return 0;
+}

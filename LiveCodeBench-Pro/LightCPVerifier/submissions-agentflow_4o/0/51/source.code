@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Function to solve for each test case
+void solve(int n, long long m) {
+    long long minDiv = n;  // Minimum divineness the tree can have
+    long long maxDiv = (long long)n * (n + 1) / 2;  // Maximum divineness if the tree is a straight chain
+
+    if (m < minDiv || m > maxDiv) {
+        cout << "-1\n";  // Impossible condition
+        return;
+    }
+
+    // This will hold the edges of the tree
+    vector<pair<int, int>> edges;
+    int current_sum = n;  // Start with the minimum divineness
+    int root = m - n + 1;  // Initial root choice balanced calculation
+    
+    // Constructing edges
+    for (int i = 2; i <= n; ++i) {
+        long long increment = i - 1;
+        if (current_sum + increment <= m) {
+            current_sum += increment;
+            edges.emplace_back(1, i);  // Direct connection to root to increment sum
+        } else {
+            long neededIncrement = m - current_sum;
+            current_sum += neededIncrement;
+            edges.emplace_back(i - neededIncrement, i);  // Correct linking considering divineness
+            break;
+        }
+    }
+
+    if (current_sum != m) {
+        cout << "-1\n";  // Check if the sum achieved correctly
+        return;
+    }
+
+    cout << root << "\n";  // Starting from the current root
+    for (auto &edge : edges) {
+        cout << edge.first << " " << edge.second << "\n";  // Output edges
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long m;
+        cin >> n >> m;
+        solve(n, m);
+    }
+
+    return 0;
+}

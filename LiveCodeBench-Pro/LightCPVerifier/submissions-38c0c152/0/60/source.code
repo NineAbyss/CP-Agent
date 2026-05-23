@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <map>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        // group positions by weight in descending order
+        map<int, vector<int>, greater<int>> groups;
+        for (int i = 0; i < n; i++) {
+            groups[a[i]].push_back(i);
+        }
+        vector<bool> present(n, false);
+        int segments = 0;
+        int ans = 0;
+        for (auto& [w, pos_list] : groups) {
+            for (int pos : pos_list) {
+                present[pos] = true;
+                bool left = (pos > 0 && present[pos-1]);
+                bool right = (pos < n-1 && present[pos+1]);
+                if (left && right) {
+                    segments--;
+                } else if (!left && !right) {
+                    segments++;
+                }
+                // else segments unchanged
+            }
+            ans = max(ans, segments);
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

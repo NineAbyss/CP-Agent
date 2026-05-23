@@ -1,0 +1,75 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> grid(n, vector<int>(n, -1));
+        int val = 0;
+        // first cell: choose cell with maximum subgrids containing it
+        long long best_score = -1;
+        int br = -1, bc = -1;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                long long score = (long long)(i + 1) * (n - i) * (j + 1) * (n - j);
+                if (score > best_score) {
+                    best_score = score;
+                    br = i;
+                    bc = j;
+                }
+            }
+        }
+        grid[br][bc] = val++;
+        int minr = br, maxr = br, minc = bc, maxc = bc;
+        while (val < n * n) {
+            // check if there is an empty cell inside the current rectangle
+            bool found_inside = false;
+            for (int i = minr; i <= maxr && !found_inside; i++) {
+                for (int j = minc; j <= maxc && !found_inside; j++) {
+                    if (grid[i][j] == -1) {
+                        grid[i][j] = val++;
+                        found_inside = true;
+                    }
+                }
+            }
+            if (found_inside) continue;
+            // otherwise find the best outside cell
+            best_score = -1;
+            int best_r = -1, best_c = -1;
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    if (grid[i][j] == -1) {
+                        int new_minr = min(minr, i);
+                        int new_maxr = max(maxr, i);
+                        int new_minc = min(minc, j);
+                        int new_maxc = max(maxc, j);
+                        long long score = (long long)(new_minr + 1) * (n - new_maxr) * (new_minc + 1) * (n - new_maxc);
+                        if (score > best_score) {
+                            best_score = score;
+                            best_r = i;
+                            best_c = j;
+                        }
+                    }
+                }
+            }
+            grid[best_r][best_c] = val++;
+            minr = min(minr, best_r);
+            maxr = max(maxr, best_r);
+            minc = min(minc, best_c);
+            maxc = max(maxc, best_c);
+        }
+        // output
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                cout << grid[i][j];
+                if (j < n - 1) cout << " ";
+            }
+            cout << endl;
+        }
+    }
+    return 0;
+}

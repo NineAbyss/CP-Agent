@@ -1,0 +1,32 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+vector<int> generatePermutation(int n) {
+    vector<int> permutation(n);
+    int index = 1;
+    // Fill odd positions with larger numbers starting from the middle
+    for (int i = 1; i < n; i += 2) {
+        permutation[i] = index++;
+    }
+    // Fill even positions with remaining numbers
+    for (int i = 0; i < n; i += 2) {
+        permutation[i] = index++;
+    }
+    return permutation;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> permutation = generatePermutation(n);
+        for (int num : permutation) {
+            cout << num << " ";
+        }
+        cout << endl;
+    }
+    return 0;
+}

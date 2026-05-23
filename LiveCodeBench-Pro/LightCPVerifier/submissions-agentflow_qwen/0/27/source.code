@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<long long> a(m);
+        for (int i = 0; i < m; i++) {
+            cin >> a[i];
+        }
+        // Do not sort a, but find min/max floor
+        long long min_group = a[0] / 100;
+        long long max_group = a[0] / 100;
+        for (int i = 1; i < m; i++) {
+            min_group = min(min_group, a[i] / 100);
+            max_group = max(max_group, a[i] / 100);
+        }
+
+        vector<long long> below, above;
+        for (int i = 0; i < m; i++) {
+            if (a[i] / 100 == min_group) {
+                below.push_back(a[i]);
+            }
+            if (a[i] / 100 == max_group) {
+                above.push_back(a[i]);
+            }
+        }
+
+        // If all in same floor
+        if (min_group == max_group) {
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < 6; j++) {
+                    cout << a[i] << " \n"[j==5];
+                }
+            }
+            continue;
+        }
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < 6; j++) {
+                if (j % 2 == 0) {
+                    int times_used = j / 2;
+                    int idx = (i + times_used) % below.size();
+                    cout << below[idx] << " ";
+                } else {
+                    int times_used = j / 2;
+                    int idx = (i + times_used) % above.size();
+                    cout << above[idx] << " ";
+                }
+            }
+            cout << "\n";
+        }
+    }
+    return 0;
+}

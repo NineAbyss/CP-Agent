@@ -1,0 +1,44 @@
+#include <iostream>
+#include <string>
+#include <limits>
+
+using namespace std;
+
+// Function to compute the cost of a number
+double compute_cost(int value, int sum_digits) {
+    if (sum_digits == 0) return numeric_limits<double>::max();
+    return double(value) / sum_digits;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        string n;
+        cin >> n;
+        int len = n.size();
+        
+        double min_cost = numeric_limits<double>::max();
+        int min_removal = len;
+
+        for (int start = 0; start < len; ++start) {
+            int num_value = 0, digit_sum = 0;
+            for (int end = start; end < len; ++end) {
+                num_value = num_value * 10 + (n[end] - '0');
+                digit_sum += (n[end] - '0');
+                
+                if (digit_sum == 0) continue; // Skip if sum is zero, which is avoided
+                
+                double current_cost = compute_cost(num_value, digit_sum);
+                int removal_count = len - (end - start + 1);
+                
+                if (current_cost < min_cost) {
+                    min_cost = current_cost;
+                    min_removal = removal_count;
+                }
+            }
+        }
+        cout << min_removal << endl;
+    }
+    return 0;
+}

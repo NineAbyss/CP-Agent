@@ -1,0 +1,123 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+#include <functional>
+using namespace std;
+
+bool isTwin(int u, int v, const vector<vector<bool>>& adj) {
+    int n = adj.size();
+    for (int w = 0; w < n; w++) {
+        if (w == u || w == v) continue;
+        if (adj[u][w] != adj[v][w]) return false;
+    }
+    return true;
+}
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<vector<vector<bool>>> adj(k, vector<vector<bool>>(n, vector<bool>(n, false)));
+    for (int i = 0; i < k; i++) {
+        int m;
+        cin >> m;
+        for (int e = 0; e < m; e++) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            adj[i][u][v] = adj[i][v][u] = true;
+        }
+    }
+
+    // For each vertex, for each graph, store (size, type) // type: 0 = independent, 1 = clique, 2 = single (can be either)
+    vector<vector<pair<int, int>>> info(n, vector<pair<int, int>>(k, {1, 2}));
+
+    for (int idx = 0; idx < k; idx++) {
+        const auto& adjg = adj[idx];
+        // Union-Find to merge twins
+        vector<int> parent(n);
+        for (int i = 0; i < n; i++) parent[i] = i;
+        function<int(int)> find = [&](int x) {
+            if (parent[x] != x) parent[x] = find(parent[x]);
+            return parent[x];
+        };
+        auto unite = [&](int a, int b) {
+            int ra = find(a), rb = find(b);
+            if (ra != rb) parent[rb] = ra;
+        };
+
+        // Find all twin pairs
+        for (int u = 0; u < n; u++) {
+            for (int v = u+1; v < n; v++) {
+                if (isTwin(u, v, adjg)) {
+                    unite(u, v);
+                }
+            }
+        }
+
+        // Compress
+        for (int i = 0; i < n; i++) find(i);
+
+        // Group components
+        vector<vector<int>> comps(n);
+        for (int i = 0; i < n; i++) {
+            comps[parent[i]].push_back(i);
+        }
+
+        // Process each component
+        for (int i = 0; i < n; i++) {
+            if (comps[i].empty()) continue;
+            int sz = comps[i].size();
+            int typ = 2; // single
+            if (sz > 1) {
+                // Check if all pairs connected
+                bool all = true;
+                for (int a = 0; a < sz; a++) {
+                    for (int b = a+1; b < sz; b++) {
+                        int u = comps[i][a], v = comps[i][b];
+                        if (!adjg[u][v]) {
+                            all = false;
+                            break;
+                        }
+                    }
+                    if (!all) break;
+                }
+                typ = all ? 1 : 0; // 1 for clique, 0 for independent
+            }
+            for (int v : comps[i]) {
+                info[v][idx] = {sz, typ};
+            }
+        }
+    }
+
+    // Check condition
+    bool ok = true;
+    for (int v = 0; v < n; v++) {
+        bool hasBigI = false, hasBigC = false;
+        for (int i = 0; i < k; i++) {
+            int sz = info[v][i].first;
+            int typ = info[v][i].second;
+            if (sz > 1) {
+                if (typ == 0) hasBigI = true;
+                if (typ == 1) hasBigC = true;
+            }
+        }
+        if (hasBigI && hasBigC) {
+            ok = false;
+            break;
+        }
+    }
+
+    cout << (ok ? "Yes" : "No") << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

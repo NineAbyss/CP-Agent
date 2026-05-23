@@ -1,0 +1,24 @@
+cpp_code = r'''
+#include <iostream>
+using namespace std;
+
+bool canFormArray(int n, int m, int p, int q) {
+    // Conditionally evaluate cyclic integer configuration against asserted space
+    return (n % p == 0 && (n / p) * q == m);
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, p, q;
+        cin >> n >> m >> p >> q;
+        
+        cout << (canFormArray(n, m, p, q) ? "YES" : "NO") << endl;
+    }
+    return 0;
+}
+'''
+
+result = cpp_validation(cpp_code)
+print(result)

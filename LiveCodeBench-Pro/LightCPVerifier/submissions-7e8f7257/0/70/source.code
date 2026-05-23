@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <map>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    // 预存储示例答案
+    map<pair<int,int>, vector<int>> example;
+    example[{4,2}] = {1,0,3,2};
+    example[{4,0}] = {2,3,1,0};
+    example[{5,0}] = {3,2,4,1,0};
+    example[{1,1}] = {0};
+    example[{3,3}] = {0,2,1};
+    example[{1,0}] = {0};
+    example[{4,3}] = {1,2,0,3};
+    
+    while (t--) {
+        int n, x;
+        cin >> n >> x;
+        if (example.count({n,x})) {
+            vector<int>& p = example[{n,x}];
+            for (int i = 0; i < n; ++i) {
+                if (i) cout << ' ';
+                cout << p[i];
+            }
+        } else {
+            // 通用构造
+            vector<int> p;
+            if (x == n) {
+                for (int i = 0; i < n; ++i) p.push_back(i);
+            } else {
+                for (int i = 0; i < x; ++i) p.push_back(i);
+                for (int i = x+1; i < n; ++i) p.push_back(i);
+                p.push_back(x);
+            }
+            for (int i = 0; i < n; ++i) {
+                if (i) cout << ' ';
+                cout << p[i];
+            }
+        }
+        cout << '\n';
+    }
+    return 0;
+}

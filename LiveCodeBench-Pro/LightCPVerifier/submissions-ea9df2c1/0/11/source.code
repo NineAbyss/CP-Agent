@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve(int n, int s, vector<int>& x) {
+    int full = (1 << n) - 1;
+    unordered_set<int> vis;
+    auto encode = [&](int pos, int mask) {
+        return pos * (full + 1) + mask;
+    };
+    queue<tuple<int, int, int>> q;
+    int startMask = 0;
+    for (int i = 0; i < n; ++i)
+        if (s == x[i]) startMask |= (1 << i);
+    q.push(make_tuple(s, startMask, 0));
+    vis.insert(encode(s, startMask));
+    while (!q.empty()) {
+        int pos, mask, steps;
+        tie(pos, mask, steps) = q.front(); q.pop();
+        if (mask == full) return steps;
+        for (int d = -1; d <= 1; d += 2) {
+            int npos = pos + d;
+            if (npos < 0 || npos > 200) continue;
+            int nmask = mask;
+            for (int i = 0; i < n; ++i)
+                if (npos == x[i]) nmask |= (1 << i);
+            int code = encode(npos, nmask);
+            if (!vis.count(code)) {
+                vis.insert(code);
+                q.push(make_tuple(npos, nmask, steps + 1));
+            }
+        }
+    }
+    return -1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, s;
+        cin >> n >> s;
+        vector<int> x(n);
+        for (int i = 0; i < n; ++i) cin >> x[i];
+        cout << solve(n, s, x) << '\n';
+    }
+    return 0;
+}

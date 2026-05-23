@@ -1,0 +1,25 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        int n = s.length();
+        int max_len = 0;
+        int cnt0 = 0;
+        for (int i = 0; i < n; i++) {
+            if (s[i] != '0') {
+                int len = cnt0 + 1;
+                if (len > max_len) max_len = len;
+            } else {
+                cnt0++;
+            }
+        }
+        cout << n - max_len << '\n';
+    }
+    return 0;
+}

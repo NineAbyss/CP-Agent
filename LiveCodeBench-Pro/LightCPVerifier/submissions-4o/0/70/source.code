@@ -1,0 +1,39 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+#include <cstring>
+
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        unordered_map<int, int> freq;
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+            freq[a[i]]++;
+        }
+        
+        int max_size = 0;
+        for (auto& entry : freq) {
+            int f = entry.second;
+            if (f > 0) {
+                // Max subsequence size can be two times the frequency of any element
+                max_size = max(max_size, 2 * f);
+            }
+        }
+        
+        // Cap at 'n' because you cannot have a subsequence longer than the original array
+        cout << min(max_size, n) << endl;
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

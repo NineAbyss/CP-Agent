@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        
+        vector<string> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        vector<vector<string>> b(m, vector<string>(n));
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                cin >> b[i][j];
+            }
+        }
+        
+        // Check if each position has at least one network providing correct value
+        bool possible = true;
+        for (int j = 0; j < n; j++) {
+            bool found = false;
+            for (int i = 0; i < m; i++) {
+                if (b[i][j] == a[j]) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                possible = false;
+                break;
+            }
+        }
+        
+        if (!possible) {
+            cout << -1 << endl;
+            continue;
+        }
+        
+        // Find maximum safe set size
+        int max_cover = 0;
+        for (int i = 0; i < m; i++) {
+            int count = 0;
+            for (int j = 0; j < n; j++) {
+                if (b[i][j] == a[j]) {
+                    count++;
+                }
+            }
+            max_cover = max(max_cover, count);
+        }
+        
+        int ans = n + 2 * (n - max_cover);
+        cout << ans << endl;
+    }
+    return 0;
+}

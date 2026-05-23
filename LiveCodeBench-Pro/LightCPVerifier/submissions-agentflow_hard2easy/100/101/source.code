@@ -1,0 +1,155 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+const ll INF = 1000000000000000LL;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        ll n, k;
+        cin >> n >> k;
+        
+        vector<ll> p(n), d(n);
+        for (int i = 0; i < n; i++) cin >> p[i];
+        for (int i = 0; i < n; i++) cin >> d[i];
+        
+        int q;
+        cin >> q;
+        vector<ll> queries(q);
+        for (int i = 0; i < q; i++) cin >> queries[i];
+        
+        // 预处理：对于每个位置，找到左右最近的灯 // 但为了简单，我们在查询时实时计算
+        
+        for (ll a : queries) {
+            // 找到a左右最近的灯
+            int idx = lower_bound(p.begin(), p.end(), a) - p.begin();
+            
+            ll L, R;
+            int iL, iR;
+            
+            if (idx == 0) {
+                L = 0;
+                iL = -1;
+                R = p[0];
+                iR = 0;
+            } else if (idx == n) {
+                L = p[n-1];
+                iL = n-1;
+                R = INF + 1;
+                iR = -1;
+            } else {
+                L = p[idx-1];
+                iL = idx-1;
+                R = p[idx];
+                iR = idx;
+            }
+            
+            // 如果起点在灯上
+            ll pos = a;
+            ll r = 0;
+            int dir = 1;
+            
+            if (iL != -1 && pos == p[iL]) {
+                if (r == d[iL]) dir = -dir;
+            } else if (iR != -1 && pos == p[iR]) {
+                if (r == d[iR]) dir = -dir;
+            }
+            
+            // 如果起点在灯上且反弹，调整区间
+            if (dir == -1 && iL != -1 && pos == p[iL]) {
+                // 向左运动
+                R = p[iL];
+                iR = iL;
+                if (iL == 0) {
+                    L = 0;
+                    iL = -1;
+                } else {
+                    L = p[iL-1];
+                    iL = iL-1;
+                }
+            } else if (dir == 1 && iR != -1 && pos == p[iR]) {
+                // 向右运动
+                L = p[iR];
+                iL = iR;
+                if (iR == n-1) {
+                    R = INF + 1;
+                    iR = -1;
+                } else {
+                    R = p[iR+1];
+                    iR = iR+1;
+                }
+            }
+            
+            bool leave = false;
+            // 增加模拟步数
+            const int MAX_STEPS = 10 * (int)n + 20;
+            
+            for (int step = 0; step < MAX_STEPS; step++) {
+                // 移动到下一个灯或边界
+                ll dist;
+                if (dir == 1) {
+                    dist = R - pos;
+                } else {
+                    dist = pos - L;
+                }
+                
+                pos += dir * dist;
+                r = (r + dist) % k;
+                
+                if (pos <= 0 || pos > INF) {
+                    leave = true;
+                    break;
+                }
+                
+                // 检查是否反弹
+                bool bounce = false;
+                if (dir == 1 && iR != -1 && pos == p[iR]) {
+                    if (r == d[iR]) bounce = true;
+                } else if (dir == -1 && iL != -1 && pos == p[iL]) {
+                    if (r == d[iL]) bounce = true;
+                }
+                
+                if (bounce) {
+                    dir = -dir;
+                }
+                
+                // 更新区间
+                if (dir == 1) {
+                    if (iR != -1) {
+                        L = p[iR];
+                        iL = iR;
+                        if (iR == n-1) {
+                            R = INF + 1;
+                            iR = -1;
+                        } else {
+                            R = p[iR+1];
+                            iR = iR+1;
+                        }
+                    }
+                } else {
+                    if (iL != -1) {
+                        R = p[iL];
+                        iR = iL;
+                        if (iL == 0) {
+                            L = 0;
+                            iL = -1;
+                        } else {
+                            L = p[iL-1];
+                            iL = iL-1;
+                        }
+                    }
+                }
+            }
+            
+            cout << (leave ? "YES" : "NO") << '\n';
+        }
+    }
+    
+    return 0;
+}

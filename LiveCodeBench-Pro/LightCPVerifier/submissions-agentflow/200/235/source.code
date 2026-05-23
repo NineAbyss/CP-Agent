@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+vector<int> try_first(int n, const string& s, int first_val) {
+    set<int> remaining;
+    for (int i = 1; i <= n; i++) remaining.insert(i);
+    vector<int> ans(n);
+    ans[0] = first_val;
+    remaining.erase(first_val);
+    int cur_min = first_val, cur_max = first_val;
+    for (int i = 1; i < n; i++) {
+        if (s[i-1] == '<') {
+            // need smaller than cur_min
+            auto it = remaining.lower_bound(cur_min);
+            if (it == remaining.begin()) return {};
+            --it;
+            ans[i] = *it;
+            remaining.erase(it);
+        } else {
+            // need larger than cur_max
+            auto it = remaining.upper_bound(cur_max);
+            if (it == remaining.end()) return {};
+            ans[i] = *it;
+            remaining.erase(it);
+        }
+        cur_min = min(cur_min, ans[i]);
+        cur_max = max(cur_max, ans[i]);
+    }
+    return ans;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        vector<int> ans;
+        for (int first_val = 1; first_val <= n; first_val++) {
+            ans = try_first(n, s, first_val);
+            if (!ans.empty()) break;
+        }
+        for (int i = 0; i < n; i++) {
+            cout << ans[i] << " \n"[i == n-1];
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

@@ -1,0 +1,40 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int a, x, y;
+        cin >> a >> x >> y;
+        
+        // Alice's distances to the two possible prize locations
+        int alice_dist_x = abs(a - x);
+        int alice_dist_y = abs(a - y);
+        
+        bool possible = false;
+        
+        // Check all possible integer starting positions for Bob (excluding a) // Since coordinates are at most 100, we can check a reasonable range
+        // But note: optimal Bob position is likely near x or y, so we can limit search // However, to be safe and given small constraints, check a wider range
+        
+        // We'll check from 1 to 100 as per constraints
+        for (int bob_start = 1; bob_start <= 100; bob_start++) {
+            if (bob_start == a) continue; // Bob cannot start at a
+            
+            int bob_dist_x = abs(bob_start - x);
+            int bob_dist_y = abs(bob_start - y);
+            
+            // Bob must reach both prizes strictly faster than Alice
+            if (bob_dist_x < alice_dist_x && bob_dist_y < alice_dist_y) {
+                possible = true;
+                break;
+            }
+        }
+        
+        cout << (possible ? "YES" : "NO") << endl;
+    }
+    
+    return 0;
+}

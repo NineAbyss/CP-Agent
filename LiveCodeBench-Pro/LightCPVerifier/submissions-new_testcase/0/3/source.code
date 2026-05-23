@@ -1,0 +1,60 @@
+#include <iostream>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+bool canFormSquare(int l1, int b1, int l2, int b2, int l3, int b3) {
+    int total = l1 * b1 + l2 * b2 + l3 * b3;
+    int S = sqrt(total);
+    if (S * S != total) return false;
+    int l[3] = {l1, l2, l3};
+    int b[3] = {b1, b2, b3};
+    int perm[3] = {0, 1, 2};
+    do {
+        int p0 = perm[0], p1 = perm[1], p2 = perm[2];
+        // configuration 1: vertical stack (three columns)
+        if (l[p0] == S && l[p1] == S && l[p2] == S && b[p0] + b[p1] + b[p2] == S) return true;
+        // configuration 2: horizontal stack (three rows)
+        if (b[p0] == S && b[p1] == S && b[p2] == S && l[p0] + l[p1] + l[p2] == S) return true;
+        // configuration 3: two on top, one at bottom
+        if (l[p2] == S) {
+            if (b[p0] == b[p1]) {
+                int ht = b[p0];
+                if (l[p0] + l[p1] == S && ht + b[p2] == S) return true;
+            }
+        }
+        // configuration 4: one on top, two at bottom
+        if (l[p0] == S) {
+            if (b[p1] == b[p2]) {
+                int hb = b[p1];
+                if (l[p1] + l[p2] == S && b[p0] + hb == S) return true;
+            }
+        }
+        // configuration 5: two on left, one on right
+        if (b[p2] == S) {
+            if (l[p0] == l[p1]) {
+                int wl = l[p0];
+                if (b[p0] + b[p1] == S && wl + l[p2] == S) return true;
+            }
+        }
+        // configuration 6: one on left, two on right
+        if (b[p0] == S) {
+            if (l[p1] == l[p2]) {
+                int wr = l[p1];
+                if (b[p1] + b[p2] == S && l[p0] + wr == S) return true;
+            }
+        }
+    } while (next_permutation(perm, perm + 3));
+    return false;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int l1, b1, l2, b2, l3, b3;
+        cin >> l1 >> b1 >> l2 >> b2 >> l3 >> b3;
+        cout << (canFormSquare(l1, b1, l2, b2, l3, b3) ? "YES" : "NO") << endl;
+    }
+    return 0;
+}

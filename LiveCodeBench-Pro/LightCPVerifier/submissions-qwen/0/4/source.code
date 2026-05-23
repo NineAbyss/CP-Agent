@@ -1,0 +1,189 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+// Function to check if three rectangles can form a square
+bool canFormSquare(int l1, int b1, int l2, int b2, int l3, int b3) {
+    // Total area of rectangles
+    long long totalArea = 1LL * l1 * b1 + 1LL * l2 * b2 + 1LL * l3 * b3;
+    
+    // The side of the square must be an integer
+    long long side = sqrt(totalArea);
+    if (side * side != totalArea) {
+        return false;
+    }
+    
+    // Try all permutations of the three rectangles
+    vector<pair<int, int>> rects = {{l1, b1}, {l2, b2}, {l3, b3}};
+    do {
+        int L1 = rects[0].first, B1 = rects[0].second;
+        int L2 = rects[1].first, B2 = rects[1].second;
+        int L3 = rects[2].first, B3 = rects[2].second;
+        
+        // Case 1: All three placed horizontally in a row
+        if (B1 == B2 && B2 == B3 && B1 == side && L1 + L2 + L3 == side) {
+            return true;
+        }
+        
+        // Case 2: Two stacked vertically on the left, one on the right
+        if (L1 == L2 && L1 + L3 == side && B1 + B2 == side && B3 == side) {
+            return true;
+        }
+        
+        // Case 3: One on the left, two stacked vertically on the right
+        if (L2 == L3 && L1 == side && B2 + B3 == side && B1 == side) {
+            return true;
+        }
+        
+        // Case 4: Two stacked horizontally at the bottom, one on top
+        if (B1 == B2 && B1 + B3 == side && L1 + L2 == side && L3 == side) {
+            return true;
+        }
+        
+        // Case 5: One at the bottom, two stacked horizontally on top
+        if (B2 == B3 && B1 == side && L2 + L3 == side && L1 == side) {
+            return true;
+        }
+        
+        // Case 6: Two stacked vertically on top of each other on the left, third fills the rest
+        if (L1 == L2 && L1 <= side && B1 + B2 <= side && 
+            L3 == side - L1 && B3 == side && 
+            B1 + B2 == side) {
+            return true;
+        }
+        
+        // Case 7: Two side by side horizontally at the top, third fills below
+        if (B1 == B2 && B1 <= side && L1 + L2 <= side &&
+            B3 == side - B1 && L3 == side && 
+            L1 + L2 == side) {
+            return true;
+        }
+        
+        // Additional configurations: // Case 8: One large rectangle with two smaller ones beside it vertically
+        if (L1 + L2 == side && B1 == side && B2 == L3 && L2 == B3 && B2 + B3 == side) {
+            continue; // This is complex and might not be needed
+        }
+        
+    } while (next_permutation(rects.begin(), rects.end()));
+    
+    // Try more structured arrangements
+    
+    // Reinitialize for fixed order but try different spatial arrangements
+    // We'll try specific known configurations based on constraints
+    
+    // Configuration: Two rectangles stacked vertically forming one column, third beside
+    if (b1 == b2 && b1 + b3 == side && l1 + l2 == l3 && l3 == side) {
+        return true;
+    }
+    if (b1 == b3 && b1 + b2 == side && l1 + l3 == l2 && l2 == side) {
+        return true;
+    }
+    if (b2 == b3 && b2 + b1 == side && l2 + l3 == l1 && l1 == side) {
+        return true;
+    }
+    
+    // Configuration: Two rectangles stacked horizontally forming one row, third above/below
+    if (l1 == l2 && l1 + l3 == side && b1 + b2 == b3 && b3 == side) {
+        return true;
+    }
+    if (l1 == l3 && l1 + l2 == side && b1 + b3 == b2 && b2 == side) {
+        return true;
+    }
+    if (l2 == l3 && l2 + l1 == side && b2 + b3 == b1 && b1 == side) {
+        return true;
+    }
+    
+    // Try all permutations again with key stacking ideas
+    do {
+        int L1 = rects[0].first, B1 = rects[0].second;
+        int L2 = rects[1].first, B2 = rects[1].second;
+        int L3 = rects[2].first, B3 = rects[2].second;
+        
+        // Three in a row vertically
+        if (L1 == L2 && L2 == L3 && L1 == side && B1 + B2 + B3 == side) {
+            return true;
+        }
+        
+        // Three in a column horizontally
+        if (B1 == B2 && B2 == B3 && B1 == side && L1 + L2 + L3 == side) {
+            return true;
+        }
+        
+        // Two side-by-side, third stacked vertically
+        if (B1 == B2 && L1 + L2 == side && B1 == side - B3 && L3 == side) {
+            return true;
+        }
+        if (L1 == L2 && B1 + B2 == side && L1 == side - L3 && B3 == side) {
+            return true;
+        }
+        
+        // L-shaped or other packing — hard to cover all, so use standard known cases
+        
+        // Classic 3-rectangle square packing: two vertical, one horizontal extension
+        if (L1 + L2 == side && B1 == B2 && B1 + B3 == side && L3 == side && B3 == abs(L1 - L2)) {
+            // Too speculative
+        }
+        
+    } while (next_permutation(rects.begin(), rects.end()));
+    
+    // After trying all logical configurations, re-check using exhaustive permutation-based layout // Known valid configurations from competitive programming problems
+    
+    do {
+        int a1 = rects[0].first, b1_val = rects[0].second;
+        int a2 = rects[1].first, b2_val = rects[1].second;
+        int a3 = rects[2].first, b3_val = rects[2].second;
+        
+        int s = side;
+        
+        // All same height, placed in row
+        if (b1_val == b2_val && b2_val == b3_val && b1_val == s && a1 + a2 + a3 == s)
+            return true;
+            
+        // All same width, stacked
+        if (a1 == a2 && a2 == a3 && a1 == s && b1_val + b2_val + b3_val == s)
+            return true;
+            
+        // Two stacked vertically (same width), third beside
+        if (a1 == a2 && a1 + a3 == s && b1_val + b2_val == s && b3_val == s)
+            return true;
+        if (a1 == a3 && a1 + a2 == s && b1_val + b3_val == s && b2_val == s)
+            return true;
+        if (a2 == a3 && a2 + a1 == s && b2_val + b3_val == s && b1_val == s)
+            return true;
+            
+        // Two stacked horizontally (same height), third above/below
+        if (b1_val == b2_val && b1_val + b3_val == s && a1 + a2 == s && a3 == s)
+            return true;
+        if (b1_val == b3_val && b1_val + b2_val == s && a1 + a3 == s && a2 == s)
+            return true;
+        if (b2_val == b3_val && b2_val + b1_val == s && a2 + a3 == s && a1 == s)
+            return true;
+            
+        // Two side by side, third fills remaining L-shape? Not allowed under strict alignment. // Only edge-aligned, no partial overlaps.
+        
+    } while (next_permutation(rects.begin(), rects.end()));
+    
+    return false;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int l1, b1, l2, b2, l3, b3;
+        cin >> l1 >> b1 >> l2 >> b2 >> l3 >> b3;
+        
+        if (canFormSquare(l1, b1, l2, b2, l3, b3)) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    
+    return 0;
+}

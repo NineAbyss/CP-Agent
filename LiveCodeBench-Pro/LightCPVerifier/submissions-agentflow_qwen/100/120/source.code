@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int calc_f(int x, int y) {
+    if (x == y) return 0;
+    if (x > y) swap(x, y);
+    return x + (y % x);
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    vector<int> candidates;
+    int best = 0;
+    vector<int> res;
+
+    for (int x : a) {
+        int cur_best = best;
+        for (int c : candidates) {
+            int val = calc_f(x, c);
+            if (val > cur_best) {
+                cur_best = val;
+            }
+        }
+        if (cur_best > best) {
+            best = cur_best;
+        }
+
+        candidates.push_back(x);
+
+        vector<int> new_candidates;
+        for (int c : candidates) {
+            if (2 * c > best) {
+                new_candidates.push_back(c);
+            }
+        }
+        candidates = new_candidates;
+
+        res.push_back(best);
+    }
+
+    for (int i = 0; i < res.size(); i++) {
+        if (i > 0) cout << " ";
+        cout << res[i];
+    }
+    cout << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

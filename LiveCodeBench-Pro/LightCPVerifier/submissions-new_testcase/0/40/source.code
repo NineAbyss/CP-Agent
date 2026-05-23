@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        long long ans = 0;
+        int last = n - 1;
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                int sum2 = a[i] + a[j];
+                // case 1: k < last // find largest index k with a[k] < sum2 and k > j
+                int lo = j + 1, hi = last - 1;
+                int Kmax = -1;
+                while (lo <= hi) {
+                    int mid = (lo + hi) / 2;
+                    if (a[mid] < sum2) {
+                        Kmax = mid;
+                        lo = mid + 1;
+                    } else {
+                        hi = mid - 1;
+                    }
+                }
+                if (Kmax != -1) {
+                    // find smallest index k with sum2 + a[k] > a[last]
+                    lo = j + 1, hi = Kmax;
+                    int L = -1;
+                    while (lo <= hi) {
+                        int mid = (lo + hi) / 2;
+                        if (sum2 + a[mid] > a[last]) {
+                            L = mid;
+                            hi = mid - 1;
+                        } else {
+                            lo = mid + 1;
+                        }
+                    }
+                    if (L != -1 && L <= Kmax) {
+                        ans += Kmax - L + 1;
+                    }
+                }
+                // case 2: k = last
+                if (sum2 > a[last] && j < last) {
+                    ans++;
+                }
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

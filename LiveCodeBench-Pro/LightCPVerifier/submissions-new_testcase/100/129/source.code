@@ -1,0 +1,101 @@
+#include <iostream>
+#include <string>
+#include <bitset>
+#include <queue>
+#include <unordered_set>
+#include <cstdlib>
+#include <ctime>
+using namespace std;
+
+const int MAXN = 200001;
+
+bool dp_solve(const string& p, const string& s) {
+    int n = p.size();
+    int m = s.size();
+    if (m < n || m > 2 * n) return false;
+    
+    bitset<MAXN> maskL, maskR;
+    for (int j = 0; j < n; ++j) {
+        if (p[j] == 'L') maskL.set(j+1);
+        else maskR.set(j+1);
+    }
+    
+    bitset<MAXN> dp1, dp2;
+    dp1.set(0);
+    
+    for (int i = 1; i <= m; ++i) {
+        char c = s[i-1];
+        bitset<MAXN>& mask = (c == 'L') ? maskL : maskR;
+        bitset<MAXN> dp_cur = (dp1 << 1) & mask;
+        if (i >= 2 && s[i-2] == s[i-1]) {
+            dp_cur |= (dp2 << 1) & mask;
+        }
+        dp2 = dp1;
+        dp1 = dp_cur;
+    }
+    return dp1.test(n);
+}
+
+bool bfs_solve(const string& p, const string& s) {
+    int n = p.size();
+    int m = s.size();
+    if (m < n || m > 2 * n) return false;
+    queue<pair<int, int>> q;
+    unordered_set<long long> visited;
+    q.push({0, 0});
+    visited.insert(0);
+    while (!q.empty()) {
+        auto [i, j] = q.front(); q.pop();
+        if (i == m && j == n) return true;
+        if (j == n) continue;
+        if (i >= m) continue;
+        if (s[i] != p[j]) continue;
+        // match 1 char
+        int ni = i + 1;
+        int nj = j + 1;
+        long long key = (long long)ni * (n + 1) + nj;
+        if (ni <= m && nj <= n && visited.find(key) == visited.end()) {
+            visited.insert(key);
+            q.push({ni, nj});
+        }
+        // match 2 chars
+        if (i + 1 < m && s[i] == s[i + 1] && s[i] == p[j]) {
+            ni = i + 2;
+            nj = j + 1;
+            key = (long long)ni * (n + 1) + nj;
+            if (ni <= m && nj <= n && visited.find(key) == visited.end()) {
+                visited.insert(key);
+                q.push({ni, nj});
+            }
+        }
+    }
+    return false;
+}
+
+int main() {
+    srand(time(0));
+    int tests = 1000;
+    for (int t = 0; t < tests; ++t) {
+        int n = rand() % 100 + 1;
+        string p;
+        for (int i = 0; i < n; ++i) {
+            p.push_back(rand() % 2 ? 'L' : 'R');
+        }
+        int m = rand() % (2 * n + 1) + n;
+        string s;
+        for (int i = 0; i < m; ++i) {
+            s.push_back(rand() % 2 ? 'L' : 'R');
+        }
+        bool ans_dp = dp_solve(p, s);
+        bool ans_bfs = bfs_solve(p, s);
+        if (ans_dp != ans_bfs) {
+            cout << "Mismatch!" << endl;
+            cout << "p: " << p << endl;
+            cout << "s: " << s << endl;
+            cout << "dp: " << ans_dp << " bfs: " << ans_bfs << endl;
+            return 0;
+        }
+    }
+    cout << "All tests passed." << endl;
+    return 0;
+}

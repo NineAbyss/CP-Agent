@@ -1,0 +1,111 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+using namespace std;
+using ll = long long;
+
+const ll INF = 1e18;
+const ll NEG = -1e17;
+
+ll max_subarray_sum(const vector<ll>& arr) {
+    ll best = -INF, cur = 0;
+    for (ll x : arr) {
+        cur = max(x, cur + x);
+        best = max(best, cur);
+    }
+    return best;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n; ll k;
+        cin >> n >> k;
+        string s;
+        cin >> s;
+        vector<ll> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        
+        // 计算已知部分最大子段和（未知位置视为0）
+        vector<ll> known_only = a;
+        for (int i = 0; i < n; i++) if (s[i] == '0') known_only[i] = 0;
+        ll M = max_subarray_sum(known_only);
+        if (M > k) {
+            cout << "No\n";
+            continue;
+        }
+        
+        // 检查是否所有位置都已知
+        bool all_known = true;
+        for (char c : s) if (c == '0') all_known = false;
+        if (all_known) {
+            if (M == k) {
+                cout << "Yes\n";
+                for (ll x : a) cout << x << " ";
+                cout << "\n";
+            } else {
+                cout << "No\n";
+            }
+            continue;
+        }
+        
+        // 存在未知位置
+        if (M == k) {
+            cout << "Yes\n";
+            for (int i = 0; i < n; i++) {
+                if (s[i] == '0') cout << NEG << " ";
+                else cout << a[i] << " ";
+            }
+            cout << "\n";
+            continue;
+        }
+        
+        // M < k // 选第一个未知位置 p
+        int p = -1;
+        for (int i = 0; i < n; i++) if (s[i] == '0') { p = i; break; }
+        
+        // 二分搜索填的值
+        ll low = -INF, high = INF, found = INF+1;
+        vector<ll> ans = a;
+        while (low <= high) {
+            ll mid = low + (high - low) / 2;
+            // 构造：p 填 mid，其他未知位置填 NEG
+            for (int i = 0; i < n; i++) {
+                if (s[i] == '0') {
+                    if (i == p) ans[i] = mid;
+                    else ans[i] = NEG;
+                }
+            }
+            ll cur_max = max_subarray_sum(ans);
+            if (cur_max == k) {
+                found = mid;
+                break;
+            } else if (cur_max > k) {
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        if (found <= INF) {
+            // 重新构造一次
+            for (int i = 0; i < n; i++) {
+                if (s[i] == '0') {
+                    if (i == p) ans[i] = found;
+                    else ans[i] = NEG;
+                }
+            }
+            cout << "Yes\n";
+            for (ll x : ans) cout << x << " ";
+            cout << "\n";
+        } else {
+            cout << "No\n";
+        }
+    }
+    return 0;
+}

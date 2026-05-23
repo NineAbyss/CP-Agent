@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve_one_test(int n, int m, const vector<int>& a, const vector<int>& b) {
+    // 预处理前缀匹配
+    vector<int> pre(m + 1, 0);
+    int j = 0;
+    for (int i = 0; i < n; i++) {
+        if (j < m && a[i] >= b[j]) {
+            pre[j + 1] = i + 1;
+            j++;
+        }
+    }
+    
+    // 如果能直接完成
+    if (pre[m] > 0) return 0;
+    
+    // 预处理后缀匹配
+    vector<int> suf(m + 1, n + 1);
+    suf[m] = n + 1;
+    j = m - 1;
+    for (int i = n - 1; i >= 0; i--) {
+        if (j >= 0 && a[i] >= b[j]) {
+            suf[j] = i + 1;
+            j--;
+        }
+    }
+    
+    // 检查所有i
+    int ans = INT_MAX;
+    for (int i = 0; i < m; i++) {
+        // 对于i>0，需要pre[i]>0（成功匹配前i个b） // 对于i=0，pre[0]=0是有效的（空前缀）
+        bool pre_ok = (i == 0) ? true : (pre[i] > 0);
+        
+        // 对于i<m-1，需要suf[i+1]<=n（成功匹配后m-i-1个b） // 对于i=m-1，suf[m]=n+1是有效的（空后缀）
+        bool suf_ok = (i == m - 1) ? true : (suf[i + 1] <= n);
+        
+        if (pre_ok && suf_ok && pre[i] < suf[i + 1]) {
+            ans = min(ans, b[i]);
+        }
+    }
+    
+    if (ans != INT_MAX) return ans;
+    else return -1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        
+        vector<int> b(m);
+        for (int i = 0; i < m; i++) cin >> b[i];
+        
+        cout << solve_one_test(n, m, a, b) << '\n';
+    }
+    
+    return 0;
+}

@@ -1,0 +1,49 @@
+#include <iostream>
+using namespace std;
+
+// Function to execute the given commands and change x to n
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n;
+        cin >> n;
+
+        // Strategy: // 1. Try reducing x by making use of the "digit" command.
+        // 2. Then use "add", "mul", or "div" to reach the number n.
+
+        // We start by assuming we would use the "digit" command first.
+        cout << "digit" << endl;
+        long long response;
+        cin >> response; // this response will always be 1, so we can ignore it
+
+        // The new assumed `x` is now the sum of digits of original `x`.
+        // Check if sum of digits is already n
+        if (response == n) {
+            cout << "!" << endl;
+            continue;
+        }
+
+        // Case when we want to double the assumed `x` if n > assumed x
+        // Using multiplication if feasible.
+        if (n < 10) {
+            // If n is less than 10 after digit, we might directly go to n using "add".
+            cout << "add " << n - response << endl;
+            cin >> response; // catch response
+        } else {
+            // Try to multiply by large enough number to reach `n`.
+            long long targetMultiplier = n / response;
+            cout << "mul " << targetMultiplier << endl;
+            cin >> response; // should ideally return 1
+        }
+        
+        cout << "!" << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

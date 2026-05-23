@@ -1,0 +1,32 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        string s;
+        cin >> s;
+        
+        int balance = 0;
+        bool reducible = false;
+        
+        for (int i = 0; i < (int)s.size(); i++) {
+            if (s[i] == '(') balance++;
+            else balance--;
+            
+            if (balance == 0 && i != (int)s.size() - 1) {
+                reducible = true;
+                break;
+            }
+        }
+        
+        cout << (reducible ? "YES" : "NO") << '\n';
+    }
+    
+    return 0;
+}

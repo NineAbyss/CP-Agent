@@ -1,0 +1,39 @@
+#include <iostream>
+#include <vector>
+#include <climits>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        long long ans = LLONG_MAX;
+        int i = 0;
+        while (i < n) {
+            int val = a[i];
+            int l = i;
+            while (i < n && a[i] == val) {
+                i++;
+            }
+            int r = i - 1;
+            // convert to 1-based
+            int L = l + 1;
+            int R = r + 1;
+            long long cost = 1LL * val * ((L - 1) + (n - R));
+            if (cost < ans) {
+                ans = cost;
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

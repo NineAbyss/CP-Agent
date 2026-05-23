@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        
+        // Use a multiset to store the elements of the array in sorted order
+        multiset<int> ms;
+        for (int i = 0; i < n; ++i) {
+            ms.insert(a[i]);
+        }
+        
+        // Initially sort the array and calculate the sum of the whole array
+        vector<long long> results(n);
+        long long current_sum = 0;
+        
+        auto it = ms.begin();
+        int count = 0;
+        
+        // Calculate the initial sum (when k = n)
+        for (auto rit = ms.rbegin(); rit != ms.rend(); ++rit) {
+            if (count < n) {
+                current_sum += *rit;
+                ++count;
+            }
+        }
+        
+        results[n - 1] = current_sum;
+        
+        for (int k = n - 1; k > 0; --k) {
+            auto largest = ms.rbegin();
+            current_sum -= *largest;   // Remove largest element from sum
+            ms.erase(ms.find(*largest)); // Erase the largest element from multiset
+            results[k - 1] = current_sum;
+        }
+        
+        for (auto result : results) {
+            cout << result << " ";
+        }
+        cout << "\n";
+    }
+    
+    return 0;
+}

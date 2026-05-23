@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool canWin(const vector<int>& a) {
+    map<int, int> cnt;
+    for (int x : a) cnt[x]++;
+    
+    // 条件A: 某个值出现至少4次
+    for (auto& [val, c] : cnt) {
+        if (c >= 4) return true;
+    }
+    
+    // 条件B: 两个相邻值每个至少出现2次
+    for (auto& [val, c] : cnt) {
+        if (c >= 2 && cnt.count(val+1) && cnt[val+1] >= 2) return true;
+    }
+    
+    // 条件C: 三个连续值都出现，且至少两个出现至少2次
+    for (auto& [val, c] : cnt) {
+        if (cnt.count(val+1) && cnt.count(val+2)) {
+            int c1 = cnt[val], c2 = cnt[val+1], c3 = cnt[val+2];
+            int ge2 = (c1 >= 2) + (c2 >= 2) + (c3 >= 2);
+            if (ge2 >= 2) return true;
+        }
+    }
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        cout << (canWin(a) ? "Yes" : "No") << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,38 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+bool is_all_zero(const string& s) {
+    for (char c : s) {
+        if (c == '1') return false;
+    }
+    return true;
+}
+
+int main() {
+    int T;
+    cin >> T;
+    while (T--) {
+        int n;
+        cin >> n;
+        string s, t;
+        cin >> s >> t;
+
+        if (s == t) {
+            cout << "Yes\n";
+            continue;
+        }
+
+        if (n % 2 == 1) {
+            cout << "No\n";
+            continue;
+        }
+
+        if (is_all_zero(s) || is_all_zero(t)) {
+            cout << "No\n";
+        } else {
+            cout << "Yes\n";
+        }
+    }
+    return 0;
+}

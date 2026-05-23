@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int gcd(int a, int b) {
+    while (b) {
+        int t = a % b;
+        a = b;
+        b = t;
+    }
+    return a;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    const int MAXV = 5000;
+    static vector<int> dist(MAXV + 1);
+    static bitset<MAXV + 1> have;
+    static vector<int> vals;
+    vals.reserve(5000);
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        int g = 0;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            g = gcd(g, a[i]);
+        }
+        int cnt_g = 0;
+        for (int x : a) {
+            if (x == g) cnt_g++;
+        }
+        if (cnt_g > 0) {
+            cout << n - cnt_g << '\n';
+            continue;
+        }
+        // normalize
+        for (int i = 0; i < n; i++) {
+            a[i] /= g;
+        }
+        // get distinct values
+        vals.clear();
+        have.reset(); // clear all bits
+        for (int x : a) {
+            if (x >= 1 && x <= MAXV && !have[x]) {
+                have[x] = true;
+                vals.push_back(x);
+            }
+        }
+        // BFS
+        for (int i = 0; i <= MAXV; i++) dist[i] = -1;
+        queue<int> q;
+        for (int v : vals) {
+            dist[v] = 0;
+            q.push(v);
+        }
+        while (!q.empty()) {
+            int u = q.front();
+            q.pop();
+            for (int y : vals) {
+                int w = gcd(u, y);
+                if (dist[w] == -1) {
+                    dist[w] = dist[u] + 1;
+                    q.push(w);
+                }
+            }
+        }
+        int steps = dist[1];
+        cout << steps + (n - 1) << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

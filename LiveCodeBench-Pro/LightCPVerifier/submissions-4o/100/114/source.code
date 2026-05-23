@@ -1,0 +1,49 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+
+        vector<int> b(n);
+        for (int &bi : b) {
+            cin >> bi;
+        }
+
+        vector<tuple<int, int, int>> operations(q);
+        for (auto &[x, y, z] : operations) {
+            cin >> x >> y >> z;
+            --x; --y; --z;  // Converting to zero-based index for convenience
+        }
+
+        vector<int> a = b;  // Tentatively assume a = b
+        
+        bool possible = true;
+        for (auto &[x, y, z] : operations) {
+            if (b[z] > min(a[x], a[y])) {
+                possible = false;
+                break;
+            }
+            a[z] = b[z];  // Set a[z] based on the provided b array and operation constraints
+        }
+
+        if (!possible) {
+            cout << "-1\n";
+        } else {
+            for (int &ai : a) {
+                cout << ai << " ";
+            }
+            cout << "\n";
+        }
+    }
+
+    return 0;
+}

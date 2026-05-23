@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<long long> a(n+1);
+    for (int i = 1; i <= n; i++) cin >> a[i];
+    vector<vector<int>> adj(n+1);
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    vector<int> parent(n+1, 0);
+    vector<int> order;
+    queue<int> q;
+    q.push(1);
+    parent[1] = 0;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        order.push_back(u);
+        for (int v : adj[u]) {
+            if (v == parent[u]) continue;
+            parent[v] = u;
+            q.push(v);
+        }
+    }
+    vector<long long> dp0(n+1), dp1(n+1);
+    for (int u : order) {
+        if (parent[u] == 0) {
+            dp0[u] = a[u];
+            dp1[u] = -a[u];
+        } else {
+            dp0[u] = max(a[u], a[u] + dp1[parent[u]]);
+            dp1[u] = max(-a[u], -a[u] + dp0[parent[u]]);
+        }
+    }
+    for (int i = 1; i <= n; i++) {
+        cout << dp0[i] << " \n"[i==n];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

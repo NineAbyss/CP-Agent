@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        int lo = 1, hi = n;
+        vector<int> ans(n);
+
+        // 提取所有非 -1 的索引，按 a[i] 降序排序
+        vector<int> idx;
+        for (int i = 0; i < n; i++) {
+            if (a[i] != -1) {
+                idx.push_back(i);
+            }
+        }
+
+        sort(idx.begin(), idx.end(), [&](int i, int j) {
+            if (a[i] != a[j]) {
+                return a[i] > a[j];  // 高轮次优先
+            }
+            return i < j; // 稳定
+        });
+
+        // 分配值
+        for (int i : idx) {
+            if (a[i] % 2 == 1) {
+                // 奇数轮删除：不是局部最小 → 给大值
+                ans[i] = hi--;
+            } else {
+                // 偶数轮删除：不是局部最大 → 给小值
+                ans[i] = lo++;
+            }
+        }
+
+        // 幸存者（a[i] == -1）得到最后一个值
+        for (int i = 0; i < n; i++) {
+            if (a[i] == -1) {
+                ans[i] = lo; // 此时 lo == hi
+                break;
+            }
+        }
+
+        // 输出
+        for (int i = 0; i < n; i++) {
+            cout << ans[i] << " \n"[i == n-1];
+        }
+    }
+    return 0;
+}

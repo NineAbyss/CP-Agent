@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+using ll = long long;
+
+bool check(ll dx, ll dy, ll x, ll y, ll s) {
+    vector<pair<ll,ll>> pockets = {{0,0}, {0,s}, {s,0}, {s,s}};
+    for (auto [px, py] : pockets) {
+        ll A = x - px;
+        ll B = y - py;
+        ll mod = 2*s;
+        // (A*dx - B*dy) % mod == 0
+        ll val = (A*dx - B*dy);
+        if (val % mod != 0) continue;
+        ll t0 = (-A*dx) % mod;
+        if (t0 < 0) t0 += mod;
+        if (A + dx*t0 >= 0 && B + dy*t0 >= 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n; ll s;
+        cin >> n >> s;
+        int cnt = 0;
+        for (int i = 0; i < n; ++i) {
+            ll dx, dy, x, y;
+            cin >> dx >> dy >> x >> y;
+            if (check(dx, dy, x, y, s)) {
+                ++cnt;
+            }
+        }
+        cout << cnt << '\n';
+    }
+    return 0;
+}

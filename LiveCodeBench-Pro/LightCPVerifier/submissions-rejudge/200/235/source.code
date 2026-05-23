@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        // 贪心算法：维护每个克隆的最后一个按钮权重 // 对于每个按钮，找到最后一个按钮权重 >= 当前权重的克隆
+        // 如果有多个，选择最后一个按钮权重最小的那个（以保持灵活性）
+        multiset<int> clones;
+        
+        for (int i = 0; i < n; i++) {
+            int weight = a[i];
+            
+            auto it = clones.lower_bound(weight);
+            if (it == clones.end()) {
+                clones.insert(weight);
+            } else {
+                clones.erase(it);
+                clones.insert(weight);
+            }
+        }
+        
+        cout << clones.size() << '\n';
+    }
+    
+    return 0;
+}

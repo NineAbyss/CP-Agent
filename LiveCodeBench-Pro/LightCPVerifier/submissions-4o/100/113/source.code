@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+// Function to find if the subarray is divisible.
+bool isDivisible(const vector<int>& p, int l, int r) {
+    // Range [l, r] in 0-based index
+    l--, r--;
+
+    int maxPrefix = p[l];
+    int minPrefix = p[l];
+
+    for (int i = l; i < r; i++) {
+        maxPrefix = max(maxPrefix, p[i]);
+        minPrefix = min(minPrefix, p[i]);
+        
+        if (maxPrefix < p[i + 1] || minPrefix > p[i + 1]) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+int main() {
+    int n;
+    cin >> n;
+    
+    vector<int> permutation(n);
+    for (int i = 0; i < n; i++) {
+        cin >> permutation[i];
+    }
+    
+    int q;
+    cin >> q;
+    
+    vector<string> results;
+    for (int i = 0; i < q; i++) {
+        int l, r;
+        cin >> l >> r;
+
+        if (isDivisible(permutation, l, r)) {
+            results.push_back("YES");
+        } else {
+            results.push_back("NO");
+        }
+
+        if ((i+1) % 10 == 0) {
+            // Print results for this batch and flush the output
+            for (string &result : results) {
+                cout << result << "\n";
+            }
+            // Clear the results after outputting
+            results.clear();
+            cout.flush();
+        }
+    }
+    
+    return 0;
+}

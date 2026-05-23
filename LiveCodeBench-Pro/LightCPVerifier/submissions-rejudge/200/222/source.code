@@ -1,0 +1,36 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        int cnt[51] = {0};
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            cnt[a[i]]++;
+        }
+        int ans = n - 1; // worst case: keep only one element // prefix sum
+        int prefix[52] = {0};
+        for (int i = 1; i <= 50; i++) {
+            prefix[i] = prefix[i - 1] + cnt[i];
+        }
+        for (int m = 1; m <= 50; m++) {
+            if (cnt[m] == 0) continue;
+            for (int M = m; M <= 50; M++) {
+                if (cnt[M] == 0) continue;
+                if ((m & 1) != (M & 1)) continue;
+                // number of elements in [m, M]
+                int keep = prefix[M] - prefix[m - 1];
+                ans = min(ans, n - keep);
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

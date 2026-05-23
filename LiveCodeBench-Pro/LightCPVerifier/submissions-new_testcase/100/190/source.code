@@ -1,0 +1,99 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+const int MAX_BITS = 30; // 10^9 < 2^30
+
+struct TrieNode {
+    TrieNode* child[2];
+    int cnt;
+    TrieNode() : child{nullptr, nullptr}, cnt(0) {}
+};
+
+void insert(TrieNode* root, int x) {
+    TrieNode* cur = root;
+    cur->cnt++;
+    for (int b = MAX_BITS; b >= 0; --b) {
+        int bit = (x >> b) & 1;
+        if (!cur->child[bit]) {
+            cur->child[bit] = new TrieNode();
+        }
+        cur = cur->child[bit];
+        cur->cnt++;
+    }
+}
+
+void remove(TrieNode* root, int x) {
+    TrieNode* cur = root;
+    cur->cnt--;
+    for (int b = MAX_BITS; b >= 0; --b) {
+        int bit = (x >> b) & 1;
+        cur = cur->child[bit];
+        cur->cnt--;
+    }
+}
+
+// Check if there exists y in the trie such that (x ^ y) >= k
+bool exists_geq(TrieNode* root, int x, int k) {
+    TrieNode* cur = root;
+    if (cur->cnt == 0) return false;
+    for (int b = MAX_BITS; b >= 0; --b) {
+        if (!cur || cur->cnt == 0) return false;
+        int k_bit = (k >> b) & 1;
+        int x_bit = (x >> b) & 1;
+        if (k_bit == 0) {
+            int want = 1 - x_bit;
+            if (cur->child[want] && cur->child[want]->cnt > 0) {
+                return true;
+            }
+            cur = cur->child[x_bit];
+        } else {
+            int want = 1 - x_bit;
+            cur = cur->child[want];
+        }
+    }
+    return cur && cur->cnt > 0;
+}
+
+void destroy(TrieNode* node) {
+    if (!node) return;
+    destroy(node->child[0]);
+    destroy(node->child[1]);
+    delete node;
+}
+
+int solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) cin >> a[i];
+    
+    TrieNode* root = new TrieNode();
+    int l = 0;
+    int ans = INT_MAX;
+    for (int r = 0; r < n; ++r) {
+        insert(root, a[r]);
+        while (exists_geq(root, a[r], k)) {
+            ans = min(ans, r - l + 1);
+            remove(root, a[l]);
+            l++;
+        }
+    }
+    destroy(root);
+    if (ans == INT_MAX) ans = -1;
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << solve() << '\n';
+    }
+    return 0;
+}

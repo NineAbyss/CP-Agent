@@ -1,0 +1,38 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> cnt(51, 0);
+        for (int i = 0; i < n; i++) {
+            int x;
+            cin >> x;
+            cnt[x]++;
+        }
+        // 前缀和
+        vector<int> pref(51, 0);
+        pref[0] = 0;
+        for (int i = 1; i <= 50; i++) {
+            pref[i] = pref[i-1] + cnt[i];
+        }
+        int max_keep = 0;
+        for (int L = 1; L <= 50; L++) {
+            if (cnt[L] == 0) continue;
+            for (int R = L; R <= 50; R++) {
+                if (cnt[R] == 0) continue;
+                if ((L % 2) != (R % 2)) continue;
+                int total = pref[R] - pref[L-1];
+                if (total > max_keep) {
+                    max_keep = total;
+                }
+            }
+        }
+        cout << n - max_keep << endl;
+    }
+    return 0;
+}

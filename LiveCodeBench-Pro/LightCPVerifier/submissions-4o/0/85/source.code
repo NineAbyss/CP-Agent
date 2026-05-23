@@ -1,0 +1,45 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <cmath>
+
+// Function to check if a number is prime
+bool isPrime(long long num) {
+    if (num <= 1) return false;
+    if (num <= 3) return true;
+    if (num % 2 == 0 || num % 3 == 0) return false;
+    for (long long i = 5; i * i <= num; i += 6) {
+        if (num % i == 0 || num % (i + 2) == 0) return false;
+    }
+    return true;
+}
+
+int main() {
+    int t;
+    std::cin >> t;
+
+    while (t--) {
+        long long x, k;
+        std::cin >> x >> k;
+        
+        // Create y by repeating x for k times
+        std::string x_str = std::to_string(x);
+        std::string y_str;
+        
+        for (int i = 0; i < k; ++i) {
+            y_str += x_str;
+        }
+        
+        // Convert y to a number
+        long long y = std::stoll(y_str);
+        
+        // Check if y is prime
+        if (isPrime(y)) {
+            std::cout << "YES" << std::endl;
+        } else {
+            std::cout << "NO" << std::endl;
+        }
+    }
+
+    return 0;
+}

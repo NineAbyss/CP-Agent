@@ -1,0 +1,118 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool check(const vector<vector<int>>& a, const vector<int>& row_max, const vector<int>& col_max, int ans) {
+    int n = a.size();
+    int m = a[0].size();
+    // 收集值 > ans 的单元格
+    vector<pair<int,int>> S;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            if (a[i][j] > ans) {
+                S.emplace_back(i, j);
+            }
+        }
+    }
+    if (S.empty()) {
+        // 需要存在一行满足 row_max[r] <= ans+1 和一列满足 col_max[c] <= ans+1
+        bool has_row = false, has_col = false;
+        for (int i = 0; i < n; i++) if (row_max[i] <= ans+1) { has_row = true; break; }
+        for (int j = 0; j < m; j++) if (col_max[j] <= ans+1) { has_col = true; break; }
+        return has_row && has_col;
+    }
+    // 构建 R_good 和 C_good
+    vector<bool> R_good(n, false), C_good(m, false);
+    for (int i = 0; i < n; i++) if (row_max[i] <= ans+1) R_good[i] = true;
+    for (int j = 0; j < m; j++) if (col_max[j] <= ans+1) C_good[j] = true;
+    // 检查是否有任何行或列是好的
+    bool any_row = false, any_col = false;
+    for (int i = 0; i < n; i++) if (R_good[i]) { any_row = true; break; }
+    for (int j = 0; j < m; j++) if (C_good[j]) { any_col = true; break; }
+    if (!any_row || !any_col) return false;
+    
+    int i0 = S[0].first, j0 = S[0].second;
+    // 情况1: 所有 S 单元格都在同一行
+    bool same_row = true;
+    for (auto& p : S) if (p.first != i0) { same_row = false; break; }
+    if (same_row && R_good[i0]) {
+        // 存在一列 c in C_good
+        for (int j = 0; j < m; j++) if (C_good[j]) return true;
+    }
+    // 情况2: 所有 S 单元格都在同一列
+    bool same_col = true;
+    for (auto& p : S) if (p.second != j0) { same_col = false; break; }
+    if (same_col && C_good[j0]) {
+        for (int i = 0; i < n; i++) if (R_good[i]) return true;
+    }
+    // 情况3: 尝试 r = i0
+    if (R_good[i0]) {
+        int col = -1;
+        bool ok = true;
+        for (auto& p : S) {
+            if (p.first != i0) {
+                if (col == -1) col = p.second;
+                else if (col != p.second) { ok = false; break; }
+            }
+        }
+        if (ok && col != -1 && C_good[col]) return true;
+    }
+    // 情况4: 尝试 c = j0
+    if (C_good[j0]) {
+        int row = -1;
+        bool ok = true;
+        for (auto& p : S) {
+            if (p.second != j0) {
+                if (row == -1) row = p.first;
+                else if (row != p.first) { ok = false; break; }
+            }
+        }
+        if (ok && row != -1 && R_good[row]) return true;
+    }
+    return false;
+}
+
+int solve_one(const vector<vector<int>>& a) {
+    int n = a.size();
+    int m = a[0].size();
+    vector<int> row_max(n, 0);
+    vector<int> col_max(m, 0);
+    int global_max = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            row_max[i] = max(row_max[i], a[i][j]);
+            col_max[j] = max(col_max[j], a[i][j]);
+            global_max = max(global_max, a[i][j]);
+        }
+    }
+    int lo = 0, hi = global_max;
+    int ans = global_max;
+    while (lo <= hi) {
+        int mid = (lo + hi) / 2;
+        if (check(a, row_max, col_max, mid)) {
+            ans = mid;
+            hi = mid - 1;
+        } else {
+            lo = mid + 1;
+        }
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<vector<int>> a(n, vector<int>(m));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                cin >> a[i][j];
+            }
+        }
+        cout << solve_one(a) << '\n';
+    }
+    return 0;
+}

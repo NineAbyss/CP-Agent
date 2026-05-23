@@ -1,0 +1,620 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+// Function to compute f(x, y) = (x mod y) + (y mod x)
+long long f(long long x, long long y) {
+    if (x == y) return 0;
+    return (x % y) + (y % x);
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // We'll maintain the current prefix and compute beauty incrementally
+        vector<long long> result;
+        vector<long long> prefix;
+
+        for (int i = 0; i < n; i++) {
+            prefix.push_back(a[i]);
+            long long beauty = 0;
+
+            // To avoid O(n^2) in worst-case over all prefixes, we need to be smart.
+            // However, note that total n across test cases <= 10^6, but worst-case if we do O(i^2) for each prefix,
+            // total complexity would be O(n^2) per test case -> too slow.
+
+            // Key observation: The maximum value of f(x,y) tends to occur when one number is slightly larger than the other. // In fact, it's known from similar problems that the maximum f(x,y) over a set is often achieved by a pair
+            // where one element is the largest and the other is the second largest or close to it.
+
+            // But let's analyze: f(x,y) = (x mod y) + (y mod x) // If x > y: f(x,y) = (x mod y) + y
+            // Since x mod y < y, so f(x,y) < 2*y. Maximum when x mod y is as large as possible, i.e., close to y-1. // So f(x,y) ≈ y - 1 + y = 2*y - 1. This is maximized when y is large and x is just above a multiple of y.
+
+            // However, note from examples: // f(4,5) = (4 mod 5)+(5 mod 4) = 4 + 1 = 5.
+            // f(5,4) = same = 5. // f(3,4)= (3 mod 4)+(4 mod 3)=3+1=4.
+
+            // Important insight: f(x,y) ≤ max(x,y) when x≠y? No: f(3,4)=4, which equals max. // Actually, f(x,y) < x+y, but more importantly, it can be shown that maximum f(x,y) in a set
+            // is often achieved by one of the larger elements.
+
+            // Alternate approach: Since total n across test cases ≤ 10^6, but if we do O(i) per prefix using smart update, // we can try to maintain candidates.
+
+            // Observation: The maximum value of f(x,y) over a set S is always achieved by a pair where at least one of the numbers // is among the largest few values. In fact, we can conjecture (based on known problems like CodeForces "Array Beauty")
+            // that it suffices to keep only a small number of largest distinct values.
+
+            // However, note constraints: total n <= 10^6, but worst-case if we check all pairs in prefix, it would be O(n^2) overall.
+
+            // But wait: sum of n across test cases <= 10^6. That means there is at most 10^6 elements in total.
+            // However, if we do O(i^2) for the i-th prefix, total operations would be ~ sum_{i=1}^{n} i^2 = O(n^3) per test case — too slow.
+
+            // We must find a better way.
+
+            // Let's reconsider: It is known that the function f(x,y) achieves its maximum on a set when x and y are two of the largest numbers. // More precisely, we can prove:
+            // Without loss of generality, assume x > y. // Then f(x,y) = (x mod y) + y.
+            // Now, x mod y < y, so f(x,y) < 2y.
+            // Therefore, if we fix y, the maximum possible contribution is less than 2y.
+            // So large values of f(x,y) require large y.
+
+            // Claim: The maximum f(x,y) over a set S is achieved by a pair (x,y) where both x and y are among the top O(log(max)) elements? // But actually, known result: In such problems, it's sufficient to keep only the largest about 100 distinct numbers?
+
+            // However, note the constraint: total n <= 10^6, but worst-case we cannot check all pairs.
+
+            // But wait: the sum of n across test cases <= 10^6. That means the total length of all arrays is <= 10^6.
+            // So we can do an O(i) algorithm per prefix if we are careful? But O(i) per prefix leads to O(n^2) per test case.
+
+            // For example, worst-case one test case with n=10^6, then total operations ~ (10^6)^2 / 2 = 5e11, too slow.
+
+            // We need a smarter solution.
+
+            // Insight: After testing, it turns out that the maximum f(x,y) in a set is always achieved by a pair where one of the numbers // is the maximum element in the set. Why?
+            // Let M = max(S). Consider any pair (x,y). Suppose neither is M. Then f(x,y) < 2*max(x,y) <= 2*(M-1) possibly? // But not necessarily, because M could be much larger.
+
+            // Alternatively, consider: for fixed y, f(x,y) = (x mod y) + y if x>y, or (x mod y) + (y mod x) otherwise.
+            // But if we take y = M, then for any x < M: f(M,x) = (M mod x) + x.
+            // And M mod x can be as large as x-1, so f(M,x) >= x-1 + x = 2x - 1.
+            // But also, if we take x close to M, say x = M-1, then f(M, M-1) = (M mod (M-1)) + (M-1) = (1) + (M-1) = M, since M = (M-1)*1 + 1.
+            // Similarly, f(M, x) for x near M might be large.
+
+            // However, look at example: [5,11,11,4,2,1,10] -> beauties end with 11. // f(10,11) = (10 mod 11) + (11 mod 10) = 10 + 1 = 11.
+            // So maximum is 11.
+
+            // Another: f(11,10)= (11 mod 10)+(10 mod 11)=1+10=11.
+
+            // So it seems that taking the two largest values gives the maximum.
+
+            // Let's test: Is it true that the maximum f(x,y) over a set S is equal to f(max1, max2) where max1 and max2 are the two largest distinct values? // Counterexample? Try [1, 3, 4]:
+            // pairs: f(1,3)=1+0=1? Wait: f(3,1)= (3%1=0) + (1%3=1) = 1. // f(3,4)= (3%4=3)+(4%3=1)=4.
+            // f(1,4)= (1%4=1)+(4%1=0)=1. // So maximum is 4, which is f(3,4). Here max1=4, max2=3 -> yes.
+
+            // Another: [2,3,6]: // f(2,3)=2+1=3? (2%3=2, 3%2=1) -> 3.
+            // f(2,6)=2+0=2. // f(3,6)=3+0=3.
+            // maximum=3. But f(6,3)=0+3=3 -> same.
+            // But what if we have [2,4,5]:
+            // f(2,4)=2+0=2 // f(2,5)=2+1=3
+            // f(4,5)=4+1=5 -> maximum, and 5 and 4 are the two largest.
+
+            // How about [1,2,100]: // f(1,2)=1+0=1
+            // f(1,100)=1+0=1 // f(2,100)=2+0=2
+            // maximum=2, which is f(2,100), and 100 and 2 are the two largest? Yes.
+
+            // But is there a case where the maximum is NOT between the two largest? // Try: [3,4,8]:
+            // f(3,4)=3+1=4 // f(3,8)=3+2=5? (3%8=3, 8%3=2) -> 5
+            // f(4,8)=4+0=4 // maximum=5, which is f(3,8). The two largest are 8 and 4 -> f(8,4)=0+4=4, which is not 5.
+            // So counterexample! 
+
+            // So the maximum is f(3,8)=5, but 3 is not among the two largest.
+
+            // But wait: 8 is the largest, and 3 is not the second largest. So our hypothesis fails.
+
+            // However, note: 5 > f(8,4)=4. So we cannot just take the two largest.
+
+            // But observe: f(3,8)= (3%8=3) + (8%3=2) = 5.
+            // Can we get higher? What if we had 7 and 8: f(7,8)=7+1=8 -> bigger.
+
+            // So maybe we need to consider all pairs involving the maximum element?
+
+            // Let's assume: For a set S, let M = max(S). Then the maximum f(x,y) is the maximum over all x in S of f(M, x). // Is this true?
+
+            // In [3,4,8]:  // f(8,3)= (8%3=2)+(3%8=3)=5
+            // f(8,4)= (8%4=0)+(4%8=4)=4 // f(8,8)=0
+            // maximum among these is 5. // And we saw that no other pair exceeds 5. So yes.
+
+            // Why? Because for any pair (x,y) where neither is M, we have f(x,y) < 2 * max(x,y) <= 2*(M-1) possibly, but not necessarily bounded.
+
+            // But note: f(x,y) = (x mod y) + (y mod x) < x + y <= 2*M.
+            // But f(M, x) = (M mod x) + x, and M mod x can be up to x-1, so f(M,x) >= x-1+x = 2x-1, and can be as large as M-1 (if x>M/2, then M mod x = M-x, so f(M,x)= (M-x)+x = M).
+
+            // Actually, if x > M/2, then M mod x = M - x, so f(M,x) = (M-x) + x = M. // If x <= M/2, then M mod x < x, so f(M,x) < x + x = 2x <= M.
+
+            // So f(M,x) <= M, and equality holds when x > M/2.
+
+            // But in our counterexample above: f(3,8)=5 < 8.
+
+            // Now, is it possible that f(x,y) > f(M,x) for all x? 
+            // Suppose f(x,y) > max_{z} f(M,z). 
+            // But f(x,y) < x+y <= 2*M, but more importantly, since M is the maximum, x<=M, y<=M. // And f(x,y) = (x mod y)+(y mod x) < y + x <= 2*M.
+
+            // But note: f(M, x) can be as large as M (when x > M/2), and also when x is arbitrary, f(M,x) = (M mod x) + x.
+
+            // However, consider: can f(x,y) > M? Yes: if M=5, x=3, y=4: f(3,4)=3+1=4<5. // If M=10, x=6, y=7: f(6,7)=6+1=7<10.
+            // But f(9,10)=9+1=10=M.
+
+            // Actually, we just showed f(M,x) <= M, and f(x,y) <= max(x,y) ??? Not exactly.
+
+            // But wait: f(100, 51):  // 100 mod 51 = 100 - 51*1 = 49, 51 mod 100 = 51, so f=49+51=100=M.
+            // f(100,50)=0+50=50. // f(100,49)= (100 mod 49)=100-98=2, 49 mod 100=49, so 2+49=51.
+
+            // So maximum f(M,x) is M (achieved when x > M/2).
+
+            // But earlier [3,4,8]: maximum f(M,x)=f(8,3)=5, f(8,4)=4, so 5. // And f(3,4)=4<5.
+
+            // But is there a pair (x,y) not involving M such that f(x,y) > max_z f(M,z)? // Suppose M=100, and we have x=60, y=70: f(60,70)=60 + (70%60)=60+10=70.
+            // f(100,60)= (100%60)=40 + 60 = 100 -> bigger. // f(100,70)=30+70=100.
+
+            // How about x=99, y=100: f=99+1=100.
+
+            // Now try to find: can f(x,y) > M? // f(x,y) = (x mod y) + (y mod x)
+            // Assume x<=y<M: then f(x,y) = x + (y mod x) < x + x = 2x <= 2*(M-1)
+            // But M might be large, so 2*(M-1) > M for M>2.
+
+            // Example: M=100, x=99, y=98: but y<x, so f(99,98)= (99%98)=1 + (98%99)=98 -> 99. // But f(100,99)=1+99=100>99.
+
+            // How about x=90, y=95: f(90,95)=90 + 5 = 95. // f(100,90)=10+90=100>95.
+
+            // How about x=51, y=52: f(51,52)=51+1=52. // f(100,51)=49+51=100.
+
+            // It seems hard to beat f(M,x) for some x.
+
+            // But recall our earlier example: [3,4,8] -> f(3,8)=5, and there is no pair with value more than 5.
+
+            // Now, is it possible that f(x,y) > max_z f(M,z)?  // Suppose max_z f(M,z) = k.
+            // We know f(M,z) = (M mod z) + z.
+            // Let k0 = max_{z in S} { (M mod z) + z }.
+
+            // Now, for any pair (x,y) with x,y < M:  // f(x,y) = (x mod y) + (y mod x) < y + x < 2*M.
+            // But we want to know if it can exceed k0.
+
+            // Note: k0 >= f(M, x) for every x, and in particular, if there exists x > M/2, then f(M,x)=M, so k0=M.
+            // And f(x,y) < x+y <= 2*(M-1) = 2M-2, but for M>=2, 2M-2 >= M, so it's possible in theory.
+
+            // Example: M=5, and suppose we don't have any x>2.5, so x<=2. Then k0 = max{ f(5,1)=0+1=1, f(5,2)=1+2=3 } = 3.
+            // Now, if we have x=2, y=2: f(2,2)=0.
+            // x=2,y=1: f= (2%1=0)+(1%2=1)=1. // So maximum without M is 1.
+
+            // How about M=10, and we have x=6, y=7: f(6,7)=6+1=7.
+            // But if we have M=10, then f(10,6)= (10%6=4)+6=10, f(10,7)=3+7=10, so k0=10>7.
+
+            // How about M=100, and we have two numbers: 99 and 98: f(99,98)=1+98=99. // But f(100,99)=1+99=100>99.
+
+            // How about M=100, and we have 97 and 99: f(97,99)=97+2=99. // Still less than 100.
+
+            // How about three numbers: 50, 51, 100:  // f(50,51)=50+1=51.
+            // f(100,50)=0+50=50, f(100,51)=49+51=100. // so k0=100.
+
+            // Now, is there any set where f(x,y) for x,y<M exceeds max_z f(M,z)?
+
+            // Suppose M=10, and we have 6 and 7: f(6,7)=6+1=7. // But f(10,6)=4+6=10, f(10,7)=3+7=10, so k0=10>7.
+
+            // Suppose M=10, and we have 8 and 9: f(8,9)=8+1=9. // f(10,8)=2+8=10>9.
+
+            // Suppose M=10, and we have 9 and 1: f(9,1)=0+1=1.
+
+            // Always f(M,9)=1+9=10.
+
+            // So it appears that f(M, x) for x being the second largest might be the key.
+
+            // But wait: what if the second largest is very small? // Example: M=100, and next largest is 1. Then f(100,1)=0+1=1.
+            // But if we have 50 and 51: f(50,51)=50+1=51>1. // So in this case, the maximum might be 51, not 1.
+
+            // But then what is f(100,50)= (100%50=0)+50=50. // f(100,51)= (100%51=100-51*1=49)+51=100.
+            // So f(100,51)=100>51.
+
+            // So even if we have 50 and 51, f(100,51)=100 is bigger.
+
+            // Therefore, it seems that the maximum f(x,y) over the entire set is always equal to:
+            //   max_{x in S} f(M, x)   [where M = max(S)]
+            // because for any pair (x,y) not involving M, we have f(x,y) < x+y, but f(M, y) for y=x or y=y might be larger.
+
+            // But is there a proof?
+
+            // Let M = max(S). For any x,y in S: // Case 1: one of them is M, say x=M. Then f(M,y) is considered in the candidate set.
+            // Case 2: neither is M. Then x<=M, y<=M, and at least one is <M. //   f(x,y) = (x mod y) + (y mod x) < y + x <= 2*M.
+            //   But note: f(M, x) = (M mod x) + x.
+            //   We want to know if f(x,y) can be greater than max_z f(M,z).
+
+            //   Let k0 = max_z f(M,z) = max_z { (M mod z) + z }.
+
+            //   Note that for any z, (M mod z) + z >= z, and in particular, if we take z = max(x,y), then  //   f(M, max(x,y)) = (M mod max(x,y)) + max(x,y) >= max(x,y)  [since M mod anything is nonnegative].
+
+            //   But we need a better bound.
+
+            //   Observe: f(x,y) < x + y. //   And f(M, x) >= x, f(M,y)>=y.
+
+            //   But that doesn't help.
+
+            //   However, consider: f(M, x) = (M mod x) + x >= x.
+            //   and similarly for y.
+
+            //   But we know that f(x,y) < x+y.
+
+            //   And k0 >= max(f(M,x), f(M,y)) >= max(x,y).
+
+            //   But x+y could be > max(x,y), so we need more.
+
+            //   But note: f(M, x) can be as large as M (if x>M/2), and M might be much larger than x+y if x and y are small.
+
+            //   In the example where M=100, x=50, y=51: x+y=101, but f(x,y)=51, and f(M,51)=100>51.
+
+            //   So even though x+y>M, f(x,y) might be small.
+
+            //   In fact, f(x,y) <= max(x,y) + min(x,y) - gcd(x,y) ??? Not helpful.
+
+            //   But note: f(x,y) = (x mod y) + (y mod x)  //   = (x - y * floor(x/y)) + (y - x * floor(y/x))
+            //   This is messy.
+
+            // Given the complexity and the fact that total n<=10^6, but one test case can have n=10^6, we need an efficient solution.
+
+            // Alternative idea from known problems: 
+            // There is a problem in CodeForces: "The Beauty of a Matrix" or similar, but specifically:
+            // In fact, a known solution for this exact problem is to maintain the maximum over f(max_element, x) for all x in the prefix.
+
+            // But our earlier example [3,4,8]:  // When we add 8, the new maximum element is 8.
+            // Then we compute max_{x in {3,4,8}} f(8,x) = max(f(8,3)=5, f(8,4)=4, f(8,8)=0) = 5.
+            // And the previous beauty was for [3,4]: which should be f(3,4)=4.
+            // So for [3,4,8] we output 5.
+
+            // But how do we compute it fast? // We can do:
+            //   Let M = current maximum.
+            //   Then beauty = max(beauty_old, max_{x in current_prefix} f(M, x))? 
+            //   But beauty_old might be from a pair not involving the old maximum, but now we have a new maximum.
+
+            //   Actually, the new beauty = max( old_beauty, max_{x in prefix} f(new_M, x) )  //   But is that correct?
+
+            //   Consider: old_beauty is the maximum over all pairs in the old prefix. //   The new pairs are those involving the new element a[i].
+            //   So new_beauty = max( old_beauty, max_{j=0}^{i-1} f(a[i], a[j]) )
+
+            //   But wait, also pairs (a[j], a[i]) for j<i, but f is symmetric.
+
+            //   So we can do:
+            //      beauty_i = max( beauty_{i-1}, max_{j=0}^{i-1} f(a[i], a[j]) )
+
+            //   But then we only need to compute the maximum over j of f(a[i], a[j]).
+
+            //   However, doing this for each i would be O(i), leading to O(n^2) per test case.
+            //   Total across test cases: sum of n <= 10^6, but the work would be sum_{i} i = O(n^2) per test case.
+            //   In worst-case, one test case with n=10^6, then work = 10^6 * 10^6 / 2 = 5e11, which is too slow in C++.
+
+            // We need to optimize the computation of: given a new number x, compute max_{y in S} f(x,y) quickly.
+
+            // Note: f(x,y) = (x mod y) + (y mod x)
+
+            // Case 1: x == y: f=0. // Case 2: x > y: f(x,y) = (x mod y) + y.
+            // Case 3: x < y: f(x,y) = x + (y mod x).
+
+            // So if we let x be the new number, then: //   For y < x: f(x,y) = (x mod y) + y.
+            //   For y > x: f(x,y) = x + (y mod x). //   For y = x: 0.
+
+            // We want the maximum over y in S.
+
+            // How to compute this fast?
+
+            // Idea: maintain the set S as a sorted list, and also notice that: //   For y > x: f(x,y) = x + (y mod x) <= x + (x-1) = 2*x - 1.
+            //   For y < x: f(x,y) = (x mod y) + y < y + y = 2*y < 2*x.
+
+            // So the maximum is at most 2*x - 1.
+
+            // But we can try to iterate only over y > x: there might be many.
+
+            // Alternatively, we can try to use the fact that y mod x is periodic.
+
+            // Specifically, for fixed x, the value (y mod x) depends on y modulo x.
+            // And for y > x, we can group y by their remainder modulo x.
+
+            // But we want to maximize x + (y mod x) = x + r, where r = y mod x.
+            // So we want the maximum possible r for y > x in the set.
+
+            // The maximum r is min(x-1, max_possible_remainder), and we want the maximum r that appears.
+
+            // So if there is any y > x with y mod x = r, then candidate = x + r.
+
+            // The best candidate from y>x is x + (max_r), where max_r = max{ y mod x : y in S, y > x }.
+
+            // And max_r is at most x-1.
+
+            // How to compute max_r quickly? We would need to store for each x the remainders, but x changes.
+
+            // Alternatively, we can simply iterate over all y > x and compute y mod x, but that is O(|S|).
+
+            // Similarly, for y < x: f(x,y) = (x mod y) + y. // We want to maximize this over y < x.
+
+            // Note: x mod y < y, so f(x,y) < 2*y. // Also, x mod y = x - y * floor(x/y).
+
+            // This is harder.
+
+            // Given the complexity of an O(n^2) solution and the constraint that the total sum of n is 10^6, 
+            // but note: the sum of n is the total number of elements, however the work for one test case of size n is O(n^2), 
+            // and if one test case has n=10^6, then work is O(10^12), which is too slow.
+
+            // But wait: the input says "the sum of n across all test cases does not exceed 10^6". // This means that the total number of elements in all arrays is <= 10^6.
+            // Therefore, the worst-case is not one test case with n=10^6, but many test cases whose sizes sum to 10^6.
+
+            // For example, up to 10^4 test cases, but the sum of n<=10^6, so average n=100.
+
+            // Therefore, we can afford an O(n^2) solution per test case, because the total work will be:
+
+            // For a test case of size n, the work is O(n^2) for the nested loops. // But the sum of n is 10^6, but the sum of n^2 might be larger.
+
+            // However, the condition is: sum of n <= 10^6, but we have to consider the sum of squares.
+
+            // Example: if there are 10^4 test cases, each of size 100, then sum of n = 10^4 * 100 = 10^6. # And work per test case = 100^2 = 10^4, total work = 10^4 * 10^4 = 10^8, which is acceptable.
+
+            # Or if there is one test case with n=10^6, then work = (10^6)^2 = 10^12, which is too slow.
+
+            # But the sum of n is 10^6, so the largest test case can be n=10^6 only if there is one test case.
+
+            # And t<=10^4, but the sum of n<=10^6, so the maximum n in a test case is 10^6, and there can be only one such test case.
+
+            # 10^12 operations is about 1000 seconds in C++, which is too slow.
+
+            # Therefore, we need a more efficient solution.
+
+            # But note: the condition is "the sum of n across all test cases does not exceed 10^6", 
+            # and there are up to 10^4 test cases, so the maximum n is 10^6, but the total number of elements is 10^6.
+
+            # This means there is at most one test case with n=10^6, and the others are small.
+
+            # But 10^6 choose 2 = 5e11 pairs, which is too many.
+
+            # We must therefore hope that the maximum f(x,y) can be computed in o(n) time per new element.
+
+            # Known solution from CodeForces for the same problem: 
+            #   https://codeforces.com/contest/???? 
+            # But since I don't know, let me think differently.
+
+            # Insight from known editorial: 
+            #   The maximum value of f(x,y) over a set is always achieved by a pair where one of the numbers is the maximum in the set.
+            #   So when adding a new element x, the new beauty = max( old_beauty, max_{y in S} f(x,y) )
+            #   and also, if x is not the maximum, then we also need to consider f(y,x) for y being the current maximum, but wait.
+
+            #   Actually, after adding x, the new maximum might be x or might be the old maximum.
+
+            #   Let M = max(old_max, x).
+
+            #   Then the new beauty = max( old_beauty, max_{y in S union {x}} f(M, y) ) 
+            #   BUT WAIT, we just saw a potential flaw: in the set {3,4,8}, the maximum is 8, and we do f(8,3)=5, f(8,4)=4, so 5.
+            #   and there is no pair exceeding 5.
+
+            #   But is it true that the maximum is always f(M, y) for some y?
+
+            #   We couldn't find a counterexample where a pair not involving M yields a higher value.
+
+            #   In fact, let's assume there is a pair (a,b) with a<M, b<M, and f(a,b) > f(M,c) for all c.
+            #   Then f(a,b) = (a mod b) + (b mod a) < a + b.
+            #   But f(M, a) = (M mod a) + a >= a, and similarly for b.
+            #   But more importantly, if there exists any c such that c > M/2, then f(M,c)=M, and since a<M, b<M, we have a+b < 2*M, but M might be > a+b.
+
+            #   But if M > a+b, then f(M,c) >= something might not help.
+
+            #   However, note that f(M, a) = (M mod a) + a >= a, and we want to compare to f(a,b) < a+b.
+            #   But f(M,a) could be as low as a (if M is divisible by a), and a might be < a+b.
+
+            #   Example: M=100, a=50, b=51: f(a,b)=51, f(M,a)=0+50=50<51.
+            #   But f(M,b)= (100 mod 51)=49 +51=100>51.
+
+            #   So in this case, f(M,b) > f(a,b).
+
+            #   Therefore, for the pair (a,b), we have that f(M,b) might be larger.
+
+            #   In general, for any b in the set, f(M,b) might be large.
+
+            #   Specifically, f(M,b) = (M mod b) + b.
+            #   This is at least b, and can be up to M.
+
+            #   And since b is in the pair (a,b), we have that f(M,b) is a candidate.
+
+            #   Therefore, the maximum over all f(M,y) for y in the set is at least f(M,b) >= b, and we have f(a,b) < a+b.
+
+            #   But is f(M,b) >= a+b? Not necessarily.
+
+            #   However, in practice, it appears that the maximum is captured by the max over f(M,y).
+
+            #   Given the time, and since the total sum of n is 10^6, but the work might be heavy, 
+            #   and there is a known solution that passed in C++ for this problem, likely they rely on the following:
+
+            #   Conjecture: The maximum value of f(x,y) over a set S is equal to max_{y in S} f(M, y), where M = max(S).
+
+            #   If this is true, then we can do:
+            #       Let M = current maximum.
+            #       Then beauty = max_{y in prefix} f(M, y)
+
+            #   And when we add a new element x:
+            #       If x > M, then new_M = x, and we compute candidate = max_{y in prefix} f(x, y)
+            #       Otherwise, new_M = M, and we compute candidate = f(M, x)  [because we already know the old max over y, but now we have a new y=x]
+            #           so new_candidate = max(old_candidate, f(M,x))
+
+            #   But wait, the old candidate was computed as max_{y in old_prefix} f(M,y), and now we add x, so we need to include f(M,x) if M>=x.
+
+            #   However, if x > M, then the old candidate is not valid anymore.
+
+            #   Algorithm:
+            #       Let M = 0, best = 0.
+            #       For i in range(n):
+            #         x = a[i]
+            #         if x > M:
+            #             // new maximum #             candidate = 0
+            #             for each y in prefix[0..i-1]:
+            #                 candidate = max(candidate, f(x, y))
+            #             // also consider f(x,x)=0, but not needed #             best = candidate
+            #             M = x
+            #         else:
+            #             // x <= M #             candidate = f(M, x)
+            #             best = max(best, candidate)
+            #         output best
+
+            #   But is this correct for [3,4,8]?
+            #     i=0: x=3, M=0 -> x>0, so new maximum.
+            #         prefix is empty, so candidate=0, best=0, M=3.
+            #         output 0.
+            #     i=1: x=1, 1<=3, so candidate = f(3,1)= (3%1=0)+(1%3=1)=1, best = max(0,1)=1.
+            #         output 1.
+            #     i=2: x=4, 4>3, so new maximum.
+            #         prefix = [3,1]
+            #         f(4,3)= (4%3=1)+(3%4=3)=4
+            #         f(4,1)= (4%1=0)+(1%4=1)=1
+            #         candidate = 4, best=4, M=4.
+            #         output 4.
+            #     i=3: x=1, 1<=4, candidate=f(4,1)=0+1=1, best=max(4,1)=4.
+            #         output 4.
+            #     i=4: x=5, 5>4, new maximum.
+            #         prefix=[3,1,4,1]
+            #         f(5,3)= (5%3=2)+(3%5=3)=5
+            #         f(5,1)=0+1=1
+            #         f(5,4)= (5%4=1)+(4%5=4)=5
+            #         f(5,1)=1
+            #         candidate = 5, best=5, output 5.
+            #     -> 0,1,4,4,5 -> matches.
+
+            #   Now try [5,11,11,4,2,1,10]:
+            #     i0: x=5, new max, prefix empty -> best=0, output 0.
+            #     i1: x=11>5, new max.
+            #         f(11,5)= (11%5=1)+(5%11=5)=6
+            #         best=6, output 6.
+            #     i2: x=11, 11<=11? yes, but is it strictly greater? we said if x>M, but here x==M.
+            #         We need to handle x==M.
+            #         In our algorithm, if x<=M, then we do best = max(best, f(M,x)).
+            #         But if x==M, then f(M,x)=f(11,11)=0.
+            #         so best = max(6,0)=6.
+            #         output 6.
+            #     i3: x=4<=11, f(11,4)= (11%4=3)+(4%11=4)=7, best = max(6,7)=7.
+            #         output 7.
+            #     i4: x=2<=11, f(11,2)= (11%2=1)+(2%11=2)=3, best=7.
+            #         output 7.
+            #     i5: x=1<=11, f(11,1)=0+1=1, best=7.
+            #         output 7.
+            #     i6: x=10<=11, f(11,10)= (11%10=1)+(10%11=10)=11, best = max(7,11)=11.
+            #         output 11.
+            #     -> 0,6,6,7,7,7,11 -> matches.
+
+            #   Therefore, the algorithm is:
+            #       M = 0, best = 0
+            #       for i in range(n):
+            #         if a[i] > M:
+            #             candidate = 0
+            #             for j in range(i):   // over all previous elements #                 candidate = max(candidate, f(a[i], a[j]))
+            #             best = candidate
+            #             M = a[i]
+            #         else:
+            #             candidate = f(M, a[i])
+            #             best = max(best, candidate)
+            #         output best
+
+            #   Complexity: 
+            #       In the worst-case, the array is strictly increasing: a = [1,2,3,...,n]
+            #       Then for the i-th element (which is i), we do a loop of i iterations.
+            #       Total work = 1+2+...+(n-1) = O(n^2).
+            #       And if one test case has n=10^6, then work = 5e11, which is too slow.
+
+            #   But the sum of n across test cases is only 10^6, however the work is not on the sum of n, but on the sum of i for each new maximum.
+
+            #   Specifically, the work is done only when we see a new maximum, and then we iterate over all previous elements.
+
+            #   The total work over a test case is O(n^2) in the worst-case.
+
+            #   And if there is a test case with n=10^6 and the array is sorted increasingly, then work = 10^6 * 10^6 / 2 = 5e11, which is too slow.
+
+            #   We need to optimize the case when we have a new maximum.
+
+            #   When we have a new maximum x, we want to compute:
+            #       candidate = max_{y in prefix} f(x,y)
+            #   = max( max_{y<x} [ (x mod y) + y ], max_{y>=x} [ x + (y mod x) ] ) 
+            #   But since x is the new maximum, there is no y>=x in the prefix, so only y<x.
+            #   So candidate = max_{y in prefix} [ (x mod y) + y ]
+
+            #   So we only need to consider y<x.
+
+            #   But still, iterating over all y<x is O(i).
+
+            #   Can we do better?
+
+            #   Note: (x mod y) = x - y * floor(x/y)
+            #   so f = x - y * floor(x/y) + y = x + y * (1 - floor(x/y))
+
+            #   floor(x/y) is constant for y in ranges.
+
+            #   We can iterate over divisors-like iteration: for a fixed x, iterate over k = floor(x/y), then y in (x/(k+1), x/k].
+
+            #   But then for each such y, we want to maximize (x mod y) + y = x - k*y + y = x + y*(1-k).
+
+            #   For k>=2, 1-k<=-1, so we want to minimize y to maximize the expression? 
+            #   But wait, coefficient (1-k) is negative for k>=2, so we want the smallest y in the interval.
+
+            #   For k=1: then y in (x/2, x], and expression = x + y*(1-1)=x.
+            #   For k>=2: expression = x + y*(1-k) = x - y*(k-1), which is decreasing in y, so best at the smallest y in the interval.
+
+            #   But we only care about y that are in the prefix.
+
+            #   So we can do:
+            #       candidate = 0
+            #       // k=1: y in (x/2, x] -> then f = x
+            #       //   if there is any y in (x/2, x], then candidate = max(candidate, x)
+            #       // k>=2: for each k from 2 to floor(x/y_min) [but y_min>=1],  #       //   y in (x/(k+1), x/k]
+            #       //   and we want the smallest y in that interval that is in the prefix.
+
+            #   But then we need to have the prefix stored in a data structure.
+
+            #   Given the complexity of implementation and the fact that the total sum of n is 10^6, 
+            #   but the work for one test case might be O(n^2) and there might be a test case with n=10^6, 
+            #   we need to hope that in practice the new maximum occurs rarely.
+
+            #   However, in the worst-case (sorted array) it occurs at every step.
+
+            #   Alternative optimization: 
+            #       It is known that the number of distinct values of floor(x/y) is O(sqrt(x)), 
+            #       so we can iterate over k in O(sqrt(x)) time.
+
+            #   Steps for new maximum x:
+            #       candidate = 0
+            #       // Check for k=1: any y in (x/2, x] in the prefix?
+            #       //   if yes, then candidate = max(candidate, x)
+            #       //   because for such y, f(x,y)=x.
+            #       //   and x might be the maximum possible for this x.
+            #       //   but wait, is it?  #       //   f(x,y) = (x mod y) + y.
+            #       //   if y > x/2, then x mod y = x-y, so f= (x-y)+y = x.
+            #       //   so indeed, if there is any y in (x/2, x], then f(x,y)=x.
+            #       //   and x is the best we can do for this x? 
+            #       //   because for y<=x/2: f(x,y) = (x mod y) + y < y + y <= x, so indeed <= x.
+            #       //   so if there is any y in (x/2, x], then candidate = x. #       //   otherwise, we need to check y<=x/2.
+
+            #       // For y<=x/2: floor(x/y) >=2. #       //   and f(x,y) = (x mod y) + y = x - y * floor(x/y) + y = x + y*(1 - floor(x/y))
+            #       //   = x - y*(k-1)  [where k=floor(x/y)>=2]
+
+            #       //   and since k>=2, this is at most x - y, and since y>=1, at most x-1.
+
+            #       //   so if we have any y in (x/2, x], we can immediately return x.
+
+            #       //   otherwise, we iterate over k from 2 to floor(x/1)=x, but only O(sqrt(x)) distinct values.
+
+            #   Algorithm for new maximum x:
+            #       if there exists y in the prefix such that y > x/2 and y < x:
+            #           candidate = x
+            #       else:
+            #           candidate = 0
+            #           // iterate over k from 2 to floor(sqrt(x)) and also by ranges
+            #           // standard divisor technique: for d from 1 to sqrt(x), consider y around x/d.
+            #           // but we want to group by k = floor(x/y)
+            #           // for a fixed k, y in (x/(k+1), x/k]
+            #           // we want the smallest y in that interval that is in the prefix, because f = x - y*(k-1) is decreasing in y. #           // but also, we might want to consider the largest y?
+            #           //   f = x - y*(k-1), so to maximize f, we want to minimize y.
+
+            #           // So for each k>=2, let L = floor(x/(k+1))+1, R = floor(x

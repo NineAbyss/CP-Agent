@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    int t; cin >> t;
+    while (t--) {
+        ll n, x, y, vx, vy;
+        cin >> n >> x >> y >> vx >> vy;
+        // Normalize velocity
+        ll g = __gcd(vx, vy);
+        vx /= g;
+        vy /= g;
+
+        set<tuple<ll, ll>> seen;
+        ll cnt = 0;
+
+        for (int iter = 0; iter < 100; iter++) {
+            // Check for vertices
+            if (x == 0 && y == 0) { cout << cnt << '\n'; goto next; }
+            if (x == 0 && y == n) { cout << cnt << '\n'; goto next; }
+            if (x == n && y == 0) { cout << cnt << '\n'; goto next; }
+
+            tuple<ll, ll> dir = {vx, vy};
+            if (seen.count(dir)) { cout << -1 << '\n'; goto next; }
+            seen.insert(dir);
+
+            // Find the smallest positive t
+            ll num = -1, den = 1;
+            int type = -1;
+
+            if (vx < 0) {
+                // t = -x / vx, but as reduced fraction
+                ll t_num = -x, t_den = -vx;
+                if (num == -1 || t_num * den < num * t_den) {
+                    num = t_num; den = t_den; type = 0;
+                }
+            }
+            if (vy < 0) {
+                ll t_num = -y, t_den = -vy;
+                if (num == -1 || t_num * den < num * t_den) {
+                    num = t_num; den = t_den; type = 1;
+                }
+            }
+            if (vx + vy > 0) {
+                ll t_num = n - x - y, t_den = vx + vy;
+                if (num == -1 || t_num * den < num * t_den) {
+                    num = t_num; den = t_den; type = 2;
+                }
+            }
+
+            if (type == -1) { cout << -1 << '\n'; goto next; }
+
+            // Update: x = x + vx * (num/den)
+            x = x * den + vx * num;
+            y = y * den + vy * num;
+            // now we are at (x/den, y/den) // But we should reduce
+            // For simplicity, assume den divides
+            if (x % den == 0 && y % den == 0) {
+                x /= den;
+                y /= den;
+            } else {
+                // not integer, so cannot continue
+                cout << -1 << '\n';
+                goto next;
+            }
+            cnt++;
+
+            if (type == 0) vx = -vx;
+            else if (type == 1) vy = -vy;
+            else if (type == 2) swap(vx, vy), vx = -vx, vy = -vy;
+        }
+        cout << -1 << '\n';
+        next:;
+    }
+    return 0;
+}

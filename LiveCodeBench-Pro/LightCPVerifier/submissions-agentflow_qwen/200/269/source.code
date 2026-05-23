@@ -1,0 +1,146 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+ll kadane(vector<ll>& arr, int n) {
+    if (n == 0) return 0;
+    ll best = arr[0];
+    ll cur = arr[0];
+    for (int i = 1; i < n; i++) {
+        cur = max(arr[i], cur + arr[i]);
+        best = max(best, cur);
+    }
+    return best;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    const ll inf = 1000000000LL * 1000000000LL; // 1e18
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        ll k;
+        cin >> n >> k;
+        string s;
+        cin >> s;
+        vector<ll> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // Check if all fixed
+        bool all_fixed = true;
+        for (int i = 0; i < n; i++) {
+            if (s[i] == '0') {
+                all_fixed = false;
+                break;
+            }
+        }
+
+        if (all_fixed) {
+            ll mss = kadane(a, n);
+            if (mss == k) {
+                cout << "Yes\n";
+                for (int i = 0; i < n; i++) {
+                    cout << a[i];
+                    if (i < n-1) cout << ' ';
+                    else cout << '\n';
+                }
+            } else {
+                cout << "No\n";
+            }
+            continue;
+        }
+
+        // Build temp_a: fixed values as is, unknowns as -inf
+        vector<ll> temp_a(n);
+        for (int i = 0; i < n; i++) {
+            if (s[i] == '1') {
+                temp_a[i] = a[i];
+            } else {
+                temp_a[i] = -inf;
+            }
+        }
+
+        ll max_fixed = kadane(temp_a, n);
+
+        if (max_fixed > k) {
+            cout << "No\n";
+            continue;
+        }
+
+        if (max_fixed == k) {
+            for (int i = 0; i < n; i++) {
+                if (s[i] == '0') {
+                    a[i] = -inf;
+                }
+            }
+            cout << "Yes\n";
+            for (int i = 0; i < n; i++) {
+                cout << a[i];
+                if (i < n-1) cout << ' ';
+                else cout << '\n';
+            }
+            continue;
+        }
+
+        // max_fixed < k // Precompute dpL and dpR on temp_a
+        vector<ll> dpL(n), dpR(n);
+        dpL[0] = temp_a[0];
+        for (int i = 1; i < n; i++) {
+            dpL[i] = max(temp_a[i], dpL[i-1] + temp_a[i]);
+        }
+
+        dpR[n-1] = temp_a[n-1];
+        for (int i = n-2; i >= 0; i--) {
+            dpR[i] = max(temp_a[i], temp_a[i] + dpR[i+1]);
+        }
+
+        // Find the first index where s[i]=='0'
+        int idx = -1;
+        for (int i = 0; i < n; i++) {
+            if (s[i] == '0') {
+                idx = i;
+                break;
+            }
+        }
+
+        ll left_gain = 0;
+        if (idx > 0) {
+            // The best sum ending at idx-1 // Note: dpL[idx-1] might be -inf, then we take 0
+            if (dpL[idx-1] > 0) {
+                left_gain = dpL[idx-1];
+            }
+        }
+
+        ll right_gain = 0;
+        if (idx < n-1) {
+            if (dpR[idx+1] > 0) {
+                right_gain = dpR[idx+1];
+            }
+        }
+
+        a[idx] = k - left_gain - right_gain;
+
+        // Set all other unknowns to -inf
+        for (int i = 0; i < n; i++) {
+            if (s[i] == '0' && i != idx) {
+                a[i] = -inf;
+            }
+        }
+
+        cout << "Yes\n";
+        for (int i = 0; i < n; i++) {
+            cout << a[i];
+            if (i < n-1) cout << ' ';
+            else cout << '\n';
+        }
+    }
+
+    return 0;
+}

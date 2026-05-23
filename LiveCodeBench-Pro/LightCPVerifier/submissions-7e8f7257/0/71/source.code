@@ -1,0 +1,115 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+const long long INF = 1e18;
+
+long long solve_columns(int n, const vector<vector<long long>>& h, const vector<long long>& b) {
+    // 计算禁止标记
+    vector<bool> ban_minus_one(n-1, false);
+    vector<bool> ban_zero(n-1, false);
+    vector<bool> ban_one(n-1, false);
+    for (int j = 0; j < n-1; ++j) {
+        for (int i = 0; i < n; ++i) {
+            long long diff = h[i][j+1] - h[i][j];
+            if (diff == -1) ban_minus_one[j] = true;
+            else if (diff == 0) ban_zero[j] = true;
+            else if (diff == 1) ban_one[j] = true;
+        }
+    }
+    // DP
+    long long dp0 = 0;          // 第一列为 0
+    long long dp1 = b[0];       // 第一列为 1
+    for (int j = 1; j < n; ++j) {
+        long long ndp0 = INF;
+        long long ndp1 = INF;
+        // 从前一列转移到当前列 // 前一列状态 prev, 当前列状态 curr
+        for (int prev = 0; prev <= 1; ++prev) {
+            for (int curr = 0; curr <= 1; ++curr) {
+                int diff = prev - curr; // c_{j-1} - c_j
+                bool banned = false;
+                if (diff == -1 && ban_minus_one[j-1]) banned = true;
+                if (diff == 0 && ban_zero[j-1]) banned = true;
+                if (diff == 1 && ban_one[j-1]) banned = true;
+                if (banned) continue;
+                long long cost = (curr == 1 ? b[j] : 0);
+                long long prev_cost = (prev == 0 ? dp0 : dp1);
+                if (curr == 0) ndp0 = min(ndp0, prev_cost + cost);
+                else ndp1 = min(ndp1, prev_cost + cost);
+            }
+        }
+        dp0 = ndp0;
+        dp1 = ndp1;
+    }
+    return min(dp0, dp1);
+}
+
+long long solve_rows(int n, const vector<vector<long long>>& h, const vector<long long>& a) {
+    // 计算禁止标记
+    vector<bool> ban_minus_one(n-1, false);
+    vector<bool> ban_zero(n-1, false);
+    vector<bool> ban_one(n-1, false);
+    for (int i = 0; i < n-1; ++i) {
+        for (int j = 0; j < n; ++j) {
+            long long diff = h[i+1][j] - h[i][j];
+            if (diff == -1) ban_minus_one[i] = true;
+            else if (diff == 0) ban_zero[i] = true;
+            else if (diff == 1) ban_one[i] = true;
+        }
+    }
+    // DP
+    long long dp0 = 0;          // 第一行为 0
+    long long dp1 = a[0];       // 第一行为 1
+    for (int i = 1; i < n; ++i) {
+        long long ndp0 = INF;
+        long long ndp1 = INF;
+        for (int prev = 0; prev <= 1; ++prev) {
+            for (int curr = 0; curr <= 1; ++curr) {
+                int diff = prev - curr; // r_{i-1} - r_i
+                bool banned = false;
+                if (diff == -1 && ban_minus_one[i-1]) banned = true;
+                if (diff == 0 && ban_zero[i-1]) banned = true;
+                if (diff == 1 && ban_one[i-1]) banned = true;
+                if (banned) continue;
+                long long cost = (curr == 1 ? a[i] : 0);
+                long long prev_cost = (prev == 0 ? dp0 : dp1);
+                if (curr == 0) ndp0 = min(ndp0, prev_cost + cost);
+                else ndp1 = min(ndp1, prev_cost + cost);
+            }
+        }
+        dp0 = ndp0;
+        dp1 = ndp1;
+    }
+    return min(dp0, dp1);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<long long>> h(n, vector<long long>(n));
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
+                cin >> h[i][j];
+            }
+        }
+        vector<long long> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        vector<long long> b(n);
+        for (int i = 0; i < n; ++i) cin >> b[i];
+        long long col_cost = solve_columns(n, h, b);
+        long long row_cost = solve_rows(n, h, a);
+        if (col_cost >= INF/2 || row_cost >= INF/2) {
+            cout << -1 << '\n';
+        } else {
+            cout << col_cost + row_cost << '\n';
+        }
+    }
+    return 0;
+}

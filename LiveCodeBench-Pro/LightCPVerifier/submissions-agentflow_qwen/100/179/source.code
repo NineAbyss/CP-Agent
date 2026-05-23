@@ -1,0 +1,205 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, r, k;
+        cin >> n >> r >> k;
+        r--; // 0-indexed
+
+        vector<vector<int>> a(n, vector<int>(n));
+        for (int i=0; i<n; ++i) {
+            for (int j=0; j<n; ++j) {
+                cin >> a[i][j];
+            }
+        }
+
+        vector<string> color(n);
+        for (int i=0; i<n; ++i) {
+            cin >> color[i];
+        }
+
+        // bottleneck function as lambda
+        auto bottleneck = [&](int si, int sj, int di, int dj) {
+            vector<vector<int>> dist(n, vector<int>(n, INF));
+            priority_queue<tuple<int,int,int>, vector<tuple<int,int,int>>, greater<>> pq;
+            dist[si][sj] = a[si][sj];
+            pq.push({a[si][sj], si, sj});
+
+            int dx[] = {0,0,1,-1};
+            int dy[] = {1,-1,0,0};
+
+            while (!pq.empty()) {
+                auto [d, i, j] = pq.top(); pq.pop();
+                if (d != dist[i][j]) continue;
+                for (int dir=0; dir<4; ++dir) {
+                    int ni = i + dx[dir], nj = j + dy[dir];
+                    if (ni<0 || ni>=n || nj<0 || nj>=n) continue;
+                    int nd = max(d, a[ni][nj]);
+                    if (nd < dist[ni][nj]) {
+                        dist[ni][nj] = nd;
+                        pq.push({nd, ni, nj});
+                    }
+                }
+            }
+            return dist[di][dj];
+        };
+
+        int ans_M = bottleneck(0, 0, r, n-1);
+
+        // Build safe region
+        vector<vector<bool>> reachable_from_start(n, vector<bool>(n, false));
+        queue<pair<int,int>> q;
+        q.push({0,0});
+        reachable_from_start[0][0] = true;
+
+        int dx[] = {0,0,1,-1}, dy[] = {1,-1,0,0};
+        while (!q.empty()) {
+            auto [i,j] = q.front(); q.pop();
+            for (int d=0; d<4; ++d) {
+                int ni = i + dx[d], nj = j + dy[d];
+                if (ni<0 || ni>=n || nj<0 || nj>=n) continue;
+                if (!reachable_from_start[ni][nj] && a[ni][nj] <= ans_M) {
+                    reachable_from_start[ni][nj] = true;
+                    q.push({ni,nj});
+                }
+            }
+        }
+
+        vector<vector<bool>> reachable_to_end(n, vector<bool>(n, false));
+        q.push({r, n-1});
+        reachable_to_end[r][n-1] = true;
+        while (!q.empty()) {
+            auto [i,j] = q.front(); q.pop();
+            for (int d=0; d<4; ++d) {
+                int ni = i + dx[d], nj = j + dy[d];
+                if (ni<0 || ni>=n || nj<0 || nj>=n) continue;
+                if (!reachable_to_end[ni][nj] && a[ni][nj] <= ans_M) {
+                    reachable_to_end[ni][nj] = true;
+                    q.push({ni,nj});
+                }
+            }
+        }
+
+        vector<vector<bool>> in_safe(n, vector<bool>(n, false));
+        for (int i=0; i<n; ++i) {
+            for (int j=0; j<n; ++j) {
+                in_safe[i][j] = (reachable_from_start[i][j] && reachable_to_end[i][j] && color[i][j]=='1');
+            }
+        }
+
+        int base_F = bottleneck(n-1, 0, r, n-1);
+
+        // Binary search on X
+        int low = base_F, high = 2000000;
+        int ans_F = base_F;
+        while (low <= high) {
+            int X = (low + high) / 2;
+
+            // If exit or start has >= X, then automatically blocked
+            if (a[n-1][0] >= X || a[r][n-1] >= X) {
+                ans_F = X;
+                low = X + 1;
+                continue;
+            }
+
+            // Only consider cells with a[i][j] < X
+            int total_nodes = 2 * n * n;
+            struct Edge { int to, cap, rev_idx; };
+            vector<vector<Edge>> g(total_nodes);
+            auto add_edge = [&](int u, int v, int cap) {
+                g[u].push_back({v, cap, (int)g[v].size()});
+                g[v].push_back({u, 0, (int)g[u].size()-1});
+            };
+
+            auto in_node = [&](int i, int j) { return i*n + j; };
+            auto out_node = [&](int i, int j) { return n*n + i*n + j; };
+
+            bool valid = true;
+            for (int i=0; i<n; ++i) {
+                for (int j=0; j<n; ++j) {
+                    if (a[i][j] >= X) continue;
+                    int u_in = in_node(i,j), u_out = out_node(i,j);
+                    int cap;
+                    if (color[i][j]=='0' || in_safe[i][j]) {
+                        cap = INF;
+                    } else {
+                        cap = X - a[i][j];
+                    }
+                    add_edge(u_in, u_out, cap);
+
+                    for (int d=0; d<4; ++d) {
+                        int ni=i+dx[d], nj=j+dy[d];
+                        if (ni<0||ni>=n||nj<0||nj>=n) continue;
+                        if (a[ni][nj] >= X) continue;
+                        add_edge(u_out, in_node(ni,nj), INF);
+                    }
+                }
+            }
+
+            int src = in_node(n-1, 0);
+            int snk = out_node(r, n-1);
+
+            // Dinic
+            vector<int> level(total_nodes), ptr(total_nodes);
+            function<bool()> bfs = [&]() {
+                fill(level.begin(), level.end(), -1);
+                queue<int> q;
+                q.push(src);
+                level[src] = 0;
+                while (!q.empty()) {
+                    int u = q.front(); q.pop();
+                    for (auto &e : g[u]) {
+                        if (e.cap > 0 && level[e.to] == -1) {
+                            level[e.to] = level[u]+1;
+                            q.push(e.to);
+                        }
+                    }
+                }
+                return level[snk] != -1;
+            };
+
+            function<int(int, int)> dfs = [&](int u, int flow) {
+                if (u == snk) return flow;
+                for (int &i = ptr[u]; i < g[u].size(); ++i) {
+                    auto &e = g[u][i];
+                    if (e.cap > 0 && level[e.to] == level[u]+1) {
+                        int f = dfs(e.to, min(flow, e.cap));
+                        if (f > 0) {
+                            e.cap -= f;
+                            g[e.to][e.rev_idx].cap += f;
+                            return f;
+                        }
+                    }
+                }
+                return 0;
+            };
+
+            int total_flow = 0;
+            while (bfs()) {
+                fill(ptr.begin(), ptr.end(), 0);
+                while (int f = dfs(src, INF)) {
+                    total_flow += f;
+                    if (total_flow >= INF) break;
+                }
+            }
+
+            if (total_flow <= k) {
+                ans_F = X;
+                low = X + 1;
+            } else {
+                high = X - 1;
+            }
+        }
+
+        cout << ans_M << " " << ans_F << "\n";
+    }
+    return 0;
+}

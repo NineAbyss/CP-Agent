@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int a, b, c, d;
+        cin >> a >> b >> c >> d;
+        bool gellyfish_wins = false;
+        if (b == 1) {
+            gellyfish_wins = true;
+        } else if (a == 1 && d == 1) {
+            gellyfish_wins = true;
+        } else if (a > d) {
+            gellyfish_wins = true;
+        } else if (a < d) {
+            gellyfish_wins = false;
+        } else { // a == d
+            gellyfish_wins = (b >= c);
+        }
+        cout << (gellyfish_wins ? "Gellyfish" : "Flower") << '\n';
+    }
+    return 0;
+}

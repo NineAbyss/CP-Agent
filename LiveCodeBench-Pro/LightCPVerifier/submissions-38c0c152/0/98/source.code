@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct DSU {
+    vector<int> parent;
+    DSU(int n) {
+        parent.resize(n + 1);
+        for (int i = 1; i <= n; i++) parent[i] = i;
+    }
+    int find(int x) {
+        if (parent[x] != x) parent[x] = find(parent[x]);
+        return parent[x];
+    }
+    bool unite(int a, int b) {
+        a = find(a), b = find(b);
+        if (a == b) return false;
+        parent[b] = a;
+        return true;
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> p(n + 1), d(n + 1);
+        for (int i = 1; i <= n; i++) cin >> p[i];
+        for (int i = 1; i <= n; i++) cin >> d[i];
+
+        DSU dsu(n);
+        int cycles = 0;
+        vector<int> ans(n + 1, 0);
+
+        // 逆序处理
+        for (int i = n; i >= 1; i--) {
+            int idx = d[i];
+            int val = p[idx];
+            // 如果 idx == val，是自环，不增加环计数
+            if (idx == val) {
+                ans[i] = cycles;
+                continue;
+            }
+            // 连接 idx 和 val
+            if (!dsu.unite(idx, val)) {
+                cycles++;
+            }
+            ans[i] = cycles;
+        }
+
+        // 正序输出
+        for (int i = 1; i <= n; i++) {
+            cout << ans[n - i + 1] << " \n"[i == n];
+        }
+    }
+    return 0;
+}

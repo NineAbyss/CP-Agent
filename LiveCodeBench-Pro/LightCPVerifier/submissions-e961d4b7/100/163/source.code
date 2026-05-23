@@ -1,0 +1,103 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+
+long long modpow(long long a, long long e) {
+    long long res = 1;
+    while (e) {
+        if (e & 1) res = res * a % MOD;
+        a = a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+void wht(vector<long long>& a, int m, bool invert) {
+    int n = 1 << m;
+    for (int len = 1; len < n; len <<= 1) {
+        for (int i = 0; i < n; i += 2*len) {
+            for (int j = 0; j < len; j++) {
+                long long u = a[i+j];
+                long long v = a[i+j+len];
+                a[i+j] = (u + v) % MOD;
+                a[i+j+len] = (u - v + MOD) % MOD;
+            }
+        }
+    }
+    if (invert) {
+        long long inv_n = modpow(n, MOD-2);
+        for (int i = 0; i < n; i++) {
+            a[i] = a[i] * inv_n % MOD;
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<int> l(n), r(n);
+        for (int i = 0; i < n; i++) {
+            cin >> l[i] >> r[i];
+        }
+        
+        int total = 1 << m;
+        vector<long long> prod(total, 1);
+        
+        for (int i = 0; i < n; i++) {
+            vector<long long> H(total, 0);
+            int L = l[i], R = r[i];
+            // 将区间拆分成块
+            int cur = L;
+            while (cur <= R) {
+                int b = 0;
+                while (b < m && (cur & ((1<<b)-1)) == 0 && cur + (1<<b) - 1 <= R) {
+                    b++;
+                }
+                b--;
+                if (b < 0) {
+                    // 单个元素
+                    int x = cur;
+                    for (int k = 0; k < total; k++) {
+                        int sign = (__builtin_popcount(x & k) % 2 == 0) ? 1 : -1;
+                        H[k] = (H[k] + sign) % MOD;
+                    }
+                    cur++;
+                } else {
+                    int len = 1 << b;
+                    int x = cur;
+                    int mask_low = (1<<b) - 1;
+                    for (int k = 0; k < total; k++) {
+                        if ((k & mask_low) == 0) {
+                            int sign = (__builtin_popcount(x & k) % 2 == 0) ? 1 : -1;
+                            H[k] = (H[k] + sign * len) % MOD;
+                        }
+                    }
+                    cur += len;
+                }
+            }
+            
+            for (int k = 0; k < total; k++) {
+                prod[k] = prod[k] * ((H[k] + MOD) % MOD) % MOD;
+            }
+        }
+        
+        vector<long long> f = prod;
+        wht(f, m, true);
+        
+        long long xor_sum = 0;
+        for (int x = 0; x < total; x++) {
+            long long g = f[x] * modpow(2, x) % MOD;
+            xor_sum ^= g;
+        }
+        
+        cout << xor_sum << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,98 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to build adjacency list from edges
+vector<vector<int>> create_adj_list(int n, vector<pair<int, int>> &edges) {
+    vector<vector<int>> adj(n + 1);
+    for (auto [u, v] : edges) {
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    return adj;
+}
+
+// BFS to mark nodes occupied by enemies over time
+void calculate_enemy_occupancy(const vector<pair<int, int>> &enemies, vector<vector<bool>> &occupied, const vector<vector<int>> &adj) {
+    for (const auto &[a, b] : enemies) {
+        vector<int> distance(adj.size(), INT_MAX);
+        queue<int> q;
+        q.push(a);
+        distance[a] = 0;
+        
+        while (!q.empty()) {
+            int node = q.front();
+            q.pop();
+            int d = distance[node];
+            occupied[node][d + 1] = true;  // Mark as occupied in this timeframe
+            
+            for (int neighbor : adj[node]) {
+                if (distance[neighbor] == INT_MAX) {
+                    distance[neighbor] = d + 1;
+                    q.push(neighbor);
+                }
+            }
+        }
+    }
+}
+
+// BFS to determine the earliest possible path for Marat safely
+int solve_test_case(int n, int m, int x, int y, vector<pair<int, int>> &edges, vector<pair<int, int>> &enemies) {
+    auto adj = create_adj_list(n, edges);
+    vector<vector<bool>> occupied(n + 1, vector<bool>(2 * n + 1, false));
+
+    calculate_enemy_occupancy(enemies, occupied, adj);
+
+    queue<pair<int, int>> q;
+    q.push({x, 0});
+    vector<vector<bool>> visited(n + 1, vector<bool>(2 * n + 1, false));
+    visited[x][0] = true;
+
+    while (!q.empty()) {
+        auto [node, time] = q.front();
+        q.pop();
+
+        if (node == y) {
+            return time;  // Reached destination with time
+        }
+
+        // Try moving to adjacent nodes
+        for (int neighbor : adj[node]) {
+            int new_time = time + 1;
+            if (!visited[neighbor][new_time] && !occupied[neighbor][new_time]) {
+                visited[neighbor][new_time] = true;
+                q.push({neighbor, new_time});
+            }
+        }
+
+        // Option of waiting at the current node
+        int wait_time = time + 1;
+        if (!visited[node][wait_time] && !occupied[node][wait_time]) {
+            visited[node][wait_time] = true;
+            q.push({node, wait_time});
+        }
+    }
+
+    return -1;  // If no valid path exists
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, x, y;
+        cin >> n >> m >> x >> y;
+        vector<pair<int, int>> edges(n - 1);
+        for (auto &[u, v] : edges) {
+            cin >> u >> v;
+        }
+        vector<pair<int, int>> enemies(m);
+        for (auto &[a, b] : enemies) {
+            cin >> a >> b;
+        }
+        cout << solve_test_case(n, m, x, y, edges, enemies) << "\n";
+    }
+    return 0;
+}

@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    auto mod = [](long long x, long long m) -> long long {
+        long long r = x % m;
+        if (r < 0) r += m;
+        return r;
+    };
+
+    int t;
+    cin >> t;
+    while (t--) {
+        long long w, h, a, b;
+        cin >> w >> h >> a >> b;
+        long long x1, y1, x2, y2;
+        cin >> x1 >> y1 >> x2 >> y2;
+
+        long long ox1 = mod(x1, a);
+        long long oy1 = mod(y1, b);
+        long long ox2 = mod(x2, a);
+        long long oy2 = mod(y2, b);
+
+        if (ox1 == ox2 && oy1 == oy2) {
+            cout << "Yes\n";
+        } else {
+            cout << "No\n";
+        }
+    }
+
+    return 0;
+}

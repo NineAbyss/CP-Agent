@@ -1,0 +1,110 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+#include <cstring>
+using namespace std;
+
+int popcount(long long x) {
+    return __builtin_popcountll(x);
+}
+
+// find minimal b >= a with popcount(b) = p
+long long find_min(long long a, int p) {
+    if (p < 0) return LLONG_MAX;
+    if (p == 0) {
+        if (a <= 0) return 0;
+        else return LLONG_MAX;
+    }
+    long long dp[61][61][2];
+    for (int i=0; i<=60; ++i) for (int j=0; j<=60; ++j) for (int k=0; k<2; ++k) dp[i][j][k] = LLONG_MAX;
+    dp[60][0][1] = 0;
+    for (int pos=60; pos>0; --pos) {
+        int bit = (a >> (pos-1)) & 1;
+        for (int cnt=0; cnt<=p; ++cnt) {
+            for (int tight=0; tight<2; ++tight) {
+                long long val = dp[pos][cnt][tight];
+                if (val == LLONG_MAX) continue;
+                // put 0
+                if (!tight || bit == 0) {
+                    int new_tight = tight && (bit == 0);
+                    dp[pos-1][cnt][new_tight] = min(dp[pos-1][cnt][new_tight], val);
+                }
+                // put 1
+                if (cnt < p) {
+                    if (!tight || bit == 1) {
+                        int new_tight = tight && (bit == 1);
+                        long long new_val = val | (1LL << (pos-1));
+                        dp[pos-1][cnt+1][new_tight] = min(dp[pos-1][cnt+1][new_tight], new_val);
+                    } else {
+                        // bit == 0 and tight
+                        int new_tight = 0;
+                        long long new_val = val | (1LL << (pos-1));
+                        dp[pos-1][cnt+1][new_tight] = min(dp[pos-1][cnt+1][new_tight], new_val);
+                    }
+                }
+            }
+        }
+    }
+    long long res = min(dp[0][p][0], dp[0][p][1]);
+    return res;
+}
+
+long long solve_case(int n, long long k, vector<long long>& a) {
+    long long init_sum = 0;
+    for (long long x : a) init_sum += popcount(x);
+    // generate options for each element
+    vector<vector<pair<long long, int>>> options(n);
+    for (int i=0; i<n; ++i) {
+        long long ai = a[i];
+        int pc = popcount(ai);
+        options[i].push_back({0, 0});
+        for (int p=pc+1; p<=60; ++p) {
+            long long b = find_min(ai, p);
+            if (b == LLONG_MAX) continue;
+            long long cost = b - ai;
+            if (cost > k) continue; // pruning
+            int delta = p - pc;
+            options[i].push_back({cost, delta});
+        }
+    }
+    // dp over total delta
+    int max_delta = 60*n;
+    vector<long long> dp(max_delta+1, LLONG_MAX/2);
+    dp[0] = 0;
+    for (int i=0; i<n; ++i) {
+        vector<long long> new_dp = dp;
+        for (auto [c,d] : options[i]) {
+            if (c > k) continue;
+            for (int r = max_delta - d; r >= 0; --r) {
+                if (dp[r] + c < new_dp[r+d]) {
+                    new_dp[r+d] = dp[r] + c;
+                }
+            }
+        }
+        dp = new_dp;
+    }
+    long long ans = init_sum;
+    for (int r=0; r<=max_delta; ++r) {
+        if (dp[r] <= k) {
+            ans = max(ans, init_sum + r);
+        }
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        vector<long long> a(n);
+        for (int i=0; i<n; ++i) cin >> a[i];
+        cout << solve_case(n, k, a) << '\n';
+    }
+    return 0;
+}

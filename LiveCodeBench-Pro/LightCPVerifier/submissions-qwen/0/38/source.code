@@ -1,0 +1,326 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Function to check if there must be at least one liar
+string solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    // Special case: only two players
+    if (n == 2) {
+        // Only one duel happens between player 1 and 2 // Exactly one of them must win, so exactly one should report 1
+        if (a[0] == 0 && a[1] == 0) return "YES"; // both say 0 -> impossible
+        if (a[0] == 1 && a[1] == 1) return "YES"; // both say 1 -> impossible
+        return "NO"; // one says 0, other says 1 -> possible
+    }
+
+    // For n >= 3: // We want to check whether the reports could possibly be consistent.
+
+    // Observation: // - Each duel produces one win and one loss.
+    // - So total number of wins is exactly n-1. // - But players only report whether they won *at least one* duel (1) or none (0).
+    // - Therefore, the number of players who report 1 (claiming at least one win)  //   cannot exceed n-1 (since only n-1 wins exist), but that's always true because
+    //   even if all report 1, it's at most n, and n-1 < n, so this isn't restrictive enough.
+
+    // More refined logic: // Consider constraints on who can have 0:
+    // - The first player only plays one match: with player 2. // - The last player only plays one match: with player n-1.
+    // - All others play two matches.
+
+    // A player reporting 0 means they lost both their matches (if they played two) 
+    // or the one match (if they are at end).
+
+    // Key idea: Can we assign actual wins/losses consistently?
+
+    // Instead, use known insight from similar problems: // After analysis of valid patterns, it turns out:
+    // The only way the configuration is **impossible** is if: //   - There is no win at all: all report 0 → impossible since n-1 ≥ 1 duels happened.
+    //   - Or: two adjacent players both report 0? Not quite.
+
+    // Actually, known solution pattern from similar Codeforces problems: // The necessary and sufficient condition is:
+    //   It's impossible if and only if all players report 0 OR all players report 1? // But example: n=2, [0,0] → YES (liar exists), [1,1] → YES, [0,1] or [1,0] → NO.
+
+    // Let's re-analyze:
+
+    // Total wins = n-1. So at most n-1 players can have at least one win.
+    // So if all n players report 1 (i.e., claim at least one win), then we have n players claiming win,
+    // but only n-1 wins available ⇒ by pigeonhole, impossible ⇒ at least one liar.
+
+    // Similarly, if all report 0, then no one claims a win, but there were n-1 wins ⇒ contradiction.
+
+    // But wait: first test case: n=3, [0,1,0] → output "NO" (no liar necessarily) //   - here not all are 0, not all are 1 → so maybe only when all same?
+
+    // However, fourth test case: n=4, [0,1,1,1] → output "NO" //   - three 1s and one 0 → okay
+
+    // Third test case: n=2, [1,1] → output "YES" → because both can't win.
+
+    // So:  //   - If all report 0 → impossible (someone must have won) → liar exists → YES
+    //   - If all report 1 → impossible when n==2? But also for larger n?
+
+    // Wait: for n=3, can all report 1? //   Players: 1,2,3
+    //   Duels: 1vs2, winner vs3 //   Is it possible that all won at least one duel?
+    //     - Player 1: must win against 2 → wins one //     - Player 2: loses to 1, but then what? Only plays one match → so cannot win any → contradiction
+    //     - So player 2 cannot win any if loses to 1 //   Alternatively: player 2 beats 1, then player 3 beats 2
+    //     - Player 1: lost only match → 0 wins //     - Player 2: won one (against 1), lost one (to 3) → 1 win → ok
+    //     - Player 3: won one → 1 win //     → so reports: [0,1,1] — not [1,1,1]
+    //   Can we get [1,1,1]?  //     - Player 1 must win at least one → must beat player 2
+    //     - Player 2 must win at least one → must beat someone → only options: beat 1 or beat 3
+    //       but if lost to 1, then must beat 3
+    //     - Then player 3 must win at least one → must beat 2? but just lost to 2 → contradiction
+    //   So [1,1,1] is impossible for n=3.
+
+    // In fact, in any tournament: //   - The very first player (player 1) only plays one match (against 2). To have a win, must beat 2.
+    //   - The very last player (player n) only plays one match (against n-1). To have a win, must beat n-1.
+    //   - But if both happen: player 1 beats 2, and player n beats n-1, then what about middle?
+    //   - However, consider chain: 1 beats 2, 2 beats 3, ..., n-1 beats n → then only player 1 has win? No: //     Actually, each player except last wins one, last loses.
+    //     So wins: players 1 to n-1 → n-1 players with at least one win.
+
+    // But can everyone have at least one win? That would require n players to have ≥1 win, but only n-1 wins exist → impossible.
+
+    // Therefore: it's **always impossible** for all n players to report 1.
+
+    // Similarly, it's impossible for all to report 0 (no wins reported, but n-1 wins occurred).
+
+    // So if all report 0 → YES (liar exists)
+    //    if all report 1 → YES (liar exists)
+
+    // But wait: what about n=1? Not applicable, n>=2.
+
+    // Now check examples: // Example 1: [0,1,0] → not all 0, not all 1 → so "NO" → matches
+    // Example 2: [0,0] → all 0 → YES → matches // Example 3: [1,1] → all 1 → YES → matches
+    // Example 4: [0,1,1,1] → not all same → NO → matches // Example 5: [1,0,0,1] → not all same → but expected "YES"
+
+    // Oh! Example 5: n=4, [1,0,0,1] → expected "YES" (liar exists)
+
+    // So our previous logic fails.
+
+    // Why is [1,0,0,1] invalid?
+
+    // Let's try to assign outcomes: // Players: 1,2,3,4
+    // Matches: 1v2, 2v3, 3v4
+
+    // Reports: //   p1: 1 → must win at least one → only match is vs2 → so must beat 2
+    //   p2: 0 → must have 0 wins → so must lose to 1 and lose to 3 //   p3: 0 → must have 0 wins → so must lose to 2 and lose to 4
+    //   p4: 1 → must win at least one → only match is vs3 → so must beat 3
+
+    // From p2: loses to 3 → so 3 beats 2 // From p3: loses to 2 → so 2 beats 3
+    // Contradiction: 2 beats 3 AND 3 beats 2 → impossible.
+
+    // So the issue is the two zeros in the middle.
+
+    // What's the pattern?
+
+    // Another idea: simulate possible win assignments.
+
+    // Known insight from similar problems (e.g., Codeforces Round 891 (Div. 3), Problem B):
+    // The answer is "YES" (i.e., there must be a liar) if and only if the array `a` contains a subsequence [1, 0, 0, ..., 0, 1] with at least two consecutive 0s between two 1s? 
+    // But [1,0,0,1] has two consecutive 0s.
+
+    // Alternatively, think about connectivity of wins.
+
+    // Alternate approach: greedy assignment.
+
+    // We know: // - Each player's result constrains their match outcomes.
+
+    // Let’s define:
+    //   w[i] = number of wins for player i (we don’t know, but we know if it's zero or not)
+
+    // Constraints: // - For each i from 1 to n-1: either player i wins against i+1, or player i+1 wins against i.
+    // - a[i] = 0 → w[i] = 0 // - a[i] = 1 → w[i] >= 1
+
+    // We want to know: is there **any** assignment of winners that satisfies these?
+
+    // Since n <= 100, but t <= 100, we might try to reason combinatorially.
+
+    // However, note structure: linear chain.
+
+    // We can use dynamic programming or greedy inference.
+
+    // But simpler: known solution from contests:
+    // After checking several cases, a known solution for this exact problem is:
+    //   Answer is "YES" (liar exists) if and only if the array `a` has two adjacent 0s.
+
+    // Let's test: // Example 1: [0,1,0] → adjacent pairs: (0,1), (1,0) → no two adjacent 0s → NO → matches
+    // Example 2: [0,0] → adjacent 0s → YES → matches // Example 3: [1,1] → no adjacent 0s → but expected YES → fails.
+
+    // So not that.
+
+    // Another idea:  //   - If there is any 0, then that player lost all matches they played.
+    //   - For internal player (not end), that means they lost to both neighbors. //   - For end player, lost to their only neighbor.
+
+    // Consider implications: //   Suppose a[i] = 0.
+    //   Then: //     - If i == 1: then player 1 lost to player 2 → so player 2 won against 1.
+    //     - If i == n: then player n lost to player n-1 → so player n-1 won against n. //     - If 1 < i < n: then player i lost to i-1 and to i+1 → so player i-1 beat i, and player i+1 beat i.
+
+    // Now, if a player reports 1, they must have won at least one match.
+
+    // So let's try to derive forced wins:
+
+    // Algorithm: //   Step 1: Mark all matches as unknown.
+    //   Step 2: For every player i with a[i]==0: //           - If i==1: then match(1,2) must be won by 2
+    //           - If i==n: then match(n-1,n) must be won by n-1 //           - Else: match(i-1,i) won by i-1, and match(i,i+1) won by i+1
+    //   Step 3: For each player, count how many wins they are forced to have.
+    //   Step 4: For players with a[i]==1, if they have 0 forced wins, then they must win some other match? 
+    //           But wait, we may have flexibility.
+
+    // Actually, we can do:
+    //   - Use the zeros to force wins on neighbors.
+    //   - Then check if any contradiction occurs (same match assigned two winners) or a player with a[i]==1 ends up with no wins even after accounting for forced and possible wins.
+
+    // But simpler: since constraints are small, we can simulate.
+
+    // However, known efficient solution:
+
+    // After reading contest editorials for similar problems, the correct insight is: //   The only impossible configurations are:
+    //     1. All zeros. //     2. Two ones at the ends and zeros in between (like [1,0,0,...,0,1]) when the number of zeros is at least 1?
+    //   But [1,0,1] for n=3: is it possible?
+
+    // Try [1,0,1] for n=3: //   p1: 1 → must beat p2
+    //   p2: 0 → must lose to p1 and p3 → so p3 beats p2 //   p3: 1 → must beat p2 (already have) → ok
+    //   Matches: p1 beats p2, p3 beats p2 → consistent. //   So [1,0,1] is possible.
+
+    // But [1,0,0,1] we saw is impossible.
+
+    // Difference: in [1,0,0,1]: //   p1: 1 → must beat p2
+    //   p2: 0 → must lose to p1 and p3 → so p3 beats p2 //   p3: 0 → must lose to p2 and p4 → so p2 beats p3
+    //   p4: 1 → must beat p3 //   Now: p3 beats p2 (from p2's loss) and p2 beats p3 (from p3's loss) → contradiction.
+
+    // So the problem is when we have two consecutive zeros in the middle.
+
+    // Specifically, if there is an index i (1 < i < n-1) such that a[i] == 0 and a[i+1] == 0, then: //   - a[i]=0 → player i+1 beats player i (because i loses to i+1)
+    //   - a[i+1]=0 → player i+1 loses to player i+2 → so player i+2 beats player i+1 //   BUT also: a[i+1]=0 → player i+1 loses to player i → so player i beats player i+1
+    //   And a[i]=0 → player i loses to player i-1 (if i>1) and to player i+1 → so player i+1 beats player i //   So from a[i]=0: player i+1 beats player i
+    //   From a[i+1]=0: player i beats player i+1 //   Contradiction: i and i+1 beat each other.
+
+    // Therefore, if there are two consecutive zeros anywhere in the array, it's impossible.
+
+    // But wait: what about at the edge? //   Case: [0,0,1] (n=3)
+    //     p1: 0 → loses to p2 → p2 beats p1 //     p2: 0 → loses to p1 and p3 → so p1 beats p2 and p3 beats p2
+    //     But p2 beats p1 (from p1's report) and p1 beats p2 (from p2's report) → contradiction. //   So any two consecutive zeros cause contradiction.
+
+    // But what about non-consecutive? [0,1,0] → no consecutive zeros → possible.
+
+    // Also, [1,1] → no zeros at all → but we know it's impossible for n=2.
+
+    // So we have multiple conditions:
+    //   Condition 1: if there is any occurrence of two consecutive 0s → impossible → YES (liar exists)
+    //   Condition 2: if all are 1 → impossible (because only n-1 wins, but n players claim win) → YES
+    //   Condition 3: if all are 0 → impossible (no one claims a win, but n-1 wins occurred) → YES
+
+    // But are these exhaustive?
+
+    // Check examples: // Example 1: [0,1,0] → not all 0, not all 1, no consecutive 0s → NO → matches
+    // Example 2: [0,0] → consecutive 0s (and also all 0) → YES → matches // Example 3: [1,1] → all 1 → YES → matches
+    // Example 4: [0,1,1,1] → not all 0, not all 1, no consecutive 0s → NO → matches // Example 5: [1,0,0,1] → has consecutive 0s → YES → matches
+    // Example 6: [0,1,0,1,0,1,0] → check consecutive: 0,1→ok; 1,0→ok; 0,1→ok; 1,0→ok; 0,1→ok; 1,0→ok → no consecutive 0s → and not all 0 or all 1 → NO → matches
+
+    // But wait: is "all 1" covered by the consecutive 0s rule? No.
+    // And "all 0" is covered by consecutive 0s only if n>=2, which it is, and all 0 implies consecutive 0s for n>=2.
+
+    // For n=2: [0,0] → consecutive 0s → caught. // For n>=3: [0,0,...,0] → definitely has consecutive 0s.
+
+    // So "all 0" is a special case of having consecutive 0s.
+
+    // But what about [1,1] for n=2: does it have consecutive 0s? No.
+
+    // So we still need to catch [1,1].
+
+    // Is there another pattern?
+
+    // Consider: if there are no zeros at all (all ones), then it's impossible.
+
+    // But also, is it possible to have no zeros? Only if every player won at least one duel.
+    // But total wins = n-1, and there are n players → by pigeonhole, impossible for all to have at least one win.
+
+    // Therefore: it's impossible to have zero zeros (i.e., all ones).
+
+    // So condition: if the number of zeros is 0 → then all ones → impossible.
+
+    // Also, if there are two consecutive zeros → impossible.
+
+    // Are there any other impossible configurations?
+
+    // Let's try: [1,0,1,0] for n=4. //   p1:1 → must beat p2
+    //   p2:0 → must lose to p1 and p3 → so p3 beats p2 //   p3:1 → must win at least one → already has win over p2 → ok
+    //   p4:0 → must lose to p3 → so p3 beats p4 //   No contradiction.
+    //   Wins: p1:1 (beat p2), p2:0, p3:2 (beat p2 and p4), p4:0 //   Reports: [1,0,1,0] → consistent.
+    //   But according to our rules:  //      - has zeros? yes
+    //      - consecutive zeros? (1,0), (0,1), (1,0) → no consecutive 0s //      - not all ones → so should be "NO"
+    //   But the example input doesn't have this.
+
+    // Our example 6: [0,1,0,1,0,1,0] → n=7, alternating → no consecutive 0s → output "NO", which matches.
+
+    // So the only bad cases are: //   - There exists at least one pair of consecutive 0s, OR
+    //   - There are no zeros at all (i.e., all ones)
+
+    // But note: if there are no zeros, then there are no consecutive zeros, so we need to check separately.
+
+    // However, observe: //   - If there are no zeros → all ones → impossible → YES
+    //   - Else, if there is at least one zero, then we must check for consecutive zeros.
+
+    // But wait: is "all ones" the only case without zeros? Yes.
+
+    // So algorithm:
+    //   if (count of 0 in a) == 0:
+    //       return "YES"
+    //   else:
+    //       for i from 0 to n-2:
+    //           if a[i] == 0 and a[i+1] == 0:
+    //               return "YES"
+    //       return "NO"
+
+    // Test: //   [0,1,0]: has zeros → check consecutive: (0,1): no, (1,0): no → NO → correct
+    //   [0,0]: has zeros → consecutive at (0,0) → YES → correct //   [1,1]: no zeros → YES → correct
+    //   [0,1,1,1]: has zeros → no consecutive 0s → NO → correct //   [1,0,0,1]: has zeros → consecutive 0s at index1 and index2 → YES → correct
+    //   [0,1,0,1,0,1,0]: has zeros → check consecutive:  //         indices: 0:0,1:1 → no
+    //                  1:1,2:0 → no //                  2:0,3:1 → no
+    //                  3:1,4:0 → no //                  4:0,5:1 → no
+    //                  5:1,6:0 → no → NO → correct
+
+    // But wait: what about [1,0,1] for n=3?  //   has zeros → check consecutive: (1,0): no, (0,1): no → NO → which is correct (possible).
+
+    // And [0,1] for n=2: //   has zeros → check consecutive: (0,1): no → NO → meaning no liar necessarily.
+    //   Is it possible? //     p1:0 → must lose to p2 → so p2 wins
+    //     p2:1 → must win at least one → wins against p1 → ok //   So consistent → NO → correct.
+
+    // Similarly, [1,0] for n=2: //   has zeros → no consecutive 0s → NO →
+    //   p1:1 → must beat p2 //   p2:0 → must lose to p1 → consistent → correct.
+
+    // Therefore, the solution is: //   - If there are no zeros in the array, output "YES"
+    //   - Else, if there are two consecutive zeros anywhere, output "YES" //   - Otherwise, output "NO"
+
+    // However, note: the condition "no zeros" is independent.
+
+    // Code accordingly.
+
+    bool hasZero = false;
+    for (int x : a) {
+        if (x == 0) {
+            hasZero = true;
+            break;
+        }
+    }
+
+    if (!hasZero) {
+        return "YES";
+    }
+
+    for (int i = 0; i < n - 1; i++) {
+        if (a[i] == 0 && a[i+1] == 0) {
+            return "YES";
+        }
+    }
+
+    return "NO";
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << solve() << '\n';
+    }
+    return 0;
+}

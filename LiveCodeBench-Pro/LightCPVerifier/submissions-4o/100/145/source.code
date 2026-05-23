@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+
+using namespace std;
+
+// Function to find and return any valid permutation p
+vector<int> findPermutation(int n, const vector<int>& a) {
+    int max_iter = ceil(log2(n));
+    vector<int> p(n);
+    vector<vector<int>> byIter(max_iter + 1);
+
+    // Place elements into groups based on when they are supposed to be removed
+    for (int i = 0; i < n; ++i) {
+        if (a[i] != -1) {
+            byIter[a[i]].push_back(i + 1);
+        }
+    }
+
+    int element = 1;
+    for (int i = 1; i <= max_iter; ++i) {
+        // Place elements expected to be removed at this iteration
+        for (int idx : byIter[i]) {
+            p[idx - 1] = element++;
+        }
+    }
+
+    // Fill remaining elements that were never removed
+    for (int i = 0; i < n; ++i) {
+        if (p[i] == 0) {
+            p[i] = element++;
+        }
+    }
+
+    return p;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        vector<int> result = findPermutation(n, a);
+        for (int x : result) {
+            cout << x << ' ';
+        }
+        cout << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // Group indices by value
+        map<int, vector<int>> by_value;
+        for (int i = 0; i < n; i++) {
+            by_value[a[i]].push_back(i);
+        }
+
+        // Get distinct values in descending order
+        vector<int> vals;
+        for (auto& p : by_value) {
+            vals.push_back(p.first);
+        }
+        sort(vals.begin(), vals.end(), greater<int>());
+
+        // Active array to track which positions are added
+        vector<bool> active(n, false);
+        int comp_count = 0;
+        int max_comp = 0;
+
+        // Process each value in descending order
+        for (int v : vals) {
+            auto& positions = by_value[v];
+            for (int i : positions) {
+                int delta = 1;
+                // Check left neighbor
+                if (i > 0 && active[i-1]) {
+                    delta--;
+                }
+                // Check right neighbor
+                if (i < n-1 && active[i+1]) {
+                    delta--;
+                }
+                comp_count += delta;
+                active[i] = true;
+            }
+            // After adding all positions with value v, update max_comp
+            max_comp = max(max_comp, comp_count);
+        }
+
+        cout << max_comp << '\n';
+    }
+
+    return 0;
+}

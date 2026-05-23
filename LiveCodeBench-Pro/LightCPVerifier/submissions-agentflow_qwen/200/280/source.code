@@ -1,0 +1,38 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<long long> l(n), r(n);
+        for (int i = 0; i < n; i++) cin >> l[i];
+        for (int i = 0; i < n; i++) cin >> r[i];
+
+        vector<long long> min_vals;
+        long long sum_max = 0;
+
+        for (int i = 0; i < n; i++) {
+            long long mi = min(l[i], r[i]);
+            long long ma = max(l[i], r[i]);
+            min_vals.push_back(mi);
+            sum_max += ma;
+        }
+
+        sort(min_vals.rbegin(), min_vals.rend());
+
+        for (int i = 0; i < k - 1; i++) {
+            sum_max += min_vals[i];
+        }
+
+        cout << sum_max + 1 << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const long long INF = LLONG_MAX;
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+
+        vector<long long> b(n+1);
+        for (int i = 1; i <= n; ++i) {
+            cin >> b[i];
+        }
+
+        vector<vector<pair<int, long long>>> adj(n+1);
+        for (int i = 0; i < m; ++i) {
+            int si, ti;
+            long long wi;
+            cin >> si >> ti >> wi;
+            adj[si].emplace_back(ti, wi);
+        }
+
+        vector<long long> min_battery(n+1, INF);
+        min_battery[1] = 0; // Start with 0 batteries at the first checkpoint
+
+        priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<>> pq;
+        pq.emplace(0, 1); // Start with 0 batteries at checkpoint 1
+
+        while (!pq.empty()) {
+            auto [current_battery, u] = pq.top();
+            pq.pop();
+
+            // Skip processing if a better solution already exists
+            if (current_battery > min_battery[u]) continue;
+
+            long long available_batteries = current_battery + b[u];
+
+            for (const auto &[v, w] : adj[u]) {
+                if (available_batteries >= w) { // If passage is possible
+                    long long new_battery = available_batteries - w; // Remaining after passage
+                    if (new_battery < min_battery[v]) {
+                        min_battery[v] = new_battery;
+                        pq.emplace(min_battery[v], v);
+                    }
+                }
+            }
+        }
+
+        long long result = min_battery[n];
+
+        if (result == INF) {
+            cout << -1 << "\n";
+        } else {
+            cout << result << "\n";
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    solve();
+
+    return 0;
+}

@@ -1,0 +1,99 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+const long long INF = 1e18;
+
+long long maxSubarraySum(const vector<long long>& arr) {
+    long long max_ending_here = 0;
+    long long max_so_far = LLONG_MIN;
+    for (long long x : arr) {
+        max_ending_here = max(x, max_ending_here + x);
+        max_so_far = max(max_so_far, max_ending_here);
+    }
+    return max_so_far;
+}
+
+bool solve(int n, long long k, const string& s, const vector<long long>& a, vector<long long>& ans) {
+    ans = a;
+    // 检查已知元素的最大子数组和是否超过k
+    vector<long long> arr_no_unknown = a;
+    for (int i = 0; i < n; i++) if (s[i] == '0') arr_no_unknown[i] = 0;
+    long long M = maxSubarraySum(arr_no_unknown);
+    if (M > k) return false;
+    if (M == k) {
+        // 设置未知为非常小的负数
+        for (int i = 0; i < n; i++) if (s[i] == '0') ans[i] = -INF;
+        return true;
+    }
+    // M < k，需要增加 // 尝试整个数组区间
+    long long S = 0;
+    int C = 0;
+    for (int i = 0; i < n; i++) {
+        if (s[i] == '1') S += a[i];
+        else C++;
+    }
+    // 计算t_min使得所有前缀和非负
+    long long cur = 0;
+    int cnt = 0;
+    long long t_min = 0;
+    for (int i = 0; i < n; i++) {
+        if (s[i] == '1') cur += a[i];
+        else cnt++;
+        if (cnt > 0) {
+            if (cur < 0) {
+                long long need = (-cur + cnt - 1) / cnt;
+                if (need > t_min) t_min = need;
+            }
+        } else {
+            if (cur < 0) return false;
+        }
+    }
+    if (k - S < C * t_min) return false;
+    long long remaining = k - S - C * t_min;
+    // 设置未知值
+    for (int i = 0; i < n; i++) if (s[i] == '0') ans[i] = t_min;
+    // 分配剩余
+    for (int i = n-1; i >= 0; i--) {
+        if (s[i] == '0') {
+            ans[i] += remaining;
+            break;
+        }
+    }
+    // 验证
+    if (maxSubarraySum(ans) != k) {
+        // 如果失败，尝试另一种构造：设所有未知为0，然后增加一个未知 // 找到当前最大子数组和的位置
+        // 由于时间有限，简单返回false
+        return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        string s;
+        cin >> s;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        vector<long long> ans;
+        if (solve(n, k, s, a, ans)) {
+            cout << "Yes\n";
+            for (int i = 0; i < n; i++) {
+                cout << ans[i] << " \n"[i==n-1];
+            }
+        } else {
+            cout << "No\n";
+        }
+    }
+    return 0;
+}

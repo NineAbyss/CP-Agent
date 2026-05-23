@@ -1,0 +1,69 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        // Check if already non-decreasing
+        bool already_sorted = true;
+        for (int i = 1; i < n; ++i) {
+            if (a[i] < a[i - 1]) {
+                already_sorted = false;
+                break;
+            }
+        }
+        
+        if (already_sorted) {
+            cout << 0 << endl;
+            continue;
+        }
+
+        // Preparation for operations
+        vector<tuple<int, int, int>> operations;
+        
+        // main loop to make the array non-decreasing
+        bool possible = true;
+
+        for (int i = 0; i < n - 1; ++i) {
+            if (a[i] > a[i + 1]) {
+                int move_needed = a[i] - a[i + 1];
+                if (a[i] + a[i + 1] >= k) {
+                    int transfer = min(move_needed, a[i] + a[i + 1] - k);
+                    operations.push_back({i + 1, i + 2, transfer});
+                    a[i] -= transfer;
+                    a[i + 1] += transfer;
+                } else {
+                    possible = false;
+                    break;
+                }
+            }
+        }
+
+        if (!possible) {
+            cout << -1 << endl;
+            continue;
+        }
+
+        cout << operations.size() << endl;
+        for (auto &[i, j, x] : operations) {
+            cout << i << " " << j << " " << x << endl;
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

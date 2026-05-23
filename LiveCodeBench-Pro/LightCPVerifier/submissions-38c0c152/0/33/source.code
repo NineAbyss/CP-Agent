@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool can(int k, const vector<int>& a, const vector<int>& cnt) {
+    int n = a.size();
+    if (k == 1) return true;
+    vector<int> rem = cnt; // remaining occurrences
+    vector<bool> inCurSet(n+1, false);
+    vector<int> curList;
+    curList.reserve(n);
+    int seg = 1;
+    for (int i = 0; i < n; ++i) {
+        int x = a[i];
+        rem[x]--;
+        if (!inCurSet[x]) {
+            inCurSet[x] = true;
+            curList.push_back(x);
+        }
+        if (seg < k) {
+            bool ok = true;
+            for (int y : curList) {
+                if (rem[y] < k - seg) {
+                    ok = false;
+                    break;
+                }
+            }
+            if (ok) {
+                // cut here
+                seg++;
+                // clear current set
+                for (int y : curList) inCurSet[y] = false;
+                curList.clear();
+                if (seg == k) {
+                    // remaining part as last segment
+                    break;
+                }
+            }
+        }
+    }
+    return seg == k;
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) cin >> a[i];
+    vector<int> cnt(n+1, 0);
+    for (int x : a) cnt[x]++;
+    int lo = 1, hi = n, ans = 1;
+    while (lo <= hi) {
+        int mid = (lo + hi) / 2;
+        if (can(mid, a, cnt)) {
+            ans = mid;
+            lo = mid + 1;
+        } else {
+            hi = mid - 1;
+        }
+    }
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

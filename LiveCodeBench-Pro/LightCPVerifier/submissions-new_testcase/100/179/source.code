@@ -1,0 +1,35 @@
+#include <iostream>
+#include <vector>
+#include <climits>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<ll> a(n+1);
+        for (int i = 1; i <= n; i++) {
+            cin >> a[i];
+        }
+        // compute suffix min of a[j] + j
+        vector<ll> suffix_min(n+2, LLONG_MAX);
+        for (int j = n; j >= 1; j--) {
+            suffix_min[j] = min(a[j] + j, suffix_min[j+1]);
+        }
+        ll total = 0;
+        for (int i = 1; i <= n; i++) {
+            ll best = a[i];
+            if (i < n) {
+                best = min(best, suffix_min[i+1] - i);
+            }
+            total += best;
+        }
+        cout << total << '\n';
+    }
+    return 0;
+}

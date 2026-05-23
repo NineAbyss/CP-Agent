@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<vector<int>> adj(n+1);
+    for (int i=0; i<n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    // 找到度数为2的顶点
+    int x = -1;
+    for (int i=1; i<=n; i++) {
+        if (adj[i].size() == 2) {
+            x = i;
+            break;
+        }
+    }
+    if (x == -1) {
+        cout << "NO\n";
+        return;
+    }
+    
+    // 邻居
+    int a = adj[x][0];
+    int b = adj[x][1];
+    
+    vector<pair<int,int>> dir_edges;
+    dir_edges.push_back({a, x}); // a -> x
+    dir_edges.push_back({x, b}); // x -> b
+    
+    // 类型：1表示出（源点），2表示入（汇点）
+    vector<int> type(n+1, 0);
+    type[a] = 1;
+    type[b] = 2;
+    
+    queue<int> q;
+    q.push(a);
+    q.push(b);
+    
+    vector<bool> visited(n+1, false);
+    visited[x] = true;
+    visited[a] = true;
+    visited[b] = true;
+    
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int v : adj[u]) {
+            if (visited[v]) continue;
+            visited[v] = true;
+            if (type[u] == 1) {
+                dir_edges.push_back({u, v});
+                type[v] = 2;
+            } else if (type[u] == 2) {
+                dir_edges.push_back({v, u});
+                type[v] = 1;
+            }
+            q.push(v);
+        }
+    }
+    
+    cout << "YES\n";
+    for (auto& e : dir_edges) {
+        cout << e.first << " " << e.second << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int gcd(int a, int b) {
+    if (b == 0) return a;
+    return gcd(b, a % b);
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    // Compute overall gcd
+    int g_all = a[0];
+    for (int i = 1; i < n; i++) {
+        g_all = gcd(g_all, a[i]);
+    }
+
+    // Build b[i] = a[i] / g_all
+    vector<int> b(n);
+    for (int i = 0; i < n; i++) {
+        b[i] = a[i] / g_all;
+    }
+
+    // Count ones
+    int count_ones = 0;
+    for (int x : b) {
+        if (x == 1) count_ones++;
+    }
+
+    if (count_ones > 0) {
+        cout << n - count_ones << '\n';
+        return;
+    }
+
+    // DP: best[g] = minimum number of elements used to achieve GCD = g
+    map<int, int> best;
+    for (int x : b) {
+        map<int, int> new_best = best;
+
+        // Option: use x alone
+        if (new_best.find(x) == new_best.end() || new_best[x] > 1) {
+            new_best[x] = 1;
+        }
+
+        // Merge x with every existing GCD group
+        for (auto &p : best) {
+            int g_val = p.first;
+            int cnt = p.second;
+            int ng = gcd(g_val, x);
+            int candidate = cnt + 1;
+            if (new_best.find(ng) == new_best.end() || new_best[ng] > candidate) {
+                new_best[ng] = candidate;
+            }
+        }
+
+        best = new_best;
+    }
+
+    int k = best[1];  // must exist
+    int ans = (k - 1) + (n - 1);
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

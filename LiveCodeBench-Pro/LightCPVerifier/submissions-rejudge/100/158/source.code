@@ -1,0 +1,184 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        
+        // 计算最大权重
+        long long max_weight = 1LL * (n-2) * (n-1) * n / 6;
+        
+        // 检查是否可能
+        if (k > max_weight + 1) {
+            cout << "No" << endl;
+            continue;
+        }
+        
+        if (n == 2) {
+            if (k <= 1) {
+                cout << "Yes" << endl << "1 2" << endl;
+            } else {
+                cout << "No" << endl;
+            }
+            continue;
+        }
+        
+        // 对于n=3,4,5，使用之前的实现
+        if (n == 3) {
+            if (k <= 2) {
+                cout << "Yes" << endl;
+                if (k <= 1) {
+                    cout << "1 2" << endl << "1 3" << endl;
+                } else {
+                    cout << "1 2" << endl << "2 3" << endl;
+                }
+            } else {
+                cout << "No" << endl;
+            }
+            continue;
+        }
+        
+        if (n == 4) {
+            if (k <= 5) {
+                cout << "Yes" << endl;
+                if (k <= 1) {
+                    cout << "1 2" << endl << "1 3" << endl << "1 4" << endl;
+                } else if (k <= 3) {
+                    cout << "1 2" << endl << "2 3" << endl << "2 4" << endl;
+                } else {
+                    cout << "1 2" << endl << "2 3" << endl << "3 4" << endl;
+                }
+            } else {
+                cout << "No" << endl;
+            }
+            continue;
+        }
+        
+        if (n == 5) {
+            if (k <= 10) {
+                cout << "Yes" << endl;
+                if (k <= 1) {
+                    cout << "1 2" << endl << "1 3" << endl << "1 4" << endl << "1 5" << endl;
+                } else if (k <= 2) {
+                    cout << "1 2" << endl << "2 3" << endl << "1 4" << endl << "1 5" << endl;
+                } else if (k <= 3) {
+                    cout << "1 2" << endl << "2 3" << endl << "2 4" << endl << "1 5" << endl;
+                } else if (k <= 4) {
+                    cout << "1 2" << endl << "2 3" << endl << "3 4" << endl << "1 5" << endl;
+                } else if (k <= 6) {
+                    cout << "1 2" << endl << "2 3" << endl << "2 4" << endl << "2 5" << endl;
+                } else if (k <= 7) {
+                    cout << "1 3" << endl << "3 5" << endl << "4 5" << endl << "3 2" << endl;
+                } else {
+                    cout << "1 2" << endl << "2 3" << endl << "3 4" << endl << "4 5" << endl;
+                }
+            } else {
+                cout << "No" << endl;
+            }
+            continue;
+        }
+        
+        // n >= 6 // 尝试用大小为2和3的子树构造
+        
+        // 我们需要x个大小为2的子树和y个大小为3的子树 // 使得x + 3y接近k
+        // 且2x + 3y <= n-1（因为根节点占用1）
+        
+        bool found = false;
+        int best_x = -1, best_y = -1;
+        long long best_diff = 1e18;
+        
+        // y的范围：0到(n-1)/3
+        for (int y = 0; y <= (n-1)/3; y++) {
+            // 计算x的最大值
+            int max_x = (n-1 - 3*y) / 2;
+            for (int x = 0; x <= max_x; x++) {
+                long long w = x + 3LL*y;
+                long long diff = abs(w - k);
+                
+                if (diff < best_diff) {
+                    best_diff = diff;
+                    best_x = x;
+                    best_y = y;
+                }
+                
+                if (diff <= 1) {
+                    found = true;
+                    // 构造树
+                    cout << "Yes" << endl;
+                    
+                    int next_node = 2;
+                    
+                    // 创建x个大小为2的子树
+                    for (int i = 0; i < x; i++) {
+                        cout << "1 " << next_node << endl;
+                        cout << next_node << " " << next_node+1 << endl;
+                        next_node += 2;
+                    }
+                    
+                    // 创建y个大小为3的子树
+                    for (int i = 0; i < y; i++) {
+                        cout << "1 " << next_node << endl;
+                        cout << next_node << " " << next_node+1 << endl;
+                        cout << next_node+1 << " " << next_node+2 << endl;
+                        next_node += 3;
+                    }
+                    
+                    // 剩下的节点作为叶子连接到根
+                    while (next_node <= n) {
+                        cout << "1 " << next_node << endl;
+                        next_node++;
+                    }
+                    
+                    goto next_case;
+                }
+            }
+        }
+        
+        if (found == false && best_diff <= 1) {
+            // 使用最佳匹配
+            found = true;
+            cout << "Yes" << endl;
+            
+            int next_node = 2;
+            
+            for (int i = 0; i < best_x; i++) {
+                cout << "1 " << next_node << endl;
+                cout << next_node << " " << next_node+1 << endl;
+                next_node += 2;
+            }
+            
+            for (int i = 0; i < best_y; i++) {
+                cout << "1 " << next_node << endl;
+                cout << next_node << " " << next_node+1 << endl;
+                cout << next_node+1 << " " << next_node+2 << endl;
+                next_node += 3;
+            }
+            
+            while (next_node <= n) {
+                cout << "1 " << next_node << endl;
+                next_node++;
+            }
+            
+            goto next_case;
+        }
+        
+        // 如果不能用大小为2和3的子树构造，尝试其他方法 // 简化：输出No
+        cout << "No" << endl;
+        continue;
+        
+        next_case:;
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    solve();
+    return 0;
+}

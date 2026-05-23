@@ -1,0 +1,110 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+vector<int> find_path(vector<vector<int>>& adj, int s, int e) {
+    int n = adj.size() - 1;
+    vector<int> parent(n + 1, 0), dist(n + 1, -1);
+    queue<int> q;
+    q.push(s);
+    dist[s] = 0;
+    parent[s] = 0;
+    
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        if (u == e) break;
+        for (int v : adj[u]) {
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                parent[v] = u;
+                q.push(v);
+            }
+        }
+    }
+    
+    vector<int> path;
+    for (int cur = e; cur != 0; cur = parent[cur]) {
+        path.push_back(cur);
+    }
+    reverse(path.begin(), path.end());
+    return path;
+}
+
+void solve() {
+    int n, m, x, y;
+    cin >> n >> m >> x >> y;
+    
+    vector<vector<int>> adj(n + 1);
+    for (int i = 0; i < n - 1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    set<pair<int, int>> forbidden;
+    
+    for (int i = 0; i < m; i++) {
+        int a, b;
+        cin >> a >> b;
+        vector<int> path = find_path(adj, a, b);
+        for (int t = 0; t < path.size(); t++) {
+            forbidden.insert({t + 1, path[t]});
+        }
+    }
+    
+    // BFS using queue, processing by increasing time
+    queue<pair<int, int>> q;  // (time, vertex)
+    set<pair<int, int>> visited;
+    
+    q.push({1, x});
+    visited.insert({1, x});
+    
+    int max_time = 2 * n;
+    
+    while (!q.empty()) {
+        auto [time, u] = q.front();
+        q.pop();
+        
+        if (u == y) {
+            cout << time << '\n';
+            return;
+        }
+        
+        int next_time = time + 1;
+        if (next_time > max_time) continue;
+        
+        // Option 1: Stay at current vertex
+        int nv = u;
+        pair<int, int> state = {next_time, nv};
+        if (!forbidden.count(state) && !visited.count(state)) {
+            visited.insert(state);
+            q.push(state);
+        }
+        
+        // Option 2: Move to adjacent vertices
+        for (int v : adj[u]) {
+            nv = v;
+            state = {next_time, nv};
+            if (!forbidden.count(state) && !visited.count(state)) {
+                visited.insert(state);
+                q.push(state);
+            }
+        }
+    }
+    
+    cout << -1 << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

@@ -1,0 +1,105 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const long long LIMIT = 20000000; // 2e7
+const int MAX_DEPTH = 10;
+
+int solve(int x, int y, int k) {
+    if (x == y) return 0;
+    if (y % x == 0 && y / x <= k) return 1;
+    if (x % y == 0 && x / y <= k) return 1;
+    
+    unordered_map<long long, int> dist_x, dist_y;
+    queue<long long> qx, qy;
+    dist_x[x] = 0;
+    dist_y[y] = 0;
+    qx.push(x);
+    qy.push(y);
+    int meet = -1;
+    while (!qx.empty() && !qy.empty() && meet == -1) {
+        // expand x side
+        int sz = qx.size();
+        for (int i = 0; i < sz && meet == -1; ++i) {
+            long long cur = qx.front(); qx.pop();
+            int d = dist_x[cur];
+            if (d >= MAX_DEPTH) continue;
+            // multiply
+            long long max_a = min((long long)k, LIMIT / cur);
+            for (long long a = 2; a <= max_a; ++a) {
+                long long nxt = cur * a;
+                if (dist_y.count(nxt)) {
+                    meet = d + 1 + dist_y[nxt];
+                    break;
+                }
+                if (!dist_x.count(nxt)) {
+                    dist_x[nxt] = d + 1;
+                    qx.push(nxt);
+                }
+            }
+            if (meet != -1) break;
+            // divide
+            long long max_div = min((long long)k, cur);
+            for (long long a = 2; a <= max_div; ++a) {
+                if (cur % a != 0) continue;
+                long long nxt = cur / a;
+                if (dist_y.count(nxt)) {
+                    meet = d + 1 + dist_y[nxt];
+                    break;
+                }
+                if (!dist_x.count(nxt)) {
+                    dist_x[nxt] = d + 1;
+                    qx.push(nxt);
+                }
+            }
+        }
+        // expand y side (reverse)
+        sz = qy.size();
+        for (int i = 0; i < sz && meet == -1; ++i) {
+            long long cur = qy.front(); qy.pop();
+            int d = dist_y[cur];
+            if (d >= MAX_DEPTH) continue;
+            // reverse multiply (original divide)
+            long long max_div = min((long long)k, cur);
+            for (long long a = 2; a <= max_div; ++a) {
+                if (cur % a != 0) continue;
+                long long nxt = cur / a;
+                if (dist_x.count(nxt)) {
+                    meet = d + 1 + dist_x[nxt];
+                    break;
+                }
+                if (!dist_y.count(nxt)) {
+                    dist_y[nxt] = d + 1;
+                    qy.push(nxt);
+                }
+            }
+            if (meet != -1) break;
+            // reverse divide (original multiply)
+            long long max_a = min((long long)k, LIMIT / cur);
+            for (long long a = 2; a <= max_a; ++a) {
+                long long nxt = cur * a;
+                if (dist_x.count(nxt)) {
+                    meet = d + 1 + dist_x[nxt];
+                    break;
+                }
+                if (!dist_y.count(nxt)) {
+                    dist_y[nxt] = d + 1;
+                    qy.push(nxt);
+                }
+            }
+        }
+    }
+    return meet;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int x, y, k;
+        cin >> x >> y >> k;
+        cout << solve(x, y, k) << '\n';
+    }
+    return 0;
+}

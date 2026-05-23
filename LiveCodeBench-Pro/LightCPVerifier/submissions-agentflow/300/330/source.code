@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    long long s;
+    int x;
+    cin >> n >> s >> x;
+    
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    // 找到 > x 的位置，将数组分割成段
+    vector<int> split_pos = {-1}; // 虚拟分割点
+    for (int i = 0; i < n; i++) {
+        if (a[i] > x) {
+            split_pos.push_back(i);
+        }
+    }
+    split_pos.push_back(n);
+    
+    long long ans = 0;
+    
+    // 处理每个段
+    for (int seg = 1; seg < split_pos.size(); seg++) {
+        int l = split_pos[seg-1] + 1;
+        int r = split_pos[seg] - 1;
+        if (l > r) continue;
+        
+        // 使用 map 保证 O(log n) 时间复杂度
+        map<long long, int> total_count, no_x_count;
+        long long prefix = 0;
+        total_count[0] = 1;
+        no_x_count[0] = 1;
+        
+        for (int i = l; i <= r; i++) {
+            prefix += a[i];
+            long long target = prefix - s;
+            
+            if (a[i] == x) {
+                // 当前位置是 x，所有以 i 结尾的子段都包含 x
+                auto it = total_count.find(target);
+                if (it != total_count.end()) {
+                    ans += it->second;
+                }
+                
+                // 遇到 x，重置 no_x_count
+                no_x_count.clear();
+                no_x_count[prefix] = 1;
+            } else {
+                // 当前位置不是 x
+                int total = 0;
+                auto it_total = total_count.find(target);
+                if (it_total != total_count.end()) {
+                    total = it_total->second;
+                }
+                
+                int no_x = 0;
+                auto it_no_x = no_x_count.find(target);
+                if (it_no_x != no_x_count.end()) {
+                    no_x = it_no_x->second;
+                }
+                
+                ans += total - no_x;
+                
+                // 更新 no_x_count（因为当前元素不是 x）
+                no_x_count[prefix]++;
+            }
+            
+            // 总是更新 total_count
+            total_count[prefix]++;
+        }
+    }
+    
+    cout << ans << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

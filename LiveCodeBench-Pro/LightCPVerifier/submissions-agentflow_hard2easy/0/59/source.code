@@ -1,0 +1,98 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9 + 10;
+
+int solve_one(int n, int m, vector<int>& a, vector<int>& b) {
+    // 计算 pre
+    vector<int> pre(n+1, 0);
+    for (int i = 1; i <= n; i++) {
+        pre[i] = pre[i-1];
+        if (pre[i] < m && a[i-1] >= b[pre[i]]) {
+            pre[i]++;
+        }
+    }
+    
+    // 如果已经可以匹配
+    if (pre[n] == m) {
+        return 0;
+    }
+    
+    // 计算 suf
+    vector<int> suf(n+2, 0);
+    for (int i = n; i >= 1; i--) {
+        suf[i] = suf[i+1];
+        if (suf[i] < m && a[i-1] >= b[m-1-suf[i]]) {
+            suf[i]++;
+        }
+    }
+    
+    // 预处理 pos_left[x]: 最小的 p 使得 pre[p] >= x
+    vector<int> pos_left(m+1, n+1);
+    int cur = 0;
+    for (int p = 0; p <= n; p++) {
+        while (cur <= pre[p] && cur <= m) {
+            pos_left[cur] = min(pos_left[cur], p);
+            cur++;
+        }
+    }
+    // 处理剩余的值
+    for (int x = cur; x <= m; x++) {
+        pos_left[x] = n+1;
+    }
+    
+    // 预处理 pos_right[x]: 最大的 p 使得 suf[p] >= x
+    vector<int> pos_right(m+1, 0);
+    int p = n+1;
+    for (int x = 0; x <= m; x++) {
+        while (p >= 1 && suf[p] < x) {
+            p--;
+        }
+        pos_right[x] = p;
+    }
+    
+    int ans = INF;
+    for (int i = 1; i <= m; i++) {
+        int left_needed = i-1;
+        int right_needed = m-i;
+        
+        int min_pos = pos_left[left_needed];
+        int max_pos = pos_right[right_needed];
+        
+        // 需要存在位置 pos 使得： // pre[pos-1] >= left_needed  => pos-1 >= min_pos  => pos >= min_pos + 1
+        // suf[pos] >= right_needed   => pos <= max_pos // 所以需要 min_pos + 1 <= max_pos
+        if (min_pos + 1 <= max_pos) {
+            ans = min(ans, b[i-1]);
+        }
+    }
+    
+    return ans == INF ? -1 : ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        vector<int> b(m);
+        for (int i = 0; i < m; i++) {
+            cin >> b[i];
+        }
+        
+        int result = solve_one(n, m, a, b);
+        cout << result << '\n';
+    }
+    
+    return 0;
+}

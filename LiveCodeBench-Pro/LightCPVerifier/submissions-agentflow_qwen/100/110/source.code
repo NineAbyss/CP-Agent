@@ -1,0 +1,98 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+vector<int> get_path(vector<vector<int>>& adj, int u, int v) {
+    int n = adj.size() - 1;
+    vector<int> parent(n+1, -1);
+    vector<bool> visited(n+1, false);
+    queue<int> q;
+    q.push(u);
+    visited[u] = true;
+    while (!q.empty()) {
+        int cur = q.front(); q.pop();
+        if (cur == v) break;
+        for (int neighbor : adj[cur]) {
+            if (!visited[neighbor]) {
+                visited[neighbor] = true;
+                parent[neighbor] = cur;
+                q.push(neighbor);
+            }
+        }
+    }
+    vector<int> path;
+    for (int now = v; now != -1; now = parent[now]) {
+        path.push_back(now);
+    }
+    reverse(path.begin(), path.end());
+    return path;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, x, y;
+        cin >> n >> m >> x >> y;
+        
+        vector<vector<int>> adj(n+1);
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+        
+        set<pair<int, int>> danger;
+        int max_t = 0;
+        
+        for (int i = 0; i < m; i++) {
+            int a, b;
+            cin >> a >> b;
+            auto path = get_path(adj, a, b);
+            for (int j = 0; j < path.size(); j++) {
+                danger.insert({path[j], j+1});
+                max_t = max(max_t, j+1);
+            }
+        }
+        
+        // BFS over (time, vertex)
+        const int MAX_TIME = max_t + n + 5;
+        set<pair<int, int>> seen; // (time, vertex)
+        queue<pair<int, int>> q;
+        
+        if (!danger.count({x, 1})) {
+            q.push({1, x});
+            seen.insert({1, x});
+        }
+        
+        int ans = -1;
+        while (!q.empty()) {
+            auto [time, u] = q.front(); q.pop();
+            if (u == y) {
+                ans = time;
+                break;
+            }
+            int nt = time + 1;
+            if (nt >= MAX_TIME) continue;
+            
+            // Stay
+            if (!danger.count({u, nt}) && seen.find({nt, u}) == seen.end()) {
+                seen.insert({nt, u});
+                q.push({nt, u});
+            }
+            // Move
+            for (int v : adj[u]) {
+                if (!danger.count({v, nt}) && seen.find({nt, v}) == seen.end()) {
+                    seen.insert({nt, v});
+                    q.push({nt, v});
+                }
+            }
+        }
+        
+        cout << ans << '\n';
+    }
+    return 0;
+}

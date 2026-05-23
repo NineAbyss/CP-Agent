@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        for (int i = 0; i < n - 1; ++i) {
+            int u, v;
+            cin >> u >> v;
+            // 树的结构不需要用于我们的查询
+        }
+        // 查询所有节点的 f 之和
+        cout << "? 1 " << n;
+        for (int i = 1; i <= n; ++i) cout << ' ' << i;
+        cout << endl;
+        cout.flush();
+        int prev;
+        cin >> prev;
+        
+        vector<int> ans(n + 1);
+        for (int i = 1; i <= n; ++i) {
+            // 切换节点 i
+            cout << "? 2 " << i << endl;
+            cout.flush();
+            // 类型2查询没有响应，所以不需要读取
+            
+            // 再次查询所有节点的 f 之和
+            cout << "? 1 " << n;
+            for (int j = 1; j <= n; ++j) cout << ' ' << j;
+            cout << endl;
+            cout.flush();
+            int cur;
+            cin >> cur;
+            int delta = cur - prev;
+            // 最终值 = sign(delta)
+            if (delta > 0) ans[i] = 1;
+            else ans[i] = -1;
+            prev = cur;
+        }
+        
+        // 输出答案
+        cout << "!";
+        for (int i = 1; i <= n; ++i) cout << ' ' << ans[i];
+        cout << endl;
+        cout.flush();
+    }
+    return 0;
+}

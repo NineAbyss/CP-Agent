@@ -1,0 +1,72 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+bool isSubsequence(const string &s, const string &t, const vector<vector<int>>& nextOccurrence) {
+    int pos = 0;
+    for (char c : t) {
+        pos = nextOccurrence[pos][c - 'a'];
+        if (pos == s.size()) return false;
+        pos++;
+    }
+    return true;
+}
+
+int calculateMinimumAppend(const vector<vector<int>>& nextOccurrence, const string& t, int k, int n) {
+    int low = 1, high = n; // Binary search over the append length
+    while (low < high) {
+        int mid = (low + high) / 2;
+        bool found = false;
+        for (char ch = 'a'; ch < 'a' + k; ++ch) {
+            if (!isSubsequence(t + string(mid, ch), t, nextOccurrence)) {
+                found = true;
+                break;
+            }
+        }
+        if (found) {
+            high = mid;
+        } else {
+            low = mid + 1;
+        }
+    }
+    return low;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int n, k, q;
+    cin >> n >> k;
+    string s;
+    cin >> s;
+    cin >> q;
+
+    vector<vector<int>> nextOccurrence(n + 1, vector<int>(26, n));
+    
+    for (int c = 0; c < 26; ++c) {
+        int nextPos = n;
+        for (int i = n - 1; i >= 0; --i) {
+            nextOccurrence[i][c] = nextPos;
+            if (s[i] == 'a' + c) {
+                nextPos = i;
+            }
+        }
+    }
+
+    while (q--) {
+        string t;
+        cin >> t;
+
+        if (!isSubsequence(s, t, nextOccurrence)) {
+            cout << 0 << endl; // Already not a subsequence
+        } else {
+            int minAppend = calculateMinimumAppend(nextOccurrence, t, k, n);
+            cout << minAppend << endl;
+        }
+    }
+    
+    return 0;
+}

@@ -1,0 +1,77 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    vector<int> g(n+1);
+    for (int i = 1; i <= n; i++) {
+        cin >> g[i];
+    }
+
+    while (q--) {
+        int x, y, k;
+        cin >> x >> y >> k;
+        g[x] = y;
+
+        // Build reverse graph and in-degrees
+        vector<vector<int>> rev(n+1);
+        vector<int> deg(n+1, 0); // in-degree
+        for (int i = 1; i <= n; i++) {
+            rev[g[i]].push_back(i);
+            deg[g[i]]++;
+        }
+
+        queue<int> q_top;
+        vector<bool> is_cycle(n+1, true);
+        // Find nodes with in-degree 0
+        for (int i = 1; i <= n; i++) {
+            if (deg[i] == 0) {
+                q_top.push(i);
+                is_cycle[i] = false;
+            }
+        }
+
+        // Topological sort to remove non-cycle nodes
+        while (!q_top.empty()) {
+            int u = q_top.front(); q_top.pop();
+            int v = g[u]; // u -> v
+            if (--deg[v] == 0) {
+                q_top.push(v);
+                is_cycle[v] = false;
+            }
+        }
+
+        // Count cycle components
+        vector<bool> visited(n+1, false);
+        int c = 0; // number of cycles
+        for (int i = 1; i <= n; i++) {
+            if (is_cycle[i] && !visited[i]) {
+                c++;
+                int u = i;
+                while (!visited[u]) {
+                    visited[u] = true;
+                    u = g[u];
+                }
+            }
+        }
+
+        // Compute answer mod 3
+        long long ans;
+        if (k % 3 == 0) {
+            ans = 0;
+        } else if (k % 3 == 1) {
+            ans = 1;
+        } else { // k % 3 == 2
+            ans = (c % 2 == 1) ? 2 : 1;
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

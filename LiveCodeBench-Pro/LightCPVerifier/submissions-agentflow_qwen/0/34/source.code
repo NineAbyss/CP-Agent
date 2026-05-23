@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        string s;
+        cin >> s;
+
+        int cnt0 = count(s.begin(), s.end(), '0');
+        int cnt1 = n - cnt0;
+
+        int total_pairs = n / 2;
+        int m = total_pairs - k;  // number of non-good pairs needed
+
+        // Check if we have enough 0s and 1s for the mixed pairs
+        if (cnt0 < m || cnt1 < m) {
+            cout << "NO\n";
+            continue;
+        }
+
+        // How many good pairs can be formed from remaining 0s and 1s?
+        int good_from_0 = (cnt0 - m) / 2;
+        int good_from_1 = (cnt1 - m) / 2;
+
+        if (good_from_0 + good_from_1 >= k) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to compute gcd of two numbers
+long long gcd(long long a, long long b) {
+    return b == 0 ? a : gcd(b, a % b);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t; // Number of test cases
+    
+    while (t--) {
+        int n;
+        cin >> n; // Number of elements in the sequence
+        
+        vector<long long> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        
+        sort(a.begin(), a.end()); // Sorting the array
+        
+        // Minimum value in the sorted array
+        long long min_value = a[0];
+        
+        // Track suffix gcd and check condition
+        long long suffix_gcd = 0;
+        bool possible = false;
+        
+        for (int i = n - 1; i >= 0; --i) {
+            suffix_gcd = gcd(suffix_gcd, a[i]);
+            if (suffix_gcd == min_value) {
+                possible = true;
+                break;
+            }
+        }
+
+        cout << (possible ? "Yes" : "No") << endl;
+    }
+    
+    return 0;
+}

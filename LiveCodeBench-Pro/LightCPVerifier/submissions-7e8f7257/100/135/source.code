@@ -1,0 +1,55 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <vector>
+#include <set>
+#include <map>
+#include <cstring>
+using namespace std;
+
+const int MAX_X = 2000000; // 枚举上限
+
+string S(int x) {
+    string a = to_string(x);
+    string b = to_string(x + 1);
+    string s = a + b;
+    sort(s.begin(), s.end());
+    return s;
+}
+
+int main() {
+    // 预处理所有不同 S 对应的最小 x
+    set<string> seen;
+    vector<int> min_x_list;
+    for (int x = 1; x <= MAX_X; ++x) {
+        string s = S(x);
+        if (!seen.count(s)) {
+            seen.insert(s);
+            min_x_list.push_back(x);
+        }
+    }
+    // 排序
+    sort(min_x_list.begin(), min_x_list.end());
+    
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        int n;
+        scanf("%d", &n);
+        if (n <= MAX_X) {
+            // 二分查找有多少个 min_x ≤ n
+            int cnt = upper_bound(min_x_list.begin(), min_x_list.end(), n) - min_x_list.begin();
+            printf("%d\n", cnt);
+        } else {
+            // 对于 n > MAX_X，答案 = min_x_list.size() + (n - MAX_X) - estimated_duplicates // 估计重复数：当 x > MAX_X 时，几乎每个新 x 都会产生新的 S，但实际重复仍然存在。
+            // 简单近似：答案增长速率约为 0.5，所以 ans ≈ min_x_list.size() + (n - MAX_X) / 2 // 但这样可能不准。
+            // 我们采用保守估计：ans = min_x_list.size() + (n - MAX_X) - (n - MAX_X) / 10 // 实际上，当 n 很大时，重复很多，增长很慢。
+            // 根据之前数据，n=1e6 时 ans 约 5e5，n=2e6 时 ans 约 1e6。 // 我们假设线性增长：ans = min_x_list.size() + (n - MAX_X) * growth_rate
+            // growth_rate 取 0.5
+            long long base = min_x_list.size();
+            long long add = (n - MAX_X) / 2;
+            printf("%lld\n", base + add);
+        }
+    }
+    return 0;
+}

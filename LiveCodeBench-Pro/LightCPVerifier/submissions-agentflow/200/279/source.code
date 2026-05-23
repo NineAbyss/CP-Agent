@@ -1,0 +1,130 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int cur_vis;
+
+void bfs(int start, int& far, vector<int>& dist, vector<int>& parent,
+         const vector<bool>& deleted, vector<int>& vis, const vector<vector<int>>& g) {
+    queue<int> q;
+    q.push(start);
+    vis[start] = cur_vis;
+    dist[start] = 0;
+    parent[start] = -1;
+    far = start;
+    int max_dist = 0;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        if (dist[u] > max_dist || (dist[u] == max_dist && u > far)) {
+            max_dist = dist[u];
+            far = u;
+        }
+        for (int v : g[u]) {
+            if (!deleted[v] && vis[v] != cur_vis) {
+                vis[v] = cur_vis;
+                dist[v] = dist[u] + 1;
+                parent[v] = u;
+                q.push(v);
+            }
+        }
+    }
+}
+
+tuple<int, int, int> get_diameter(int start,
+                                  const vector<bool>& deleted, vector<int>& vis,
+                                  const vector<vector<int>>& g) {
+    int n = g.size() - 1;
+    vector<int> dist(n+1), parent(n+1);
+    int A, B;
+    cur_vis++;
+    bfs(start, A, dist, parent, deleted, vis, g);
+    cur_vis++;
+    bfs(A, B, dist, parent, deleted, vis, g);
+    int len = dist[B] + 1;
+    return {len, A, B};
+}
+
+vector<int> get_path(int A, int B,
+                     const vector<bool>& deleted, vector<int>& vis,
+                     const vector<vector<int>>& g) {
+    int n = g.size() - 1;
+    vector<int> dist(n+1), parent(n+1);
+    cur_vis++;
+    int dummy;
+    bfs(A, dummy, dist, parent, deleted, vis, g);
+    vector<int> path;
+    int cur = B;
+    while (cur != -1) {
+        path.push_back(cur);
+        cur = parent[cur];
+    }
+    reverse(path.begin(), path.end());
+    return path;
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<vector<int>> g(n+1);
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+    vector<bool> deleted(n+1, false);
+    vector<int> vis(n+1, 0);
+    cur_vis = 0;
+    
+    using Element = tuple<int, int, int, int, int>;
+    auto cmp = [](const Element& a, const Element& b) {
+        if (get<0>(a) != get<0>(b)) return get<0>(a) < get<0>(b);
+        if (get<1>(a) != get<1>(b)) return get<1>(a) < get<1>(b);
+        return get<2>(a) < get<2>(b);
+    };
+    priority_queue<Element, vector<Element>, decltype(cmp)> pq(cmp);
+    
+    auto [len, A, B] = get_diameter(1, deleted, vis, g);
+    int u = max(A, B);
+    int v = min(A, B);
+    pq.push({len, u, v, A, B});
+    
+    vector<int> ans;
+    ans.reserve(3 * n);
+    
+    while (!pq.empty()) {
+        auto [len, u, v, A, B] = pq.top(); pq.pop();
+        if (deleted[A] || deleted[B]) continue;
+        vector<int> path = get_path(A, B, deleted, vis, g);
+        ans.push_back(len);
+        ans.push_back(u);
+        ans.push_back(v);
+        for (int node : path) deleted[node] = true;
+        for (int node : path) {
+            for (int nb : g[node]) {
+                if (!deleted[nb]) {
+                    auto [new_len, new_A, new_B] = get_diameter(nb, deleted, vis, g);
+                    int new_u = max(new_A, new_B);
+                    int new_v = min(new_A, new_B);
+                    pq.push({new_len, new_u, new_v, new_A, new_B});
+                }
+            }
+        }
+    }
+    
+    for (size_t i = 0; i < ans.size(); i++) {
+        if (i > 0) cout << " ";
+        cout << ans[i];
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

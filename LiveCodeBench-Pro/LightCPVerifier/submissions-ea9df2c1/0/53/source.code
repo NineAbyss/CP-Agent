@@ -1,0 +1,16 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        // n*n may be up to 250000, fits in int, but use long long to avoid overflow if n larger? not needed.
+        // However, n*n/4 is integer division, which floors for positive numbers.
+        long long ans = 1LL * n * n / 4 + 1;
+        cout << ans << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,86 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+bool isZero(const string &s) {
+    for (char c : s) if (c == '1') return false;
+    return true;
+}
+
+string xorStrings(const string &a, const string &b) {
+    string res = a;
+    for (size_t i = 0; i < a.size(); i++) {
+        res[i] = ((a[i] - '0') ^ (b[i] - '0')) + '0';
+    }
+    return res;
+}
+
+bool inSpan(const string &x, const string &y, const string &v) {
+    if (isZero(v)) return true;
+    if (isZero(x) && isZero(y)) return isZero(v);
+    if (isZero(x)) return v == y;
+    if (isZero(y)) return v == x;
+    if (x == y) return v == x;
+    // x and y are independent
+    if (v == x || v == y) return true;
+    string xy = xorStrings(x, y);
+    return v == xy;
+}
+
+bool sameSpan(const string &L1, const string &R1, const string &L2, const string &R2) {
+    // Check if span{L1,R1} == span{L2,R2}
+    // Check L1 and R1 are in span{L2,R2}
+    if (!inSpan(L2, R2, L1)) return false;
+    if (!inSpan(L2, R2, R1)) return false;
+    // Check L2 and R2 are in span{L1,R1}
+    if (!inSpan(L1, R1, L2)) return false;
+    if (!inSpan(L1, R1, R2)) return false;
+    return true;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s, t;
+        cin >> s >> t;
+        
+        if (n % 2 == 1) {
+            // odd length
+            cout << (s == t ? "Yes" : "No") << '\n';
+            continue;
+        }
+        
+        // even length
+        int half = n / 2;
+        if (half % 2 == 1) {
+            // half is odd
+            string Ls = s.substr(0, half);
+            string Rs = s.substr(half, half);
+            string Lt = t.substr(0, half);
+            string Rt = t.substr(half, half);
+            if (sameSpan(Ls, Rs, Lt, Rt)) {
+                cout << "Yes\n";
+            } else {
+                cout << "No\n";
+            }
+        } else {
+            // half is even
+            bool s_zero = isZero(s);
+            bool t_zero = isZero(t);
+            if (s_zero == t_zero) {
+                cout << "Yes\n";
+            } else {
+                cout << "No\n";
+            }
+        }
+    }
+    
+    return 0;
+}

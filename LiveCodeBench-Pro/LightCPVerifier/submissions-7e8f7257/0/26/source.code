@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9+7;
+
+long long modpow(long long a, long long b) {
+    long long res = 1;
+    while(b) {
+        if(b&1) res = res * a % MOD;
+        a = a * a % MOD;
+        b >>= 1;
+    }
+    return res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while(t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> adj(n+1);
+        for(int i=0; i<n-1; i++) {
+            int u,v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+        // root at 1
+        vector<int> parent(n+1, 0);
+        vector<int> children[n+1];
+        function<void(int,int)> dfs = [&](int u, int p) {
+            parent[u] = p;
+            for(int v : adj[u]) {
+                if(v == p) continue;
+                children[u].push_back(v);
+                dfs(v, u);
+            }
+        };
+        dfs(1,0);
+        bool bad = false;
+        for(int u=1; u<=n; u++) {
+            if(children[u].size() > 2) {
+                bad = true;
+                break;
+            }
+        }
+        if(bad) {
+            cout << 0 << '\n';
+        } else {
+            cout << modpow(2, n) << '\n';
+        }
+    }
+    return 0;
+}

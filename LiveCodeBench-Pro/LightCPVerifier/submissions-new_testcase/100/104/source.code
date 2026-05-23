@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool is_beautiful(const string& s) {
+    for (int i = 0; i < 10; ++i) {
+        if (s[i] - '0' < 9 - i) return false;
+    }
+    return true;
+}
+
+string solve(string s) {
+    vector<int> digits;
+    for (char c : s) digits.push_back(c - '0');
+    sort(digits.begin(), digits.end());
+    string res(10, ' ');
+    for (int i = 0; i < 10; ++i) {
+        int need = 9 - i;
+        auto it = lower_bound(digits.begin(), digits.end(), need);
+        if (it != digits.end()) {
+            res[i] = char('0' + *it);
+            digits.erase(it);
+        } else {
+            res[i] = char('0' + digits[0]);
+            digits.erase(digits.begin());
+        }
+    }
+    if (!is_beautiful(res)) {
+        return "9999999999";
+    }
+    return res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        cout << solve(s) << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+using namespace std;
+
+// Function to determine the partition point in arrays A and B
+pair<int, int> find_transition_point(int n, int k) {
+    vector<int> elements(n);
+    unordered_map<int, int> freq;
+
+    // Query initial k elements
+    for (int i = 0; i < k; ++i) {
+        cout << "? " << i + 1 << endl;
+        cout.flush();
+        int value;
+        cin >> value;
+        elements[i] = value;
+        freq[value]++;
+    }
+
+    for (int i = k; i < n; ++i) {
+        // Query next elements in line
+        cout << "? " << i + 1 << endl;
+        cout.flush();
+        int value;
+        cin >> value;
+        elements[i] = value;
+
+        freq[value]++;
+        freq[elements[i - k]]--;
+        if (freq[elements[i - k]] <= 0) {
+            freq.erase(elements[i - k]); // Remove elements fully slid out of window
+        }
+
+        // When distinct k property breaks, we identify transition
+        if (freq.size() < k) {
+            return {i - k + 1, n - (i - k + 1)};
+        }
+    }
+
+    return {-1, -1};
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        pair<int, int> lengths = find_transition_point(n, k);
+        if (lengths.first == -1) {
+            cout << "! -1" << endl;
+        } else {
+            cout << "! " << lengths.first << " " << lengths.second << endl;
+        }
+        cout.flush();
+    }
+    return 0;
+}

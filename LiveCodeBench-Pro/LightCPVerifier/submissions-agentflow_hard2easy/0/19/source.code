@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> adj(n + 1);
+        for (int i = 0; i < n - 1; i++) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+        vector<int> sz(n + 1);
+        function<void(int, int)> dfs = [&](int u, int p) {
+            sz[u] = 1;
+            for (int v : adj[u]) {
+                if (v == p) continue;
+                dfs(v, u);
+                sz[u] += sz[v];
+            }
+        };
+        dfs(1, 0);
+        map<int, int> cnt;
+        for (int i = 1; i <= n; i++) cnt[sz[i]]++;
+        bool ok = true;
+        for (auto &[s, c] : cnt) if (c > s + 1) ok = false;
+        long long ans = 1;
+        if (!ok) ans = 0;
+        else {
+            // guess: 2^n
+            for (int i = 0; i < n; i++) ans = ans * 2 % MOD;
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

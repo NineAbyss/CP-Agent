@@ -1,0 +1,53 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        
+        // To store the first and last occurrence indices of each potential value in b
+        unordered_map<int, int> first_occurrence;
+        unordered_map<int, int> last_occurrence;
+        
+        for (int i = 0; i < n; ++i) {
+            int val = a[i];
+            if (first_occurrence.find(val) == first_occurrence.end()) {
+                // First time seeing this value
+                first_occurrence[val] = i;
+            }
+            // Update the last occurrence
+            last_occurrence[val] = i;
+        }
+        
+        long long beauty = 0;
+        
+        for (const auto& entry : first_occurrence) {
+            int val = entry.first;
+            int first = entry.second;
+            int last = last_occurrence[val];
+            beauty += (last - first);
+        }
+        
+        cout << beauty << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    solve();
+    
+    return 0;
+}

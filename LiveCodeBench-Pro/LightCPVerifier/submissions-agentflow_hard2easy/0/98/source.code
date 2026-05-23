@@ -1,0 +1,146 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, m, x, y;
+    cin >> n >> m >> x >> y;
+    
+    vector<vector<int>> adj(n+1);
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    // BFS预处理父节点（以1为根）
+    vector<int> parent(n+1, -1);
+    vector<int> depth(n+1);
+    queue<int> q;
+    q.push(1);
+    parent[1] = 0;
+    depth[1] = 0;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int v : adj[u]) {
+            if (v == parent[u]) continue;
+            parent[v] = u;
+            depth[v] = depth[u] + 1;
+            q.push(v);
+        }
+    }
+    
+    // 获取路径
+    auto get_path = [&](int a, int b) {
+        vector<int> pa, pb;
+        int u = a, v = b;
+        while (depth[u] > depth[v]) {
+            pa.push_back(u);
+            u = parent[u];
+        }
+        while (depth[v] > depth[u]) {
+            pb.push_back(v);
+            v = parent[v];
+        }
+        while (u != v) {
+            pa.push_back(u);
+            pb.push_back(v);
+            u = parent[u];
+            v = parent[v];
+        }
+        pa.push_back(u);
+        reverse(pb.begin(), pb.end());
+        pa.insert(pa.end(), pb.begin(), pb.end());
+        return pa;
+    };
+    
+    // 禁止时间
+    vector<vector<int>> forbid(n+1);
+    for (int i = 0; i < m; i++) {
+        int a, b;
+        cin >> a >> b;
+        vector<int> path = get_path(a, b);
+        for (int t = 0; t < path.size(); t++) {
+            forbid[path[t]].push_back(t+1);
+        }
+    }
+    
+    // 排序禁止时间
+    for (int v = 1; v <= n; v++) {
+        sort(forbid[v].begin(), forbid[v].end());
+    }
+    
+    // 检查是否禁止
+    auto is_forbidden = [&](int v, int t) -> bool {
+        const auto& vec = forbid[v];
+        auto it = lower_bound(vec.begin(), vec.end(), t);
+        return it != vec.end() && *it == t;
+    };
+    
+    // 起始检查
+    if (is_forbidden(x, 1)) {
+        cout << "-1\n";
+        return;
+    }
+    
+    // BFS分层
+    vector<int> cur, nxt;
+    vector<int> in_current(n+1, 0);
+    int timer = 1; // 用于标记是否在当前集合中
+    
+    cur.push_back(x);
+    in_current[x] = timer;
+    
+    // 时间上界
+    int maxT = 4 * n;
+    
+    for (int t = 1; t <= maxT; t++) {
+        // 检查目标
+        if (in_current[y] == timer) {
+            cout << t << '\n';
+            return;
+        }
+        
+        // 下一时间
+        timer++;
+        nxt.clear();
+        
+        for (int v : cur) {
+            // 停留
+            if (!is_forbidden(v, t+1)) {
+                if (in_current[v] != timer) {
+                    nxt.push_back(v);
+                    in_current[v] = timer;
+                }
+            }
+            
+            // 移动
+            for (int u : adj[v]) {
+                if (!is_forbidden(u, t+1)) {
+                    if (in_current[u] != timer) {
+                        nxt.push_back(u);
+                        in_current[u] = timer;
+                    }
+                }
+            }
+        }
+        
+        cur.swap(nxt);
+        if (cur.empty()) break;
+    }
+    
+    cout << "-1\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

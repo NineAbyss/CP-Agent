@@ -1,0 +1,109 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long solve(long long n, long long x, long long y, long long vx, long long vy) {
+    // 检查必要条件
+    long long D = vy * x - vx * y;
+    if (D % n != 0) return -1;
+    long long C = D / n;
+    bool possible = false;
+    if (C % 2 == 0) possible = true;
+    if ((C + vx) % 2 == 0) possible = true;
+    if ((C - vy) % 2 == 0) possible = true;
+    if (!possible) return -1;
+    
+    // 模拟（最多一定次数）
+    double px = x, py = y;
+    double vx_curr = vx, vy_curr = vy;
+    long long hits = 0;
+    const long long MAX_HITS = 1000000;
+    const double EPS = 1e-9;
+    
+    while (hits < MAX_HITS) {
+        // 计算到各边的时间
+        vector<pair<double, int>> events;
+        
+        // 到边 x=0
+        if (vx_curr < 0) {
+            double dt = -px / vx_curr;
+            if (dt > EPS) {
+                double ny = py + vy_curr * dt;
+                if (ny > EPS && ny < n - EPS) {
+                    events.push_back({dt, 1});
+                }
+            }
+        }
+        
+        // 到边 y=0
+        if (vy_curr < 0) {
+            double dt = -py / vy_curr;
+            if (dt > EPS) {
+                double nx = px + vx_curr * dt;
+                if (nx > EPS && nx < n - EPS) {
+                    events.push_back({dt, 2});
+                }
+            }
+        }
+        
+        // 到边 x+y=n
+        double denom = vx_curr + vy_curr;
+        if (denom > 0) {
+            double dt = (n - px - py) / denom;
+            if (dt > EPS) {
+                double nx = px + vx_curr * dt;
+                double ny = py + vy_curr * dt;
+                if (nx > EPS && ny > EPS && fabs(nx + ny - n) < EPS) {
+                    events.push_back({dt, 3});
+                }
+            }
+        }
+        
+        if (events.empty()) {
+            return -1;
+        }
+        
+        sort(events.begin(), events.end());
+        double dt = events[0].first;
+        int edge = events[0].second;
+        
+        px += vx_curr * dt;
+        py += vy_curr * dt;
+        
+        // 检查是否到达顶点
+        if ((fabs(px) < EPS && fabs(py) < EPS) ||
+            (fabs(px) < EPS && fabs(py - n) < EPS) ||
+            (fabs(px - n) < EPS && fabs(py) < EPS)) {
+            return hits;
+        }
+        
+        hits++;
+        if (edge == 1) {
+            vx_curr = -vx_curr;
+            px = 0;
+        } else if (edge == 2) {
+            vy_curr = -vy_curr;
+            py = 0;
+        } else if (edge == 3) {
+            double dot = vx_curr + vy_curr;
+            vx_curr = vx_curr - dot;
+            vy_curr = vy_curr - dot;
+            px = n - py;
+        }
+    }
+    
+    return -1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n, x, y, vx, vy;
+        cin >> n >> x >> y >> vx >> vy;
+        cout << solve(n, x, y, vx, vy) << '\n';
+    }
+    return 0;
+}

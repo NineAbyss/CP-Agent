@@ -1,0 +1,347 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+// We are guaranteed that total n across test cases <= 200,000 // So we can do O(n) or O(n log n) per test case.
+
+// Idea: // We want subsegments [l, r] such that:
+//   sum(l, r) = s and max(l, r) = x. //
+// Conditions: //   - The maximum must be exactly x. So at least one element must be x, and no element > x.
+//   - All elements in the segment must be <= x. //   - At least one element must be equal to x.
+// // Approach:
+// Instead of iterating over all segments, we can fix positions where a[i] == x, and consider
+// segments where this is the "last" occurrence of x (to avoid double counting), and ensure
+// that the segment has sum s and all values <= x. //
+// However, note: multiple x's can exist. We need to avoid double counting? Actually, we can use
+// contribution technique: for each index i with a[i] == x, count the number of segments [l, r]
+// such that: //   - l <= i <= r,
+//   - a[i] is the rightmost occurrence of x in [l, r], //   - all elements in [l, r] <= x,
+//   - sum(l, r) = s. //
+// But wait: what if there are duplicates? We can enforce that we only count segments where the // **first** occurrence of x is at some position? Or better: use the idea of "dominant" element.
+//
+// Alternate idea: iterate over all segments? -> O(n^2) which is too slow for n=200000.
+// // Better idea:
+// Since total n over test cases <= 200000, but worst-case one test case n=200000, O(n^2) would be 40e9. // So we need something better.
+
+// Observation: // We can try to iterate over possible left endpoints and use two pointers? But sum can be negative.
+// // Another idea: use the fact that the maximum must be x. So any valid segment must contain at least
+// one x and no element > x. So we can break the array into segments separated by values > x. // Then within each such segment, we can consider only those subsegments that contain at least one x
+// and have sum s. //
+// Steps: // 1. Split the array into contiguous parts where all elements <= x. Any valid segment must lie entirely
+//    within one such part (because if it crosses a value > x, then max > x). // 2. For each such part, count the number of subsegments that:
+//      - have sum = s, //      - contain at least one occurrence of x.
+// // How to count in one part?
+// Let the part be b[0..m-1]. We want to count subarrays with sum = s and containing at least one x. // Total subarrays with sum = s in this block MINUS those that have sum = s but do not contain any x.
+//
+// But note: if x does not appear in this block, skip.
+//
+// So for a block:
+//   count1 = number of subarrays in block with sum = s. //   count2 = number of subarrays in block with sum = s and all elements < x (i.e., no x present).
+//   Then contribution = count1 - count2. //
+// However, caution: what if x appears in the block, but we subtract subarrays without x? That works. //
+// But note: the entire block has elements <= x, so subarrays without x are exactly those with all elements < x. //
+// How to compute number of subarrays with a given sum in an array? Use prefix sums and map. // But note: s can be as large as 2e14, and prefix sums can be huge. But we can still use unordered_map?
+// However, worst-case many distinct prefix sums, but total length of all blocks across test cases <= 200000. // So total work over all blocks is acceptable.
+//
+// But note: the constraint says total n across test cases <= 200000. So we can process each block in O(m) time.
+//
+// Algorithm for one block of length m:
+//   Precompute prefix sums: p[0]=0, p[i]=b[0]+...+b[i-1]. //   We want number of pairs (i,j) with i<j such that p[j]-p[i] = s => p[i] = p[j] - s.
+//   Use a map to count frequency of prefix sums.
+//   Traverse j from 0 to m, and for each j, add count[p[j] - s] to answer.
+//   Similarly for the sub-blocks without x: we split the block into segments separated by x? Actually, no: //      we want subarrays that lie entirely within the block and do not contain any x.
+//      So we can split the block by positions where b[i] == x, and then each maximal contiguous segment
+//      between these x's (or before first, after last) is a segment with all values < x.
+//      Then apply the same prefix-sum method on each such segment. //
+// Example: block = [1, 2, x, 3, 4, x, 5], x=2 (but actually x is the value, say x=2, then b[i]==x at indices 2 and 5) //   Then segments without x: [1,2] (but wait: 2==x? yes! so we cannot include any element equal to x.
+//   Actually, we want segments that do not contain any x. So we split at every index where b[i]==x, and take the contiguous parts that do not include x.
+//   So: [1] (if the first element is 1, then 1<2 -> valid), then [3,4], then [5].
+//
+// But note: the original block might have values equal to x only at specific positions. So we break the block into pieces that are separated by x, and each piece has values < x.
+//
+// Steps for one block:
+//   Step 1: Count total subarrays in the block with sum = s.
+//   Step 2: Break the block into subsegments that do not contain any x (by splitting at every index where b[i]==x), and for each such subsegment, count subarrays with sum = s.
+//   Step 3: Subtract: ans_block = total_in_block - total_in_subsegments_without_x. //
+// But note: the subarrays we subtract are exactly those that do not contain any x, and they are disjoint and cover all such subarrays. //
+// However, caution: a subarray that does not contain x must lie entirely in one of these subsegments (because if it crosses an x, then it contains x). So yes, we can do this. //
+// Implementation: //   For the entire block, we do:
+//      map<ll, int> freq;
+//      freq[0] = 1;
+//      ll cur = 0;
+//      ll total = 0;
+//      for (int i = 0; i < m; i++) {
+//          cur += b[i];
+//          total += freq[cur - s];
+//          freq[cur]++;
+//      } //
+//   For the subsegments without x: we traverse the block and whenever we meet an x, we break. Otherwise, we form a contiguous segment of non-x (and all < x, because block has <=x and not equal to x) elements.
+//   Then for each such segment, do the same prefix-sum counting.
+// //   Then subtract.
+//
+// But note: what if x is not in the block? Then we skip the entire block? Actually, if x doesn't appear, then no segment in this block can have maximum = x (since max would be < x). So we skip.
+// // So overall algorithm:
+//   t = number of test cases
+//   for each test case:
+//      read n, s, x //      read a[0..n-1]
+// //      We'll break the array into maximal contiguous segments where all elements <= x.
+//      For each such segment:
+//          if the segment does not contain x, skip.
+//          else: //             total_seg = count_subarrays_with_sum(segment, s)   // using prefix sums and map
+//             // Now, break this segment into pieces that do not contain x: split at every index where element == x
+//             vector<vector<ll>> small_segs;
+//             vector<ll> temp;
+//             for (ll val : segment) {
+//                 if (val == x) {
+//                     if (!temp.empty()) {
+//                         small_segs.push_back(temp);
+//                         temp.clear();
+//                     }
+//                 } else {
+//                     temp.push_back(val);
+//                 }
+//             }
+//             if (!temp.empty()) small_segs.push_back(temp);
+//
+//             subtract = 0;
+//             for (auto& seg : small_segs) {
+//                 subtract += count_subarrays_with_sum(seg, s);
+//             }
+//             ans += total_seg - subtract;
+// //   Output ans.
+//
+// However, note: what if the block has x, but the subarray we are counting in the entire block might extend beyond the small segments? Yes, but that's okay because we are counting all subarrays in the block, including those that span over x's. And then we subtract only those that do not contain any x (which are confined to the small segments). So it's correct.
+//
+// But note: performance? The total length of all blocks is <= n, and total n over test cases <= 200000, so the sum of m over all blocks is <= 200000. Also, the sum of lengths of small_segs is <= length of block. So overall O(total_n) per test case? Actually, we are doing multiple passes per block, but total work is O(total_n) per test case? But note: the total n across test cases is bounded by 200000, so we are safe.
+//
+// However, worst-case one test case with n=200000, and we do several passes, but each element is processed a constant number of times. So O(n) per test case? Actually, the splitting into blocks: we traverse once. Then for each block, we do two passes: one for the entire block and one for breaking into small segments. But note: the entire block processing includes a map-based prefix sum counting: O(m log m) per block? But worst-case one block of size 200000, then O(200000 log 200000) which is acceptable? 200000 * log2(200000) ≈ 200000 * 18 = 3.6e6, which is acceptable.
+// // But note: we are using map, which is O(log m) per operation. Alternatively, we can use unordered_map, but worst-case might be attacked? But constraints are high, but total n is only 200000, so even O(n log n) is acceptable.
+//
+// However, worst-case total n over test cases is 200000, so worst-case one test case with n=200000, and we do one block of 200000, then the rest negligible. So overall O(n log n) per worst-case test case, which is acceptable for n=200000.
+//
+// But note: s can be very large, and prefix sums can be very large, but that's okay for map.
+// // Special note: when counting subarrays with sum = s, we must be cautious about overflow? The values a[i] are up to 1e9, and n up to 200000, so maximum absolute sum is 200000 * 1e9 = 2e14, which fits in long long (since s is also in [-2e14, 2e14]).
+// // Let's code accordingly.
+// // Implementation of count_subarrays_with_sum(vector<ll>& arr, ll target):
+//   if arr is empty, return 0.
+//   map<ll, int> freq;
+//   freq[0] = 1;
+//   ll cur = 0;
+//   ll cnt = 0;
+//   for (int i = 0; i < arr.size(); i++) {
+//       cur += arr[i];
+//       if (freq.count(cur - target)) {
+//           cnt += freq[cur - target];
+//       }
+//       freq[cur]++;
+//   }
+//   return cnt; //
+// But note: the prefix sum method: we start with p0=0, then p1 = arr[0], etc. // This counts subarray from 0 to i: p[i+1]-p[0] = arr[0..i] = p[i+1] - 0.
+// So it's standard. //
+// Now, how to split the original array into blocks with elements <= x?
+//   We traverse the array and group consecutive elements that are <= x. When we see an element > x, we break the current block (if any) and skip this element (don't include in any block).
+// // Example:
+//   a = [1, 3, 2, 4, 1], x=3 -> then blocks: [1,3,2] (because 4>3, so break), then [1]. But note: 3<=3 -> included. Then 4>3 -> break. Then 1<=3 -> new block. //
+// However, note: what if x is negative? Then elements <= x might be rare. But the logic holds. //
+// Let's test with the examples.
+
+// Example 1: n=1, s=0, x=0, a=[0] //   Block: [0] (0<=0 -> true)
+//   Does it contain x=0? yes. //   total_seg = count_subarrays_with_sum([0], 0):
+//        p0=0 -> freq{0:1} //        i=0: cur=0, need 0-0=0 -> cnt += freq[0] = 1.
+//        then freq[0] becomes 2.
+//        returns 1.
+//   Now, break into small_segs:  //        traverse [0]: see 0==x? yes -> so push current temp (empty) and clear. Then after, push temp (still empty).
+//        so small_segs is empty -> subtract=0. //   ans = 1 - 0 = 1. -> correct.
+// // Example 2: n=1, s=-2, x=-1, a=[-2]
+//   Block: [-2] -> -2<=-1? yes. //   Does it contain x=-1? no -> skip. So ans=0. -> correct.
+// // Example 3: n=3, s=-1, x=-1, a=[-1,1,-1]
+//   Block: entire array? check: -1<=-1 -> yes, 1<=-1? no -> so actually 1>-1 -> so break at 1. //   So blocks:
+//        first: [-1] (from index0) //        then skip 1 (because 1>-1)
+//        then [-1] (index2) //   Each block has x? yes, because -1==-1.
+//   For first block: [ -1 ] //        total_seg = count_subarrays_with_sum([-1], -1):
+//           p0=0 -> freq{0:1} //           i=0: cur = -1, need -1 - (-1)=0 -> cnt += freq[0]=1.
+//           then freq[-1] = 1.
+//           returns 1.
+//        small_segs: split at -1 -> so we get two empty segments?  //           temp starts empty, then see -1 -> push temp (empty) and clear -> then after loop, push temp (empty). So no non-empty small_segs.
+//        subtract=0 -> contribution=1. //   Second block: same -> contribution=1.
+//   Total ans=2. -> correct. //
+// Example 4: n=6, s=-3, x=-2, a=[-1,-1,-1,-2,-1,-1] //   Check: all elements <= -2?
+//      -1 <= -2? false -> so no block?  //   Actually: -1 > -2 -> so we break at every element?
+//   So no block contains any element?  //   But wait: -2 <= -2 -> true. So the element -2 is included. But -1 > -2 -> so not included.
+//   So blocks: only the single element at index3: [-2] //   Does it contain x=-2? yes.
+//   total_seg = count_subarrays_with_sum([-2], -3): 
+//        p0=0 -> freq{0:1}
+//        cur = -2, need -2 - (-3) = 1 -> freq[1] = 0 -> cnt=0. //        then freq[-2] = 1.
+//        returns 0. //   subtract=0 -> contribution=0.
+//   So ans=0. -> correct. //
+// Example 5: n=8, s=3, x=2, a=[2,2,-1,-2,3,-1,2,2] //   First, split into blocks of elements <=2:
+//      index0: 2<=2 -> include //      index1: 2<=2 -> include
+//      index2: -1<=2 -> include //      index3: -2<=2 -> include
+//      index4: 3<=2? no -> break. So block1 = [2,2,-1,-2] //      index4: skip
+//      index5: -1<=2 -> include //      index6: 2<=2 -> include
+//      index7: 2<=2 -> include //      So block2 = [-1,2,2]  [Note: the example output says 2, so let's see]
+//   Now, check if each block contains x=2? //      block1: has 2 -> yes.
+//      block2: has 2 -> yes. //   Process block1: [2,2,-1,-2]
+//      total_seg = count_subarrays_with_sum([2,2,-1,-2], 3) //        prefix: [0,2,4,3,1]
+//        We want pairs (i,j) such that p[j]-p[i]=3 -> p[i]=p[j]-3. //        j=1: p[1]=2 -> need p[i]=-1 -> none -> cnt=0
+//        j=2: p[2]=4 -> need 1 -> none -> cnt=0 //        j=3: p[3]=3 -> need 0 -> freq[0]=1 -> cnt=1
+//        j=4: p[4]=1 -> need -2 -> none -> cnt=1 //        So total_seg=1.
+//      Now, break block1 into segments without 2: split at every 2. //        [2] -> break -> then [2] -> break -> then [-1,-2] -> this is one segment (values: -1,-2, both <2)
+//        So small_segs = [ [-1,-2] ] //      Count in small_segs:
+//          count_subarrays_with_sum([-1,-2], 3): 
+//             p0=0 -> freq{0:1}
+//             i=0: cur=-1, need -1-3=-4 -> 0
+//             i=1: cur=-3, need -3-3=-6 -> 0 -> returns 0.
+//      So subtract=0 -> contribution=1. //   Process block2: [-1,2,2]
+//      total_seg = count_subarrays_with_sum([-1,2,2], 3) //        prefix: [0, -1, 1, 3]
+//        j=1: p[1]=-1 -> need -1-3=-4 -> 0 //        j=2: p[2]=1 -> need 1-3=-2 -> 0
+//        j=3: p[3]=3 -> need 0 -> freq[0]=1 -> cnt=1 //        So total_seg=1.
+//      Break into segments without 2:  //          -1 -> not 2 -> temp=[-1]
+//          2 -> break: push temp -> then clear -> then 2 -> break -> then end: push temp (empty) //          so small_segs = [ [-1] ]
+//      Count in [-1]: sum=3? -> 
+//          p0=0, p1=-1 -> need -1-3=-4 -> 0 -> returns 0.
+//      subtract=0 -> contribution=1. //   Total ans = 1+1 = 2. -> matches.
+// // But wait: the example says suitable subsegments are [1,3] and [6,8] (1-indexed).
+//   [1,3]: a[0..2] = [2,2,-1] -> sum=3, max=2 -> valid. But our block1 is [2,2,-1,-2] -> the subarray [0,2] is in block1? yes. 
+//   But our count for block1 was 1. How did we get 1? 
+//        We found one subarray: at j=3 (prefix index 3) -> p[3]=3, and p[0]=0 -> so subarray from index0 to index2: [2,2,-1] -> sum=3 -> that's the one. //   Then block2: we found one: j=3 -> p[3]=3, p[0]=0 -> subarray from index0 to index2: [-1,2,2] -> sum=3 -> that's [5,7] in 0-indexed?
+//        But the example says [6,8] -> which is a[5..7] = [-1,2,2] -> yes, that's the one. //   So we got both.
+// // However, note: in block1, is there another subarray with sum=3?
+//   [0,0]: 2 -> no //   [1,1]: 2 -> no
+//   [0,1]: 4 -> no //   [2,2]: -1 -> no
+//   [3,3]: -2 -> no //   [0,2]: 2+2-1=3 -> yes
+//   [1,3]: 2-1-2=-1 -> no //   [2,3]: -1-2=-3 -> no
+//   [0,3]: 2+2-1-2=1 -> no //   So only one in block1.
+//   In block2:  //      [0,0]: -1 -> no
+//      [1,1]: 2 -> no //      [2,2]: 2 -> no
+//      [0,1]: -1+2=1 -> no //      [1,2]: 2+2=4 -> no
+//      [0,2]: -1+2+2=3 -> yes //   So only one in block2.
+//   So total 2 -> correct. //
+// But wait: the example input says "8 3 2" and the array is "2 2 -1 -2 3 -1 2 2", and we broke at 3 (index4) because 3>2. So block1 is indices0..3, block2 is indices5..7.  //   The subarray [6,8] is indices5..7? 1-indexed: 6->index5, 8->index7 -> yes.
+// // However, note: the example says "l=6, r=8" -> that's the second block.
+// // But why didn't we get the subarray [7,8]? [2,2] -> sum=4, not 3. So not counted.
+// // So the algorithm seems correct.
+// // One more: example 6: n=9, s=6, x=3, a=[1,2,3,1,2,3,1,2,3]
+//   All elements <=3? yes -> one big block: [1,2,3,1,2,3,1,2,3] //   Contains 3? yes.
+//   total_seg = count_subarrays_with_sum(entire array, 6) //      We need to count all contiguous subarrays with sum=6.
+//      How many?  //        The example says 7.
+//      Let me list them:  //        The pattern: 1,2,3,1,2,3,1,2,3
+//        We want sum=6. //        Possibilities:
+//          [1,2,3] -> 6 -> positions: [0,2], [3,5], [6,8] -> 3 //          [3,1,2] -> 6 -> [2,4], [5,7] -> 2
+//          [2,3,1] -> 6 -> [1,3], [4,6] -> 2 //          [1,2,3] already counted?
+//          [3,3] -> 6? -> no, 3+3=6 -> but are there consecutive 3's? no. //          [1,2,3] again?
+//          [6] -> 6? no element is 6. //          [2,3,1] -> we have [1,3]: a[1..3]=2+3+1=6 -> yes, and [4,6]=2+3+1=6 -> yes.
+//          [3,1,2] -> [2,4]=3+1+2=6 -> yes, [5,7]=3+1+2=6 -> yes. //          [1,2,3] -> [0,2]=1+2+3=6, [3,5]=1+2+3=6, [6,8]=1+2+3=6 -> 3
+//          So total 3+2+2 = 7. //      So total_seg = 7.
+//   Now, subtract subarrays that do not contain 3?  //      Break the block at every 3:
+//          [1,2] -> then 3 -> break -> [1,2] -> then 3 -> break -> [1,2] -> then 3 -> break -> then nothing. //      So small_segs = [ [1,2], [1,2], [1,2] ]
+//      Count subarrays with sum=6 in each [1,2]: //          [1,2]: sum=3 -> no subarray with sum=6 -> 0.
+//          So subtract=0. //      Then ans = 7 - 0 = 7. -> correct.
+// // Example 7: n=13, s=7, x=3, a=[0,-1,3,3,3,-2,1,2,2,3,-1,0,3]
+//   The example says 8. //   We'll trust the algorithm.
+//
+// But note: what if the array has negative numbers and zeros? Our prefix sum method handles that.
+// // Let's code accordingly.
+// // Edge: when the block is empty? skip.
+// // Important: when breaking the block into segments without x, note that we split at every occurrence of x, and the segments between are the ones without x. But note: the segments can be empty? then we skip.
+// // Implementation:
+
+ll count_subarrays_with_sum(const vector<ll>& arr, ll target) {
+    if (arr.empty()) return 0;
+    map<ll, int> freq;
+    freq[0] = 1;
+    ll cur = 0;
+    ll cnt = 0;
+    for (int i = 0; i < arr.size(); i++) {
+        cur += arr[i];
+        ll need = cur - target;
+        if (freq.find(need) != freq.end()) {
+            cnt += freq[need];
+        }
+        freq[cur]++;
+    }
+    return cnt;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        ll s, x;
+        cin >> n >> s >> x;
+        vector<ll> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        ll ans = 0;
+
+        // Split the array into maximal contiguous blocks where all elements <= x.
+        vector<vector<ll>> blocks;
+        vector<ll> current_block;
+        for (int i = 0; i < n; i++) {
+            if (a[i] > x) {
+                if (!current_block.empty()) {
+                    blocks.push_back(current_block);
+                    current_block.clear();
+                }
+            } else {
+                current_block.push_back(a[i]);
+            }
+        }
+        if (!current_block.empty()) {
+            blocks.push_back(current_block);
+        }
+
+        // Process each block
+        for (const vector<ll>& block : blocks) {
+            // Check if block contains at least one x
+            bool has_x = false;
+            for (ll val : block) {
+                if (val == x) {
+                    has_x = true;
+                    break;
+                }
+            }
+            if (!has_x) {
+                continue;
+            }
+
+            // Count total subarrays in block with sum = s
+            ll total_in_block = count_subarrays_with_sum(block, s);
+
+            // Break the block into segments that do not contain x (split at every x)
+            vector<vector<ll>> small_segs;
+            vector<ll> temp;
+            for (ll val : block) {
+                if (val == x) {
+                    if (!temp.empty()) {
+                        small_segs.push_back(temp);
+                        temp.clear();
+                    }
+                } else {
+                    temp.push_back(val);
+                }
+            }
+            if (!temp.empty()) {
+                small_segs.push_back(temp);
+            }
+
+            ll subtract = 0;
+            for (const vector<ll>& seg : small_segs) {
+                subtract += count_subarrays_with_sum(seg, s);
+            }
+
+            ans += total_in_block - subtract;
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

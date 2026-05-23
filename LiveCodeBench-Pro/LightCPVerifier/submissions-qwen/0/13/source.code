@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to count number of 1-bits in binary representation
+long long popcount(long long x) {
+    return __builtin_popcountll(x);
+}
+
+// Function to compute the next value that increases popcount // Returns the minimum number of increments needed to increase the beauty of a number
+vector<long long> get_next_increments(long long x) {
+    vector<long long> increments;
+    // Try to fill zeros from low to high bits
+    for (int i = 0; i < 60; i++) {
+        if (!(x & (1LL << i))) {
+            // The next number with bit i set and all lower bits 0
+            long long target = (x | ((1LL << i) - 1)) + 1;
+            if (target > x) {
+                increments.push_back(target - x);
+            }
+        }
+    }
+    sort(increments.begin(), increments.end());
+    return increments;
+}
+
+void solve() {
+    int n;
+    long long k;
+    cin >> n >> k;
+    
+    vector<long long> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    // Base beauty without any operations
+    long long total_beauty = 0;
+    for (int i = 0; i < n; i++) {
+        total_beauty += popcount(a[i]);
+    }
+    
+    // We'll collect all possible "beauty gains" with their cost
+    vector<pair<long long, long long>> gains; // (cost, gain)
+    
+    for (int i = 0; i < n; i++) {
+        vector<long long> incs = get_next_increments(a[i]);
+        long long current = a[i];
+        long long current_pop = popcount(current);
+        
+        for (long long step : incs) {
+            current += step;
+            long long new_pop = popcount(current);
+            long long gain = new_pop - current_pop;
+            if (gain > 0) {
+                gains.push_back({step, gain});
+                current_pop = new_pop;
+            }
+        }
+    }
+    
+    // Sort by cost (greedy: take cheapest improvements first)
+    sort(gains.begin(), gains.end());
+    
+    // Apply improvements greedily
+    long long remaining_ops = k;
+    for (auto [cost, gain] : gains) {
+        if (remaining_ops >= cost) {
+            total_beauty += gain;
+            remaining_ops -= cost;
+        } else {
+            break;
+        }
+    }
+    
+    cout << total_beauty << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

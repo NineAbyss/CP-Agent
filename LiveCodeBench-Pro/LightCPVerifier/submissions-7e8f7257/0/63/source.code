@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    map<int, int> cnt;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        cnt[a[i]]++;
+    }
+    
+    // 条件1：某个数出现至少4次
+    for (auto& p : cnt) if (p.second >= 4) return true;
+    
+    // 条件2：存在 x 和 x+1 每个出现至少2次
+    for (auto& p : cnt) {
+        if (p.second >= 2) {
+            int x = p.first;
+            if (cnt.count(x+1) && cnt[x+1] >= 2) return true;
+        }
+    }
+    
+    // 条件3：存在 x 和 x+2 每个出现至少2次
+    for (auto& p : cnt) {
+        if (p.second >= 2) {
+            int x = p.first;
+            if (cnt.count(x+2) && cnt[x+2] >= 2) return true;
+        }
+    }
+    
+    // 条件4：存在 x, x+1, x+2 每个至少出现一次，并且至少有两个出现次数 >= 2
+    for (auto& p : cnt) {
+        int x = p.first;
+        if (cnt.count(x+1) && cnt.count(x+2)) {
+            int c1 = p.second;
+            int c2 = cnt[x+1];
+            int c3 = cnt[x+2];
+            int cntGe2 = (c1 >= 2) + (c2 >= 2) + (c3 >= 2);
+            if (cntGe2 >= 2) return true;
+        }
+    }
+    
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << (solve() ? "Yes" : "No") << '\n';
+    }
+    return 0;
+}

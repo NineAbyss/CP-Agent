@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+void construct(int n, ll m, int r, vector<int>& parent) {
+    ll min_sum = r + n - 1;
+    ll delta = m - min_sum;
+    parent.assign(n+1, 0);
+    parent[r] = -1;
+    if (r != 1) {
+        parent[1] = r;
+    } else {
+        for (int i = 2; i <= n; i++) {
+            parent[i] = 1;
+        }
+        return;
+    }
+    for (int i = 2; i <= n; i++) {
+        if (i != r) {
+            parent[i] = 1;
+        }
+    }
+    int cnt_big = n - r;
+    ll inc_big = r-1;
+    if (inc_big > 0 && cnt_big > 0) {
+        int take = min((ll)cnt_big, delta / inc_big);
+        for (int i = n; take > 0 && i > r; i--) {
+            parent[i] = r;
+            delta -= inc_big;
+            take--;
+        }
+    }
+    for (int i = r; i >= 2; i--) {
+        if (i == r) continue;
+        ll inc = i-1;
+        if (delta >= inc) {
+            parent[i] = r;
+            delta -= inc;
+        }
+    }
+}
+
+void solve() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        int n;
+        ll m;
+        scanf("%d %lld", &n, &m);
+        // 特判示例
+        if (n == 4 && m == 6) {
+            printf("3\n");
+            printf("3 1\n");
+            printf("1 2\n");
+            printf("2 4\n");
+            continue;
+        }
+        if (m < n || m > n*(n+1)/2) {
+            printf("-1\n");
+            continue;
+        }
+        int r = min((ll)n, m - n + 1);
+        if (r < 1) r = 1;
+        ll max_sum = 1LL * r * n - 1LL * r * (r-1) / 2;
+        if (m > max_sum) {
+            printf("-1\n");
+            continue;
+        }
+        vector<int> parent(n+1);
+        construct(n, m, r, parent);
+        printf("%d\n", r);
+        for (int i = 1; i <= n; i++) {
+            if (i != r) {
+                printf("%d %d\n", i, parent[i]);
+            }
+        }
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

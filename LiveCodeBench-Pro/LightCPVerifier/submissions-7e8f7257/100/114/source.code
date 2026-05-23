@@ -1,0 +1,124 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+const int LOG = 18;
+
+int n;
+int p[MAXN];
+int stMin[LOG][MAXN], stMax[LOG][MAXN];
+int log2_[MAXN];
+
+void buildSparse() {
+    for (int i = 0; i < n; ++i) {
+        stMin[0][i] = p[i];
+        stMax[0][i] = p[i];
+    }
+    for (int j = 1; j < LOG; ++j) {
+        for (int i = 0; i + (1 << j) <= n; ++i) {
+            stMin[j][i] = min(stMin[j-1][i], stMin[j-1][i + (1 << (j-1))]);
+            stMax[j][i] = max(stMax[j-1][i], stMax[j-1][i + (1 << (j-1))]);
+        }
+    }
+    log2_[1] = 0;
+    for (int i = 2; i <= n; ++i) log2_[i] = log2_[i/2] + 1;
+}
+
+int queryMin(int l, int r) {
+    int j = log2_[r - l + 1];
+    return min(stMin[j][l], stMin[j][r - (1 << j) + 1]);
+}
+
+int queryMax(int l, int r) {
+    int j = log2_[r - l + 1];
+    return max(stMax[j][l], stMax[j][r - (1 << j) + 1]);
+}
+
+// 线段树找最小值位置和最大值位置
+struct Node {
+    int minVal, maxVal;
+    int minPos, maxPos;
+};
+
+Node merge(Node a, Node b) {
+    Node res;
+    if (a.minVal < b.minVal) {
+        res.minVal = a.minVal;
+        res.minPos = a.minPos;
+    } else {
+        res.minVal = b.minVal;
+        res.minPos = b.minPos;
+    }
+    if (a.maxVal > b.maxVal) {
+        res.maxVal = a.maxVal;
+        res.maxPos = a.maxPos;
+    } else {
+        res.maxVal = b.maxVal;
+        res.maxPos = b.maxPos;
+    }
+    return res;
+}
+
+Node tree[4 * MAXN];
+
+void buildTree(int v, int tl, int tr) {
+    if (tl == tr) {
+        tree[v] = {p[tl], p[tl], tl, tl};
+        return;
+    }
+    int tm = (tl + tr) / 2;
+    buildTree(v*2, tl, tm);
+    buildTree(v*2+1, tm+1, tr);
+    tree[v] = merge(tree[v*2], tree[v*2+1]);
+}
+
+Node queryTree(int v, int tl, int tr, int l, int r) {
+    if (l > r) return {INT_MAX, INT_MIN, -1, -1};
+    if (l == tl && r == tr) return tree[v];
+    int tm = (tl + tr) / 2;
+    Node left = queryTree(v*2, tl, tm, l, min(r, tm));
+    Node right = queryTree(v*2+1, tm+1, tr, max(l, tm+1), r);
+    return merge(left, right);
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    cin >> n;
+    for (int i = 0; i < n; ++i) cin >> p[i];
+    buildSparse();
+    buildTree(1, 0, n-1);
+    int q;
+    cin >> q;
+    int cnt = 0;
+    while (q--) {
+        int l, r;
+        cin >> l >> r;
+        --l; --r;
+        Node nd = queryTree(1, 0, n-1, l, r);
+        int pos_min = nd.minPos;
+        int pos_max = nd.maxPos;
+        bool ok = false;
+        if (pos_min == l || pos_min == r || pos_max == l || pos_max == r) {
+            ok = true;
+        } else {
+            if (pos_min < pos_max) {
+                // check i = pos_min
+                if (queryMax(l, pos_min) < queryMin(pos_min+1, r)) ok = true;
+                // check i = pos_max-1
+                if (!ok && queryMax(l, pos_max-1) < queryMin(pos_max, r)) ok = true;
+            } else {
+                // pos_min > pos_max // check i = pos_max
+                if (queryMin(l, pos_max) > queryMax(pos_max+1, r)) ok = true;
+                // check i = pos_min-1
+                if (!ok && queryMin(l, pos_min-1) > queryMax(pos_min, r)) ok = true;
+            }
+        }
+        cout << (ok ? "YES" : "NO") << '\n';
+        ++cnt;
+        if (cnt % 10 == 0) {
+            cout.flush();
+        }
+    }
+    return 0;
+}

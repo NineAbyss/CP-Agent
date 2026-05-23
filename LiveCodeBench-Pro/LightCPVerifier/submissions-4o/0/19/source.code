@@ -1,0 +1,31 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+void solve(int n) {
+    vector<vector<int>> operations;
+    
+    for (int i = 2; i <= n; i += 2) {
+        operations.push_back({i, 1, n});
+    }
+    
+    int k = operations.size();
+    cout << k << "\n";
+    for (auto op : operations) {
+        cout << op[0] << " " << op[1] << " " << op[2] << "\n";
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        solve(n);
+    }
+    
+    return 0;
+}

@@ -1,0 +1,79 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MAX_A = 100000;
+
+vector<int> divisors[MAX_A + 1];
+bool appear[MAX_A + 1];
+
+void precompute_divisors() {
+    for (int i = 1; i <= MAX_A; i++) {
+        for (int j = i; j <= MAX_A; j += i) {
+            divisors[j].push_back(i);
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    precompute_divisors();
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        vector<int> a(n + 1);
+        vector<vector<int>> pos(MAX_A + 1);
+        fill(appear, appear + MAX_A + 1, false);
+        for (int i = 1; i <= n; i++) {
+            cin >> a[i];
+            appear[a[i]] = true;
+            pos[a[i]].push_back(i);
+        }
+        
+        while (q--) {
+            int k, l, r;
+            cin >> k >> l >> r;
+            long long ans = 0;
+            int cur_pos = l;
+            int cur_k = k;
+            
+            while (cur_pos <= r) {
+                if (cur_k == 1) {
+                    ans += (r - cur_pos + 1);
+                    break;
+                }
+                // find next i in [cur_pos, r] such that a[i] divides cur_k
+                int next_i = r + 1; // sentinel
+                for (int d : divisors[cur_k]) {
+                    if (!appear[d]) continue;
+                    // binary search in pos[d] for first index >= cur_pos
+                    auto it = lower_bound(pos[d].begin(), pos[d].end(), cur_pos);
+                    if (it != pos[d].end() && *it <= r) {
+                        next_i = min(next_i, *it);
+                    }
+                }
+                if (next_i == r + 1) {
+                    // no such i
+                    ans += (long long)cur_k * (r - cur_pos + 1);
+                    break;
+                }
+                // add contributions from cur_pos to next_i - 1
+                ans += (long long)cur_k * (next_i - cur_pos);
+                // process position next_i
+                while (cur_k % a[next_i] == 0) {
+                    cur_k /= a[next_i];
+                }
+                ans += cur_k;
+                cur_pos = next_i + 1;
+            }
+            cout << ans << '\n';
+        }
+    }
+    return 0;
+}

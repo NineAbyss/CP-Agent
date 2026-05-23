@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    string p, s;
+    cin >> p >> s;
+    int n = p.size(), m = s.size();
+    int i = 0, j = 0;
+    while (i < n && j < m) {
+        if (p[i] != s[j]) {
+            cout << "NO\n";
+            return;
+        }
+        // 优先匹配2个字符
+        if (j + 1 < m && s[j + 1] == p[i]) {
+            j += 2;
+        } else {
+            j += 1;
+        }
+        i++;
+    }
+    if (i == n && j == m) {
+        cout << "YES\n";
+    } else {
+        cout << "NO\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

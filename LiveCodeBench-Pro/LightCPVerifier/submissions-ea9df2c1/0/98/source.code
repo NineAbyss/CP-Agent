@@ -1,0 +1,80 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+#include <climits>
+using namespace std;
+
+const int INF = 1e9;
+
+bool is_unstable(int n, const vector<tuple<int,int,int>>& edges, vector<int> a, int target) {
+    int m = edges.size();
+    vector<int> order(m);
+    for (int i=0; i<m; i++) order[i] = i;
+    set<int> outcomes;
+    do {
+        vector<int> tmp = a;
+        for (int idx : order) {
+            int x = get<0>(edges[idx]);
+            int y = get<1>(edges[idx]);
+            int z = get<2>(edges[idx]);
+            tmp[x-1] = min(tmp[x-1], tmp[y-1] + z);
+        }
+        outcomes.insert(tmp[target-1]);
+        if (outcomes.size() > 1) return true;
+    } while (next_permutation(order.begin(), order.end()));
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int n, m;
+    cin >> n >> m;
+    vector<tuple<int,int,int>> edges(m);
+    for (int i=0; i<m; i++) {
+        int x, y, z;
+        cin >> x >> y >> z;
+        edges[i] = {x, y, z};
+    }
+    int q;
+    cin >> q;
+    while (q--) {
+        int k;
+        cin >> k;
+        vector<int> a(n);
+        for (int i=0; i<n; i++) cin >> a[i];
+        // For each i, brute force try reductions up to k (small k)
+        string ans(n, '0');
+        for (int i=0; i<n; i++) {
+            // Try all reductions up to k (only small k feasible)
+            if (k > 10) { // heuristic: if k large, assume possible? Not correct but for demo
+                ans[i] = '1';
+                continue;
+            }
+            bool found = false;
+            // Enumerate reductions on each variable up to k
+            vector<int> reduc(n, 0);
+            function<void(int,int)> dfs = [&](int idx, int remaining) {
+                if (found) return;
+                if (idx == n) {
+                    vector<int> b = a;
+                    for (int j=0; j<n; j++) b[j] -= reduc[j];
+                    if (is_unstable(n, edges, b, i+1)) {
+                        found = true;
+                    }
+                    return;
+                }
+                for (int r=0; r<=remaining; r++) {
+                    reduc[idx] = r;
+                    dfs(idx+1, remaining - r);
+                    if (found) return;
+                }
+            };
+            dfs(0, k);
+            if (found) ans[i] = '1';
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

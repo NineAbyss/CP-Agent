@@ -1,0 +1,25 @@
+#include <iostream>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+int L(long long x) {
+    if (x == 1) return 0;
+    int k = 0;
+    while ((1LL << k) < x) k++;
+    return k;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n, m, a, b;
+        cin >> n >> m >> a >> b;
+        long long R_min = min(a, n - a + 1);
+        long long C_min = min(b, m - b + 1);
+        int ans = 1 + min( L(R_min) + L(m), L(n) + L(C_min) );
+        cout << ans << endl;
+    }
+    return 0;
+}

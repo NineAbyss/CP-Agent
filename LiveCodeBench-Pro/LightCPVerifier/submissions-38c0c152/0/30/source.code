@@ -1,0 +1,49 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<pair<int, int>> classrooms(m);
+        for (int i = 0; i < m; i++) {
+            int x;
+            cin >> x;
+            classrooms[i] = {x / 100, x};
+        }
+        sort(classrooms.begin(), classrooms.end(), [](const pair<int, int>& a, const pair<int, int>& b) {
+            if (a.first != b.first) return a.first < b.first;
+            return a.second < b.second;
+        });
+        
+        vector<int> low(n), high(n);
+        for (int i = 0; i < n; i++) {
+            low[i] = classrooms[i].second;
+            high[i] = classrooms[m - n + i].second;
+        }
+        
+        vector<vector<int>> ans(n, vector<int>(6));
+        for (int i = 0; i < n; i++) {
+            ans[i][0] = low[i];
+            ans[i][1] = high[i];
+            ans[i][2] = low[(i + 1) % n];
+            ans[i][3] = high[(i + 1) % n];
+            ans[i][4] = low[(i + 1) % n];
+            ans[i][5] = high[(i + 1) % n];
+        }
+        
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < 6; j++) {
+                cout << ans[i][j] << (j == 5 ? '\n' : ' ');
+            }
+        }
+    }
+    return 0;
+}

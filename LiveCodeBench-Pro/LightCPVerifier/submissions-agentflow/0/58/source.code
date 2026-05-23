@@ -1,0 +1,44 @@
+#include <iostream>
+#include <vector>
+#include <climits> // For LLONG_MAX
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n);
+
+        for (long long &x : a) cin >> x;
+
+        long long leftCost = 0, rightCost = 0;
+        long long totalPrefixCost = 0, totalSuffixCost = 0;
+
+        for (int i = 1; i < n; ++i) {
+            totalSuffixCost += (a[i] * (n - i)); // Only need right cost initially
+        }
+
+        long long minCost = LLONG_MAX;
+
+        for (int i = 0; i < n; ++i) {
+
+            if(i != 0){
+                totalPrefixCost += (i * a[i-1]);
+                totalSuffixCost -= (n - i) * a[i];
+            }
+
+            long long currentCost = totalPrefixCost + totalSuffixCost;
+            minCost = min(minCost, currentCost);
+        }
+
+        cout << minCost << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    solve();
+}

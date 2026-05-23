@@ -1,0 +1,43 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Function to compute f(k, a, l, r) as per the given pseudocode
+long long f(int k, const vector<int>& a, int l, int r) {
+    long long ans = 0;
+    // Convert to 0-indexed: l-1 to r-1
+    for (int i = l - 1; i <= r - 1; ++i) {
+        int temp_k = k;
+        // While temp_k is divisible by a[i], divide it
+        while (temp_k % a[i] == 0) {
+            temp_k /= a[i];
+        }
+        ans += temp_k;
+    }
+    return ans;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        while (q--) {
+            int k, l, r;
+            cin >> k >> l >> r;
+            cout << f(k, a, l, r) << '\n';
+        }
+    }
+
+    return 0;
+}

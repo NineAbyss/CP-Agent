@@ -1,0 +1,84 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int INF = 1e9;
+
+int solve(vector<int>& a) {
+    int n = a.size();
+    // 转换为1-索引
+    vector<int> arr(n+1);
+    for (int i = 1; i <= n; ++i) arr[i] = a[i-1];
+    
+    // 预处理 mn 和 mx
+    vector<vector<int>> mn(n+2, vector<int>(n+2, INF));
+    vector<vector<int>> mx(n+2, vector<int>(n+2, -INF));
+    for (int i = 1; i <= n; ++i) {
+        mn[i][i] = mx[i][i] = arr[i];
+        for (int j = i+1; j <= n; ++j) {
+            mn[i][j] = min(mn[i][j-1], arr[j]);
+            mx[i][j] = max(mx[i][j-1], arr[j]);
+        }
+    }
+    
+    // 检查是否已经美丽
+    for (int i = 1; i < n; ++i) {
+        if (abs(arr[i] - arr[i+1]) <= 1) return 0;
+    }
+    
+    // 检查整个数组是否可行
+    bool whole = false;
+    for (int m = 1; m < n; ++m) {
+        int left_min = mn[1][m];
+        int left_max = mx[1][m];
+        int right_min = mn[m+1][n];
+        int right_max = mx[m+1][n];
+        int dist;
+        if (left_max < right_min) dist = right_min - left_max;
+        else if (right_max < left_min) dist = left_min - right_max;
+        else dist = 0;
+        if (dist <= 1) {
+            whole = true;
+            break;
+        }
+    }
+    if (!whole) return -1;
+    
+    // 搜索更小的区间
+    for (int len = 2; len < n; ++len) {
+        for (int l = 1; l + len - 1 <= n; ++l) {
+            int r = l + len - 1;
+            for (int m = l; m < r; ++m) {
+                int left_min = mn[l][m];
+                int left_max = mx[l][m];
+                int right_min = mn[m+1][r];
+                int right_max = mx[m+1][r];
+                int dist;
+                if (left_max < right_min) dist = right_min - left_max;
+                else if (right_max < left_min) dist = left_min - right_max;
+                else dist = 0;
+                if (dist <= 1) {
+                    return len - 2;
+                }
+            }
+        }
+    }
+    // 整个数组是可行的
+    return n - 2;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        cout << solve(a) << '\n';
+    }
+    return 0;
+}

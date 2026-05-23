@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to compute the distinct sorted strings for given n
+int countDistinctStrings(int n) {
+    // A set to store unique strings
+    unordered_set<string> distinctStrings;
+
+    for (int x = 1; x <= n; ++x) {
+        // Convert numbers to strings and concatenate
+        string concatenated = to_string(x) + to_string(x + 1);
+
+        // Sort the concatenated string
+        sort(concatenated.begin(), concatenated.end());
+
+        // Insert the sorted concatenated string in the set
+        distinctStrings.insert(concatenated);
+    }
+    
+    // Return the number of distinct strings
+    return distinctStrings.size();
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        // Output the number of distinct strings for this test case
+        cout << countDistinctStrings(n) << '\n';
+    }
+    
+    return 0;
+}

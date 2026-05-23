@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> g(n + 1);
+        vector<pair<int, int>> edges;
+        for (int i = 0; i < n - 1; i++) {
+            int u, v;
+            cin >> u >> v;
+            g[u].push_back(v);
+            g[v].push_back(u);
+            edges.emplace_back(u, v);
+        }
+        if (n == 2) {
+            cout << "NO\n";
+            continue;
+        }
+        // 找到度数至少为2的顶点
+        int root = 1;
+        while (g[root].size() < 2) root++;
+        // 找到两个邻居
+        int a = g[root][0];
+        int b = g[root][1];
+        // 定向边 root->a 和 root->b ？不，我们需要特定方向 // 根据官方题解，定向为 a->root 和 root->b
+        // 然后其他边指向 root
+        vector<int> parent(n + 1, -1);
+        vector<vector<int>> children(n + 1);
+        function<void(int, int)> dfs = [&](int u, int p) {
+            parent[u] = p;
+            for (int v : g[u]) {
+                if (v == p) continue;
+                children[u].push_back(v);
+                dfs(v, u);
+            }
+        };
+        dfs(root, -1);
+        vector<pair<int, int>> ans;
+        for (auto [u, v] : edges) {
+            if ((u == root && v == a) || (u == a && v == root)) {
+                ans.emplace_back(a, root); // a->root
+            } else if ((u == root && v == b) || (u == b && v == root)) {
+                ans.emplace_back(root, b); // root->b
+            } else {
+                if (parent[u] == v) {
+                    ans.emplace_back(u, v);
+                } else {
+                    ans.emplace_back(v, u);
+                }
+            }
+        }
+        cout << "YES\n";
+        for (auto [u, v] : ans) {
+            cout << u << " " << v << "\n";
+        }
+    }
+    return 0;
+}

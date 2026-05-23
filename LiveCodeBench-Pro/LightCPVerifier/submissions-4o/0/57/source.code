@@ -1,0 +1,29 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, x;
+        cin >> n >> x;
+        
+        // Handle special cases for n = 1
+        if (n == 1) {
+            // Only possible array is just [x]
+            if (x == 0) cout << "0\n";
+            else cout << x << "\n";
+            continue;
+        }
+
+        // If n = 2, we can always have the array [1, x+1]
+        if (n == 2) {
+            cout << x << "\n";
+            continue;
+        }
+        
+        // General Case: n > 2 // The smallest possible elements sum when their xor is x with at least 3 elements.
+        cout << (x ^ 0) + (n - 1) << "\n";
+    }
+    return 0;
+}

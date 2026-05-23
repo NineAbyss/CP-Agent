@@ -1,0 +1,53 @@
+#include <iostream>
+#include <string>
+#include <cstring>
+using namespace std;
+
+const int INF = 1e9;
+
+int memo[10][2][2];
+string L_str, R_str;
+int n;
+
+int dfs(int pos, int tight_low, int tight_high) {
+    if (pos == n) {
+        return 0;
+    }
+    if (memo[pos][tight_low][tight_high] != -1) {
+        return memo[pos][tight_low][tight_high];
+    }
+    int lo = tight_low ? (L_str[pos] - '0') : 0;
+    int hi = tight_high ? (R_str[pos] - '0') : 9;
+    int res = INF;
+    for (int d = lo; d <= hi; ++d) {
+        int add = 0;
+        if (d == (L_str[pos] - '0')) add++;
+        if (d == (R_str[pos] - '0')) add++;
+        int ntight_low = tight_low && (d == (L_str[pos] - '0'));
+        int ntight_high = tight_high && (d == (R_str[pos] - '0'));
+        int cur = add + dfs(pos + 1, ntight_low, ntight_high);
+        if (cur < res) res = cur;
+    }
+    return memo[pos][tight_low][tight_high] = res;
+}
+
+int solve(int l, int r) {
+    L_str = to_string(l);
+    R_str = to_string(r);
+    n = L_str.size();
+    memset(memo, -1, sizeof memo);
+    return dfs(0, 1, 1);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int l, r;
+        cin >> l >> r;
+        cout << solve(l, r) << '\n';
+    }
+    return 0;
+}

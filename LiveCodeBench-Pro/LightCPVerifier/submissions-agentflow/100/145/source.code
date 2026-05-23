@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // Initialize occurrences trackers
+        vector<int> first_occurrence(n + 1, n);
+        vector<int> last_occurrence(n + 1, -1);
+
+        // Traverse the array to capture first and last occurrences
+        for (int i = 0; i < n; i++) {
+            int value = a[i];
+            first_occurrence[value] = min(first_occurrence[value], i);
+            last_occurrence[value] = max(last_occurrence[value], i);
+        }
+
+        // Compute maximum beauty as sum of distances
+        int max_beauty = 0;
+        for (int x = 1; x <= n; x++) {
+            if (first_occurrence[x] != n && last_occurrence[x] != -1) {
+                max_beauty += (last_occurrence[x] - first_occurrence[x]);
+            }
+        }
+
+        cout << max_beauty << endl;
+    }
+
+    return 0;
+}

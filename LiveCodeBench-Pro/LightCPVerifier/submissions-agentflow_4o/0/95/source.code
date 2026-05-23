@@ -1,0 +1,32 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        
+        int clones_needed = 1;  // Start with one clone for pressing
+
+        // Traverse each button
+        for (int i = 1; i < n; ++i) {
+            if (a[i] > a[i - 1]) {
+                // When encountering a rise, a new clone is needed
+                clones_needed++;
+            }
+        }
+
+        cout << clones_needed << "\n";  // Output the needed amount of clones
+    }
+    
+    return 0;
+}

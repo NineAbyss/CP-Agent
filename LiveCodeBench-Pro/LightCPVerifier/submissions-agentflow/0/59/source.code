@@ -1,0 +1,37 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+using namespace std;
+
+// Function to calculate the number of steps required to make all elements equal
+int min_operations_to_equal_array(const vector<int>& a)
+{
+    int global_gcd = a[0];
+    for (int num : a) {
+        global_gcd = gcd(global_gcd, num);
+    }
+
+    int count_equal_to_gcd = 0;
+    for (int num : a) {
+        if (num == global_gcd) ++count_equal_to_gcd;
+    }
+
+    return a.size() - count_equal_to_gcd;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int &x : a) {
+            cin >> x;
+        }
+        cout << min_operations_to_equal_array(a) << endl;
+    }
+
+    return 0;
+}

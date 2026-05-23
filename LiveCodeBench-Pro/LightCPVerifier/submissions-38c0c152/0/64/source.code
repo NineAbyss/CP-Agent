@@ -1,0 +1,67 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int INF = 1e9 + 10;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        vector<int> b(m);
+        for (int i = 0; i < m; i++) cin >> b[i];
+        
+        // pre[j]: 匹配前 j 个 b 所需的最小下标（1-based），INF 表示无法匹配
+        vector<int> pre(m + 1, INF);
+        pre[0] = 0;
+        int i = 0, j = 0;
+        while (i < n && j < m) {
+            if (a[i] >= b[j]) {
+                pre[j + 1] = i + 1;
+                j++;
+            }
+            i++;
+        }
+        
+        // suf[j]: 匹配 b[j+1..m] 所需的最大起始下标（1-based），-INF 表示无法匹配
+        vector<int> suf(m + 1, -INF);
+        suf[m] = n + 1;
+        i = n - 1;
+        j = m - 1;
+        while (i >= 0 && j >= 0) {
+            if (a[i] >= b[j]) {
+                suf[j] = i + 1;
+                j--;
+            }
+            i--;
+        }
+        
+        // 如果已经可以匹配所有 m 个
+        if (pre[m] <= n) {
+            cout << "0\n";
+            continue;
+        }
+        
+        int ans = INF;
+        for (int p = 1; p <= m; p++) {
+            if (pre[p - 1] < suf[p]) {
+                ans = min(ans, b[p - 1]);
+            }
+        }
+        
+        if (ans == INF) {
+            cout << "-1\n";
+        } else {
+            cout << ans << "\n";
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,60 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <limits>
+
+using namespace std;
+
+// Function to perform DFS and calculate the maximum alternating sum
+void dfs(int node, int parent, const vector<int>& danger, const vector<vector<int>>& tree, vector<int>& threatValues) {
+    int maxEvenSum = 0;
+    int maxOddSum = 0;
+    
+    threatValues[node] = danger[node]; // Initial threat value
+    
+    for (int child : tree[node]) {
+        if (child == parent) continue;
+        dfs(child, node, danger, tree, threatValues);
+        maxEvenSum = max(maxEvenSum, maxOddSum + threatValues[child]); // As odd becomes new even
+        maxOddSum = max(maxOddSum, maxEvenSum - threatValues[child]);  // As even becomes new odd
+    }
+    
+    threatValues[node] = max(threatValues[node], maxEvenSum);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+
+        vector<int> danger(n + 1);
+        for (int i = 1; i <= n; ++i) {
+            cin >> danger[i];
+        }
+
+        vector<vector<int>> tree(n + 1);
+        for (int i = 0; i < n - 1; ++i) {
+            int v, u;
+            cin >> v >> u;
+            tree[v].push_back(u);
+            tree[u].push_back(v);
+        }
+
+        vector<int> threatValues(n + 1);
+
+        dfs(1, -1, danger, tree, threatValues);
+
+        for (int i = 1; i <= n; ++i) {
+            cout << threatValues[i] << " ";
+        }
+        cout << "\n";
+    }
+
+    return 0;
+}

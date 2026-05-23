@@ -1,0 +1,129 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+const int N = 100005;
+const int INF = 1e9;
+
+vector<int> g[N];
+vector<int> forbid[N];
+int min_arrival[N];
+int n, m, x, y;
+
+bool is_forbidden(int v, int t) {
+    if (t >= min_arrival[v]) return true;
+    const auto& vec = forbid[v];
+    auto it = lower_bound(vec.begin(), vec.end(), t);
+    return it != vec.end() && *it == t;
+}
+
+int earliest_arrival(int v, int w, int t) {
+    int s = t;
+    while (s <= 2 * n) {
+        if (!is_forbidden(v, s) && !is_forbidden(w, s + 1)) {
+            return s + 1;
+        }
+        s++;
+    }
+    return INF;
+}
+
+void solve() {
+    cin >> n >> m >> x >> y;
+    for (int i = 1; i <= n; i++) {
+        g[i].clear();
+        forbid[i].clear();
+        min_arrival[i] = INF;
+    }
+    for (int i = 0; i < n - 1; i++) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+
+    // 处理每个敌人
+    for (int i = 0; i < m; i++) {
+        int a, b;
+        cin >> a >> b;
+        // BFS 找最短路径
+        vector<int> dist(n + 1, -1);
+        vector<int> prev(n + 1, -1);
+        queue<int> q;
+        dist[a] = 0;
+        prev[a] = -1;
+        q.push(a);
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            for (int v : g[u]) {
+                if (dist[v] == -1) {
+                    dist[v] = dist[u] + 1;
+                    prev[v] = u;
+                    q.push(v);
+                }
+            }
+        }
+        // 重构路径
+        vector<int> path;
+        int cur = b;
+        while (cur != -1) {
+            path.push_back(cur);
+            cur = prev[cur];
+        }
+        reverse(path.begin(), path.end());
+        int k = path.size();
+        // 记录工作地点永久禁止
+        min_arrival[b] = min(min_arrival[b], k);
+        // 记录临时禁止时刻
+        for (int j = 0; j < k; j++) {
+            int v = path[j];
+            int t = j + 1;
+            forbid[v].push_back(t);
+        }
+    }
+
+    // 排序去重
+    for (int i = 1; i <= n; i++) {
+        sort(forbid[i].begin(), forbid[i].end());
+        forbid[i].erase(unique(forbid[i].begin(), forbid[i].end()), forbid[i].end());
+    }
+
+    // Dijkstra
+    vector<int> earliest(n + 1, INF);
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+    if (!is_forbidden(x, 1)) {
+        pq.push({1, x});
+    }
+    int ans = INF;
+    while (!pq.empty()) {
+        auto [t, v] = pq.top(); pq.pop();
+        if (t >= earliest[v]) continue;
+        earliest[v] = t;
+        if (v == y) {
+            ans = t;
+            break;
+        }
+        for (int w : g[v]) {
+            int nt = earliest_arrival(v, w, t);
+            if (nt < earliest[w]) {
+                pq.push({nt, w});
+            }
+        }
+    }
+    if (ans == INF) ans = -1;
+    cout << ans << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

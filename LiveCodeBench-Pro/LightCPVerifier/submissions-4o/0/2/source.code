@@ -1,0 +1,38 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int a, x, y;
+        cin >> a >> x >> y;
+        
+        int aliceDistToX = abs(a - x);
+        int aliceDistToY = abs(a - y);
+        
+        bool canWin = false;
+        
+        // Check if there exists a b that satisfies the condition
+        for (int b = 1; b <= 100; ++b) { // 1 to 100, as given in constraints
+            if (b == a) continue; // Bob cannot start at Alice's position
+            int bobDistToX = abs(b - x);
+            int bobDistToY = abs(b - y);
+            
+            // Check if Bob's distances to both targets are strictly less than Alice's
+            if (bobDistToX < aliceDistToX && bobDistToY < aliceDistToY) {
+                canWin = true;
+                break;
+            }
+        }
+        
+        if (canWin) {
+            cout << "YES" << endl;
+        } else {
+            cout << "NO" << endl;
+        }
+    }
+    
+    return 0;
+}

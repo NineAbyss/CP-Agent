@@ -1,0 +1,100 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX_BIT = 30;
+const int INF = 1e9;
+
+struct TrieNode {
+    int max_idx;
+    int child[2];
+    TrieNode() : max_idx(-1) {
+        child[0] = child[1] = -1;
+    }
+};
+
+vector<TrieNode> nodes;
+
+int new_node() {
+    nodes.emplace_back();
+    return (int)nodes.size() - 1;
+}
+
+void insert(int root, int num, int idx) {
+    int p = root;
+    nodes[p].max_idx = max(nodes[p].max_idx, idx);
+    for (int bit = MAX_BIT; bit >= 0; --bit) {
+        int b = (num >> bit) & 1;
+        if (nodes[p].child[b] == -1) {
+            int nxt = new_node();
+            nodes[p].child[b] = nxt;
+        }
+        p = nodes[p].child[b];
+        nodes[p].max_idx = max(nodes[p].max_idx, idx);
+    }
+}
+
+int dfs(int p, int num, int k, int bit, int cur) {
+    if (p == -1) return -1;
+    if (cur >= k) {
+        return nodes[p].max_idx;
+    }
+    if (bit < 0) return -1;
+    int b = (num >> bit) & 1;
+    int kb = (k >> bit) & 1;
+    int res = -1;
+    if (kb == 1) {
+        int nxt = nodes[p].child[b ^ 1];
+        if (nxt != -1) {
+            res = dfs(nxt, num, k, bit - 1, cur | (1 << bit));
+        }
+    } else {
+        int nxt = nodes[p].child[b ^ 1];
+        if (nxt != -1) {
+            res = max(res, nodes[nxt].max_idx);
+        }
+        nxt = nodes[p].child[b];
+        if (nxt != -1) {
+            res = max(res, dfs(nxt, num, k, bit - 1, cur));
+        }
+    }
+    return res;
+}
+
+int query(int root, int num, int k) {
+    return dfs(root, num, k, MAX_BIT, 0);
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        if (k == 0) {
+            cout << 1 << '\n';
+            continue;
+        }
+        // 初始化 Trie
+        nodes.clear();
+        int root = new_node();
+        int ans = INF;
+        for (int i = 0; i < n; ++i) {
+            int j = query(root, a[i], k);
+            if (j != -1) {
+                ans = min(ans, i - j + 1);
+            }
+            insert(root, a[i], i);
+        }
+        if (ans == INF) ans = -1;
+        cout << ans << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

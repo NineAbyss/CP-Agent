@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// DFS function to find cycles in the graph
+void dfs(int v, vector<int>& visited, vector<int>& stack, vector<int>& cycle_count, const vector<int>& g) {
+    if (visited[v] == 2) return;  // Vertex was fully processed
+    if (visited[v] == 1) {
+        // Cycle detected, backtrack and count the components in this cycle
+        int u = stack.back();
+        int count = 1;
+        while (u != v) {
+            stack.pop_back();
+            u = stack.back();
+            count++;
+        }
+        stack.pop_back();
+        cycle_count.push_back(count);
+        return;
+    }
+    // Start DFS
+    visited[v] = 1;  // Mark as in-progress
+    stack.push_back(v);
+    dfs(g[v], visited, stack, cycle_count, g);
+    visited[v] = 2;
+}
+
+// Quick power calculation with modulo 3, noticing that powers mod 3 repeat
+int mod3_power(long long base, long long exp) {
+    // Since k % 3 can only be 0, 1, or 2, we notice: // * 0^exp is always 0
+    // * 1^exp is always 1 // * 2^exp mod 3 is (1 2 1 2 ...)
+    if (exp == 0) return 1;
+    if (base % 3 == 0) return 0;
+    if (base % 3 == 1) return 1;
+    return (exp % 2 == 0 ? 1 : 2);  // Use pattern 2121...
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    
+    vector<int> g(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        cin >> g[i];
+    }
+
+    while (q--) {
+        int x, y;
+        long long k;
+        cin >> x >> y >> k;
+        
+        g[x] = y;
+        
+        // Finding all unique cycles
+        vector<int> visited(n + 1, 0);
+        vector<int> stack;
+        vector<int> cycle_count;
+
+        for (int i = 1; i <= n; ++i) {
+            if (visited[i] == 0) {
+                dfs(i, visited, stack, cycle_count, g);
+            }
+        }
+        
+        // Number of cycles
+        int C = cycle_count.size();
+        
+        // Calculate the number of distinct colorings modulo 3
+        cout << mod3_power(k, C) << '\n';
+    }
+    return 0;
+}

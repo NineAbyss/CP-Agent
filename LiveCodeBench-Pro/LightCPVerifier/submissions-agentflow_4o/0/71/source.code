@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+vector<int> adj[200005];
+int dp[200005];
+
+// Calculate the factorials modulo MOD for combinatorial purposes.
+long long factorials[200005];
+
+void precompute_factorials(int n) {
+    factorials[0] = 1;
+    for (int i = 1; i <= n; ++i) {
+        factorials[i] = (factorials[i - 1] * i) % MOD;
+    }
+}
+
+void dfs(int node, int parent) {
+    dp[node] = 1;
+
+    for (int child : adj[node]) {
+        if (child != parent) {
+            dfs(child, node);
+            dp[node] = (dp[node] * dp[child]) % MOD;
+        }
+    }
+    
+    dp[node] = (dp[node] * 2) % MOD; // Each node assignment has two options (1 or 2)
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    
+    precompute_factorials(200004); // Enough for our constraints
+
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        for (int i = 1; i <= n; ++i) adj[i].clear();
+
+        for (int i = 0; i < n - 1; ++i) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+
+        dfs(1, 0); // Start DFS from the root at node 1
+
+        cout << dp[1] << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9+7;
+
+long long pow_mod(long long a, long long b) {
+    long long res = 1;
+    a %= MOD;
+    while (b) {
+        if (b & 1) res = res * a % MOD;
+        a = a * a % MOD;
+        b >>= 1;
+    }
+    return res;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        long long a, b, k;
+        cin >> a >> b >> k;
+        
+        long long n = ((a-1) % MOD) * (k % MOD) % MOD + 1;
+        n %= MOD;
+        
+        long long m = ((b-1) % MOD) * pow_mod(k, a) % MOD + 1;
+        m %= MOD;
+        
+        if (a == b) {
+            m = (m + ((a-1) % MOD) * (k % MOD) % MOD) % MOD;
+        }
+        
+        cout << n << " " << m << endl;
+    }
+    
+    return 0;
+}

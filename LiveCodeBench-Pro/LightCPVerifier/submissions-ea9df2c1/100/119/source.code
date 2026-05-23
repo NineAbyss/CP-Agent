@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        multiset<int> ms;
+        int mx = 0;
+        int beauty = 0;
+        vector<int> ans(n);
+        const int K = 100; // 检查最大的K个数
+        for (int i = 0; i < n; i++) {
+            int x = a[i];
+            ms.insert(x);
+            if (x > mx) {
+                mx = x;
+                // 检查最大的最多K个数
+                auto it = ms.end();
+                int cnt = 0;
+                beauty = 0;
+                while (it != ms.begin() && cnt < K) {
+                    --it;
+                    int y = *it;
+                    int val = (mx % y) + (y % mx);
+                    if (val > beauty) beauty = val;
+                    cnt++;
+                }
+            } else {
+                // 只检查新数x
+                int val = (mx % x) + (x % mx);
+                if (val > beauty) beauty = val;
+            }
+            ans[i] = beauty;
+        }
+        for (int i = 0; i < n; i++) {
+            cout << ans[i] << " \n"[i == n-1];
+        }
+    }
+    return 0;
+}

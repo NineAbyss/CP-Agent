@@ -1,0 +1,77 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <tuple>
+#include <limits>
+using namespace std;
+
+struct DSU {
+    vector<int> parent, rank;
+    vector<bool> has_min;
+    DSU(int n) : parent(n), rank(n, 0), has_min(n, false) {
+        for (int i = 0; i < n; i++) parent[i] = i;
+    }
+    int find(int x) {
+        while (parent[x] != x) x = parent[x];
+        return x;
+    }
+    void unite(int x, int y, bool edge_is_min) {
+        x = find(x), y = find(y);
+        if (x == y) {
+            if (edge_is_min) has_min[x] = true;
+            return;
+        }
+        if (rank[x] < rank[y]) swap(x, y);
+        parent[y] = x;
+        if (rank[x] == rank[y]) rank[x]++;
+        has_min[x] = has_min[x] || has_min[y] || edge_is_min;
+    }
+    bool connected(int x, int y) {
+        return find(x) == find(y);
+    }
+    bool component_has_min(int x) {
+        return has_min[find(x)];
+    }
+};
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<tuple<int, int, int>> edges;
+        for (int i = 0; i < m; i++) {
+            int u, v, w;
+            cin >> u >> v >> w;
+            u--; v--;
+            edges.emplace_back(w, u, v);
+        }
+        sort(edges.begin(), edges.end());
+        
+        long long ans = numeric_limits<long long>::max();
+        // iterate over possible minimum weight
+        for (int l = 0; l < m; l++) {
+            int L = get<0>(edges[l]);
+            // if L + L >= ans, then further L will only be larger, so break
+            if ((long long)L + L >= ans) break;
+            DSU dsu(n);
+            for (int r = l; r < m; r++) {
+                int w = get<0>(edges[r]);
+                dsu.unite(get<1>(edges[r]), get<2>(edges[r]), w == L);
+                if (dsu.connected(0, n-1) && dsu.component_has_min(0)) {
+                    ans = min(ans, (long long)L + w);
+                    break;
+                }
+            }
+        }
+        cout << ans << '\n';
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

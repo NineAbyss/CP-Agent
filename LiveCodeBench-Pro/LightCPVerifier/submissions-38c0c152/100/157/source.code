@@ -1,0 +1,166 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <unordered_map>
+#include <unordered_set>
+#include <algorithm>
+using namespace std;
+
+struct Block {
+    vector<int> arr;
+    bool rev;
+    Block() : rev(false) {}
+};
+
+int n, q;
+vector<Block> blocks;
+int block_size;
+vector<vector<int>> inserts; // 每个原始集合的插入元素列表
+vector<int> cur_min; // 每个原始集合的当前最小元素，0表示空
+unordered_map<int, unordered_set<int>> val_to_sets; // 值 x 到集合 j 的映射
+vector<bool> deleted; // 元素是否被删除
+
+void init_blocks() {
+    block_size = sqrt(n);
+    int num_blocks = (n + block_size - 1) / block_size;
+    blocks.resize(num_blocks);
+    for (int i = 0; i < num_blocks; i++) {
+        int l = i * block_size + 1;
+        int r = min(n, (i + 1) * block_size);
+        blocks[i].arr.resize(r - l + 1);
+        for (int j = l; j <= r; j++) {
+            blocks[i].arr[j - l] = j;
+        }
+    }
+}
+
+int get_sid(int p) {
+    p--;
+    int block_id = p / block_size;
+    int idx = p % block_size;
+    if (blocks[block_id].rev) {
+        idx = blocks[block_id].arr.size() - 1 - idx;
+    }
+    return blocks[block_id].arr[idx];
+}
+
+void reverse_prefix(int r) {
+    if (r == 0) return;
+    int last_pos = r;
+    int first_block = 0;
+    int last_block = (last_pos - 1) / block_size;
+    if (first_block == last_block) {
+        Block& blk = blocks[first_block];
+        int l = 0;
+        int r_idx = last_pos - first_block * block_size - 1;
+        reverse(blk.arr.begin() + l, blk.arr.begin() + r_idx + 1);
+        blk.rev = false;
+    } else {
+        vector<int> elements;
+        for (int pos = 1; pos <= last_pos; pos++) {
+            elements.push_back(get_sid(pos));
+        }
+        reverse(elements.begin(), elements.end());
+        int idx = 0;
+        for (int pos = 1; pos <= last_pos; pos++) {
+            int block_id = (pos - 1) / block_size;
+            int block_idx = (pos - 1) % block_size;
+            if (blocks[block_id].rev) {
+                block_idx = blocks[block_id].arr.size() - 1 - block_idx;
+            }
+            blocks[block_id].arr[block_idx] = elements[idx++];
+        }
+        for (int b = 0; b <= last_block; b++) {
+            blocks[b].rev = false;
+        }
+    }
+}
+
+void update_cur_min(int j) {
+    int old_val = cur_min[j];
+    if (old_val != 0) {
+        val_to_sets[old_val].erase(j);
+        if (val_to_sets[old_val].empty()) {
+            val_to_sets.erase(old_val);
+        }
+    }
+    int new_val = 0;
+    auto& vec = inserts[j];
+    int idx = lower_bound(vec.begin(), vec.end(), old_val) - vec.begin();
+    if (old_val != 0 && idx < vec.size() && vec[idx] == old_val) {
+        idx++;
+    }
+    for (; idx < vec.size(); idx++) {
+        if (!deleted[vec[idx]]) {
+            new_val = vec[idx];
+            break;
+        }
+    }
+    cur_min[j] = new_val;
+    if (new_val != 0) {
+        val_to_sets[new_val].insert(j);
+    }
+}
+
+void insert_op(int i, int r) {
+    for (int pos = 1; pos <= r; pos++) {
+        int sid = get_sid(pos);
+        inserts[sid].push_back(i);
+        if (cur_min[sid] == 0) {
+            int old_val = cur_min[sid];
+            if (old_val != 0) {
+                val_to_sets[old_val].erase(sid);
+                if (val_to_sets[old_val].empty()) {
+                    val_to_sets.erase(old_val);
+                }
+            }
+            cur_min[sid] = i;
+            val_to_sets[i].insert(sid);
+        }
+    }
+}
+
+void delete_op(int x) {
+    if (deleted[x]) return;
+    deleted[x] = true;
+    if (val_to_sets.count(x)) {
+        auto sets_copy = val_to_sets[x];
+        for (int j : sets_copy) {
+            update_cur_min(j);
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    cin >> n >> q;
+    init_blocks();
+    inserts.resize(n + 1);
+    cur_min.assign(n + 1, 0);
+    deleted.assign(q + 1, false);
+    int last_ans = 0;
+    for (int op_idx = 1; op_idx <= q; op_idx++) {
+        int a, b, c;
+        cin >> a >> b >> c;
+        int r, x, p;
+        if (a == 1 || a == 2) {
+            r = (b + last_ans - 1) % n + 1;
+            p = (c + last_ans - 1) % n + 1;
+        } else {
+            x = (b + last_ans - 1) % q + 1;
+            p = (c + last_ans - 1) % n + 1;
+        }
+        if (a == 1) {
+            insert_op(op_idx, r);
+        } else if (a == 2) {
+            reverse_prefix(r);
+        } else {
+            delete_op(x);
+        }
+        int sid = get_sid(p);
+        last_ans = cur_min[sid];
+        cout << last_ans << '\n';
+    }
+    return 0;
+}

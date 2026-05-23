@@ -1,0 +1,314 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to compute median of a subarray
+int med(const vector<int>& a, int l, int r) {
+    vector<int> temp;
+    for (int i = l; i <= r; i++) {
+        temp.push_back(a[i]);
+    }
+    sort(temp.begin(), temp.end());
+    int m = temp.size();
+    return temp[(m + 1) / 2 - 1]; // ceil(m/2)-th smallest (0-indexed)
+}
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    // We need to find indices l and r such that 1 <= l < r < n (0-indexed: 0 <= l < r <= n-2) // i.e., first part [0, l], second [l+1, r], third [r+1, n-1]
+
+    // Precompute prefix medians: med(0..i) for all i
+    vector<int> prefix_med(n);
+    for (int i = 0; i < n; i++) {
+        prefix_med[i] = med(a, 0, i);
+    }
+
+    // Precompute suffix medians: med(i..n-1) for all i
+    vector<int> suffix_med(n);
+    for (int i = 0; i < n; i++) {
+        suffix_med[i] = med(a, i, n-1);
+    }
+
+    // Try all valid l and r // l from 0 to n-3 (so that we can have at least one element in middle and one in end)
+    // r from l+1 to n-2
+
+    // However, note: total n across test cases <= 200,000, but trying O(n^2) per test case is too slow.
+
+    // We need a more efficient solution.
+
+    // Alternate idea: // Since the final answer is the median of three values: M1 = med(a[0..l]), M2 = med(a[l+1..r]), M3 = med(a[r+1..n-1])
+    // We want: med(M1, M2, M3) <= k
+    // That means at least two of {M1, M2, M3} must be <= k.
+
+    // So we can try to fix possibilities: // Case 1: M1 <= k and M2 <= k
+    // Case 2: M1 <= k and M3 <= k // Case 3: M2 <= k and M3 <= k
+
+    // But computing medians for every segment is expensive.
+
+    // Insight: Instead of computing actual medians, we can use binary search on answer?  // But here k is given.
+
+    // Another idea: Transform array to 0/1 based on <=k or not? // But median depends on actual values.
+
+    // Let's think simpler: The constraints say total n over test cases <= 200,000. // But note: worst-case t up to 10,000, but sum of n <= 200,000 => average n is small.
+
+    // So we can do O(n^2) per test case if the individual n is small, but worst-case n=200,000 in one test case -> O(n^2)=40e9 which is too high.
+
+    // We need an efficient solution.
+
+    // Let me re-read constraint: "It is guaranteed that the sum of n over all test cases does not exceed 2⋅10^5"
+    // So there is only one test case with n=200,000? No: sum of all n <= 200,000 => so maximum number of test cases is about 1000 (if each n=200), but actually t<=10,000 but sum n<=200,000 => average n=20.
+
+    // So we can do O(n^2) per test case!
+
+    // Because sum of n <= 200,000, but what about sum of n^2? // Worst-case: one test case with n=200,000 -> n^2 = 40e9 -> too slow.
+
+    // Wait: the constraint says "the sum of n over all test cases does not exceed 2*10^5" // So maximum n in a single test case could be 200,000? But then sum would be at least 200,000 -> so only one test case allowed?
+
+    // Actually: "sum of n" means if you add up the n's of all test cases, it's <= 200,000. // So maximum possible n in one test case is 200,000, but then there can be only one test case.
+
+    // But worst-case O(n^2) for n=200,000 is 40e9 operations, which is too slow in C++.
+
+    // We need O(n) or O(n log n).
+
+    // Let's go back to the condition: we need at least two of the three medians <= k.
+
+    // Case 1: M1 <= k and M3 <= k. //   Then regardless of M2, the median of (M1,M2,M3) will be <= k (since two are <=k).
+    //   So if we can find any split where both prefix and suffix medians are <=k, we return YES.
+
+    // How to check this fast?
+    // Precompute for each l from 0 to n-3: med(a[0..l]) <= k
+    // Precompute for each r from l+1 to n-2: med(a[r+1..n-1]) <= k // But we need existence of l and r with l < r and r <= n-2 such that:
+    //   med(0..l) <= k and med(r+1..n-1) <= k.
+
+    // Note: once we fix l, we just need to know if there exists any r in [l+1, n-2] such that med(r+1..n-1) <= k. // But med(r+1..n-1) depends only on r, not on l.
+
+    // So let's precompute an array suf_ok[r] = (med(a[r+1..n-1]) <= k) for r from 0 to n-2. // Then we can compute suf_max[r] = whether there exists any index >= r such that suf_ok[index] is true.
+
+    // Similarly, we can iterate l from 0 to n-3, and check if med(0..l)<=k and suf_max[l+1] is true.
+
+    // This handles Case 1.
+
+    // Case 2: M1 <= k and M2 <= k.
+    //   We need med(0..l) <= k and med(l+1..r) <= k for some l,r with l<r<n.
+    //   For fixed l, we need to check if there exists r in [l+1, n-2] such that med(l+1..r) <= k.
+
+    //   But med(l+1..r) is the median of a[l+1..r]. We can precompute for each starting point?
+
+    //   Alternatively, for fixed l, we can iterate r from l+1 to n-2 and compute medians on the fly? 
+    //   But computing median for each segment is O(length log length) -> too slow.
+
+    //   But note: total sum of n <= 200,000. However, if we do nested loops, worst-case O(n^2 log n) per test case, which for n=500 would be about 500^2 * log(500) ~ 250000 * 9 = 2.25e6 per test case, and if we have 400 test cases of size 500, total n=200,000, but total work could be 400 * 2.25e6 = 900e6 which might pass in C++.
+
+    //   But worst-case one test case with n=200,000: then O(n^2 log n) is about (200000)^2 * log(200000) ~ 4e10 * 18 = 72e10 operations -> way too slow.
+
+    // We need better.
+
+    // Alternative idea: since we only care whether median <= k, we can transform the array: // Define b[i] = (a[i] <= k) ? 1 : 0   -> but wait, no: median <= k doesn't depend only on count of numbers <=k.
+
+    // Actually, the median of a segment is <= k if and only if at least ceil(L/2) elements in the segment are <= k? 
+    // NO: consider segment [1, 3, 5], k=4: median=3<=4 -> yes. But if we set b[i]=1 if a[i]<=4, then b=[1,1,0], number of ones=2, ceil(3/2)=2 -> 2>=2 -> condition holds.
+    // But is this always true?
+
+    // Claim: The median of a segment of length L is <= k  <=>  at least ceil(L/2) elements in the segment are <= k.
+
+    // Proof:  // Let x = median = the ceil(L/2)-th smallest element.
+    // If x <= k, then all elements smaller than or equal to x are <= k, and there are at least ceil(L/2) such elements (because x is the ceil(L/2)-th smallest).
+    // Conversely, if there are at least ceil(L/2) elements <= k, then the ceil(L/2)-th smallest element must be <= k (since even in the best case for large values, the ceil(L/2)-th smallest is one of the ones <=k).
+
+    // So yes! We can transform the problem.
+
+    // Let b[i] = 1 if a[i] <= k, else -1 (or 0? we want to count). Actually, we want to know if count of (a[i] <= k) >= ceil(L/2).
+
+    // Alternatively, define c[i] = 1 if a[i] <= k, else 0.
+    // Then for a segment [l, r], let len = r-l+1, required = (len+1)/2 (ceiling of len/2).
+    // Then median <= k  <=>  sum_{i=l}^{r} c[i] >= (len+1)/2.
+
+    // Which is equivalent to: sum_{i=l}^{r} (c[i] - 0.5) >= 0.5 * len - 0.5? Not helpful.
+
+    // Better: multiply by 2: we require 2 * (number of ones) >= len + 1? 
+    // But ceil(len/2) = (len+1)//2 for integer len? 
+    //   if len is odd: ceil(len/2) = (len+1)/2
+    //   if len is even: ceil(len/2) = len/2 + 1? no: ceil(4/2)=ceil(2)=2, which is 4/2=2 -> so ceil(len/2) = (len+1)//2? 
+    //   Actually: ceil(len/2) = (len+1)//2 in integer arithmetic.
+
+    // Example: len=3 -> (3+1)//2 = 2 -> correct. //          len=4 -> (4+1)//2 = 2 -> correct.
+
+    // So we require: count_ones >= (len+1)/2  => 2*count_ones >= len+1.
+
+    // Define d[i] = 2*c[i] - 1. Then c[i]=1 -> d[i]=1, c[i]=0 -> d[i]=-1.
+    // Then sum_{i=l}^{r} d[i] = 2*count_ones - (len) 
+    // We require: 2*count_ones >= len+1  => 2*count_ones - len >= 1  => sum d[i] >= 1.
+
+    // So the condition becomes: sum of d over the segment >= 1.
+
+    // Now we can use this transformation.
+
+    // So now the three conditions become:
+
+    // Let d[i] = 1 if a[i] <= k, else -1.
+
+    // Then:
+    //   M1 = med(a[0..l]) <= k  <=>  sum_{i=0}^{l} d[i] >= 1
+    //   M2 = med(a[l+1..r]) <= k  <=>  sum_{i=l+1}^{r} d[i] >= 1
+    //   M3 = med(a[r+1..n-1]) <= k  <=>  sum_{i=r+1}^{n-1} d[i] >= 1
+
+    // And we need at least two of these three sums to be >= 1.
+
+    // Now we can precompute prefix sums of d:  //   Let s[0] = 0, s[i] = d[0]+d[1]+...+d[i-1]
+    // Then sum from i=l to r is s[r+1]-s[l].
+
+    // So: //   M1 condition: s[l+1] - s[0] >= 1  => s[l+1] >= 1
+    //   M3 condition: s[n] - s[r+1] >= 1  => s[r+1] <= s[n]-1 //   M2 condition: s[r+1] - s[l+1] >= 1  => s[r+1] >= s[l+1] + 1
+
+    // Now we can handle the three cases:
+
+    // Case 1: M1 and M3:  //   Find l in [0, n-3] and r in [l+1, n-2] such that:
+    //      s[l+1] >= 1 and s[r+1] <= s[n]-1. //   But note: we don't require anything between l and r? Actually, we just need existence of such l and r with l < r.
+    //   So we can:  //      Let min_r_index = minimum r+1 in [l+2, n-1] (i.e., r from l+1 to n-2 => r+1 from l+2 to n-1) such that s[r+1] <= s[n]-1?
+    //      Actually, we don't need to tie l and r together beyond l < r.
+    //      So: if there exists any l in [0, n-3] such that s[l+1]>=1, and there exists any r in [l+1, n-2] such that s[r+1] <= s[n]-1, then YES.
+    //      But note: we can separate:  //          Let L_min = minimum index i in [1, n-2] (since l+1 from 1 to n-2) such that s[i] >= 1? Actually we want to know: is there an l in [0, n-3] with s[l+1]>=1?
+    //          And independently, is there an r in [1, n-1] (but r<=n-2 => r+1<=n-1) such that s[r+1] <= s[n]-1? //      But wait: we require l < r, so the r must come after l.
+    //      So: let A = list of indices i (from 1 to n-2) such that s[i] >= 1. Let min_i = min(A) if exists.
+    //           let B = list of indices j (from 2 to n-1) such that s[j] <= s[n]-1. Let max_j = max(B) if exists? Actually we want j>i for some i in A.
+    //      Actually: we want to know if there exists i in [1, n-2] and j in [i+1, n-1] such that s[i]>=1 and s[j]<=s[n]-1.
+    //      So: for a fixed i, we need j>i and j<=n-1 with s[j]<=s[n]-1.
+    //      We can precompute: suf_min[j] = minimum s value in positions from j to n-1? But we want existence of s[j]<=threshold.
+
+    //      Alternatively: precompute an array: last_occurrence or simply: 
+    //          Let suf_ok[j] = (s[j] <= s[n]-1) for j from 1 to n-1.
+    //          Then build suf_max_index: from right, the leftmost index >= current that satisfies? Actually we want for each i, if there exists j>i with suf_ok[j]. //          We can do: suf_has[j] = (there exists index >= j such that suf_ok[index])
+    //          Then for any i from 1 to n-2, if s[i]>=1 and suf_has[i+1] is true, then Case 1 holds.
+
+    // Case 2: M1 and M2: //   Conditions: s[l+1]>=1 and s[r+1] >= s[l+1]+1, with l in [0, n-3], r in [l+1, n-2] (so r+1 in [l+2, n-1]).
+    //   For a fixed l, we need: exists r+1 in [l+2, n-1] such that s[r+1] >= s[l+1]+1.
+    //   So: let T = s[l+1]+1. We need max_{j=l+2}^{n-1} s[j] >= T.
+    //   We can precompute suffix maximum of s: suf_max[i] = max(s[i], s[i+1], ..., s[n])
+    //   Then for l from 0 to n-3: if s[l+1]>=1 and suf_max[l+2] >= s[l+1]+1, then YES.
+
+    // Case 3: M2 and M3: //   Conditions: s[r+1] >= s[l+1]+1 and s[r+1] <= s[n]-1.
+    //   Also, we require l in [0, n-3] and r in [l+1, n-2] => l+1 in [1, n-2], r+1 in [l+2, n-1]. //   Rearranged: we need s[l+1] <= s[r+1]-1 and s[r+1] <= s[n]-1.
+    //   For fixed r, we need: exists l in [0, r-1] (so l+1 in [1, r]) such that s[l+1] <= s[r+1]-1. //   And also s[r+1] <= s[n]-1.
+    //   So: for r from 1 to n-2 (r+1 from 2 to n-1): if s[r+1] <= s[n]-1, then we need min_{i=1}^{r} s[i] <= s[r+1]-1. //   Precompute prefix minimum: pre_min[i] = min(s[1], s[2], ..., s[i])
+
+    // So algorithm:
+
+    // Step 1: Read a, k. // Step 2: Build array d: d[i] = (a[i]<=k)? 1 : -1.
+    // Step 3: Build prefix sum s of d: s[0]=0, s[i]=s[i-1]+d[i-1] for i=1..n, and s[n] = s[n-1]+d[n-1]? Actually: //         s[0] = 0
+    //         s[1] = d[0] //         s[2] = d[0]+d[1]
+    //         ...
+    //         s[i] = sum_{j=0}^{i-1} d[j]
+    //         Then sum from l to r = s[r+1]-s[l]
+
+    // Step 4: Precompute: //   suf_has: boolean array of length n+2, suf_has[i] = (there exists j in [i, n-1] such that s[j] <= s[n]-1)
+    //   suf_max: suf_max[i] = max{ s[j] for j in [i, n] }   [we need up to n? our s has indices 0..n]
+    //   pre_min: pre_min[i] = min{ s[j] for j in [1, i] }   [for j from 1 to i]
+
+    // Step 5: Check the three cases:
+
+    //   Case 1: exists l in [0, n-3] (so l+1 in [1, n-2]) such that s[l+1]>=1 AND suf_has[l+2] is true. //      Why l+2? because r>=l+1 => r+1>=l+2.
+
+    //   Case 2: exists l in [0, n-3] such that s[l+1]>=1 AND suf_max[l+2] >= s[l+1]+1.
+
+    //   Case 3: exists r in [1, n-2] (so r+1 in [2, n-1]) such that s[r+1] <= s[n]-1 AND pre_min[r] <= s[r+1]-1.
+
+    // Step 6: If any case is true, output "YES", else "NO".
+
+    // But note: the entire array d has length n, and s has n+1 elements: s[0..n].
+
+    // Let's code accordingly.
+
+    vector<int> d(n);
+    for (int i = 0; i < n; i++) {
+        d[i] = (a[i] <= k) ? 1 : -1;
+    }
+
+    vector<long long> s(n+1);
+    s[0] = 0;
+    for (int i = 1; i <= n; i++) {
+        s[i] = s[i-1] + d[i-1];
+    }
+
+    // Precompute suf_has: from right
+    vector<bool> suf_has(n+2, false); // suf_has[i] = true if there exists j in [i, n-1] with s[j] <= s[n]-1
+    suf_has[n+1] = false;
+    suf_has[n] = (s[n] <= s[n]-1); // s[n] <= s[n]-1 -> false
+    for (int i = n-1; i >= 0; i--) {
+        suf_has[i] = suf_has[i+1] || (s[i] <= s[n]-1);
+    }
+
+    // Precompute suf_max: suf_max[i] = max(s[i], s[i+1], ..., s[n])
+    vector<long long> suf_max(n+2);
+    suf_max[n+1] = LLONG_MIN;
+    for (int i = n; i >= 0; i--) {
+        suf_max[i] = max(s[i], suf_max[i+1]);
+    }
+
+    // Precompute pre_min: pre_min[i] = min(s[1], s[2], ..., s[i]) for i>=1, and for i=0 undefined? we'll do from 1 to n.
+    vector<long long> pre_min(n+1);
+    if (n >= 1) {
+        pre_min[1] = s[1];
+        for (int i = 2; i <= n; i++) {
+            pre_min[i] = min(pre_min[i-1], s[i]);
+        }
+    }
+
+    bool found = false;
+
+    // Case 1: M1 and M3 // l from 0 to n-3 -> l+1 from 1 to n-2
+    for (int l = 0; l <= n-3; l++) {
+        int idx = l+1; // s index
+        if (s[idx] >= 1) {
+            if (suf_has[idx+1]) { // r+1 >= idx+1 = l+2, and we need s[r+1] <= s[n]-1
+                found = true;
+                break;
+            }
+        }
+    }
+
+    if (!found) {
+        // Case 2: M1 and M2
+        for (int l = 0; l <= n-3; l++) {
+            int idx = l+1;
+            if (s[idx] >= 1) {
+                if (suf_max[idx+1] >= s[idx] + 1) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!found) {
+        // Case 3: M2 and M3 // r from 1 to n-2: meaning r+1 from 2 to n-1
+        for (int r_plus1 = 2; r_plus1 <= n-1; r_plus1++) {
+            if (s[r_plus1] <= s[n]-1) {
+                // we need l+1 <= r_plus1 - 1 (since r>=l+1 => l+1<=r) and s[l+1] <= s[r_plus1]-1 // l+1 in [1, r_plus1-1]
+                if (pre_min[r_plus1-1] <= s[r_plus1] - 1) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    cout << (found ? "YES" : "NO") << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

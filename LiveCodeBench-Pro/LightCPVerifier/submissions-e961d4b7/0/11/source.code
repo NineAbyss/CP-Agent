@@ -1,0 +1,90 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+using namespace std;
+
+typedef long long ll;
+
+ll solve_case(int n, ll s, int x, vector<int>& a) {
+    // 找出所有 > x 的位置
+    vector<int> bounds;
+    bounds.reserve(n + 2);
+    bounds.push_back(-1);
+    for (int i = 0; i < n; i++) {
+        if (a[i] > x) {
+            bounds.push_back(i);
+        }
+    }
+    bounds.push_back(n);
+    
+    ll ans = 0;
+    
+    // 处理每个区间
+    for (int seg = 0; seg < (int)bounds.size() - 1; seg++) {
+        int L = bounds[seg] + 1;
+        int R = bounds[seg + 1] - 1;
+        if (L > R) continue;
+        
+        int len = R - L + 1;
+        // 计算前缀和数组
+        vector<ll> pref(len + 1);
+        pref[0] = 0;
+        for (int i = 0; i < len; i++) {
+            pref[i + 1] = pref[i] + a[L + i];
+        }
+        
+        unordered_map<ll, int> cnt;
+        cnt.reserve(len + 1);
+        int last_x = L - 2;  // 小于 L-1，表示还没有遇到 x
+        int ptr = 0;  // 下一个要添加到 cnt 的前缀和索引
+        
+        ll cur = 0;
+        for (int i = 0; i < len; i++) {
+            int pos = L + i;
+            cur += a[pos];
+            
+            if (a[pos] == x) {
+                last_x = pos;
+            }
+            
+            // 添加所有位置 ≤ last_x - 1 的前缀和到 cnt // pref 索引 j 对应位置 L-1+j
+            // 我们需要位置 ≤ last_x - 1，即 L-1+j ≤ last_x-1 => j ≤ last_x - L
+            int max_j = last_x - L;
+            while (ptr <= max_j) {
+                cnt[pref[ptr]]++;
+                ptr++;
+            }
+            
+            ll need = cur - s;
+            auto it = cnt.find(need);
+            if (it != cnt.end()) {
+                ans += it->second;
+            }
+        }
+    }
+    
+    return ans;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, x;
+        ll s;
+        cin >> n >> s >> x;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        cout << solve_case(n, s, x, a) << '\n';
+    }
+    
+    return 0;
+}

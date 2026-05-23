@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+void solve() {
+    ll n, k;
+    cin >> n >> k;
+    vector<ll> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int i = 0; i < n; i++) cin >> b[i];
+
+    // Step 1: Find the required sum x from known b[i]
+    ll x0 = -1;  // will store the common sum
+    bool valid = true;
+
+    for (int i = 0; i < n; i++) {
+        if (b[i] != -1) {
+            ll required_x = a[i] + b[i];
+            if (x0 == -1) {
+                x0 = required_x;
+            } else if (x0 != required_x) {
+                valid = false;
+                break;
+            }
+        }
+    }
+
+    // If there was inconsistency in known values
+    if (!valid) {
+        cout << 0 << '\n';
+        return;
+    }
+
+    // Case 1: At least one known b[i] exists -> x0 is fixed
+    if (x0 != -1) {
+        // Check all positions: b[i] = x0 - a[i] must be in [0, k]
+        for (int i = 0; i < n; i++) {
+            ll bi_val = x0 - a[i];
+            if (bi_val < 0 || bi_val > k) {
+                cout << 0 << '\n';
+                return;
+            }
+        }
+        cout << 1 << '\n';
+        return;
+    }
+
+    // Case 2: All b[i] are -1 -> free to choose x in [max_a, min_a + k]
+    ll max_a = *max_element(a.begin(), a.end());
+    ll min_a = *min_element(a.begin(), a.end());
+    ll L = max_a;
+    ll R = min_a + k;
+
+    if (L > R) {
+        cout << 0 << '\n';
+    } else {
+        cout << R - L + 1 << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,117 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1000000007;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<pair<int, int>> fixed;
+        set<pair<int, int>> fixed_set;
+        for (int i = 0; i <= k; i++) {
+            int x, y;
+            cin >> x >> y;
+            fixed.emplace_back(x, y);
+            fixed_set.insert({x, y});
+        }
+
+        vector<pair<int, int>> dirs = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+        vector<set<pair<int, int>>> candidates(k);
+        bool any_empty = false;
+
+        for (int i = 0; i < k; i++) {
+            auto [x1, y1] = fixed[i];
+            auto [x2, y2] = fixed[i + 1];
+
+            for (auto [dx, dy] : dirs) {
+                int nx = x1 + dx, ny = y1 + dy;
+                if (nx < 1 || nx > n || ny < 1 || ny > m) continue;
+                pair<int, int> mid = {nx, ny};
+                if (fixed_set.count(mid)) continue;
+                int d = abs(nx - x2) + abs(ny - y2);
+                if (d == 1) {
+                    candidates[i].insert(mid);
+                }
+            }
+            if (candidates[i].empty()) any_empty = true;
+        }
+
+        if (any_empty) {
+            cout << 0 << '\n';
+            continue;
+        }
+
+        set<pair<int, int>> U;
+        for (int i = 0; i < k; i++) {
+            for (auto cell : candidates[i]) {
+                U.insert(cell);
+            }
+        }
+
+        int M = U.size();
+        if (M >= 64) {
+            bool disjoint = true;
+            for (int i = 0; i < k; i++) {
+                for (int j = i + 1; j < k; j++) {
+                    set<pair<int, int>> intersect;
+                    set_intersection(candidates[i].begin(), candidates[i].end(),
+                                    candidates[j].begin(), candidates[j].end(),
+                                    inserter(intersect, intersect.begin()));
+                    if (!intersect.empty()) {
+                        disjoint = false;
+                        break;
+                    }
+                }
+                if (!disjoint) break;
+            }
+            if (disjoint) {
+                long long ans = 1;
+                for (int i = 0; i < k; i++) {
+                    ans = (ans * (long long)candidates[i].size()) % MOD;
+                }
+                cout << ans << '\n';
+            } else {
+                cout << 0 << '\n';
+            }
+            continue;
+        }
+
+        map<pair<int, int>, int> cell_to_idx;
+        vector<pair<int, int>> idx_to_cell(U.begin(), U.end());
+        for (int i = 0; i < M; i++) {
+            cell_to_idx[idx_to_cell[i]] = i;
+        }
+
+        map<unsigned long long, long long> dp;
+        dp[0] = 1;
+
+        for (int i = 0; i < k; i++) {
+            map<unsigned long long, long long> new_dp;
+            for (auto &p : dp) {
+                unsigned long long mask = p.first;
+                long long count = p.second;
+                for (auto &cell : candidates[i]) {
+                    int idx = cell_to_idx[cell];
+                    if (mask & ((unsigned long long)1 << idx)) continue;
+                    unsigned long long new_mask = mask | ((unsigned long long)1 << idx);
+                    new_dp[new_mask] = (new_dp[new_mask] + count) % MOD;
+                }
+            }
+            dp = move(new_dp);
+            if (dp.empty()) break;
+        }
+
+        long long ans = 0;
+        for (auto &p : dp) {
+            ans = (ans + p.second) % MOD;
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,742 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+/*
+Observation:
+This is a combinatorial game theory problem.
+
+Let's analyze the losing conditions:
+1. A player loses if there are no positive boxes (i.e., all are 0).
+2. A player loses immediately after their move if max - min > k.
+
+Note: The second condition means that if after your move, the array becomes too spread out (>k), you lose.
+
+So, a state is losing for the current player if:
+- Either there's no valid move (all zeros) -> immediate loss.
+- Or every possible move leads to a state where max-min > k (so you lose by making any move).
+
+But note: if you can make a move without violating max-min <= k, then you don't lose from condition 2.
+
+Key insight:
+Let M = max(a), m = min(a). Initially, if M - m > k, then Tom cannot even make a move? 
+Wait — but Tom goes first. However, the condition "after the move" applies only after picking an apple.
+
+But initially, before any move, the state may already have M - m > k? Let's check the rules:
+
+- On a turn: choose a box with ai > 0, remove one apple.
+- After the move, if max - min > k → current player loses.
+
+So if the initial state has max - min > k, then **any move** will be made on a state that already satisfies this? Not necessarily.
+
+Wait: suppose initial state has max - min > k. Then Tom makes a move: he reduces some ai by 1.
+
+After the move, the new max and min could change.
+
+But actually, the condition is checked **after** the move. So even if the initial state had max-min > k, we still play — because the condition is checked after each move.
+
+But wait: what if the initial state has max - min > k? Then Tom must make a move. He picks one apple from some box. Then after his move, we check: is max - min > k? It might still be true, so Tom would lose immediately.
+
+So if the initial state has max - min > k, then Tom will lose on his first move unless he can fix it.
+
+But reducing an element can only:
+- Decrease max (if he takes from a max element)
+- Increase the gap (if he takes from a non-min element, min stays same, max might stay or drop slightly)
+Actually:
+Case 1: take from a max element:
+   new_max = max-1 (possibly still max if multiple max)
+   min unchanged
+   => gap becomes (max-1) - min = old_gap - 1
+
+Case 2: take from a non-max element:
+   max unchanged
+   min might decrease if that element was the only min and we took from it? No, we reduce it, so if it was min, it becomes min-1 → new min might be min-1 or still min (if other mins exist)
+
+But worst-case: taking from a non-max and non-min: max unchanged, min unchanged → gap unchanged.
+
+So if initial gap > k, then after any move:
+- If we take from a max element: gap becomes gap - 1
+- Otherwise: gap remains at least gap (could even increase if we create a new lower min)
+
+But since gap > k initially, even if we reduce it by 1, it might still be > k.
+
+So unless gap == k+1 and we take from a max element, the gap after move is still > k → Tom loses.
+
+Therefore, if initial max - min > k, then:
+- If max - min == k+1: Tom can survive only if he takes from a max element. Then gap becomes k, which is acceptable.
+- But if max - min > k+1: then even after taking from a max, gap >= k+1 > k → Tom loses.
+
+But wait: what if there are multiple max elements? Taking from one max reduces one of them, but others remain → max stays same! So max doesn't drop.
+
+Ah! Important: max is the maximum value in the array. If there are multiple boxes with value = M, then removing one apple from one of them leaves others at M → so max remains M.
+
+Similarly, min: if multiple boxes at m, removing one from one of them doesn’t change min.
+
+So after a move:
+- Max decreases only if the chosen box was the unique maximum.
+- Min decreases only if the chosen box was the only minimum and we reduced it below the next smallest.
+
+So if there are multiple max values, then taking from one doesn’t reduce the max.
+
+Therefore, if initial gap = M - m > k:
+- Tom can avoid losing only if after his move, the gap <= k.
+- This requires that either:
+   a) He reduces the max, and M-1 - m <= k  → M - m <= k+1, and also the max must be unique so that it drops.
+   b) Or somehow increases the min? No, he reduces a number, so min can only go down or stay.
+
+Actually, reducing a number never increases the min; it either keeps it same (if not the only min) or decreases it (if it was the only min and now becomes min-1).
+
+So the gap can:
+- Increase: if we reduce a min element that is unique → new min = min-1, max unchanged → gap += 1
+- Stay same: if we reduce a middle element → min and max unchanged
+- Decrease by 1: only if we reduce a unique maximum
+
+Thus, if initial gap > k:
+- The only way to make gap <= k is to reduce the maximum and have it drop, and have M-1 - m <= k.
+- That is: gap must be exactly k+1 AND the maximum must be unique.
+
+Otherwise, after Tom's move, gap > k → Tom loses.
+
+So:
+- If initial gap > k:
+   - If gap == k+1 and count(max) == 1: then Tom can take from the max box → new max = M-1, min = m → gap = k → safe. Game continues.
+   - Else: Tom loses immediately → Jerry wins.
+
+But wait: what if gap > k+1? Then even reducing a unique max gives gap = (M-1)-m = gap-1 > k → still >k → Tom loses.
+
+So only when gap == k+1 and max is unique, Tom survives.
+
+But what if gap == k+1 but max is not unique? Then reducing one max doesn't change max → gap still k+1 > k → Tom loses.
+
+So summary:
+If initial gap > k:
+   Tom wins only if (gap == k+1 and frequency of max == 1)
+   Otherwise, Tom loses immediately → Jerry wins.
+
+But wait: if Tom loses immediately, output "Jerry".
+
+Now, what if initial gap <= k?
+Then the game proceeds normally until someone is forced to make the gap exceed k or cannot move.
+
+We need to determine the winner under optimal play.
+
+Another idea: think in terms of total moves.
+
+But the constraint is not just total apples, but maintaining the gap <= k.
+
+Note: players can always try to keep the numbers close.
+
+Let’s define:
+Let m = min(a), M = max(a), and assume M - m <= k.
+
+The ideal situation is to reduce all numbers to some common value, but we can't increase numbers.
+
+We can model the game as having a "safe zone": all values should remain in [x, x+k] for some x.
+
+But x decreases over time.
+
+Alternatively, consider that eventually all boxes become zero. But during the process, we must never let the gap exceed k.
+
+But note: if we ever reach a state where min = 0 and max > k, then gap > k → invalid.
+
+So once min becomes 0, all remaining values must be <= k.
+
+But more importantly, we can consider how many total moves can be made without violating the gap condition.
+
+But both players play optimally — one wants to win, the other to lose.
+
+This resembles impartial games — perhaps we can use Sprague-Grundy? But constraints are high.
+
+Alternative Insight:
+
+Let’s denote:
+- Let’s sort the array: b[0] <= b[1] <= ... <= b[n-1]
+- We want to maintain b[n-1] - b[0] <= k
+
+Each move decreases one element by 1.
+
+The game ends when:
+- A player cannot move → all are 0 → previous player won? No: the player who cannot move loses.
+   So if all are 0, current player loses.
+- Or after a move, gap > k → current player loses.
+
+So the last player to successfully make a move (without causing gap>k) wins.
+
+But if a player makes a move that causes gap>k, they lose — so they wouldn't do that unless forced.
+
+So players will only make moves that keep gap <= k.
+
+So the game is equivalent to: players alternately remove 1 from any positive element, but must preserve max-min <= k.
+
+Total number of such moves possible?
+
+But the number of moves depends on strategy.
+
+However, under optimal play, we can compute whether the total number of "safe" moves is odd or even?
+
+But note: the starting player (Tom) wins if the total number of safe moves is odd? Only if the game ends by exhaustion (someone cannot move), not by breaking the gap.
+
+But if the game ends by breaking the gap, then the player who made the last move loses.
+
+So it's not simply about counting moves.
+
+But observe: both players will avoid making a move that causes gap > k, unless every possible move causes gap > k.
+
+So a player loses when:
+- No move possible (all zero) → but this means previous player emptied the last apple, so current player faces all zero → loses.
+- Or every possible move leads to gap > k → so whatever you do, you lose.
+
+So we need to find the set of positions that are losing.
+
+Let f(state) = true if current player can force a win.
+
+But state space is huge.
+
+Another approach: known similar problems (e.g., CodeForces "Array Game").
+
+Insight from known solutions to similar problems:
+
+Consider the following:
+
+Let m = min(a), M = max(a)
+
+Case 1: M - m > k
+   Then Tom can survive only if M - m == k+1 and the maximum appears only once.
+   In that case, Tom takes from the unique maximum → new max = M-1, so gap = (M-1)-m = k ≤ k → safe.
+   Then the game continues.
+   But otherwise, Tom loses immediately.
+
+But wait: what if M - m > k+1? Then even after reducing the unique max, gap = M-1-m > k → Tom loses.
+And if max is not unique, reducing one max doesn't reduce M → gap still M-m > k → Tom loses.
+
+So only when M - m == k+1 and max is unique, Tom survives.
+
+But after that move, the state has gap = k.
+
+Now, what about the rest of the game?
+
+But note: after Tom's move, it's Jerry's turn, and the state is safe.
+
+So we need to know: from a state with gap <= k, who wins?
+
+But now we have two cases:
+- Initial gap > k: special case
+- Initial gap <= k: general case
+
+Let's focus on initial gap <= k.
+
+Claim: In this case, the outcome depends on the parity of the total number of moves that can be made until the game ends.
+
+But what is the maximum number of moves?
+
+We can simulate a greedy strategy: always reduce the largest element? To prevent gap from increasing.
+
+In fact, optimal strategy is to always reduce the largest element (to keep the gap small).
+
+Similarly, sometimes you may want to reduce a smaller one, but generally, to maximize the number of moves, we balance.
+
+But for game theory: both players will play to avoid losing.
+
+Known result in such games: the game is equivalent to a nim-like game where the total number of moves is fixed under optimal play.
+
+But here's a key observation:
+
+As long as the gap <= k, and we always reduce the current maximum, we can continue until the entire array is reduced to some base level.
+
+Let’s define:
+Let’s sort the array: b[0] <= b[1] <= ... <= b[n-1]
+
+We can “flatten” the array to a certain floor x, such that after reduction, all values are in [x, x+k].
+
+The maximum x we can achieve? Actually, we want to minimize waste.
+
+But the total number of moves is sum(a_i) minus the final sum.
+
+But what is the minimal final sum we can achieve while respecting the gap constraint?
+
+Actually, we can keep playing as long as the gap does not exceed k.
+
+The game ends when:
+- All are 0 → then the player to move loses.
+- Or when any move would cause gap > k.
+
+But if the current min is m and max is M, with M - m <= k, then:
+- Reducing a max element: if it was the only max, then new max = M-1, min = m → gap = M-1-m <= k-1 <= k → safe.
+   Unless M-1 - m > k? But M-m<=k → M-1-m <= k-1 < k → safe.
+- Reducing a min element: new value = m-1, so new min could be m-1 (if only one min), max = M → gap = M - (m-1) = (M-m)+1
+   So if M-m == k, then gap becomes k+1 > k → unsafe.
+
+Therefore, if the gap is currently k, then:
+- You cannot reduce any minimum element (because that would make gap = k+1 > k → you lose)
+- You can only reduce elements that are > m (non-minimums)
+
+Similarly, if gap < k, you can reduce any element.
+
+So the constraint tightens as gap approaches k.
+
+To maximize the number of moves, players will avoid creating a gap > k.
+
+Optimal strategy:
+- When gap < k: you can reduce any positive element.
+- When gap == k: you can only reduce elements that are strictly greater than the current minimum.
+
+This is critical.
+
+So the game evolves with states defined by the multiset and the current gap.
+
+But note: the total number of moves is bounded.
+
+We can model the entire game as a sequence of moves where:
+
+Let’s define:
+- Let m = current min
+- We can reduce any element as long as after reduction, gap <= k.
+
+But instead of simulating, we can calculate the total number of moves possible under optimal play (where players cooperate to prolong the game) — but in reality, they play optimally to win.
+
+But in impartial games like this, often the first player wins if the total number of moves is odd.
+
+But is this game such that the total number of moves is fixed regardless of play? No, because players might be forced to make suboptimal choices.
+
+However, both players will try to extend the game if it benefits them.
+
+Actually, a better idea:
+
+Let’s consider the entire game can be played until all elements are reduced to some value L, but we must have throughout the process that max-min <= k.
+
+The minimal value any element can reach is 0.
+
+Suppose we reduce all elements to a common floor L.
+
+Then the total moves = sum(a_i) - n*L.
+
+But we must ensure that during the process, we never violate the gap condition.
+
+But if we reduce uniformly, it's safe.
+
+But players may not reduce uniformly.
+
+However, the maximum number of moves possible is achieved by balancing.
+
+But for determining the winner, we care about whether the total number of moves in the game (until a player loses) is odd or even.
+
+But the player who makes the last move wins only if after that move, the game is still valid and the opponent cannot move.
+
+But if a player makes a move that makes all elements zero, then the next player finds no positive box → loses. So the player who removed the last apple wins.
+
+But if a player makes a move that causes gap > k, they lose.
+
+So the game ends in two ways:
+1. A player makes a move to empty the last apple(s) → then next player has no move → next player loses → so the mover wins.
+2. A player makes a move that causes gap > k → that player loses.
+
+So players will avoid type 2.
+
+Therefore, as long as there exists a move that does not cause gap > k, a player will make it.
+
+Only when every possible move causes gap > k, the player is forced to lose.
+
+When does that happen?
+
+Suppose current state has min = m, max = M, with M - m <= k.
+
+Can a player be unable to move without causing gap > k?
+
+Yes: if M - m == k, and there is only one element with value > m (i.e., all but one are at m), then:
+- You cannot reduce any element at m: because that would make it m-1, so new min = m-1, max = M → gap = M - (m-1) = k+1 > k → lose.
+- You can only reduce elements > m.
+
+But if there is at least one element > m, you can reduce it.
+
+You are forced to lose only if:
+- No element > m (then all are m, so M=m, gap=0) → but then you can reduce any, but if you reduce one, it becomes m-1, new min = m-1, max = m → gap = 1.
+   So if k>=1, it's safe.
+
+The only danger is when gap == k.
+
+Specifically, if gap == k and all elements are either m or M (=m+k), and you reduce an m-element: it becomes m-1, new min = m-1, max = m+k → gap = m+k - (m-1) = k+1 > k → lose.
+
+So you must not reduce any m-element.
+
+You can only reduce M-elements.
+
+As long as there is at least one M-element > 0, you can reduce it.
+
+After reduction, that element becomes M-1 = m+k-1.
+
+New max = max of remaining: could be M (if other M exist) or m+k-1.
+
+New min = m.
+
+So new gap = (m+k-1) - m = k-1 < k → safe.
+
+So you can always reduce an M-element safely.
+
+The only time you have no safe move is when:
+- All elements are 0 → then you cannot move → lose.
+- Or, every possible move leads to gap > k.
+
+When does every move lead to gap > k?
+
+Suppose:
+- min = m, max = M, M - m = k.
+- There are no elements with value in (m, M) — only m and M.
+- And m > 0.
+- Then:
+   - Reducing an m-element: creates m-1, so new min = m-1, new max = M = m+k → gap = (m+k) - (m-1) = k+1 > k → lose.
+   - Reducing an M-element: new value = M-1 = m+k-1, which is > m (since k>=1), so new max = M-1 (if only one M) or M (if multiple), min = m → gap = M - m = k or (M-1)-m = k-1, both <=k? 
+        If there are multiple M, then max remains M, min remains m → gap = k <=k → safe.
+        If only one M, then new max = next highest, which could be m (if no other values) → then max = m, min = m, gap=0.
+
+Wait, if only one M and others are m, then after reducing M to M-1 = m+k-1, the new array has values: m and m+k-1.
+Since k>=1, m+k-1 >= m, so new max = m+k-1, new min = m, gap = k-1 <=k → safe.
+
+So reducing an M-element is always safe when gap=k.
+
+Therefore, the only time you have no safe move is when all elements are 0.
+
+But wait: what if m=0 and M=k, and there is an element at 0 and an element at k.
+Then:
+- You cannot reduce an element at 0 (already 0) — so only can reduce positive ones.
+- Reducing an element at k: becomes k-1, new max = max of others, which might be k (if multiple) or k-1, min=0 → gap = k or k-1, both <=k → safe.
+
+So you can always reduce a positive element that is not the unique minimum when gap==k? 
+
+Actually, the only restriction is: when gap==k, you cannot reduce a minimum element (because it would create a new min = m-1, gap becomes k+1).
+
+But if the minimum element is 0, you cannot reduce it anyway (since it's 0).
+
+So the rule is: when gap==k, you can only reduce elements that are > min.
+
+And since the element must be >0 to reduce, and if it's >min, then reducing it won't create a gap>k.
+
+Therefore, the game continues until all elements are 0.
+
+The only terminal state is when all are 0, and the player to move loses.
+
+Therefore, the total number of moves in the game is fixed: it is the total number of apples, i.e., sum(a_i).
+
+And the player who makes the last move (the one who removes the last apple) wins, because after that move, the array is all zeros, and the next player has no move.
+
+But wait: after the last apple is removed, the state is all zeros. The player who made that move does not lose from the gap condition (assuming it was safe), and then the next player tries to move but cannot, so the next player loses.
+
+Therefore, the player who makes the last move wins.
+
+Hence, if the total number of moves (sum of a_i) is odd, Tom wins (because Tom starts).
+If even, Jerry wins.
+
+BUT WAIT: what about the initial condition where gap > k?
+
+We must combine both ideas.
+
+So let's reconcile:
+
+Case 1: initial max - min > k
+   - If max - min > k+1: then any move by Tom will leave gap > k (either unchanged or reduced by at most 1) → Tom loses immediately → Jerry wins.
+   - If max - min == k+1:
+        - If the maximum is unique: Tom can reduce it, new max = max-1, so gap = (max-1)-min = k <=k → safe. Then the game continues with total_moves = sum(a_i) - 1 (because one apple removed), and it's Jerry's turn.
+             So the remaining number of moves is sum(a_i) - 1.
+             Total moves made in the game will be sum(a_i) (including Tom's first move).
+             But Tom has made one move, and there are sum(a_i)-1 moves left.
+             The player to move now is Jerry.
+             So the remaining game has sum(a_i)-1 moves.
+             The winner of the remaining game: if (sum(a_i)-1) is odd, then Jerry will make the last move? 
+                 Moves: Jerry, Tom, Jerry, ... 
+                 Number of moves: S = sum(a_i)-1
+                 If S is odd, Jerry makes the last move → Jerry wins the subgame → so Jerry wins overall.
+                 If S is even, Tom makes the last move → Tom wins overall.
+             But wait: the entire game has sum(a_i) moves.
+             Tom makes move 1, then Jerry makes move 2, ..., the last move is move number sum(a_i).
+             If sum(a_i) is odd, Tom makes the last move → Tom wins.
+             If even, Jerry wins.
+             But Tom already made one move, and the game will have sum(a_i) moves in total.
+             So the outcome is determined by the parity of sum(a_i).
+
+        BUT: is it guaranteed that the game lasts sum(a_i) moves? Only if we never encounter a gap>k during the game.
+
+        However, after Tom's first move, the gap is k, and then we play optimally.
+
+        Can future moves cause gap>k? Only if a player reduces a minimum element when gap==k.
+
+        But players are optimal — they will not do that.
+
+        They will only reduce non-minimum elements when gap==k.
+
+        And as long as there is a non-minimum element, they can reduce it.
+
+        The only issue is if at some point, the only positive elements are the minimum elements, and gap==k.
+
+        Example: 
+           n=2, k=1, a=[1,3] -> gap=2>1 -> Tom must reduce the 3 (unique max) -> becomes [1,2], gap=1<=1.
+           Now Jerry's turn: min=1, max=2, gap=1=k.
+           Jerry cannot reduce the 1 (because that would make [0,2], gap=2>1), so must reduce the 2 -> [1,1].
+           Then Tom reduces any -> [0,1], gap=1<=1 -> safe.
+           Then Jerry reduces the 1 -> [0,0] -> wins? 
+                After Jerry's move: [0,0], Tom has no move -> Tom loses -> Jerry wins.
+
+           Total moves: 4, which is even -> Jerry wins.
+
+           Sum(a_i)=1+3=4, even -> Jerry wins.
+
+        Another example: [2,1,2] from sample: n=3,k=1
+           a = [2,1,2] -> sorted: [1,2,2], gap=1<=1 -> so initial gap<=k.
+           sum=5, odd -> Tom wins. -> matches sample.
+
+        Second sample: [1,1,3], n=3,k=1
+           gap = 3-1=2>1 -> so initial gap>k.
+           gap = k+1=2, and max=3 is unique? yes.
+           So Tom reduces the 3 -> becomes [1,1,2], sum=4, total moves=4 (including Tom's first move) -> even -> Jerry wins? 
+           but expected output is "Tom".
+
+        Contradiction.
+
+        Expected: "Tom"
+
+        What's happening?
+
+        Let me re-read sample: 
+          "3 1\n           1 1 3"
+
+          Output: "Tom"
+
+        According to our reasoning: initial gap=2>1, but gap==k+1 and max is unique, so Tom can make a safe move.
+
+        Then total sum = 1+1+3 = 5.
+
+        Total moves in the game = 5.
+
+        Since Tom starts, and 5 is odd, Tom makes the last move -> Tom wins.
+
+        Why did I say sum becomes 4 after first move? No: the total number of apples is 5, so there will be 5 moves.
+
+        After Tom's first move: [1,1,2] -> 4 apples left.
+
+        Then Jerry moves: now state [1,1,2], gap=1<=1.
+
+        Jerry can reduce any non-min? But gap=1=k, so he cannot reduce a min element (which are 1).
+
+        The min is 1, so he cannot reduce any 1.
+
+        He must reduce the 2.
+
+        So he reduces the 2 to 1: [1,1,1]
+
+        Then Tom reduces any: [0,1,1]
+
+        Then Jerry: state [0,1,1], min=0, max=1, gap=1<=1.
+            Jerry cannot reduce a min element? The min is 0, and he can only reduce positive ones.
+            The positive ones are 1, which are not min? min=0, so 1>0 -> he can reduce them.
+            But reducing a 1: becomes 0, new state [0,0,1], min=0, max=1, gap=1<=1 -> safe.
+            So Jerry reduces one 1: [0,0,1]
+
+        Then Tom reduces the last 1: [0,0,0] -> wins.
+
+        So Tom makes the last move.
+
+        Total moves: 5, odd -> Tom wins.
+
+        So the answer is based on the parity of the total sum.
+
+        But what if after Tom's first move, the game could have been shorter?
+
+        In this case, it went to 5 moves.
+
+        Could Jerry have played differently?
+
+        After [1,1,2], Jerry has only one choice: reduce the 2, because reducing a 1 would make [0,1,2] -> min=0, max=2, gap=2>1 -> Jerry loses immediately.
+
+        So Jerry must reduce the 2.
+
+        So the game is forced.
+
+        Therefore, the total number of moves is always the total sum, provided that players never make a move that causes gap>k (and they won't, if there is an alternative).
+
+        But is it always possible to make a move without causing gap>k, as long as there is a positive apple?
+
+        Suppose at some state, min = m, max = M, M-m<=k, and there is at least one positive apple.
+
+        Can we always find a move that keeps gap<=k?
+
+        - If M - m < k: then we can reduce any positive apple. Even if it's a min element: new value = m-1, new min = m-1, new max = M, gap = M - (m-1) = (M-m)+1 <= k -> since M-m < k, then (M-m)+1 <= k only if M-m <= k-1.
+             But if M-m = k-1, then gap becomes k, which is allowed.
+             If M-m < k-1, then gap becomes <=k.
+             So it's safe.
+
+        - If M - m == k:
+             - Cannot reduce a min element (would make gap = k+1)
+             - But can reduce any element > m.
+             - Is there such an element? Yes, because if all were m, then M=m, gap=0, contradiction.
+                   So there is at least one element with value > m.
+             - And since the element is > m and positive, we can reduce it.
+             - After reduction, new value = v-1 >= m (since v>m and integer, v>=m+1, so v-1>=m)
+                   so new min is still m (unless v-1 < m, but v-1>=m), so min unchanged.
+                   new max: if v was the only maximum, then new max might be less, but at most v-1 <= M-1 = m+k-1, so gap = (m+k-1) - m = k-1 <=k.
+                   if there are other M's, then max remains M, so gap = M - m = k.
+             - In both cases, gap <=k.
+
+        Therefore, as long as there is at least one positive apple, there exists a safe move.
+
+        Hence, the game will last exactly sum(a_i) moves.
+
+        The player who makes the last move wins.
+
+        Therefore, if sum(a_i) is odd, Tom wins; if even, Jerry wins.
+
+        BUT: what about the initial condition where gap > k?
+
+        We have to handle it separately.
+
+        Case 1: initial gap = M - m > k
+           - If M - m > k+1: then Tom cannot make a safe move (every move either leaves gap > k or reduces gap by at most 1, so still >k), so Tom loses immediately -> Jerry wins.
+           - If M - m == k+1:
+                - If the maximum is unique: Tom can reduce it, and the move is safe (new gap = k). Then the game continues for the remaining sum = total_sum - 1 apples? 
+                      No: the total number of moves will be total_sum, including this one.
+                      But after this move, there are total_sum - 1 moves left, and it's Jerry's turn.
+                      The entire game has total_sum moves.
+                      So if total_sum is odd, Tom makes the last move -> Tom wins.
+                      If even, Jerry wins.
+                - If the maximum is not unique: then reducing one max doesn't reduce the overall max -> gap remains k+1 > k -> Tom loses immediately -> Jerry wins.
+
+        But wait: if there are multiple maxima, then after reducing one, the max is still M, min is m, gap = M-m = k+1 > k -> Tom loses.
+
+        So only when the maximum is unique and gap==k+1, Tom survives.
+
+        Otherwise, Tom loses immediately.
+
+        Therefore, algorithm:
+
+        For each test case:
+          read n,k
+          read a[0..n-1]
+
+          M = *max_element(a.begin(), a.end())
+          m = *min_element(a.begin(), a.end())
+
+          total = accumulate(a.begin(), a.end(), 0LL);
+
+          if (M - m > k) {
+             if (M - m == k+1) {
+                 // Count frequency of M
+                 int count_max = count(a.begin(), a.end(), M);
+                 if (count_max == 1) {
+                     // Tom can make a safe move // Then the game will have 'total' moves in total
+                     if (total % 2 == 1) {
+                         cout << "Tom\n";
+                     } else {
+                         cout << "Jerry\n";
+                     }
+                 } else {
+                     // Tom loses immediately
+                     cout << "Jerry\n";
+                 }
+             } else {
+                 // M - m > k+1
+                 cout << "Jerry\n";
+             }
+          } else {
+             // M - m <= k // Game lasts exactly 'total' moves
+             if (total % 2 == 1) {
+                 cout << "Tom\n";
+             } else {
+                 cout << "Jerry\n";
+             }
+          }
+
+        Let's validate with examples:
+
+        Example 1: "3 1\n2 1 2"
+          n=3,k=1, a=[2,1,2]
+          M=2, m=1, gap=1<=1 -> enter else branch.
+          total = 2+1+2=5, odd -> Tom wins. -> correct.
+
+        Example 2: "3 1\n1 1 3"
+          M=3, m=1, gap=2>1 -> enter if.
+          gap = 2 == k+1 (1+1=2) -> yes.
+          count of 3: 1 -> unique.
+          total=5, odd -> Tom wins. -> correct.
+
+        Example 3: "2 1\n1 4"
+          n=2,k=1, a=[1,4]
+          M=4, m=1, gap=3>1 -> enter if.
+          gap=3, k+1=2, so 3>2 -> M-m > k+1 -> output Jerry. -> correct.
+
+        But wait: what if gap==k+1 and count_max>1? 
+          Example: n=2,k=1, a=[2,3] -> wait, [2,3]: M=3,m=2,gap=1<=1 -> not in if.
+
+          How about: n=2,k=1, a=[1,3] -> but then another box also 3: a=[1,3,3]
+          M=3, m=1, gap=2>1 -> and gap==k+1=2.
+          count of 3: 2 > 1 -> not unique.
+          So Tom reduces one 3 -> becomes [1,2,3] -> wait, no: he reduces one 3 to 2 -> [1,2,3]? 
+          But then max is still 3 -> gap=3-1=2>1 -> Tom loses.
+
+          So output Jerry.
+
+          total=1+3+3=7, but Tom loses immediately, so Jerry wins.
+
+        Another corner: gap>k+1 but count_max=1?
+          Example: n=2,k=1, a=[1,4] -> gap=3>2 -> Tom reduces the 4 to 3 -> state [1,3], gap=2>1 -> Tom loses.
+          So Jerry wins.
+
+        Therefore, code:
+
+        Note: total can be up to 10^5 * 10^9 = 10^14, so use long long.
+
+        Also note: the sum of n over test cases <= 10^5, so we can do O(n) per test case.
+
+        Let's code accordingly.
+*/
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        long long k;  // k can be up to 10^9
+        cin >> n >> k;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        long long M = *max_element(a.begin(), a.end());
+        long long m = *min_element(a.begin(), a.end());
+        long long total = accumulate(a.begin(), a.end(), 0LL);
+
+        if (M - m > k) {
+            if (M - m == k + 1) {
+                // Check if the maximum is unique
+                int count_max = 0;
+                for (long long x : a) {
+                    if (x == M) {
+                        count_max++;
+                    }
+                }
+                if (count_max == 1) {
+                    // Tom can make a safe move
+                    if (total % 2 == 1) {
+                        cout << "Tom\n";
+                    } else {
+                        cout << "Jerry\n";
+                    }
+                } else {
+                    cout << "Jerry\n";
+                }
+            } else {
+                // M - m > k+1
+                cout << "Jerry\n";
+            }
+        } else {
+            // M - m <= k
+            if (total % 2 == 1) {
+                cout << "Tom\n";
+            } else {
+                cout << "Jerry\n";
+            }
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+// 斑马值计算函数（贪心）
+ll zebra_value(ll e) {
+    ll val = 0;
+    vector<ll> zebras;
+    for (ll z = 1; z <= e; z = z * 4 + 1)
+        zebras.push_back(z);
+    for (int i = zebras.size() - 1; i >= 0; i--) {
+        ll cnt = e / zebras[i];
+        val += cnt;
+        e -= cnt * zebras[i];
+    }
+    return val;
+}
+
+// 数位DP
+ll dp[70][200][100][2]; // pos, carry, sum, tight
+vector<int> digits;
+int K;
+
+ll dfs(int pos, int carry, int sum, bool tight) {
+    if (pos == -1) return (carry == 0 && sum == K) ? 1 : 0;
+    if (sum > K) return 0;
+    if (dp[pos][carry+100][sum][tight] != -1) return dp[pos][carry+100][sum][tight];
+    int up = tight ? digits[pos] : 3;
+    ll res = 0;
+    for (int d = 0; d <= up; d++) {
+        // 当前位数字为d，需要满足来自低位的覆盖需求carry
+        if (d < carry) continue; // 不够，需要借位，不可能
+        int rem = d - carry; // 当前位多余的部分 // 我们可以选择use个长度为(pos+1)的斑马数
+        // use可以是0到rem（因为多余部分可以保留，不影响低位）
+        for (int use = 0; use <= rem; use++) {
+            // 这些use个斑马数会对下一位产生use的覆盖需求
+            int new_carry = use;
+            res += dfs(pos - 1, new_carry, sum + use, tight && (d == up));
+        }
+    }
+    return dp[pos][carry+100][sum][tight] = res;
+}
+
+ll count_up_to(ll e, int k) {
+    if (k < 0) return 0;
+    K = k;
+    digits.clear();
+    while (e) {
+        digits.push_back(e % 4);
+        e /= 4;
+    }
+    if (digits.empty()) digits.push_back(0);
+    memset(dp, -1, sizeof(dp));
+    return dfs(digits.size() - 1, 0, 0, 1);
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        ll l, r, k;
+        cin >> l >> r >> k;
+        // 斑马值不会太大，实际上限约为3*log_4(1e18) ≈ 90
+        if (k > 90) {
+            cout << 0 << '\n';
+            continue;
+        }
+        ll ans = count_up_to(r, k) - count_up_to(l - 1, k);
+        cout << ans << '\n';
+    }
+    return 0;
+}

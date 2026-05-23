@@ -1,0 +1,77 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+using namespace std;
+
+// A function to check the feasibility of the statements in range [l, r].
+bool canAllBeTrue(vector<pair<int, int>> &statements, vector<int> &statement_type, int l, int r) {
+    int n = statements.size();
+    
+    // To store the changes in for crewmates or impostors within the range of queries.
+    vector<int> diff(n + 1, 0);
+    
+    // Apply the difference array technique for range updates.
+    for (int i = l; i <= r; ++i) {
+        int a = statements[i].first, b = statements[i].second, type = statement_type[i];
+        if (type == 0) {
+            // There are no impostors in this range, we add `1` meaning `crewmate` logic
+            diff[a]++;
+            diff[b + 1]--;
+        } else {
+            // There is at least one impostor in this range, we subtract `1` meaning `impostor` logic
+            diff[a]--;
+            diff[b + 1]++;
+        }
+    }
+    
+    // To verify if there is any contradiction, we take prefix sum and validate logic
+    int current = 0;
+    for (int i = 1; i <= n; ++i) {
+        current += diff[i];
+        if (current == r - l + 1 || current == -(r - l + 1)) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        
+        vector<pair<int, int>> statements(m);
+        vector<int> statement_type(m);
+        
+        for (int i = 0; i < m; ++i) {
+            int x, a, b;
+            cin >> x >> a >> b;
+            statement_type[i] = x;
+            statements[i] = {a - 1, b - 1}; // adjusting 1-indexed to 0-indexed
+        }
+        
+        int q;
+        cin >> q;
+        
+        while (q--) {
+            int l, r;
+            cin >> l >> r;
+            --l; --r; // adjusting 1-indexed to 0-indexed
+            
+            if (canAllBeTrue(statements, statement_type, l, r)) {
+                cout << "YES\n";
+            } else {
+                cout << "NO\n";
+            }
+        }
+    }
+    
+    return 0;
+}

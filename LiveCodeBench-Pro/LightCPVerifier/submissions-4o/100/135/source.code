@@ -1,0 +1,96 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+void solveTestCase(int n, vector<pair<int, int>>& edges) {
+    vector<vector<int>> adj(n + 1);
+    for (auto &edge : edges) {
+        adj[edge.first].push_back(edge.second);
+        adj[edge.second].push_back(edge.first);
+    }
+    
+    // Try to remove edges and calculate paths // Start from the given structure, do a DFS or BFS to find advisable nodes to remove
+    int max_path = 0;
+    int best_u = 0, best_v = 0;
+    vector<int> bestColors(n + 1, 0); // Initialize all colors to 0
+
+    // Rough DFS approach to fetch one of desired by the problem
+    for (auto &edge : edges) {
+        int u = edge.first, v = edge.second;
+        // assuming initial removal of v here and reattach her adjacent (except u) to u
+        vector<int> colors(n + 1, -1); // -1 means no color initially
+        
+        colors[v] = 0; // Removed vertex gets a color 0
+        
+        queue<int> q;
+        q.push(u);
+        colors[u] = 1;
+        
+        int color = 2; // Start coloring from 2
+        while (!q.empty()) {
+            int current = q.front();
+            q.pop();
+
+            for (int neighbor : adj[current]) {
+                if (colors[neighbor] == -1 && neighbor != v) {
+                    colors[neighbor] = color;
+                    q.push(neighbor);
+                    color++;
+                }
+            }
+        }
+
+        colors[v] = 0;
+
+        int current_path = 0;
+        for (int i = 1; i <= n; i++) {
+            for (int j = i + 1; j <= n; j++) {
+                if (colors[i] == colors[j] && colors[i] != 0) {
+                    // Compute path length if needed, simulate edge-paths counting
+                    current_path += 2; // Simplified example assuming adjacent handling
+                }
+            }
+        }
+
+        if (current_path > max_path) {
+            max_path = current_path;
+            best_u = u;
+            best_v = v;
+            bestColors = colors;
+        }
+    }
+
+    cout << best_u << " " << best_v << endl;
+    for (int i = 1; i <= n; i++) {
+        if (i > 1) {
+            cout << " ";
+        }
+        cout << bestColors[i];
+    }
+    cout << endl;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+
+        vector<pair<int, int>> edges(n - 1);
+        for (int i = 0; i < n - 1; i++) {
+            cin >> edges[i].first >> edges[i].second;
+        }
+
+        solveTestCase(n, edges);
+    }
+
+    return 0;
+}

@@ -1,0 +1,45 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        // compute runs
+        vector<int> runs;
+        runs.push_back(s[0] - '0');
+        for (int i = 1; i < n; i++) {
+            if (s[i] != s[i-1]) {
+                runs.push_back(s[i] - '0');
+            }
+        }
+        int k = runs.size();
+        int fc = runs[0];
+        int orig_cost = n + k - 1 + fc;
+        int improve = 0;
+        if (k >= 4) {
+            improve = 2;
+        } else if (k >= 3 && fc == 1) {
+            improve = 2;
+        } else {
+            // check left merge with last run
+            for (int i = 2; i <= k; i++) {
+                if (runs[i-2] == runs[k-1]) {
+                    improve = 1;
+                    break;
+                }
+            }
+            if (improve == 0 && fc == 1 && runs[k-1] == 0) {
+                improve = 1;
+            }
+        }
+        int ans = orig_cost - improve;
+        cout << ans << '\n';
+    }
+    return 0;
+}

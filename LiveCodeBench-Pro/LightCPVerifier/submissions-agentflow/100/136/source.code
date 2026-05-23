@@ -1,0 +1,45 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm> // For std::min and std::max
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr); // Speeds up input/output
+
+    int t;
+    cin >> t; // Number of test cases
+
+    while (t--) {
+        int n;
+        cin >> n; // Number of rounds
+
+        vector<uint64_t> a(n), b(n);
+        string c;
+
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        for (int i = 0; i < n; ++i) cin >> b[i];
+        cin >> c;
+
+        uint64_t x = 0; // Initial XOR value
+        
+        for (int i = 0; i < n; ++i) {
+            // Calculate potential XOR outcomes with a[i] and b[i]
+            uint64_t xorA = x ^ a[i];
+            uint64_t xorB = x ^ b[i];
+
+            if (c[i] == '0') {
+                // Gellyfish's turn: minimally impacts x
+                x = min(xorA, xorB);
+            } else {
+                // Flower's turn: maximally impacts x
+                x = max(xorA, xorB);
+            }
+        }
+
+        cout << x << "\n"; // Output the final XOR value for this test case
+    }
+
+    return 0;
+}

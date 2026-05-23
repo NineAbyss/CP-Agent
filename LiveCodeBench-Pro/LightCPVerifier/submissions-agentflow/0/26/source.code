@@ -1,0 +1,28 @@
+#include <iostream>
+using namespace std;
+
+// Function to calculate the minimum number of steps needed to reach the energy level x
+int calculateSteps(int x) {
+    int steps = 0;
+
+    // Simulate process using halving and count the steps needed
+    while (x > 0) {
+        x = (x + 1) / 2; // Simulate one step of energy level adjustment
+        steps++;
+    }
+
+    return steps;
+}
+
+int main() {
+    int t;
+    cin >> t; // Reading number of test cases
+
+    while (t--) {
+        int x;
+        cin >> x; // Reading the target energy level x
+        cout << calculateSteps(x) << endl; // Output the minimum steps required
+    }
+
+    return 0;
+}

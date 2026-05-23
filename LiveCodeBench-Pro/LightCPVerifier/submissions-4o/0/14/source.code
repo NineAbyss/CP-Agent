@@ -1,0 +1,43 @@
+#include <iostream>
+
+using namespace std;
+
+bool canTile(int w, int h, int a, int b, int x1, int y1, int x2, int y2) {
+    // Check if the placed sheets already leave part of the roof untileable by sedimentary blocks of width `a` and height `b`.
+    bool possible = true;
+    
+    int minX = min(x1, x2), maxX = max(x1, x2);
+    int minY = min(y1, y2), maxY = max(y1, y2);
+
+    // Check horizontally
+    if ((minX % a) != 0 || ((w - maxX) % a) != 0) {
+        possible = false;
+    }
+    
+    // Check vertically
+    if ((minY % b) != 0 || ((h - maxY) % b) != 0) {
+        possible = false;
+    }
+    
+    return possible;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int w, h, a, b;
+        int x1, y1, x2, y2;
+        cin >> w >> h >> a >> b;
+        cin >> x1 >> y1 >> x2 >> y2;
+        
+        if (canTile(w, h, a, b, x1, y1, x2, y2)) {
+            cout << "Yes" << endl;
+        } else {
+            cout << "No" << endl;
+        }
+    }
+    
+    return 0;
+}

@@ -1,0 +1,71 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int gcd(int a, int b) {
+    while (b) {
+        a %= b;
+        swap(a, b);
+    }
+    return a;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++)
+            cin >> a[i];
+
+        // Check if all elements are equal
+        bool allEqual = true;
+        for (int i = 1; i < n; i++) {
+            if (a[i] != a[0]) {
+                allEqual = false;
+                break;
+            }
+        }
+
+        if (allEqual) {
+            cout << "No" << endl;
+            continue;
+        }
+
+        // Try to find an index i such that a[i] != gcd of all other elements
+        bool found = false;
+        vector<int> assignment(n);
+        for (int i = 0; i < n; i++) {
+            int g = 0;
+            for (int j = 0; j < n; j++) {
+                if (i == j) continue;
+                if (g == 0) g = a[j];
+                else g = gcd(g, a[j]);
+            }
+            if (a[i] != g) {
+                // Found valid split: put i in group 1, others in group 2
+                for (int k = 0; k < n; k++) {
+                    assignment[k] = (k == i) ? 1 : 2;
+                }
+                found = true;
+                break;
+            }
+        }
+
+        if (found) {
+            cout << "Yes" << endl;
+            for (int k = 0; k < n; k++) {
+                cout << assignment[k];
+                if (k < n-1) cout << " ";
+            }
+            cout << endl;
+        } else {
+            // According to theory, this should not happen when not all equal
+            cout << "No" << endl;
+        }
+    }
+    return 0;
+}

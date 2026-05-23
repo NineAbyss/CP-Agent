@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // 初始化 L[x] and R[x]
+        vector<int> L(n + 2, n);      // L[x] = min index where a[i] >= x
+        vector<int> R(n + 2, -1);     // R[x] = max index where a[i] >= x
+
+        // For each position i, update x in [1, a[i]]
+        for (int i = 0; i < n; i++) {
+            for (int x = 1; x <= a[i]; x++) {
+                if (i < L[x]) L[x] = i;
+                if (i > R[x]) R[x] = i;
+            }
+        }
+
+        // Collect spans and sort by span descending
+        vector<pair<int, pair<int, int>>> spans; // (span, (l, r))
+        for (int x = 1; x <= n; x++) {
+            if (L[x] < R[x]) {
+                spans.push_back({R[x] - L[x], {L[x], R[x]}});
+            }
+        }
+        sort(spans.rbegin(), spans.rend()); // descending order
+
+        vector<bool> used(n, false);
+        long long ans = 0;
+        for (auto &p : spans) {
+            int l = p.second.first;
+            int r = p.second.second;
+            if (!used[l] && !used[r]) {
+                ans += p.first;
+                used[l] = true;
+                used[r] = true;
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

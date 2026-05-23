@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool canMatch(int cnt[10], const vector<int>& bounds) {
+    int tmp[10];
+    memcpy(tmp, cnt, sizeof(tmp));
+    // bounds 已经排序
+    for (int b : bounds) {
+        int chosen = -1;
+        for (int d = b; d <= 9; d++) {
+            if (tmp[d] > 0) {
+                chosen = d;
+                break;
+            }
+        }
+        if (chosen == -1) return false;
+        tmp[chosen]--;
+    }
+    return true;
+}
+
+string solve(const string& s) {
+    int cnt[10] = {0};
+    for (char c : s) cnt[c - '0']++;
+    
+    string ans;
+    vector<int> bounds;
+    for (int i = 1; i <= 10; i++) bounds.push_back(10 - i);
+    
+    for (int pos = 0; pos < 10; pos++) {
+        int bound = bounds[pos];
+        for (int d = bound; d <= 9; d++) {
+            if (cnt[d] == 0) continue;
+            cnt[d]--;
+            vector<int> remainingBounds(bounds.begin() + pos + 1, bounds.end());
+            sort(remainingBounds.begin(), remainingBounds.end());
+            if (canMatch(cnt, remainingBounds)) {
+                ans.push_back(char(d + '0'));
+                break;
+            }
+            cnt[d]++;
+        }
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        cout << solve(s) << '\n';
+    }
+    return 0;
+}

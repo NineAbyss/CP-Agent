@@ -1,0 +1,102 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MOD = 998244353;
+const int inv2 = (MOD + 1) / 2;
+
+int mod_add(int a, int b) {
+    a += b;
+    if (a >= MOD) a -= MOD;
+    return a;
+}
+int mod_sub(int a, int b) {
+    a -= b;
+    if (a < 0) a += MOD;
+    return a;
+}
+int mod_mul(int a, int b) {
+    return 1LL * a * b % MOD;
+}
+
+int powmod(int a, int b) {
+    int res = 1;
+    while (b) {
+        if (b & 1) res = mod_mul(res, a);
+        a = mod_mul(a, a);
+        b >>= 1;
+    }
+    return res;
+}
+
+void walsh_transform(vector<int> &a, bool invert) {
+    int n = a.size();
+    for (int len = 1; len < n; len <<= 1) {
+        for (int i = 0; i < n; i += len << 1) {
+            for (int j = 0; j < len; j++) {
+                int u = a[i + j];
+                int v = a[i + j + len];
+                a[i + j] = mod_add(u, v);
+                a[i + j + len] = mod_sub(u, v);
+            }
+        }
+    }
+    if (invert) {
+        int inv_n = powmod(n, MOD - 2);
+        for (int i = 0; i < n; i++) {
+            a[i] = mod_mul(a[i], inv_n);
+        }
+    }
+}
+
+vector<int> solve(int l, int r, const vector<pair<int, int>> &intervals, int m) {
+    int size = 1 << m;
+    if (l == r) {
+        vector<int> arr(size, 0);
+        int li = intervals[l].first;
+        int ri = intervals[l].second;
+        // 差分
+        vector<int> diff(size + 1, 0);
+        diff[li]++;
+        if (ri + 1 < size) diff[ri + 1]--;
+        int pref = 0;
+        for (int i = 0; i < size; i++) {
+            pref += diff[i];
+            arr[i] = pref;
+        }
+        walsh_transform(arr, false);
+        return arr;
+    }
+    int mid = (l + r) / 2;
+    vector<int> left = solve(l, mid, intervals, m);
+    vector<int> right = solve(mid + 1, r, intervals, m);
+    for (int i = 0; i < size; i++) {
+        left[i] = mod_mul(left[i], right[i]);
+    }
+    return left;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<pair<int, int>> intervals(n);
+        for (int i = 0; i < n; i++) {
+            cin >> intervals[i].first >> intervals[i].second;
+        }
+        vector<int> f_wht = solve(0, n - 1, intervals, m);
+        walsh_transform(f_wht, true); // 逆变换得到 f
+        long long xor_sum = 0;
+        for (int x = 0; x < (1 << m); x++) {
+            long long g = mod_mul(f_wht[x], powmod(2, x));
+            xor_sum ^= g;
+        }
+        cout << xor_sum << '\n';
+    }
+    return 0;
+}

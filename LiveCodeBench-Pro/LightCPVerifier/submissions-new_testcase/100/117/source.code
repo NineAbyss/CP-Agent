@@ -1,0 +1,34 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        vector<int> a(n);
+        a[0] = 0;
+        int minVal = 0, maxVal = 0;
+        for (int i = 1; i < n; i++) {
+            if (s[i-1] == '<') {
+                a[i] = minVal - 1;
+            } else {
+                a[i] = maxVal + 1;
+            }
+            minVal = min(minVal, a[i]);
+            maxVal = max(maxVal, a[i]);
+        }
+        int shift = 1 - minVal;
+        for (int i = 0; i < n; i++) {
+            a[i] += shift;
+        }
+        for (int i = 0; i < n; i++) {
+            cout << a[i] << (i == n-1 ? '\n' : ' ');
+        }
+    }
+    return 0;
+}

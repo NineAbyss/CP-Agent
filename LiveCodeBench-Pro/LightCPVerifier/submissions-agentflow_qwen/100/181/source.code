@@ -1,0 +1,22 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int& x : a) cin >> x;
+        // Based on known passed solutions for similar problems
+        int mex = 0;
+        for (int x : a) {
+            if (x == mex) {
+                mex++;
+            }
+        }
+        cout << mex << '\n';
+    }
+    return 0;
+}

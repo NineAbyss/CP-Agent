@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+
+        vector<int> C(n+1); // 1-indexed, storing queried results from 1 to n.
+        
+        int a = -1, b = -1; // Initialize a, b with -1 indicating not found yet.
+
+        for (int i = 1; i + k <= n && a == -1; ++i) {
+            // Query k+1 elements to find a repeat.
+            unordered_set<int> elements;
+            bool foundRepeat = false;
+            int repeatIndex = 0;
+            
+            for (int j = i; j < i + k + 1; ++j) {
+                cout << "? " << j << endl;
+                fflush(stdout);
+                cin >> C[j];
+
+                if (elements.count(C[j]) > 0) {
+                    foundRepeat = true;
+                    repeatIndex = j;
+                    break;
+                } else {
+                    elements.insert(C[j]);
+                }
+            }
+
+            if (foundRepeat) {
+                a = repeatIndex - 1; // because repeat happens at boundary, k distinct before
+                b = n - a;
+                break;
+            }
+        }
+
+        if (a == -1 || b == -1) {
+            cout << "! -1" << endl; // Unable to determine uniquely
+        } else {
+            cout << "! " << a << " " << b << endl;
+        }
+        
+        fflush(stdout);
+    }
+
+    return 0;
+}

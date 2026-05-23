@@ -1,0 +1,93 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int n, m, k;
+vector<string> grid;
+vector<vector<int>> pref;
+
+void buildPref() {
+    pref.assign(n+1, vector<int>(m+1, 0));
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            pref[i+1][j+1] = pref[i+1][j] + pref[i][j+1] - pref[i][j] + (grid[i][j] == 'g');
+        }
+    }
+}
+
+int goldSum(int x1, int y1, int x2, int y2) {
+    if (x1 > x2 || y1 > y2) return 0;
+    x1 = max(x1, 0); x2 = min(x2, n-1);
+    y1 = max(y1, 0); y2 = min(y2, m-1);
+    if (x1 > x2 || y1 > y2) return 0;
+    return pref[x2+1][y2+1] - pref[x1][y2+1] - pref[x2+1][y1] + pref[x1][y1];
+}
+
+// 返回边界金矿数，内部金矿数
+pair<int,int> borderAndInside(int cx, int cy) {
+    int x1 = cx - k, x2 = cx + k;
+    int y1 = cy - k, y2 = cy + k;
+    int total = goldSum(x1, y1, x2, y2);
+    int inside = goldSum(x1+1, y1+1, x2-1, y2-1);
+    return {total - inside, inside};
+}
+
+int solve() {
+    buildPref();
+    int totalGold = 0;
+    while (true) {
+        vector<pair<int,int>> emptyCells;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (grid[i][j] == '.') emptyCells.push_back({i, j});
+            }
+        }
+        int bestBorder = -1, bestInside = 1e9, bx = -1, by = -1;
+        for (auto [x, y] : emptyCells) {
+            auto [border, inside] = borderAndInside(x, y);
+            if (border == 0) continue;
+            // 优先选 inside==0 的，否则选 inside 最小的
+            if (inside == 0) {
+                if (border > bestBorder) {
+                    bestBorder = border;
+                    bestInside = inside;
+                    bx = x;
+                    by = y;
+                }
+            } else {
+                if (bestInside > 0 && inside < bestInside) {
+                    bestBorder = border;
+                    bestInside = inside;
+                    bx = x;
+                    by = y;
+                }
+            }
+        }
+        if (bestBorder <= 0) break;
+        totalGold += bestBorder;
+        // 清空爆炸范围内的金矿
+        int x1 = max(0, bx - k), x2 = min(n-1, bx + k);
+        int y1 = max(0, by - k), y2 = min(m-1, by + k);
+        for (int i = x1; i <= x2; i++) {
+            for (int j = y1; j <= y2; j++) {
+                if (grid[i][j] == 'g') grid[i][j] = '.';
+            }
+        }
+        buildPref(); // 更新前缀和
+    }
+    return totalGold;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        cin >> n >> m >> k;
+        grid.resize(n);
+        for (int i = 0; i < n; i++) cin >> grid[i];
+        cout << solve() << '\n';
+    }
+    return 0;
+}

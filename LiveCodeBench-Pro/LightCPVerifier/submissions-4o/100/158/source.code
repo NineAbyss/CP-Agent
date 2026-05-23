@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <deque>
+
+using namespace std;
+
+int calculateMinutes(int n, int d, vector<int>& a) {
+    deque<int> maxDeque;
+    int minutes = 0;
+
+    for (int i = 0; i < n; ++i) {
+        // Remove elements that are out of the bounds of the window
+        if (!maxDeque.empty() && maxDeque.front() < i - d + 1) {
+            maxDeque.pop_front();
+        }
+
+        // Maintain a decreasing deque
+        while (!maxDeque.empty() && a[maxDeque.back()] <= a[i]) {
+            maxDeque.pop_back();
+        }
+
+        maxDeque.push_back(i);
+
+        // Decrease all sections covered with the max snow
+        if (a[maxDeque.front()] > 0) {
+            int maxSnow = a[maxDeque.front()];
+            for (int j = i; j >= 0 && j >= i - d + 1; --j) {
+                if (a[j] == maxSnow) {
+                    --a[j];
+                }
+            }
+            ++minutes;
+            // Adjust deque as needed
+            while (!maxDeque.empty() && a[maxDeque.front()] == 0) {
+                maxDeque.pop_front();
+            }
+        }
+    }
+
+    return minutes;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, d;
+        cin >> n >> d;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        cout << calculateMinutes(n, d, a) << '\n';
+    }
+
+    return 0;
+}

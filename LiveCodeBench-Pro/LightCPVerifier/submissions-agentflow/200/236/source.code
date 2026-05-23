@@ -1,0 +1,40 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        if (n == 1) {
+            // single row: just cycle 1..k
+            for (int j = 0; j < m; j++) {
+                cout << (j % k + 1);
+                if (j + 1 < m) cout << ' ';
+            }
+            cout << '\n';
+        } else {
+            // pairing alternating construction
+            for (int i = 0; i < n; i++) {
+                int a = i % k + 1;
+                int b = k - i % k;
+                if (a == b) {
+                    for (int j = 0; j < m; j++) {
+                        cout << a;
+                        if (j + 1 < m) cout << ' ';
+                    }
+                } else {
+                    for (int j = 0; j < m; j++) {
+                        cout << ((j % 2 == 0) ? a : b);
+                        if (j + 1 < m) cout << ' ';
+                    }
+                }
+                cout << '\n';
+            }
+        }
+    }
+    return 0;
+}

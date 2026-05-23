@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int MOD = 998244353;
+
+// Function to perform modular exponentiation
+long long mod_exp(long long base, long long exp, long long mod) {
+    long long result = 1;
+    while (exp > 0) {
+        if (exp % 2 != 0) result = (result * base) % mod;
+        base = (base * base) % mod;
+        exp /= 2;
+    }
+    return result;
+}
+
+const int MAX_C = 500000;
+long long fac[MAX_C + 1], ifac[MAX_C + 1];
+
+void precompute_factorials() {
+    fac[0] = ifac[0] = 1;
+    for (int i = 1; i <= MAX_C; i++) {
+        fac[i] = fac[i - 1] * i % MOD;
+    }
+    ifac[MAX_C] = mod_exp(fac[MAX_C], MOD - 2, MOD);
+    for (int i = MAX_C - 1; i >= 1; --i) {
+        ifac[i] = ifac[i + 1] * (i + 1) % MOD;
+    }
+}
+
+long long calculate_permutations(const vector<int>& c) {
+    int total_sum = accumulate(c.begin(), c.end(), 0);
+    if (total_sum % 2 != 0) return 0;
+
+    int half_sum = total_sum / 2;
+    long long result = fac[half_sum];
+
+    for (int count : c) {
+        result = result * ifac[count / 2] % MOD;
+    }
+
+    return result;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    precompute_factorials();
+
+    int t;
+    cin >> t;
+    while (t--) {
+        vector<int> c(26);
+        for (int i = 0; i < 26; ++i) {
+            cin >> c[i];
+        }
+
+        cout << calculate_permutations(c) << '\n';
+    }
+
+    return 0;
+}

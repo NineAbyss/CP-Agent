@@ -1,0 +1,37 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    // 预处理斐波那契数列 f[1]=1, f[2]=2
+    int f[12];
+    f[1] = 1;
+    f[2] = 2;
+    for (int i = 3; i <= 11; i++) {
+        f[i] = f[i-1] + f[i-2];
+    }
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        int need1 = f[n];
+        int need2 = f[n+1];
+        string ans(m, '0');
+        for (int i = 0; i < m; i++) {
+            int a, b, c;
+            cin >> a >> b >> c;
+            int d[3] = {a, b, c};
+            sort(d, d + 3);
+            if (d[0] >= need1 && d[1] >= need1 && d[2] >= need2) {
+                ans[i] = '1';
+            }
+        }
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

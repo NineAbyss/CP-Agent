@@ -1,0 +1,115 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+struct Point {
+    int x, y, id;
+};
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<Point> pts(n);
+    for (int i = 0; i < n; i++) {
+        cin >> pts[i].x >> pts[i].y;
+        pts[i].id = i;
+    }
+    
+    if (n == 1) {
+        cout << 1 << '\n';
+        return;
+    }
+    
+    vector<Point> byX = pts;
+    vector<Point> byY = pts;
+    sort(byX.begin(), byX.end(), [](const Point& a, const Point& b) { return a.x < b.x; });
+    sort(byY.begin(), byY.end(), [](const Point& a, const Point& b) { return a.y < b.y; });
+    
+    vector<int> preMinX(n), preMaxX(n), sufMinX(n), sufMaxX(n);
+    vector<int> preMinY(n), preMaxY(n), sufMinY(n), sufMaxY(n);
+    
+    preMinX[0] = byX[0].x; preMaxX[0] = byX[0].x;
+    for (int i = 1; i < n; i++) {
+        preMinX[i] = min(preMinX[i-1], byX[i].x);
+        preMaxX[i] = max(preMaxX[i-1], byX[i].x);
+    }
+    sufMinX[n-1] = byX[n-1].x; sufMaxX[n-1] = byX[n-1].x;
+    for (int i = n-2; i >= 0; i--) {
+        sufMinX[i] = min(sufMinX[i+1], byX[i].x);
+        sufMaxX[i] = max(sufMaxX[i+1], byX[i].x);
+    }
+    
+    preMinY[0] = byY[0].y; preMaxY[0] = byY[0].y;
+    for (int i = 1; i < n; i++) {
+        preMinY[i] = min(preMinY[i-1], byY[i].y);
+        preMaxY[i] = max(preMaxY[i-1], byY[i].y);
+    }
+    sufMinY[n-1] = byY[n-1].y; sufMaxY[n-1] = byY[n-1].y;
+    for (int i = n-2; i >= 0; i--) {
+        sufMinY[i] = min(sufMinY[i+1], byY[i].y);
+        sufMaxY[i] = max(sufMaxY[i+1], byY[i].y);
+    }
+    
+    // 原始边界
+    long long origW = preMaxX[n-1] - preMinX[n-1] + 1;
+    long long origH = preMaxY[n-1] - preMinY[n-1] + 1;
+    long long ans = origW * origH;
+    
+    vector<int> posInX(n), posInY(n);
+    for (int i = 0; i < n; i++) {
+        posInX[byX[i].id] = i;
+        posInY[byY[i].id] = i;
+    }
+    
+    for (int i = 0; i < n; i++) {
+        int px = posInX[i];
+        int py = posInY[i];
+        
+        int minX = INT_MAX, maxX = 0;
+        if (px > 0) {
+            minX = min(minX, preMinX[px-1]);
+            maxX = max(maxX, preMaxX[px-1]);
+        }
+        if (px < n-1) {
+            minX = min(minX, sufMinX[px+1]);
+            maxX = max(maxX, sufMaxX[px+1]);
+        }
+        
+        int minY = INT_MAX, maxY = 0;
+        if (py > 0) {
+            minY = min(minY, preMinY[py-1]);
+            maxY = max(maxY, preMaxY[py-1]);
+        }
+        if (py < n-1) {
+            minY = min(minY, sufMinY[py+1]);
+            maxY = max(maxY, sufMaxY[py+1]);
+        }
+        
+        long long w = maxX - minX + 1;
+        long long h = maxY - minY + 1;
+        long long cells = w * h;
+        long long area;
+        if (cells > n-1) {
+            area = w * h;
+        } else { // cells == n-1
+            area = min((w+1)*h, w*(h+1));
+        }
+        if (area < ans) ans = area;
+    }
+    
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

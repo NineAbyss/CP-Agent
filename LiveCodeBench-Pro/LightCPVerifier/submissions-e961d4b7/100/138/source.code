@@ -1,0 +1,110 @@
+#include <iostream>
+#include <cmath>
+#include <map>
+using namespace std;
+
+const double EPS = 1e-12;
+
+struct Velocity {
+    int dx, dy;
+    bool operator<(const Velocity& other) const {
+        if (dx != other.dx) return dx < other.dx;
+        return dy < other.dy;
+    }
+};
+
+struct State {
+    int edge; // 0:x=0, 1:y=0, 2:x+y=n
+    double param; // for edge0: y, edge1: x, edge2: x
+    Velocity vel;
+    bool operator<(const State& other) const {
+        if (edge != other.edge) return edge < other.edge;
+        if (fabs(param - other.param) > EPS) return param < other.param;
+        if (vel.dx != other.vel.dx) return vel.dx < other.vel.dx;
+        return vel.dy < other.vel.dy;
+    }
+};
+
+Velocity reflect(int edge, Velocity v) {
+    if (edge == 0) {
+        return {-v.dx, v.dy};
+    } else if (edge == 1) {
+        return {v.dx, -v.dy};
+    } else {
+        return {-v.dy, -v.dx};
+    }
+}
+
+int solve(int n, int x, int y, int vx, int vy) {
+    double px = x, py = y;
+    Velocity vel{vx, vy};
+    int hits = 0;
+    map<State, int> visited;
+    
+    while (true) {
+        // 检查是否在顶点
+        if (fabs(px) < EPS && fabs(py) < EPS) return hits;
+        if (fabs(px) < EPS && fabs(py - n) < EPS) return hits;
+        if (fabs(px - n) < EPS && fabs(py) < EPS) return hits;
+        
+        // 计算到每条边的时间
+        double t_x = (vel.dx != 0) ? -px / vel.dx : 1e18;
+        double t_y = (vel.dy != 0) ? -py / vel.dy : 1e18;
+        double t_sum = (vel.dx + vel.dy != 0) ? (n - px - py) / (vel.dx + vel.dy) : 1e18;
+        
+        double t_min = 1e18;
+        int edge = -1;
+        if (t_x > EPS && t_x < t_min) { t_min = t_x; edge = 0; }
+        if (t_y > EPS && t_y < t_min) { t_min = t_y; edge = 1; }
+        if (t_sum > EPS && t_sum < t_min) { t_min = t_sum; edge = 2; }
+        
+        if (edge == -1) {
+            // 没有正的时间，应该不会发生
+            return -1;
+        }
+        
+        double nx = px + vel.dx * t_min;
+        double ny = py + vel.dy * t_min;
+        
+        bool is_vertex = false;
+        if (fabs(nx) < EPS && fabs(ny) < EPS) is_vertex = true;
+        if (fabs(nx) < EPS && fabs(ny - n) < EPS) is_vertex = true;
+        if (fabs(nx - n) < EPS && fabs(ny) < EPS) is_vertex = true;
+        
+        if (is_vertex) {
+            return hits;
+        }
+        
+        hits++;
+        px = nx;
+        py = ny;
+        
+        State state;
+        state.edge = edge;
+        if (edge == 0) state.param = ny;
+        else if (edge == 1) state.param = nx;
+        else state.param = nx;
+        state.vel = vel;
+        
+        if (visited.count(state)) {
+            return -1;
+        }
+        visited[state] = hits;
+        
+        vel = reflect(edge, vel);
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, x, y, vx, vy;
+        cin >> n >> x >> y >> vx >> vy;
+        cout << solve(n, x, y, vx, vy) << '\n';
+    }
+    return 0;
+}

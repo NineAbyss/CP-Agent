@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+#include <numeric>
+
+using namespace std;
+
+long long min_total_angriness(int n, int k, vector<int>& a) {
+    long long total_cars = accumulate(a.begin(), a.end(), 0LL);
+    long long base = total_cars / n;
+    long long extra = total_cars % n;
+
+    vector<long long> ideal_lanes(n, base);
+    for (int i = 0; i < extra; ++i) {
+        ++ideal_lanes[i];
+    }
+
+    long long total_angriness = 0;
+    for (long long cars : ideal_lanes) {
+        total_angriness += cars * (cars + 1) / 2;
+    }
+    
+    vector<int> surplus, deficit;
+    for (int i = 0; i < n; ++i) {
+        if (a[i] > ideal_lanes[i]) {
+            surplus.push_back(a[i] - ideal_lanes[i]);
+        } else if (a[i] < ideal_lanes[i]) {
+            deficit.push_back(ideal_lanes[i] - a[i]);
+        }
+    }
+
+    long long transfer_penalty = 0;
+    int i = 0, j = 0;
+    while (i < surplus.size() && j < deficit.size()) {
+        int transfer = min(surplus[i], deficit[j]);
+        surplus[i] -= transfer;
+        deficit[j] -= transfer;
+        transfer_penalty += transfer * k;
+        if (surplus[i] == 0) ++i;
+        if (deficit[j] == 0) ++j;
+    }
+
+    return total_angriness + transfer_penalty;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        cout << min_total_angriness(n, k, a) << '\n';
+    }
+
+    return 0;
+}

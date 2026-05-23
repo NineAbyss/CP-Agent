@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    vector<int> b(n);
+    for (int i = 0; i < n; ++i) cin >> b[i];
+    vector<int> x(q), y(q), z(q);
+    for (int i = 0; i < q; ++i) {
+        cin >> x[i] >> y[i] >> z[i];
+        --x[i]; --y[i]; --z[i]; // 转为0-indexed
+    }
+    
+    vector<int> last(n, -1);
+    vector<bool> written(n, false);
+    for (int i = 0; i < q; ++i) {
+        last[z[i]] = i;
+        written[z[i]] = true;
+    }
+    
+    vector<int> cur = b;
+    bool ok = true;
+    for (int i = q-1; i >= 0; --i) {
+        if (i != last[z[i]]) continue; // 只处理最后一次写入
+        int xi = x[i], yi = y[i], zi = z[i];
+        if (cur[zi] < min(cur[xi], cur[yi])) {
+            ok = false;
+            break;
+        }
+        // 更新 xi 和 yi 的值，使得 min 可以等于 cur[zi]
+        if (written[xi]) {
+            cur[xi] = max(cur[xi], cur[zi]);
+        } else {
+            if (cur[xi] < cur[zi]) {
+                ok = false;
+                break;
+            }
+        }
+        if (written[yi]) {
+            cur[yi] = max(cur[yi], cur[zi]);
+        } else {
+            if (cur[yi] < cur[zi]) {
+                ok = false;
+                break;
+            }
+        }
+    }
+    // 检查未被写入的位置是否被改变（理论上不会，因为只更新了written位置）
+    if (ok) {
+        for (int k = 0; k < n; ++k) {
+            if (!written[k] && cur[k] != b[k]) {
+                ok = false;
+                break;
+            }
+        }
+    }
+    
+    if (!ok) {
+        cout << "-1\n";
+    } else {
+        for (int i = 0; i < n; ++i) {
+            cout << cur[i] << " \n"[i == n-1];
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

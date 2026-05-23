@@ -1,0 +1,92 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int query1(const vector<int>& nodes) {
+    int k = nodes.size();
+    cout << "? 1 " << k;
+    for (int u : nodes) cout << " " << u;
+    cout << endl;
+    int res;
+    cin >> res;
+    return res;
+}
+
+void query2(int u) {
+    cout << "? 2 " << u << endl;
+    int dummy; // 交互器返回空，但我们仍然需要读取？实际上类型2查询没有返回值，但交互器可能会返回一个整数（可能是0），根据示例，类型2查询后没有输出。但题目描述说“The jury will toggle the value”，没有说会返回什么。通常交互问题中，类型2查询后需要读取一个整数（可能是0）以确认。但示例中类型2查询后没有显示返回值。为了安全起见，我们读取一个整数。
+    cin >> dummy;
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    // 读取边，但不需要使用
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        // 忽略
+    }
+    
+    vector<int> candidates(n);
+    iota(candidates.begin(), candidates.end(), 1); // 1,2,...,n
+    
+    // 二分搜索找根
+    while (candidates.size() > 1) {
+        int m = candidates.size();
+        int half = m / 2;
+        vector<int> A(candidates.begin(), candidates.begin() + half);
+        vector<int> B(candidates.begin() + half, candidates.end());
+        
+        int S1 = query1(A);
+        query2(1);
+        int S2 = query1(A);
+        query2(1); // 切换回来
+        
+        int d = S2 - S1;
+        int absd = abs(d);
+        // absd 应该是偶数
+        int I = (int)A.size() - absd / 2;
+        if (I == 1) {
+            candidates = A;
+        } else {
+            candidates = B;
+        }
+    }
+    
+    int r = candidates[0];
+    vector<int> ans(n+1);
+    
+    if (r == 1) {
+        int a1 = query1({1});
+        ans[1] = a1;
+        for (int u = 2; u <= n; u++) {
+            int val = query1({u});
+            ans[u] = val - a1;
+        }
+    } else {
+        int ar = query1({r});
+        ans[r] = ar;
+        int val1 = query1({1});
+        ans[1] = val1 - ar;
+        for (int u = 1; u <= n; u++) {
+            if (u == 1 || u == r) continue;
+            int val = query1({u});
+            ans[u] = val - ar - ans[1];
+        }
+    }
+    
+    cout << "!";
+    for (int i = 1; i <= n; i++) {
+        cout << " " << ans[i];
+    }
+    cout << endl;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

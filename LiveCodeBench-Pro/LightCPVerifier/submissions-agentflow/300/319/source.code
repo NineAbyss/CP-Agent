@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long solve(vector<long long>& a, int d) {
+    int n = a.size();
+    long long ans = 0;
+    
+    // 收集所有不同的高度值，按降序排序
+    vector<long long> heights = a;
+    sort(heights.begin(), heights.end());
+    heights.erase(unique(heights.begin(), heights.end()), heights.end());
+    reverse(heights.begin(), heights.end());
+    
+    if (heights.empty()) return 0;
+    
+    // 按高度分组位置
+    unordered_map<long long, vector<int>> pos_by_h;
+    for (int i = 0; i < n; i++) {
+        pos_by_h[a[i]].push_back(i);
+    }
+    
+    // 当前需要覆盖的位置（有序）
+    vector<int> cur_positions;
+    
+    // 添加虚拟高度0
+    heights.push_back(0);
+    
+    for (size_t i = 0; i < heights.size() - 1; i++) {
+        long long h = heights[i];
+        long long next_h = heights[i+1];
+        
+        // 添加高度为h的位置到cur_positions
+        for (int pos : pos_by_h[h]) {
+            cur_positions.push_back(pos);
+        }
+        sort(cur_positions.begin(), cur_positions.end());
+        
+        // 计算覆盖cur_positions所需的最小区间数
+        int intervals = 0;
+        int covered_until = -1;
+        
+        for (int pos : cur_positions) {
+            if (pos > covered_until) {
+                intervals++;
+                covered_until = pos + d - 1;
+            }
+        }
+        
+        // 层数 = h - next_h
+        long long levels = h - next_h;
+        ans += intervals * levels;
+    }
+    
+    return ans;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, d;
+        cin >> n >> d;
+        
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        cout << solve(a, d) << '\n';
+    }
+    
+    return 0;
+}

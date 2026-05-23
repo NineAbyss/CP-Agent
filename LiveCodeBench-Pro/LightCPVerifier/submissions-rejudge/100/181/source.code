@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int mismatch(const string &t) {
+    int len = t.length();
+    int cnt = 0;
+    for (int i = 0; i < len/2; i++) {
+        if (t[i] != t[len-1-i]) cnt++;
+    }
+    return cnt;
+}
+
+int main() {
+    char c;
+    string t = "";
+    int step = 0;
+    while (cin >> c) {
+        if (c == '0') break;
+        step++;
+        t += c;
+        int len = t.length();
+        // 尝试交换使得当前 t 成为回文
+        bool found = false;
+        for (int l = 1; l <= len && !found; l++) {
+            for (int r = l; r <= len; r++) {
+                if (l == r) continue;
+                string t2 = t;
+                swap(t2[l-1], t2[r-1]);
+                bool pal = true;
+                for (int i = 0; i < len/2; i++) {
+                    if (t2[i] != t2[len-1-i]) { pal = false; break; }
+                }
+                if (pal) {
+                    swap(t[l-1], t[r-1]);
+                    cout << l << " " << r << endl;
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (!found) {
+            cout << "0 0" << endl;
+        }
+        cout.flush();
+    }
+    return 0;
+}

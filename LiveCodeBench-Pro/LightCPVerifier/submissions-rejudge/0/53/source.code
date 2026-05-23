@@ -1,0 +1,113 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        // 读取边
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+        }
+        
+        vector<ll> f0(n+1);
+        // 查询所有单个 f(u)
+        for (int u = 1; u <= n; u++) {
+            cout << "? 1 1 " << u << endl;
+            cout.flush();
+            ll resp;
+            cin >> resp;
+            f0[u] = resp;
+        }
+        
+        // 切换节点1
+        cout << "? 2 1" << endl;
+        cout.flush();
+        
+        // 查询所有 f(u) 的和
+        cout << "? 1 " << n;
+        for (int u = 1; u <= n; u++) {
+            cout << " " << u;
+        }
+        cout << endl;
+        cout.flush();
+        ll S1;
+        cin >> S1;
+        
+        ll S0 = 0;
+        for (int u = 1; u <= n; u++) S0 += f0[u];
+        ll delta = S1 - S0;
+        ll abs_delta = llabs(delta);
+        
+        int root = -1;
+        if (abs_delta == 2LL * n) {
+            root = 1;
+        } else {
+            // 根是叶子节点
+            vector<int> candidates;
+            for (int u = 2; u <= n; u++) candidates.push_back(u);
+            
+            while ((int)candidates.size() > 1) {
+                int m = (int)candidates.size() / 2;
+                vector<int> left(candidates.begin(), candidates.begin() + m);
+                vector<int> right(candidates.begin() + m, candidates.end());
+                
+                cout << "? 1 " << left.size();
+                for (int u : left) cout << " " << u;
+                cout << endl;
+                cout.flush();
+                ll sum1_left;
+                cin >> sum1_left;
+                
+                ll sum0_left = 0;
+                for (int u : left) sum0_left += f0[u];
+                ll delta_left = sum1_left - sum0_left;
+                ll abs_delta_left = llabs(delta_left);
+                
+                if (abs_delta_left == 2LL * (ll)left.size()) {
+                    candidates = right;
+                } else {
+                    candidates = left;
+                }
+            }
+            root = candidates[0];
+        }
+        
+        // 计算最终值
+        vector<int> ans(n+1);
+        if (root == 1) {
+            int v1_orig = f0[1];
+            ans[1] = -v1_orig;
+            for (int u = 2; u <= n; u++) {
+                ans[u] = f0[u] - f0[1];
+            }
+        } else {
+            int vr_orig = f0[root];
+            int v1_orig = f0[1] - f0[root];
+            ans[root] = vr_orig;
+            ans[1] = -v1_orig;
+            for (int u = 2; u <= n; u++) {
+                if (u == root) continue;
+                ans[u] = f0[u] - f0[1];
+            }
+        }
+        
+        // 输出答案
+        cout << "!";
+        for (int i = 1; i <= n; i++) {
+            cout << " " << ans[i];
+        }
+        cout << endl;
+        cout.flush();
+    }
+    
+    return 0;
+}

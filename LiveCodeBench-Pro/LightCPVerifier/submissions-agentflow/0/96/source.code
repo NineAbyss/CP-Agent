@@ -1,0 +1,71 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n), b(n);
+
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        for (int i = 0; i < n; ++i) cin >> b[i];
+
+        int x = -1;
+        bool possible = true;
+
+        // Determine consistent value of x from known entries in b, if any
+        for (int i = 0; i < n; ++i) {
+            if (b[i] != -1) {
+                int temp_x = a[i] + b[i];
+                if (x == -1) {
+                    x = temp_x;
+                } else if (x != temp_x) {
+                    possible = false;
+                    break;
+                }
+            }
+        }
+
+        if (!possible) {
+            cout << "0" << endl;
+            continue;
+        }
+
+        // If x is not determined, calculate valid range of x
+        if (x == -1) {
+            int min_x = 0;
+            int max_x = INT_MAX;
+            for (int i = 0; i < n; ++i) {
+                min_x = max(min_x, a[i]);
+                max_x = min(max_x, k + a[i]);
+            }
+
+            int valid_count = max(max_x - min_x + 1, 0);
+            cout << valid_count << endl;
+            continue;
+        }
+
+        // Evaluate the possibility with a determined x
+        possible = true;
+        for (int i = 0; i < n; ++i) {
+            if (b[i] == -1) {
+                int b_i = x - a[i];
+                if (b_i < 0 || b_i > k) {
+                    possible = false;
+                    break;
+                }
+            }
+        }
+
+        cout << (possible ? "1" : "0") << endl;
+    }
+
+    return 0;
+}

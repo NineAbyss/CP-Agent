@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+bool canSplitWithCondition(const vector<int>& a, int n, int k) {
+    // Count number of elements less than or equal to k
+    int countLEK = 0;
+    for (int i = 0; i < n; ++i) {
+        if (a[i] <= k) {
+            ++countLEK;
+        }
+    }
+
+    // Check if there are at least two elements <= k
+    if (countLEK < 2) return false;
+
+    // We need to ensure at least one place where two <= k elements occur // The presence of a single contiguous pair that is <= k is enough
+    for (int i = 0; i < n - 1; ++i) {
+        if (a[i] <= k && a[i+1] <= k) {
+            return true;
+        }
+    }
+
+    // If n is enough to split into three parts and countLEK >= 3
+    return (countLEK >= 3 && n > 3);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        if (canSplitWithCondition(a, n, k)) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+
+    return 0;
+}

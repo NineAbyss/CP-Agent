@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int compute_k(const set<int>& pos_set) {
+    if (pos_set.empty()) return 0;
+    vector<int> pos(pos_set.begin(), pos_set.end());
+    int m = pos.size();
+    int best = 0;
+    int min_b = 0 - pos[0];
+    for (int r = 0; r < m; r++) {
+        int b_r = 2*r - pos[r];
+        int val = b_r - min_b + 1;
+        if (val >= 0) {
+            best = max(best, val / 2);
+        }
+        if (r+1 < m) {
+            min_b = min(min_b, 2*(r+1) - pos[r+1]);
+        }
+    }
+    return best;
+}
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    vector<int> a(n+1);
+    vector<set<int>> pos(n+1);
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        pos[a[i]].insert(i);
+    }
+    
+    vector<int> k_val(n+1, 0);
+    multiset<int> global;
+    for (int v = 1; v <= n; v++) {
+        k_val[v] = compute_k(pos[v]);
+        global.insert(k_val[v]);
+    }
+    
+    vector<int> ans;
+    while (q--) {
+        int i, x;
+        cin >> i >> x;
+        int old = a[i];
+        if (old != x) {
+            // 删除 old
+            auto it_old = global.find(k_val[old]);
+            if (it_old != global.end()) global.erase(it_old);
+            pos[old].erase(i);
+            k_val[old] = compute_k(pos[old]);
+            global.insert(k_val[old]);
+            
+            // 插入 x
+            auto it_x = global.find(k_val[x]);
+            if (it_x != global.end()) global.erase(it_x);
+            pos[x].insert(i);
+            k_val[x] = compute_k(pos[x]);
+            global.insert(k_val[x]);
+            
+            a[i] = x;
+        }
+        if (global.empty()) ans.push_back(0);
+        else ans.push_back(*global.rbegin());
+    }
+    
+    for (int i = 0; i < (int)ans.size(); i++) {
+        cout << ans[i] << " \n"[i+1==(int)ans.size()];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

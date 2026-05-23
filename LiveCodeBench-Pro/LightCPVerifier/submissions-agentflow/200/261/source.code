@@ -1,0 +1,82 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int calculate_score(const vector<int>& player, const vector<int>& dealer) {
+    int n = player.size();
+    int i = 0, j = 0;
+    int score = 0;
+    
+    for (int round = 0; round < n; round++) {
+        if (player[i] > dealer[j]) {
+            score++;
+            i++;
+        } else {
+            j++;
+        }
+    }
+    return score;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<int> player(n);
+        for (int i = 0; i < n; i++) {
+            cin >> player[i];
+        }
+        
+        vector<int> dealer(n);
+        for (int i = 0; i < n; i++) {
+            cin >> dealer[i];
+        }
+        
+        // Try all possible swaps (brute force)
+        int best = calculate_score(player, dealer);
+        
+        // Since total n over all test cases is 2e5, we can afford O(n^2) for small n
+        if (n <= 500) {
+            vector<int> p = player;
+            for (int i = 0; i < n; i++) {
+                for (int j = i+1; j < n; j++) {
+                    swap(p[i], p[j]);
+                    best = max(best, calculate_score(p, dealer));
+                    swap(p[i], p[j]);
+                }
+            }
+        } else {
+            // For large n, try some heuristic swaps
+            vector<int> p = player;
+            
+            // Try swapping max to front
+            int max_pos = max_element(p.begin(), p.end()) - p.begin();
+            swap(p[0], p[max_pos]);
+            best = max(best, calculate_score(p, dealer));
+            swap(p[0], p[max_pos]);
+            
+            // Try swapping min to back
+            int min_pos = min_element(p.begin(), p.end()) - p.begin();
+            swap(p[n-1], p[min_pos]);
+            best = max(best, calculate_score(p, dealer));
+            swap(p[n-1], p[min_pos]);
+            
+            // Try swapping first with each of first 100 cards
+            for (int i = 1; i < min(n, 100); i++) {
+                swap(p[0], p[i]);
+                best = max(best, calculate_score(p, dealer));
+                swap(p[0], p[i]);
+            }
+        }
+        
+        cout << best << '\n';
+    }
+    
+    return 0;
+}

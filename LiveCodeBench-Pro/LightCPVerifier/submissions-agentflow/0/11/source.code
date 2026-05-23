@@ -1,0 +1,31 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+int main() {
+    int t;
+    std::cin >> t;
+    while (t--) {
+        int n, s;
+        std::cin >> n >> s;
+        std::vector<int> x(n);
+        for (int i = 0; i < n; ++i) {
+            std::cin >> x[i];
+        }
+
+        int min_x = x.front();
+        int max_x = x.back();
+
+        int min_steps;
+        if (s < min_x) {
+            min_steps = max_x - s;
+        } else if (s > max_x) {
+            min_steps = s - min_x;
+        } else {
+            min_steps = (max_x - min_x) + std::min(s - min_x, max_x - s);
+        }
+
+        std::cout << min_steps << std::endl;
+    }
+    return 0;
+}

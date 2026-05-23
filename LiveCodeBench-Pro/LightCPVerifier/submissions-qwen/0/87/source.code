@@ -1,0 +1,134 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int i = 0; i < n; i++) cin >> b[i];
+
+    map<pair<int, int>, queue<int>> mp;
+    for (int i = 0; i < n; i++) {
+        mp[{a[i], b[i]}].push(i);
+    }
+
+    vector<pair<int, int>> pairs;
+    vector<int> center;
+
+    for (auto it = mp.begin(); it != mp.end(); ++it) {
+        int x = it->first.first, y = it->first.second;
+        auto& q = it->second;
+        if (q.empty()) continue;
+
+        if (x == y) {
+            while (q.size() >= 2) {
+                int i = q.front(); q.pop();
+                int j = q.front(); q.pop();
+                pairs.push_back({i, j});
+            }
+            if (q.size() == 1) {
+                if (n % 2 == 0) {
+                    cout << -1 << '\n';
+                    return;
+                }
+                if (!center.empty()) {
+                    cout << -1 << '\n';
+                    return;
+                }
+                center.push_back(q.front());
+                q.pop();
+            }
+        } else if (x < y) {
+            auto it2 = mp.find({y, x});
+            if (it2 == mp.end() || it2->second.empty()) {
+                cout << -1 << '\n';
+                return;
+            }
+            auto& q2 = it2->second;
+            // Must have same size
+            if (q.size() != q2.size()) {
+                cout << -1 << '\n';
+                return;
+            }
+            while (!q.empty()) {
+                int i = q.front(); q.pop();
+                int j = q2.front(); q2.pop();
+                pairs.push_back({i, j});
+            }
+        }
+        // if x > y, skip; will be handled when x<y or not at all
+    }
+
+    // Final check: all queues must be empty
+    for (auto& kv : mp) {
+        if (!kv.second.empty()) {
+            cout << -1 << '\n';
+            return;
+        }
+    }
+
+    // Check center
+    if (n % 2 == 1 && center.empty()) {
+        cout << -1 << '\n';
+        return;
+    }
+    if (n % 2 == 0 && !center.empty()) {
+        cout << -1 << '\n';
+        return;
+    }
+
+    // Build target permutation
+    vector<int> target(n, -1);
+    int idx = 0;
+    for (auto& p : pairs) {
+        target[idx] = p.first;
+        target[n-1-idx] = p.second;
+        idx++;
+    }
+    if (!center.empty()) {
+        target[n/2] = center[0];
+    }
+
+    // Now, apply swaps to achieve the target arrangement
+    vector<int> arr(n);
+    iota(arr.begin(), arr.end(), 0); // arr[i] = original index at position i
+    vector<int> pos(n);
+    for (int i = 0; i < n; i++) {
+        pos[i] = i;
+    }
+
+    vector<pair<int, int>> operations;
+    for (int i = 0; i < n; i++) {
+        if (arr[i] == target[i]) continue;
+        int j = pos[target[i]]; // current position of the desired element
+
+        // Perform swap between i and j
+        operations.push_back({i+1, j+1});
+
+        // Update the arrays
+        int val_i = arr[i], val_j = arr[j];
+        arr[i] = val_j;
+        arr[j] = val_i;
+        pos[val_i] = j;
+        pos[val_j] = i;
+    }
+
+    cout << operations.size() << '\n';
+    for (auto& op : operations) {
+        cout << op.first << ' ' << op.second << '\n';
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

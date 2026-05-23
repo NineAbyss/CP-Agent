@@ -1,0 +1,69 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<long long> s(n), luggage(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> s[i];
+            luggage[i] = s[i];
+        }
+
+        for (int i = 0; i < m; ++i) {
+            vector<long long> a(n), b(n), c(n);
+            for (int j = 0; j < n; ++j) cin >> a[j];
+            for (int j = 0; j < n; ++j) cin >> b[j];
+            for (int j = 0; j < n; ++j) cin >> c[j];
+
+            vector<long long> transport(n, 0);
+            
+            // Simulate morning transport
+            for (int j = 0; j < n; ++j) {
+                int prev_airport = (j - 1 + n) % n;
+                int next_airport = (j + 1) % n;
+
+                long long from_current = luggage[j];
+                long long to_prev = min(from_current, a[j]);
+                long long to_next = min(from_current, c[j]);
+                
+                transport[prev_airport] += to_prev;
+                transport[next_airport] += to_next;
+                luggage[j] -= (to_prev + to_next);
+            }
+
+            // Afternoon: find luggage (calculate only unfound luggage)
+            for (int j = 0; j < n; ++j) {
+                if (luggage[j] > b[j]) {
+                    luggage[j] = b[j];  // Calculate how much luggage can remain unfound
+                }
+                transport[j] += luggage[j];
+            }
+
+            // Update luggage with transported pieces
+            for (int j = 0; j < n; ++j) {
+                luggage[j] = transport[j];
+            }
+
+            // Calculate number of unfound luggage
+            long long unfound = 0;
+            for (int j = 0; j < n; ++j) {
+                unfound += luggage[j];
+            }
+            cout << unfound << '\n';
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

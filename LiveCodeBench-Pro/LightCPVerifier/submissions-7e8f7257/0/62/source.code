@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int MAX_N = 400000;
+vector<ll> prime_sum; // prime_sum[i] = sum of first i primes
+
+void precompute() {
+    // Estimate limit for the MAX_N-th prime
+    // p_n ~ n (ln n + ln ln n) for n=400000 ~ 400000*(12.9+2.56) ≈ 6.2e6
+    int limit = 7000000; // safe bound
+    vector<bool> is_prime(limit + 1, true);
+    is_prime[0] = is_prime[1] = false;
+    for (int i = 2; i * i <= limit; ++i) {
+        if (is_prime[i]) {
+            for (int j = i * i; j <= limit; j += i) {
+                is_prime[j] = false;
+            }
+        }
+    }
+    vector<int> primes;
+    primes.reserve(MAX_N);
+    for (int p = 2; p <= limit && (int)primes.size() < MAX_N; ++p) {
+        if (is_prime[p]) {
+            primes.push_back(p);
+        }
+    }
+    prime_sum.resize(MAX_N + 1, 0);
+    ll sum = 0;
+    for (int i = 0; i < MAX_N; ++i) {
+        sum += primes[i];
+        prime_sum[i + 1] = sum;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    precompute();
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        sort(a.begin(), a.end(), greater<int>());
+        vector<ll> pref(n + 1, 0);
+        for (int i = 0; i < n; ++i) {
+            pref[i + 1] = pref[i] + a[i];
+        }
+        int best_k = 0;
+        for (int k = 1; k <= n; ++k) {
+            if (pref[k] >= prime_sum[k]) {
+                best_k = k;
+            }
+        }
+        cout << n - best_k << '\n';
+    }
+    return 0;
+}

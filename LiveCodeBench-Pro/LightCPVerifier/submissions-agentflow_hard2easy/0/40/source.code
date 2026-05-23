@@ -1,0 +1,27 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n;
+        cin >> n;
+        cout << "mul 9" << endl;
+        cout.flush();
+        string resp; cin >> resp;
+        cout << "digit" << endl;
+        cout.flush();
+        cin >> resp;
+        cout << "digit" << endl;
+        cout.flush();
+        cin >> resp;
+        cout << "add " << (n - 9) << endl;
+        cout.flush();
+        cin >> resp;
+        cout << "!" << endl;
+        cout.flush();
+        cin >> resp;
+    }
+    return 0;
+}

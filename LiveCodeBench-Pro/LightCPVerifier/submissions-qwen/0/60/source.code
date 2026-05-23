@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+void solve() {
+    int n;
+    ll k;
+    cin >> n >> k;
+    
+    vector<ll> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int i = 0; i < n; i++) cin >> b[i];
+    
+    // Determine the target sum x = a_i + b_i for all i // If there's any known pair, that fixes x.
+    // Otherwise, x can vary, but we'll check constraints.
+    
+    ll x = -1; // The required sum a_i + b_i
+    bool possible = true;
+    
+    // First pass: determine what x must be
+    for (int i = 0; i < n; i++) {
+        if (b[i] != -1) {
+            ll required_x = a[i] + b[i];
+            if (x == -1) {
+                x = required_x;
+            } else if (x != required_x) {
+                possible = false;
+                break;
+            }
+        }
+    }
+    
+    if (!possible) {
+        cout << 0 << '\n';
+        return;
+    }
+    
+    // If no fixed b[i] was found, x is not yet determined
+    // Then x can be any value such that for every i:
+    //   b_i = x - a_i must satisfy 0 <= b_i <= k (if b_i was missing)
+    //   and also if b_i was fixed, it must match.
+    
+    if (x == -1) {
+        // No fixed b[i], so we need to count how many x values are valid
+        
+        // Constraints on x: for each i, since b_i = x - a_i must be in [0, k] // => 0 <= x - a_i <= k
+        // => a_i <= x <= a_i + k
+        
+        ll low = 0, high = k;
+        for (int i = 0; i < n; i++) {
+            low = max(low, a[i]);         // x >= a_i
+            high = min(high, a[i] + k);   // x <= a_i + k
+        }
+        
+        if (low > high) {
+            cout << 0 << '\n';
+        } else {
+            cout << (high - low + 1) << '\n';
+        }
+        
+        return;
+    }
+    
+    // Now x is fixed. Check if all implied b_i values are valid
+    for (int i = 0; i < n; i++) {
+        ll implied_b = x - a[i];
+        if (b[i] == -1) {
+            // Must have 0 <= implied_b <= k
+            if (implied_b < 0 || implied_b > k) {
+                possible = false;
+                break;
+            }
+        } else {
+            // Already checked during first pass, but double-check
+            if (implied_b != b[i]) {
+                possible = false;
+                break;
+            }
+        }
+    }
+    
+    cout << (possible ? 1 : 0) << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

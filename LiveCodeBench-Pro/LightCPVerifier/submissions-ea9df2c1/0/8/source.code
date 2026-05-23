@@ -1,0 +1,103 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> g(n+1);
+        vector<pair<int,int>> edges;
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            g[u].push_back(v);
+            g[v].push_back(u);
+            edges.emplace_back(u, v);
+        }
+        if (n == 2) {
+            cout << "NO\n";
+            continue;
+        }
+        // 检查是否是星形
+        bool star = false;
+        for (int i = 1; i <= n; i++) {
+            if ((int)g[i].size() == n-1) {
+                star = true;
+                break;
+            }
+        }
+        if (star) {
+            cout << "NO\n";
+            continue;
+        }
+        cout << "YES\n";
+        // 找到一条连接两个度至少为2的节点的边
+        int u = -1, v = -1;
+        for (auto& e : edges) {
+            int a = e.first, b = e.second;
+            if (g[a].size() >= 2 && g[b].size() >= 2) {
+                u = a; v = b;
+                break;
+            }
+        }
+        // 如果没找到，选择第一条边
+        if (u == -1) {
+            u = edges[0].first;
+            v = edges[0].second;
+        }
+        // 以v为根进行DFS
+        vector<int> parent(n+1, -1);
+        vector<vector<int>> children(n+1);
+        vector<int> stack;
+        parent[v] = 0;
+        stack.push_back(v);
+        while (!stack.empty()) {
+            int x = stack.back();
+            stack.pop_back();
+            for (int y : g[x]) {
+                if (y == parent[x]) continue;
+                parent[y] = x;
+                children[x].push_back(y);
+                stack.push_back(y);
+            }
+        }
+        // 选择v的一个叶子节点后代进行反向
+        int leaf = -1;
+        for (int i = 1; i <= n; i++) {
+            if (i != v && children[i].empty()) {
+                leaf = i;
+                break;
+            }
+        }
+        // 输出定向边
+        vector<pair<int,int>> ans;
+        ans.emplace_back(u, v); // u->v
+        for (auto& e : edges) {
+            int a = e.first, b = e.second;
+            if ((a == u && b == v) || (a == v && b == u)) continue;
+            if (parent[a] == b) {
+                if (a == leaf) {
+                    ans.emplace_back(a, b);
+                } else {
+                    ans.emplace_back(b, a);
+                }
+            } else if (parent[b] == a) {
+                if (b == leaf) {
+                    ans.emplace_back(b, a);
+                } else {
+                    ans.emplace_back(a, b);
+                }
+            } else {
+                ans.emplace_back(a, b);
+            }
+        }
+        for (auto& e : ans) {
+            cout << e.first << " " << e.second << "\n";
+        }
+    }
+    return 0;
+}

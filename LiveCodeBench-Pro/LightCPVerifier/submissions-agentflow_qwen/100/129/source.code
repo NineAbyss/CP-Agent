@@ -1,0 +1,93 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t; cin >> t;
+    while (t--) {
+        int n; cin >> n;
+        vector<pair<int,int>> edges;
+        vector<vector<int>> adj(n+1);
+        for (int i=0; i<n-1; i++) {
+            int u, v; cin >> u >> v;
+            edges.push_back({u,v});
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+
+        long long best_score = -1;
+        pair<int, int> best_edge;
+        vector<int> best_color(n+1);
+
+        for (auto [u,v] : edges) {
+            vector<vector<int>> adj_new(n+1);
+            for (auto [x,y] : edges) {
+                if ((x==u && y==v) || (x==v && y==u)) continue;
+                adj_new[x].push_back(y);
+                adj_new[y].push_back(x);
+            }
+            for (int w : adj[v]) {
+                if (w == u) continue;
+                adj_new[u].push_back(w);
+                adj_new[w].push_back(u);
+            }
+
+            for (int i=1; i<=n; ++i) {
+                sort(adj_new[i].begin(), adj_new[i].end());
+                adj_new[i].erase(unique(adj_new[i].begin(), adj_new[i].end()), adj_new[i].end());
+            }
+
+            int root = 1;
+            while (root == v) root++;
+
+            vector<long long> contrib;
+            function<int(int, int)> dfs = [&](int node, int parent) {
+                int sz = 1;
+                for (int child : adj_new[node]) {
+                    if (child == parent || child == v) continue;
+                    int cs = dfs(child, node);
+                    sz += cs;
+                    contrib.push_back(min(cs, n-1-cs));
+                }
+                return sz;
+            };
+
+            try {
+                dfs(root, -1);
+            } catch (...) { continue; }
+
+            long long score = 0;
+            for (auto x : contrib) score += x;
+
+            if (score > best_score) {
+                best_score = score;
+                best_edge = {u,v};
+                vector<int> order;
+                function<void(int, int)> get_order = [&](int node, int parent) {
+                    if (node == v) return;
+                    order.push_back(node);
+                    for (int child : adj_new[node]) {
+                        if (child == parent || child == v) continue;
+                        get_order(child, node);
+                    }
+                };
+                get_order(1, -1);
+                best_color.assign(n+1,0);
+                int np = (n-1)/2;
+                for (int i=0; i<np; i++) {
+                    if (i >= order.size()/2) break;
+                    best_color[order[i]] = i+1;
+                    best_color[order[order.size()-1-i]] = i+1;
+                }
+                best_color[v] = 0;
+            }
+        }
+
+        cout << best_edge.first << " " << best_edge.second << "\n";
+        for (int i=1; i<=n; i++) cout << best_color[i] << " ";
+        cout << "\n";
+    }
+    return 0;
+}

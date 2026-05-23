@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool check(const vector<int>& a) {
+    int n = a.size();
+    set<int> days_set;
+    for (int x : a) {
+        days_set.insert(x+1);
+        days_set.insert(x+2);
+    }
+    vector<int> days(days_set.begin(), days_set.end());
+    int D = days.size();
+    if (D > 7) return false;
+    unordered_map<int, int> idx;
+    for (int i = 0; i < D; i++) idx[days[i]] = i;
+    
+    vector<pair<int,int>> student_days(n);
+    for (int i = 0; i < n; i++) {
+        int d1 = a[i]+1, d2 = a[i]+2;
+        student_days[i] = {idx[d1], idx[d2]};
+    }
+    
+    vector<pair<int,int>> predictions = {{0,0},{0,1},{1,0},{1,1}};
+    
+    int total_assign = 1;
+    for (int i = 0; i < n; i++) total_assign *= 4;
+    for (int assign = 0; assign < total_assign; assign++) {
+        vector<pair<int,int>> pred_for_student(n);
+        int tmp = assign;
+        for (int i = 0; i < n; i++) {
+            int p = tmp % 4;
+            pred_for_student[i] = predictions[p];
+            tmp /= 4;
+        }
+        bool all_covered = true;
+        for (int mask = 0; mask < (1 << D); mask++) {
+            bool ok = false;
+            for (int i = 0; i < n; i++) {
+                int d1 = student_days[i].first;
+                int d2 = student_days[i].second;
+                int v1 = (mask >> d1) & 1;
+                int v2 = (mask >> d2) & 1;
+                if (v1 == pred_for_student[i].first && v2 == pred_for_student[i].second) {
+                    ok = true;
+                    break;
+                }
+            }
+            if (!ok) {
+                all_covered = false;
+                break;
+            }
+        }
+        if (all_covered) return true;
+    }
+    return false;
+}
+
+int main() {
+    vector<int> a = {1,1,1,2};
+    cout << (check(a) ? "Yes" : "No") << endl;
+    return 0;
+}

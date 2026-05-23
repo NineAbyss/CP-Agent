@@ -1,0 +1,86 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<vector<int>> a(n, vector<int>(m));
+        int M = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                cin >> a[i][j];
+                if (a[i][j] > M) M = a[i][j];
+            }
+        }
+        vector<pair<int, int>> pos;
+        vector<int> row_cnt(n, 0);
+        vector<int> col_cnt(m, 0);
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (a[i][j] == M) {
+                    pos.push_back({i, j});
+                    row_cnt[i]++;
+                    col_cnt[j]++;
+                }
+            }
+        }
+        set<int> rows_set, cols_set;
+        for (auto &p : pos) {
+            rows_set.insert(p.first);
+            cols_set.insert(p.second);
+        }
+        int rows_size = rows_set.size();
+        int cols_size = cols_set.size();
+        bool can = false;
+        if (rows_size == 1 || cols_size == 1) {
+            can = true;
+        } else {
+            // compute unique_cols per row
+            vector<int> unique_cols_per_row(n, 0);
+            for (auto &p : pos) {
+                int i = p.first, j = p.second;
+                if (col_cnt[j] == 1) {
+                    unique_cols_per_row[i]++;
+                }
+            }
+            for (int r : rows_set) {
+                int diff = cols_size - unique_cols_per_row[r];
+                if (diff <= 1) {
+                    can = true;
+                    break;
+                }
+            }
+            if (!can) {
+                // compute unique_rows per col
+                vector<int> unique_rows_per_col(m, 0);
+                for (auto &p : pos) {
+                    int i = p.first, j = p.second;
+                    if (row_cnt[i] == 1) {
+                        unique_rows_per_col[j]++;
+                    }
+                }
+                for (int c : cols_set) {
+                    int diff = rows_size - unique_rows_per_col[c];
+                    if (diff <= 1) {
+                        can = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if (can) {
+            cout << M-1 << '\n';
+        } else {
+            cout << M << '\n';
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,68 @@
+#include <iostream>
+#include <vector>
+#include <numeric>
+using namespace std;
+
+int gcd(int a, int b) {
+    while (b) {
+        int t = b;
+        b = a % b;
+        a = t;
+    }
+    return a;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        // 检查是否所有元素相等
+        bool all_equal = true;
+        for (int i = 1; i < n; i++) {
+            if (a[i] != a[0]) {
+                all_equal = false;
+                break;
+            }
+        }
+        if (all_equal) {
+            cout << "No" << endl;
+            continue;
+        }
+        // 计算前缀 GCD 和后缀 GCD
+        vector<int> pref(n), suff(n);
+        pref[0] = a[0];
+        for (int i = 1; i < n; i++) {
+            pref[i] = gcd(pref[i-1], a[i]);
+        }
+        suff[n-1] = a[n-1];
+        for (int i = n-2; i >= 0; i--) {
+            suff[i] = gcd(suff[i+1], a[i]);
+        }
+        // 找到分割点
+        int split = -1;
+        for (int k = 1; k < n; k++) {
+            if (pref[k-1] != suff[k]) {
+                split = k;
+                break;
+            }
+        }
+        // 根据证明，split 一定存在
+        cout << "Yes" << endl;
+        for (int i = 0; i < n; i++) {
+            if (i < split) {
+                cout << "2";
+            } else {
+                cout << "1";
+            }
+            if (i != n-1) cout << " ";
+        }
+        cout << endl;
+    }
+    return 0;
+}

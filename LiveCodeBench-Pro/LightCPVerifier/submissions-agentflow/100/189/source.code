@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    // 离散化
+    vector<int> vals;
+    for (int x : a) {
+        vals.push_back(x);
+        vals.push_back(x-1);
+        vals.push_back(x-2);
+    }
+    vals.push_back(0); // 哨兵，表示没有值
+    sort(vals.begin(), vals.end());
+    vals.erase(unique(vals.begin(), vals.end()), vals.end());
+    int m = vals.size();
+    
+    // 树状数组维护前缀最大值
+    vector<int> bit(m+1, 0);
+    auto update = [&](int idx, int val) {
+        while (idx <= m) {
+            bit[idx] = max(bit[idx], val);
+            idx += idx & -idx;
+        }
+    };
+    auto query = [&](int idx) {
+        int res = 0;
+        while (idx > 0) {
+            res = max(res, bit[idx]);
+            idx -= idx & -idx;
+        }
+        return res;
+    };
+    
+    // 存储每个离散化值的最大 dp
+    vector<int> best(m, 0);
+    
+    // 映射值到索引（从1开始）
+    auto get_idx = [&](int x) -> int {
+        auto it = lower_bound(vals.begin(), vals.end(), x);
+        if (it == vals.end() || *it != x) return -1;
+        return int(it - vals.begin()) + 1;
+    };
+    
+    int ans = 0;
+    for (int i = 0; i < n; i++) {
+        int dp = 1; // 只取当前元素
+        
+        // 情况1：前一个元素值 <= a[i]-2
+        int idx1 = get_idx(a[i]-2);
+        if (idx1 != -1) {
+            int q = query(idx1);
+            dp = max(dp, q + 1);
+        }
+        
+        // 情况2：前一个元素值在 [a[i]-1, a[i]]
+        int idx2 = get_idx(a[i]-1);
+        int idx3 = get_idx(a[i]);
+        if (idx2 != -1) dp = max(dp, best[idx2-1]);
+        if (idx3 != -1) dp = max(dp, best[idx3-1]);
+        
+        // 更新
+        int idx = get_idx(a[i]);
+        best[idx-1] = max(best[idx-1], dp);
+        update(idx, dp);
+        ans = max(ans, dp);
+    }
+    
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

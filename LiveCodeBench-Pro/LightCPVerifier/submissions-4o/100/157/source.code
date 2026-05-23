@@ -1,0 +1,53 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    int n, q;
+    cin >> n >> q;
+
+    vector<set<int>> sets(n);
+    int last_answer = 0;
+
+    for (int i = 1; i <= q; i++) {
+        int a, b, c;
+        cin >> a >> b >> c;
+
+        int r, p;
+
+        if (a == 1 || a == 2) {
+            r = (b + last_answer - 1) % n + 1;
+        } else {
+            r = (b + last_answer - 1) % q + 1;
+        }
+
+        p = (c + last_answer - 1) % n + 1;
+
+        if (a == 1) {
+            for (int j = 0; j < r; j++) {
+                sets[j].insert(i);
+            }
+        } else if (a == 2) {
+            reverse(sets.begin(), sets.begin() + r);
+        } else if (a == 3) {
+            for (int j = 0; j < n; j++) {
+                sets[j].erase(r);
+            }
+        }
+
+        if (sets[p-1].empty()) {
+            last_answer = 0;
+        } else {
+            last_answer = *sets[p-1].begin();
+        }
+
+        cout << last_answer << '\n';
+    }
+
+    return 0;
+}

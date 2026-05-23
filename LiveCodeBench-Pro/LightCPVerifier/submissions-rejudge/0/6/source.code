@@ -1,0 +1,144 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+const int inv2 = (MOD + 1) / 2;
+
+// 快速幂计算 2^x mod MOD
+vector<int> pow2_cache;
+int pow2(int x) {
+    if (pow2_cache.empty()) {
+        pow2_cache.resize(1 << 18);
+        pow2_cache[0] = 1;
+        for (int i = 1; i < (1 << 18); i++) {
+            pow2_cache[i] = pow2_cache[i-1] * 2LL % MOD;
+        }
+    }
+    return pow2_cache[x];
+}
+
+// FWT 变换
+void fwt(vector<int> &a, bool invert) {
+    int n = a.size();
+    for (int len = 1; len < n; len <<= 1) {
+        for (int i = 0; i < n; i += len << 1) {
+            for (int j = 0; j < len; j++) {
+                int u = a[i + j];
+                int v = a[i + j + len];
+                a[i + j] = (u + v) % MOD;
+                a[i + j + len] = (u - v + MOD) % MOD;
+                if (invert) {
+                    a[i + j] = 1LL * a[i + j] * inv2 % MOD;
+                    a[i + j + len] = 1LL * a[i + j + len] * inv2 % MOD;
+                }
+            }
+        }
+    }
+}
+
+// 记忆化计算 P(x, j)
+unordered_map<long long, int> memo_p;
+
+int compute_P(int x, int j, int m) {
+    if (x < 0) return 0;
+    if (j == 0) return (x + 1) % MOD;
+    
+    long long key = (long long)x * (1 << m) + j;
+    auto it = memo_p.find(key);
+    if (it != memo_p.end()) return it->second;
+    
+    int msb = 1 << (31 - __builtin_clz(j));
+    int k = 31 - __builtin_clz(msb);
+    
+    int mask = (1 << (k + 1)) - 1;
+    int x_masked = x & mask;
+    
+    int two_k = 1 << k;
+    int j_prime = j ^ msb;
+    
+    int result;
+    if (x_masked < two_k) {
+        result = compute_P(x_masked, j_prime, m);
+    } else {
+        int first = compute_P(two_k - 1, j_prime, m);
+        int second = compute_P(x_masked - two_k, j_prime, m);
+        result = (first - second + MOD) % MOD;
+    }
+    
+    memo_p[key] = result;
+    return result;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        
+        vector<pair<int, int>> intervals(n);
+        for (int i = 0; i < n; i++) {
+            cin >> intervals[i].first >> intervals[i].second;
+        }
+        
+        int size = 1 << m;
+        memo_p.clear();
+        
+        // 收集所有需要的 x 值
+        vector<int> needed_x;
+        needed_x.reserve(2 * n);
+        for (auto &[l, r] : intervals) {
+            needed_x.push_back(r);
+            if (l > 0) needed_x.push_back(l - 1);
+        }
+        sort(needed_x.begin(), needed_x.end());
+        needed_x.erase(unique(needed_x.begin(), needed_x.end()), needed_x.end());
+        
+        // 预先计算所有需要的 P(x, j) // 但只计算实际需要的，而不是所有 j
+        // 我们将在处理区间时按需计算
+        
+        vector<int> fhat(size, 1);
+        
+        // 对于每个区间，计算其 FWT 变换
+        for (auto &[l, r] : intervals) {
+            // 如果区间很小，直接计算
+            if (r - l + 1 <= 1000) {
+                for (int j = 0; j < size; j++) {
+                    int sum = 0;
+                    for (int a = l; a <= r; a++) {
+                        if (__builtin_parity(a & j)) sum--;
+                        else sum++;
+                    }
+                    sum = (sum % MOD + MOD) % MOD;
+                    fhat[j] = 1LL * fhat[j] * sum % MOD;
+                }
+            } else {
+                for (int j = 0; j < size; j++) {
+                    int val = (compute_P(r, j, m) - compute_P(l - 1, j, m) + MOD) % MOD;
+                    fhat[j] = 1LL * fhat[j] * val % MOD;
+                }
+            }
+        }
+        
+        // 逆变换
+        fwt(fhat, true);
+        
+        // 计算答案
+        long long h = 0;
+        for (int x = 0; x < size; x++) {
+            long long g = 1LL * fhat[x] * pow2(x) % MOD;
+            h ^= g;
+        }
+        
+        cout << h << '\n';
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    solve();
+    return 0;
+}

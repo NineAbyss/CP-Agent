@@ -1,0 +1,26 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+int log2ceil(long long x) {
+    if (x <= 1) return 0;
+    return 64 - __builtin_clzll(x - 1);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n, m, a, b;
+        cin >> n >> m >> a >> b;
+        int Ln = log2ceil(n);
+        int Lm = log2ceil(m);
+        int La = log2ceil(min(a, n - a + 1));
+        int Lb = log2ceil(min(b, m - b + 1));
+        int ans = 1 + min(La + Lm, Ln + Lb);
+        cout << ans << '\n';
+    }
+    return 0;
+}

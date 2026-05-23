@@ -1,0 +1,49 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> p(n), d(n);
+        vector<bool> position_filled(n + 1, false);
+
+        for (int i = 0; i < n; ++i) {
+            cin >> p[i];
+        }
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> d[i];
+            d[i]--; // Convert 1-based index to 0-based.
+        }
+        
+        int next_value_needed = 1;
+        vector<int> result(n);
+        set<int> available;
+
+        for (int i = 0; i < n; ++i) {
+            available.insert(p[i]);
+            while (!available.empty() && *available.begin() == next_value_needed) {
+                available.erase(next_value_needed++);
+            }
+            result[i] = next_value_needed - 1;
+            
+            position_filled[d[i]] = true;
+            available.erase(p[d[i]]);
+        }
+
+        for (int i = 0; i < n; ++i) {
+            cout << result[i] << " ";
+        }
+        cout << "\n";
+    }
+    return 0;
+}

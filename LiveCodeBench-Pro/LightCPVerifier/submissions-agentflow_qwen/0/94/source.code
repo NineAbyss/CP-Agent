@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+void solve() {
+    ll n, k, x;
+    cin >> n >> k >> x;
+    vector<ll> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+
+    ll S = accumulate(a.begin(), a.end(), 0LL);
+
+    // 如果总和都不够
+    if (x > k * S) {
+        cout << 0 << '\n';
+        return;
+    }
+
+    // 预处理后缀和 suff[i] = sum from i to n-1
+    vector<ll> suff(n + 1, 0);
+    for (int i = n - 1; i >= 0; i--) {
+        suff[i] = suff[i + 1] + a[i];
+    }
+
+    ll ans = 0;
+    for (int i = 0; i < n; i++) {
+        if (x <= suff[i]) {
+            ans += k; // 所有k个周期中的这个位置都合法
+        } else {
+            ll diff = x - suff[i];
+            // 需要多少个完整的后续周期 T，使得 T*S >= diff
+            ll needed_T = (diff + S - 1) / S; // 上取整除法
+
+            // 剩余可用的完整周期数最多为 k-1（因为当前周期已占用）
+            if (needed_T >= k) {
+                // 即使用完所有周期也不够
+                continue;
+            }
+
+            // 可以使用的周期起始编号 p 满足：p <= k - 1 - needed_T // 即 p ∈ [0, k - needed_T - 1] → 共 k - needed_T 个
+            ans += (k - needed_T);
+        }
+    }
+
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

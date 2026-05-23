@@ -1,0 +1,124 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+const int M = 40000;      // 200*200
+const int EXTRA = 200;    // max(c_i)
+const int TOTAL = M + EXTRA; // 40200
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n, m;
+    cin >> n >> m;
+    
+    vector<int> c(n+1), w(n+1);
+    for (int i = 1; i <= n; i++) {
+        cin >> c[i] >> w[i];
+    }
+    
+    // 邻接矩阵
+    vector<vector<bool>> adj(n+1, vector<bool>(n+1, false));
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u][v] = true;
+    }
+    
+    // 计算传递闭包
+    vector<vector<bool>> reachable = adj;
+    for (int i = 1; i <= n; i++) {
+        reachable[i][i] = true;
+    }
+    
+    // Floyd-Warshall
+    for (int k = 1; k <= n; k++) {
+        for (int i = 1; i <= n; i++) {
+            if (reachable[i][k]) {
+                for (int j = 1; j <= n; j++) {
+                    if (reachable[k][j]) {
+                        reachable[i][j] = true;
+                    }
+                }
+            }
+        }
+    }
+    
+    // 从1可达
+    vector<bool> from1(n+1, false);
+    for (int i = 1; i <= n; i++) {
+        if (reachable[1][i]) from1[i] = true;
+    }
+    
+    // 对于每个p，计算DP
+    vector<vector<long long>> dp(n+1, vector<long long>(TOTAL+1, 0));
+    vector<pair<int, long long>> best_item(n+1);
+    
+    for (int p = 1; p <= n; p++) {
+        // 收集物品
+        vector<pair<int, int>> items;
+        for (int i = 1; i <= n; i++) {
+            if (from1[i] && reachable[i][p]) {
+                items.push_back({c[i], w[i]});
+            }
+        }
+        
+        // 完全背包DP
+        vector<long long>& dp_p = dp[p];
+        fill(dp_p.begin(), dp_p.end(), 0);
+        
+        for (auto& item : items) {
+            int ci = item.first;
+            long long wi = item.second;
+            for (int j = ci; j <= TOTAL; j++) {
+                long long val = dp_p[j - ci] + wi;
+                if (val > dp_p[j]) {
+                    dp_p[j] = val;
+                }
+            }
+        }
+        
+        // 找到性价比最高的物品
+        double best_ratio = 0;
+        int best_c = 1;
+        long long best_w = 0;
+        for (auto& item : items) {
+            int ci = item.first;
+            long long wi = item.second;
+            double ratio = (double)wi / ci;
+            if (ratio > best_ratio || (ratio == best_ratio && wi > best_w)) {
+                best_ratio = ratio;
+                best_c = ci;
+                best_w = wi;
+            }
+        }
+        best_item[p] = {best_c, best_w};
+    }
+    
+    // 处理查询
+    int q;
+    cin >> q;
+    while (q--) {
+        int p, r;
+        cin >> p >> r;
+        long long ans = 0;
+        
+        if (r <= TOTAL) {
+            ans = dp[p][r];
+        } else {
+            int c_best = best_item[p].first;
+            long long w_best = best_item[p].second;
+            // 注意：使用M而不是TOTAL
+            long long k = (r - M) / c_best;
+            int rem = (r - M) % c_best;
+            ans = dp[p][M + rem] + k * w_best;
+        }
+        
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

@@ -1,0 +1,173 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int n;
+vector<vector<int>> adj;
+
+// 以 r 为根计算父节点
+vector<int> get_parents(int r) {
+    vector<int> parent(n+1, 0);
+    function<void(int,int)> dfs = [&](int u, int p) {
+        parent[u] = p;
+        for (int v : adj[u]) {
+            if (v == p) continue;
+            dfs(v, u);
+        }
+    };
+    dfs(r, 0);
+    return parent;
+}
+
+// 查询辅助函数
+int query1(int k, vector<int>& nodes) {
+    cout << "? 1 " << k;
+    for (int u : nodes) cout << " " << u;
+    cout << endl;
+    int res;
+    cin >> res;
+    return res;
+}
+
+void query2(int u) {
+    cout << "? 2 " << u << endl;
+    // 不需要读取响应
+}
+
+void solve() {
+    cin >> n;
+    adj.assign(n+1, vector<int>());
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    // 步骤1：获取所有 f(u)
+    vector<int> base_f(n+1);
+    for (int u = 1; u <= n; u++) {
+        vector<int> nodes = {u};
+        base_f[u] = query1(1, nodes);
+    }
+    
+    // 步骤2：计算所有候选根节点
+    vector<vector<int>> cand_vals;
+    vector<int> cand_roots;
+    for (int r = 1; r <= n; r++) {
+        vector<int> parent = get_parents(r);
+        vector<int> cand_a(n+1);
+        bool ok = true;
+        for (int u = 1; u <= n; u++) {
+            if (u == r) {
+                cand_a[u] = base_f[u];
+            } else {
+                cand_a[u] = base_f[u] - base_f[parent[u]];
+            }
+            if (cand_a[u] != 1 && cand_a[u] != -1) {
+                ok = false;
+                break;
+            }
+        }
+        if (ok) {
+            cand_roots.push_back(r);
+            cand_vals.push_back(cand_a);
+        }
+    }
+    
+    vector<int> flip(n+1, 0);
+    set<int> remaining;
+    for (int i = 0; i < cand_roots.size(); i++) remaining.insert(i);
+    
+    // 检查所有候选根节点在 flip 调整后是否相同
+    auto all_same = [&](const set<int>& rem) -> bool {
+        if (rem.empty()) return true;
+        int first = *rem.begin();
+        for (int u = 1; u <= n; u++) {
+            int val0 = cand_vals[first][u] * (flip[u] ? -1 : 1);
+            for (int idx : rem) {
+                int val = cand_vals[idx][u] * (flip[u] ? -1 : 1);
+                if (val != val0) return false;
+            }
+        }
+        return true;
+    };
+    
+    if (all_same(remaining)) {
+        // 直接输出
+        int idx = *remaining.begin();
+        cout << "!";
+        for (int u = 1; u <= n; u++) {
+            int val = cand_vals[idx][u] * (flip[u] ? -1 : 1);
+            cout << " " << val;
+        }
+        cout << endl;
+        return;
+    }
+    
+    // 迭代缩小范围
+    while (remaining.size() > 1) {
+        // 找到节点 u，使得调整后的值不同
+        int u = -1;
+        for (int node = 1; node <= n; node++) {
+            set<int> vals;
+            for (int idx : remaining) {
+                int val = cand_vals[idx][node] * (flip[node] ? -1 : 1);
+                vals.insert(val);
+            }
+            if (vals.size() > 1) {
+                u = node;
+                break;
+            }
+        }
+        if (u == -1) break; // 应该不会发生
+        
+        // 查询当前 f(u)
+        vector<int> nodes = {u};
+        int cur_f = query1(1, nodes);
+        // 切换节点 u
+        query2(u);
+        flip[u] ^= 1;
+        // 查询新的 f(u)
+        int new_f = query1(1, nodes);
+        int delta = new_f - cur_f;
+        
+        // 筛选候选根节点
+        set<int> new_remaining;
+        for (int idx : remaining) {
+            int old_flip = flip[u] ^ 1;
+            int a_u = cand_vals[idx][u] * (old_flip ? -1 : 1);
+            int pred_delta = -2 * a_u;
+            if (pred_delta == delta) {
+                new_remaining.insert(idx);
+            }
+        }
+        remaining = new_remaining;
+        if (remaining.empty()) {
+            // 不应该发生，但为了安全起见，中断
+            break;
+        }
+        if (all_same(remaining)) {
+            break;
+        }
+    }
+    
+    // 输出答案
+    int idx = *remaining.begin();
+    cout << "!";
+    for (int u = 1; u <= n; u++) {
+        int val = cand_vals[idx][u] * (flip[u] ? -1 : 1);
+        cout << " " << val;
+    }
+    cout << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

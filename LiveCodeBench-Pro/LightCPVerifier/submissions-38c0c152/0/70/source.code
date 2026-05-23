@@ -1,0 +1,35 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool solve(const vector<int>& a) {
+    map<int, int> cnt;
+    for (int x : a) cnt[x]++;
+    // 条件1：存在值出现 >=4
+    for (auto& p : cnt) if (p.second >= 4) return true;
+    // 条件2：相邻两个值都 >=2
+    for (auto& p : cnt) {
+        int x = p.first;
+        if (cnt[x] >= 2 && cnt[x+1] >= 2) return true;
+    }
+    // 条件3：连续三个值，两端 >=2，中间 >=1
+    for (auto& p : cnt) {
+        int x = p.first;
+        if (cnt[x] >= 2 && cnt[x+1] >= 1 && cnt[x+2] >= 2) return true;
+    }
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        cout << (solve(a) ? "Yes" : "No") << '\n';
+    }
+    return 0;
+}

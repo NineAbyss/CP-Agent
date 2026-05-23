@@ -1,0 +1,101 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+double solve(int n, vector<int> h, int m, double p) {
+    vector<int> r(n);
+    for (int i = 0; i < n; i++) {
+        r[i] = h[i] - 1;
+    }
+    sort(r.begin(), r.end());
+    
+    double q = 1.0 - p;
+    
+    // 使用map存储状态
+    map<pair<int, vector<int>>, double> memo;
+    
+    function<double(int, vector<int>)> dfs = [&](int round, vector<int> state) -> double {
+        if (round == m) {
+            for (int x : state) if (x > 0) return 0.0;
+            return 1.0;
+        }
+        
+        sort(state.begin(), state.end());
+        auto key = make_pair(round, state);
+        if (memo.find(key) != memo.end()) return memo[key];
+        
+        bool done = true;
+        for (int x : state) {
+            if (x > 0) {
+                done = false;
+                break;
+            }
+        }
+        if (done) return memo[key] = 1.0;
+        
+        // 剑发光
+        double shine_val = 0.0;
+        bool can_shine = true;
+        for (int x : state) {
+            if (x == 0) {
+                can_shine = false;
+                break;
+            }
+        }
+        
+        if (can_shine) {
+            // 攻击
+            vector<int> new_state = state;
+            for (int &x : new_state) x--;
+            sort(new_state.begin(), new_state.end());
+            double attack = dfs(round + 1, new_state);
+            // 不攻击
+            double no_attack = dfs(round + 1, state);
+            shine_val = max(attack, no_attack);
+        } else {
+            shine_val = dfs(round + 1, state);
+        }
+        
+        // 剑不发光
+        double no_shine_val = dfs(round + 1, state); // 不攻击
+        
+        // 攻击每个可能的怪物
+        for (int i = 0; i < n; i++) {
+            if (state[i] == 0) continue;
+            vector<int> new_state = state;
+            new_state[i]--;
+            sort(new_state.begin(), new_state.end());
+            double val = dfs(round + 1, new_state);
+            no_shine_val = max(no_shine_val, val);
+        }
+        
+        return memo[key] = p * shine_val + q * no_shine_val;
+    };
+    
+    return dfs(0, r);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    cout << fixed << setprecision(9);
+    
+    while (t--) {
+        int n, m, p_prime;
+        cin >> n >> m >> p_prime;
+        double p = p_prime / 100.0;
+        
+        vector<int> h(n);
+        for (int i = 0; i < n; i++) {
+            cin >> h[i];
+        }
+        
+        double ans = solve(n, h, m, p);
+        // 输出6位小数
+        cout << fixed << setprecision(6) << ans << '\n';
+    }
+    
+    return 0;
+}

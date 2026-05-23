@@ -1,0 +1,72 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<vector<int>> grid(n, vector<int>(n));
+        
+        if (n == 1) {
+            grid[0][0] = 0;
+        } else if (n == 2) {
+            // row-major order
+            grid[0][0] = 0; grid[0][1] = 1;
+            grid[1][0] = 2; grid[1][1] = 3;
+        } else if (n == 3) {
+            // optimal arrangement from example
+            grid[0][0] = 8; grid[0][1] = 4; grid[0][2] = 5;
+            grid[1][0] = 6; grid[1][1] = 0; grid[1][2] = 1;
+            grid[2][0] = 7; grid[2][1] = 2; grid[2][2] = 3;
+        } else {
+            // for n >= 4, construct based on distance to bottom-right corner
+            vector<pair<int, int>> positions;
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    positions.push_back({i, j});
+                }
+            }
+            
+            // sort by Chebyshev distance to (n-1, n-1), then Manhattan distance
+            sort(positions.begin(), positions.end(), [n](const pair<int, int>& a, const pair<int, int>& b) {
+                int dx_a = n-1 - a.first;
+                int dy_a = n-1 - a.second;
+                int cheb_a = max(dx_a, dy_a);
+                
+                int dx_b = n-1 - b.first;
+                int dy_b = n-1 - b.second;
+                int cheb_b = max(dx_b, dy_b);
+                
+                if (cheb_a != cheb_b) return cheb_a < cheb_b;
+                
+                int manh_a = dx_a + dy_a;
+                int manh_b = dx_b + dy_b;
+                if (manh_a != manh_b) return manh_a < manh_b;
+                
+                if (a.first != b.first) return a.first > b.first;
+                return a.second > b.second;
+            });
+            
+            for (int idx = 0; idx < n*n; idx++) {
+                int i = positions[idx].first;
+                int j = positions[idx].second;
+                grid[i][j] = idx;
+            }
+        }
+        
+        // output
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                cout << grid[i][j];
+                if (j < n-1) cout << " ";
+            }
+            cout << endl;
+        }
+    }
+    return 0;
+}

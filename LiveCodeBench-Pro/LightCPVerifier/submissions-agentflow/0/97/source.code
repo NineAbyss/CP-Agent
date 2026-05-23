@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+// Utility function to find the median in a given range
+int findMedian(const vector<int>& arr, int start, int end) {
+    vector<int> segment(arr.begin() + start, arr.begin() + end + 1);
+    sort(segment.begin(), segment.end());
+    int size = segment.size();
+    return segment[(size - 1) / 2]; // Median value
+}
+
+// Function to determine if valid partitions can have median <= k
+bool canSplitWithMedianLEK(const vector<int>& a, int k) {
+    int n = a.size();
+    // Two possible valid triplet evaluations in segment positioning
+    for (int l = 0; l < n - 2; ++l) { // Start of first subarray endpoint
+        for (int r = l + 1; r < n - 1; ++r) { // Start of second subarray endpoint
+            int m1 = findMedian(a, 0, l);
+            int m2 = findMedian(a, l + 1, r);
+            int m3 = findMedian(a, r + 1, n - 1);
+            
+            vector<int> medians = {m1, m2, m3};
+            sort(medians.begin(), medians.end());
+            
+            if (medians[1] <= k) return true;
+        }
+    }
+    
+    return false;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        cout << (canSplitWithMedianLEK(a, k) ? "YES\n" : "NO\n");
+    }
+    return 0;
+}

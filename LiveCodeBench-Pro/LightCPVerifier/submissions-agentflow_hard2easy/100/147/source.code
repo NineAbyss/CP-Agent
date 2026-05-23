@@ -1,0 +1,166 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 205;
+const int M = 2005;
+const int T = 40000; // 阈值，c_max * c_max = 200*200=40000
+const long long INF = 1e18;
+
+int n, m, q;
+int c[N], w[N];
+vector<int> adj[N];
+bool reach[N][N]; // reach[i][j] : i 能否到达 j
+long long dp[N][T+1]; // dp[i][j] 走到i恰好花费j的最大力量
+long long pref[N][T+1]; // pref[i][j] = max_{0<=k<=j} dp[i][k]
+
+void compute_reach() {
+    for (int i = 1; i <= n; i++) reach[i][i] = true;
+    for (int u = 1; u <= n; u++) {
+        for (int v : adj[u]) {
+            reach[u][v] = true;
+        }
+    }
+    // Floyd-Warshall 传递闭包
+    for (int k = 1; k <= n; k++) {
+        for (int i = 1; i <= n; i++) {
+            if (reach[i][k]) {
+                for (int j = 1; j <= n; j++) {
+                    if (reach[k][j]) {
+                        reach[i][j] = true;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void compute_dp() {
+    // 初始化
+    for (int i = 1; i <= n; i++) {
+        for (int j = 0; j <= T; j++) {
+            dp[i][j] = -INF;
+        }
+    }
+    dp[1][0] = 0;
+    // 按照拓扑序（编号顺序）处理
+    for (int u = 1; u <= n; u++) {
+        // 在u进行完全背包更新
+        for (int j = c[u]; j <= T; j++) {
+            if (dp[u][j - c[u]] != -INF) {
+                dp[u][j] = max(dp[u][j], dp[u][j - c[u]] + w[u]);
+            }
+        }
+        // 传播到后继
+        for (int v : adj[u]) {
+            for (int j = 0; j <= T; j++) {
+                if (dp[u][j] != -INF) {
+                    dp[v][j] = max(dp[v][j], dp[u][j]);
+                }
+            }
+        }
+    }
+    // 计算前缀最大值
+    for (int i = 1; i <= n; i++) {
+        pref[i][0] = dp[i][0];
+        for (int j = 1; j <= T; j++) {
+            pref[i][j] = max(pref[i][j-1], dp[i][j]);
+        }
+    }
+}
+
+// 对于每个p，预处理最佳物品和查询数据结构
+int best_c[N], best_w[N]; // 路径上性价比最高的物品
+long long best_mod[N][200]; // best_mod[p][rem] 对于最佳物品c=best_c[p]
+
+void preprocess() {
+    // 计算每个p的最佳物品
+    for (int p = 1; p <= n; p++) {
+        int best_i = -1;
+        for (int i = 1; i <= n; i++) {
+            if (reach[1][i] && reach[i][p]) {
+                if (best_i == -1) {
+                    best_i = i;
+                } else {
+                    // 比较性价比 w_i/c_i 和 w_best/c_best
+                    long long left = 1LL * w[i] * c[best_i];
+                    long long right = 1LL * w[best_i] * c[i];
+                    if (left > right || (left == right && w[i] > w[best_i])) {
+                        best_i = i;
+                    }
+                }
+            }
+        }
+        best_c[p] = c[best_i];
+        best_w[p] = w[best_i];
+        
+        // 预处理 best_mod
+        int cc = best_c[p];
+        int ww = best_w[p];
+        // 计算 max_h[rem] = max_{j % cc == rem} (dp[p][j] - (j/cc)*ww)
+        vector<long long> max_h(cc, -INF);
+        for (int j = 0; j <= T; j++) {
+            if (dp[p][j] == -INF) continue;
+            int rem_j = j % cc;
+            long long h = dp[p][j] - (j / cc) * 1LL * ww;
+            if (h > max_h[rem_j]) max_h[rem_j] = h;
+        }
+        // 计算前缀最大值和后缀最大值
+        vector<long long> pre(cc, -INF), suf(cc, -INF);
+        pre[0] = max_h[0];
+        for (int r = 1; r < cc; r++) {
+            pre[r] = max(pre[r-1], max_h[r]);
+        }
+        suf[cc-1] = max_h[cc-1];
+        for (int r = cc-2; r >= 0; r--) {
+            suf[r] = max(suf[r+1], max_h[r]);
+        }
+        // 计算 best_mod[p][rem_r]
+        for (int rem_r = 0; rem_r < cc; rem_r++) {
+            long long val1 = pre[rem_r]; // rem_j <= rem_r
+            long long val2 = (rem_r+1 < cc) ? suf[rem_r+1] - ww : -INF; // rem_j > rem_r
+            best_mod[p][rem_r] = max(val1, val2);
+        }
+    }
+}
+
+long long query(int p, long long r) {
+    if (r <= T) {
+        return pref[p][r];
+    }
+    int cc = best_c[p];
+    int ww = best_w[p];
+    long long qr = r / cc;
+    int rem_r = r % cc;
+    long long base = qr * ww;
+    long long add = best_mod[p][rem_r];
+    return base + add;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    cin >> n >> m;
+    for (int i = 1; i <= n; i++) {
+        cin >> c[i] >> w[i];
+    }
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+    }
+    
+    compute_reach();
+    compute_dp();
+    preprocess();
+    
+    cin >> q;
+    while (q--) {
+        int p;
+        long long r;
+        cin >> p >> r;
+        cout << query(p, r) << "\n";
+    }
+    
+    return 0;
+}

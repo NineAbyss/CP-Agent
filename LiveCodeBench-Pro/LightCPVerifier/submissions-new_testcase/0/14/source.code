@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<vector<int>> a(n, vector<int>(m));
+        int M = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                cin >> a[i][j];
+                M = max(M, a[i][j]);
+            }
+        }
+        vector<pair<int,int>> max_cells;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (a[i][j] == M) {
+                    max_cells.emplace_back(i, j);
+                }
+            }
+        }
+        set<int> rows_set, cols_set;
+        for (auto &p : max_cells) {
+            rows_set.insert(p.first);
+            cols_set.insert(p.second);
+        }
+        if (rows_set.size() == 1 || cols_set.size() == 1) {
+            cout << M - 1 << '\n';
+            continue;
+        }
+        bool found = false;
+        if (rows_set.size() <= cols_set.size()) {
+            for (int r : rows_set) {
+                set<int> cols;
+                for (auto &p : max_cells) {
+                    if (p.first != r) {
+                        cols.insert(p.second);
+                    }
+                }
+                if (cols.size() <= 1) {
+                    found = true;
+                    break;
+                }
+            }
+        } else {
+            for (int c : cols_set) {
+                set<int> rows;
+                for (auto &p : max_cells) {
+                    if (p.second != c) {
+                        rows.insert(p.first);
+                    }
+                }
+                if (rows.size() <= 1) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (found) {
+            cout << M - 1 << '\n';
+        } else {
+            cout << M << '\n';
+        }
+    }
+    return 0;
+}

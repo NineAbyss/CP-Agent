@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <tuple>
+#include <string>
+
+const int MOD = 998244353;
+const int MAXN = 500;
+
+// Precompute factorials and inverses
+int fact[MAXN + 1];
+int invFact[MAXN + 1];
+
+int powmod(int a, int b, int mod) {
+    int res = 1;
+    while (b > 0) {
+        if (b % 2 == 1)
+            res = 1LL * res * a % mod;
+        a = 1LL * a * a % mod;
+        b /= 2;
+    }
+    return res;
+}
+
+void precomputeFactorials() {
+    fact[0] = 1;
+    for (int i = 1; i <= MAXN; ++i)
+        fact[i] = 1LL * fact[i - 1] * i % MOD;
+    invFact[MAXN] = powmod(fact[MAXN], MOD - 2, MOD);
+    for (int i = MAXN - 1; i >= 0; --i)
+        invFact[i] = 1LL * invFact[i + 1] * (i + 1) % MOD;
+}
+
+int binom(int n, int k) {
+    if (k < 0 || k > n)
+        return 0;
+    return 1LL * fact[n] * invFact[k] % MOD * invFact[n - k] % MOD;
+}
+
+int main() {
+    precomputeFactorials();
+
+    int t = 1;
+    std::vector<std::tuple<int, int, std::string>> testCases;
+    testCases.push_back(std::make_tuple(3, 1, "010"));
+
+    for (size_t i = 0; i < testCases.size(); ++i) {
+        int n = std::get<0>(testCases[i]);
+        int k = std::get<1>(testCases[i]);
+        std::string s = std::get<2>(testCases[i]);
+
+        int count0 = 0;
+        for (char c : s) {
+            if (c == '0') count0++;
+        }
+        std::cout << "Count of 0s: " << count0 << ", Needed: " << k << "\\n";
+        if (count0 < k) {
+            std::cout << 0 << "\\n";
+        } else {
+            std::cout << binom(count0, k) << "\\n";
+        }
+    }
+    return 0;
+}

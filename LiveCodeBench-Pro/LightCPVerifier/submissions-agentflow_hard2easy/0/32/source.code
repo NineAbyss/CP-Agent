@@ -1,0 +1,34 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        string s;
+        cin >> n >> k >> s;
+        
+        int cnt0 = 0, cnt1 = 0;
+        for (char c : s) {
+            if (c == '0') cnt0++;
+            else cnt1++;
+        }
+        
+        int q = n/2 - k; // 坏对数量
+        
+        bool ok = true;
+        if (q < 0 || q > n/2) ok = false;
+        else if (q > cnt0 || q > cnt1) ok = false;
+        else if ((cnt0 - q) % 2 != 0) ok = false;
+        
+        cout << (ok ? "YES" : "NO") << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

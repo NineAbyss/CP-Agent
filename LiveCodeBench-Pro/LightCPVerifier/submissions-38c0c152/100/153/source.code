@@ -1,0 +1,114 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int add(int a, int b) {
+    a += b;
+    if (a >= MOD) a -= MOD;
+    return a;
+}
+int mul(int a, int b) {
+    return (1LL * a * b) % MOD;
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> pos(n, -1);
+    for (int i = 0; i < n; ++i) {
+        int x;
+        cin >> x;
+        if (x != -1) pos[x] = i;
+    }
+
+    vector<vector<int>> dp(n, vector<int>(n, 0));
+    vector<vector<int>> sum(n, vector<int>(n, 0));
+
+    // 初始化数字0
+    if (pos[0] != -1) {
+        dp[pos[0]][pos[0]] = 1;
+    } else {
+        for (int i = 0; i < n; ++i) dp[i][i] = 1;
+    }
+
+    for (int i = 1; i < n; ++i) {
+        vector<vector<int>> ndp(n, vector<int>(n, 0));
+        vector<vector<int>> nsum(n, vector<int>(n, 0));
+
+        for (int l = 0; l < n; ++l) {
+            for (int r = l; r < n; ++r) {
+                int ways = dp[l][r];
+                if (ways == 0) continue;
+                int cur = sum[l][r];
+                int len = r - l + 1;
+                int inside = len - i;
+                int left = l;
+                int right = n - 1 - r;
+
+                if (pos[i] != -1) {
+                    int p = pos[i];
+                    int nl = l, nr = r;
+                    if (p < l) nl = p;
+                    if (p > r) nr = p;
+                    int add_val = 0;
+                    if (p < l) {
+                        add_val = mul(i, mul(l - p, n - r));
+                    } else if (p > r) {
+                        add_val = mul(i, mul(l + 1, p - r));
+                    }
+                    ndp[nl][nr] = add(ndp[nl][nr], ways);
+                    nsum[nl][nr] = add(nsum[nl][nr], add(cur, mul(ways, add_val)));
+                } else {
+                    // 放在左边
+                    if (left > 0) {
+                        for (int p = 0; p < l; ++p) {
+                            int add_val = mul(i, mul(l - p, n - r));
+                            ndp[p][r] = add(ndp[p][r], ways);
+                            nsum[p][r] = add(nsum[p][r], add(cur, mul(ways, add_val)));
+                        }
+                    }
+                    // 放在右边
+                    if (right > 0) {
+                        for (int p = r + 1; p < n; ++p) {
+                            int add_val = mul(i, mul(l + 1, p - r));
+                            ndp[l][p] = add(ndp[l][p], ways);
+                            nsum[l][p] = add(nsum[l][p], add(cur, mul(ways, add_val)));
+                        }
+                    }
+                    // 放在内部
+                    if (inside > 0) {
+                        ndp[l][r] = add(ndp[l][r], mul(inside, ways));
+                        nsum[l][r] = add(nsum[l][r], mul(inside, cur));
+                    }
+                }
+            }
+        }
+
+        dp = move(ndp);
+        sum = move(nsum);
+    }
+
+    int ans = 0;
+    int total_ways = 0;
+    for (int l = 0; l < n; ++l) {
+        for (int r = l; r < n; ++r) {
+            ans = add(ans, sum[l][r]);
+            total_ways = add(total_ways, dp[l][r]);
+        }
+    }
+    ans = add(ans, mul(n, total_ways));
+
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

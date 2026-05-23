@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        
+        // Collect all numbers
+        vector<int> all = a;
+        all.insert(all.end(), b.begin(), b.end());
+        sort(all.begin(), all.end());
+        vector<int> a_target(all.begin(), all.begin() + n);
+        vector<int> b_target(all.begin() + n, all.end());
+        
+        vector<pair<int, int>> ops;
+        // Step 1: ensure each position has correct array assignment
+        for (int i = 0; i < n; i++) {
+            // check if a[i] belongs to b_target
+            bool a_in_b = false;
+            for (int x : b_target) {
+                if (a[i] == x) {
+                    a_in_b = true;
+                    break;
+                }
+            }
+            if (a_in_b) {
+                ops.push_back({3, i+1});
+                swap(a[i], b[i]);
+            }
+        }
+        // Now a contains only numbers from a_target, b from b_target // Sort a using bubble sort
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n-1-i; j++) {
+                if (a[j] > a[j+1]) {
+                    ops.push_back({1, j+1});
+                    swap(a[j], a[j+1]);
+                }
+            }
+        }
+        // Sort b using bubble sort
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n-1-i; j++) {
+                if (b[j] > b[j+1]) {
+                    ops.push_back({2, j+1});
+                    swap(b[j], b[j+1]);
+                }
+            }
+        }
+        // Output
+        cout << ops.size() << '\n';
+        for (auto& op : ops) {
+            cout << op.first << ' ' << op.second << '\n';
+        }
+    }
+    return 0;
+}

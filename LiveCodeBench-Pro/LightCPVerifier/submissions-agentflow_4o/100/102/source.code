@@ -1,0 +1,27 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t; // number of test cases
+    cin >> t;
+    while (t--) {
+        int n; // length of binary string s
+        cin >> n;
+        string s;
+        cin >> s;
+
+        int num_of_ones = 0;
+        for (char c : s) {
+            if (c == '1') {
+                num_of_ones++;
+            }
+        }
+
+        int total_ones = num_of_ones * (n - 1) + (n - num_of_ones);
+        
+        cout << total_ones << '\n';
+    }
+
+    return 0;
+}

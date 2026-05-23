@@ -1,0 +1,22 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n;
+        cin >> n;
+        cout << "digit" << endl;
+        string res;
+        cin >> res;
+        cout << "digit" << endl;
+        cin >> res;
+        cout << "add " << (n - 1) << endl;
+        cin >> res;
+        cout << "!" << endl;
+        cin >> res;
+    }
+    return 0;
+}

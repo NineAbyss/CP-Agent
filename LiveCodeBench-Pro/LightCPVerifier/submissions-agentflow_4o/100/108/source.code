@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Calculate minimal reorders for binary search success
+int calculateReorders(const vector<int>& p, int l, int r, int k) {
+    l--; r--; // Convert to zero-based index
+    
+    // Confirm presence of `k`
+    if (find(p.begin() + l, p.begin() + r + 1, k) == p.begin() + r + 1) {
+        return -1;
+    }
+
+    // Find the position of `k` when sorted
+    vector<int> subarray(p.begin() + l, p.begin() + r + 1);
+    sort(subarray.begin(), subarray.end());
+    int k_pos = find(subarray.begin(), subarray.end(), k) - subarray.begin();
+
+    int d = 0;
+    while (l <= r) {
+        int m = (l + r) / 2;
+        if (p[m] == k) {
+            return d;
+        }
+        
+        // Adjust search range and count disruptions
+        if (p[m] < k) {
+            l = m + 1;
+        } else {
+            r = m - 1;
+        }
+        
+        d++;
+    }
+
+    return d;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        vector<int> p(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> p[i];
+        }
+        while (q--) {
+            int l, r, k;
+            cin >> l >> r >> k;
+            int result = calculateReorders(p, l, r, k);
+            cout << result << '\n';
+        }
+    }
+    return 0;
+}

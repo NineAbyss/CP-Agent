@@ -1,0 +1,42 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+void solve() {
+    int t; 
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        
+        // Calculate the number of distinct segments, needed for structural assessment.
+        int distinct_segments = 1;
+        for (int i = 1; i < n; ++i) {
+            if (a[i] != a[i - 1]) {
+                distinct_segments++;
+            }
+        }
+
+        // To recreate the array, we need sufficient operations for placement 
+        // and allow for the sum if k > n (to cover optional reductions).
+        if (k >= distinct_segments && k >= n) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    solve();
+    return 0;
+}

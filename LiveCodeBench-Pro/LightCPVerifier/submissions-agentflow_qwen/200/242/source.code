@@ -1,0 +1,19 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long a, b, c, d;
+        cin >> a >> b >> c >> d;
+        bool rush_flower = (a > b - 1) && (c > b - 1);
+        bool kill_knight_then_rush = (d <= c) && (a > d - 1) && (c > d - 1);
+        if (rush_flower || kill_knight_then_rush) {
+            cout << "Gellyfish\n";
+        } else {
+            cout << "Flower\n";
+        }
+    }
+    return 0;
+}

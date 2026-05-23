@@ -1,0 +1,27 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, l, r;
+        cin >> n >> m >> l >> r;
+        int x_min = max(0, m - r);
+        int x_max = min(-l, m);
+        int best_x = x_min;
+        int best_diff = abs(2*x_min - m);
+        for (int x = x_min+1; x <= x_max; x++) {
+            int diff = abs(2*x - m);
+            if (diff < best_diff || (diff == best_diff && x < best_x)) {
+                best_diff = diff;
+                best_x = x;
+            }
+        }
+        int lp = -best_x;
+        int rp = m - best_x;
+        cout << lp << " " << rp << "\n";
+    }
+    return 0;
+}

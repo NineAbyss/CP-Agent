@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool can(int x, const vector<int>& a, int k) {
+    if (x == 0) return true;
+    int n = (int)a.size();
+    // 快速检查：整个数组是否包含 0..x-1 所有数
+    vector<bool> global(x, false);
+    for (int v : a) {
+        if (v < x) global[v] = true;
+    }
+    for (int i = 0; i < x; i++) {
+        if (!global[i]) return false;
+    }
+    // 贪心分段
+    vector<bool> seen(x, false);
+    vector<int> cur;
+    cur.reserve(x);
+    int have = 0;
+    int segments = 0;
+    for (int v : a) {
+        if (v < x && !seen[v]) {
+            seen[v] = true;
+            cur.push_back(v);
+            have++;
+        }
+        if (have == x) {
+            segments++;
+            // 清空当前段的状态
+            for (int u : cur) seen[u] = false;
+            cur.clear();
+            have = 0;
+        }
+    }
+    return segments >= k;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        int lo = 0, hi = n + 2;
+        while (lo < hi) {
+            int mid = (lo + hi + 1) / 2;
+            if (can(mid, a, k)) {
+                lo = mid;
+            } else {
+                hi = mid - 1;
+            }
+        }
+        cout << lo << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

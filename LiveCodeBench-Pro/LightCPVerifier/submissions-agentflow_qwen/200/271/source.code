@@ -1,0 +1,71 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MAX_K = 500000;
+vector<long long> F(MAX_K + 1, 0);
+
+// Function to precompute F[k] = sum of first k primes
+void precompute() {
+    int MAX = 10000000;
+    vector<bool> is_prime(MAX + 1, true);
+    is_prime[0] = is_prime[1] = false;
+    for (int i = 2; i * i <= MAX; i++) {
+        if (is_prime[i]) {
+            for (int j = i * i; j <= MAX; j += i) {
+                is_prime[j] = false;
+            }
+        }
+    }
+
+    vector<int> primes;
+    for (int i = 2; i <= MAX && primes.size() < MAX_K; i++) {
+        if (is_prime[i]) {
+            primes.push_back(i);
+        }
+    }
+
+    F[0] = 0;
+    for (int i = 1; i <= MAX_K; i++) {
+        F[i] = F[i - 1] + primes[i - 1];
+    }
+}
+
+int main() {
+    precompute();
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        // Sort in descending order
+        sort(a.begin(), a.end(), greater<long long>());
+        
+        // Compute prefix sums S[k]
+        vector<long long> S(n + 1, 0);
+        for (int i = 0; i < n; i++) {
+            S[i + 1] = S[i] + a[i];
+        }
+        
+        // Find maximum k such that S[k] >= F[k]
+        int max_k = 0;
+        for (int k = 0; k <= n; k++) {
+            if (S[k] >= F[k]) {
+                max_k = k;
+            } else {
+                // Since S[k] increases slower than F[k] eventually, we can break early? // But F[k] grows faster, so once it fails, it may not recover? Actually no: S[k] increases with k, but F[k] also increases.
+                // We must check all k from 0 to n. // Do nothing, just continue to ensure we get the last valid k.
+            }
+        }
+        
+        cout << n - max_k << '\n';
+    }
+    return 0;
+}

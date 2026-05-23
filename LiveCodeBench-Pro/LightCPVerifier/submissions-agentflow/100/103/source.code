@@ -1,0 +1,23 @@
+#include <iostream>
+#include <string>
+
+int main() {
+    int t;
+    std::cin >> t;
+    std::cin.ignore(); // Consume newline after reading integer t
+    
+    for (int i = 0; i < t; ++i) {
+        std::string a, b, c;
+        std::cin >> a >> b >> c;
+        
+        // Take the first letter of each string and concatenate
+        std::string modern_name;
+        modern_name += a[0];
+        modern_name += b[0];
+        modern_name += c[0];
+        
+        std::cout << modern_name << std::endl;
+    }
+
+    return 0;
+}

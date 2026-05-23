@@ -1,0 +1,70 @@
+#include <iostream>
+#include <vector>
+#include <bitset>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+const int MAXN = 305;
+
+int main() {
+    // 第三个样例
+    int n = 4, k = 3;
+    
+    // G1: 无边
+    vector<bitset<MAXN>> adj1(n+1);
+    bool edge1[MAXN][MAXN] = {0};
+    
+    // G2: 边 3-1, 1-4, 1-2
+    vector<bitset<MAXN>> adj2(n+1);
+    bool edge2[MAXN][MAXN] = {0};
+    adj2[3][1] = adj2[1][3] = 1; edge2[3][1] = edge2[1][3] = 1;
+    adj2[1][4] = adj2[4][1] = 1; edge2[1][4] = edge2[4][1] = 1;
+    adj2[1][2] = adj2[2][1] = 1; edge2[1][2] = edge2[2][1] = 1;
+    
+    // G3: 边 4-2, 4-3, 1-2, 2-3
+    vector<bitset<MAXN>> adj3(n+1);
+    bool edge3[MAXN][MAXN] = {0};
+    adj3[4][2] = adj3[2][4] = 1; edge3[4][2] = edge3[2][4] = 1;
+    adj3[4][3] = adj3[3][4] = 1; edge3[4][3] = edge3[3][4] = 1;
+    adj3[1][2] = adj3[2][1] = 1; edge3[1][2] = edge3[2][1] = 1;
+    adj3[2][3] = adj3[3][2] = 1; edge3[2][3] = edge3[3][2] = 1;
+    
+    // 检查 G1 的可合并对
+    cout << "G1 mergeable pairs:" << endl;
+    for (int u = 1; u <= n; u++) {
+        for (int v = u+1; v <= n; v++) {
+            bitset<MAXN> nu = adj1[u], nv = adj1[v];
+            nu[v] = 0; nv[u] = 0;
+            if (nu == nv) {
+                cout << u << " " << v << " edge: " << edge1[u][v] << endl;
+            }
+        }
+    }
+    
+    // 检查 G2 的可合并对
+    cout << "\nG2 mergeable pairs:" << endl;
+    for (int u = 1; u <= n; u++) {
+        for (int v = u+1; v <= n; v++) {
+            bitset<MAXN> nu = adj2[u], nv = adj2[v];
+            nu[v] = 0; nv[u] = 0;
+            if (nu == nv) {
+                cout << u << " " << v << " edge: " << edge2[u][v] << endl;
+            }
+        }
+    }
+    
+    // 检查 G3 的可合并对
+    cout << "\nG3 mergeable pairs:" << endl;
+    for (int u = 1; u <= n; u++) {
+        for (int v = u+1; v <= n; v++) {
+            bitset<MAXN> nu = adj3[u], nv = adj3[v];
+            nu[v] = 0; nv[u] = 0;
+            if (nu == nv) {
+                cout << u << " " << v << " edge: " << edge3[u][v] << endl;
+            }
+        }
+    }
+    
+    return 0;
+}

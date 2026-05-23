@@ -1,0 +1,51 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+// Function to determine the floor from the classroom index
+int getFloor(int index) {
+    return index / 100;
+}
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<int> classrooms(m);
+
+        for (int i = 0; i < m; ++i) {
+            cin >> classrooms[i];
+        }
+
+        // Sort the classrooms based on their floor numbers
+        sort(classrooms.begin(), classrooms.end(), [](int a, int b) {
+            return getFloor(a) < getFloor(b);
+        });
+
+        vector<vector<int>> schedule(n, vector<int>(6));
+
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < 6; ++j) {
+                if ((i * 6 + j) / m % 2 == 0) {
+                    schedule[i][j] = classrooms[(i * 6 + j) % m];
+                } else {
+                    schedule[i][j] = classrooms[m - 1 - (i * 6 + j) % m];
+                }
+            }
+        }
+
+        // Output the schedule for each group
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < 6; ++j) {
+                cout << schedule[i][j] << (j == 5 ? "\n" : " ");
+            }
+        }
+    }
+    
+    return 0;
+}

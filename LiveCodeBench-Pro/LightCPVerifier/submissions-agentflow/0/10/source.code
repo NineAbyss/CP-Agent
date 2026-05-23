@@ -1,0 +1,65 @@
+#include <iostream>
+#include <vector>
+#include <deque>
+#include <unordered_map>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long s, x;
+        cin >> n >> s >> x;
+
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        long long current_sum = 0, count = 0;
+        unordered_map<long long, int> prefix_count;
+        prefix_count[0] = 1;
+
+        deque<int> max_deque; 
+        int start = 0;
+
+        for (int end = 0; end < n; ++end) {
+            current_sum += a[end];
+            
+            // Maintain the maximum value in the current window
+            while (!max_deque.empty() && a[max_deque.back()] <= a[end]) {
+                max_deque.pop_back();
+            }
+            max_deque.push_back(end);
+
+            // Adjust the window if the max is larger than x
+            while (start <= end && max_deque.front() < start) {
+                max_deque.pop_front();
+            }
+            while (start <= end && a[max_deque.front()] > x) {
+                current_sum -= a[start];
+                start++;
+                if (max_deque.front() < start) max_deque.pop_front();
+            }
+            
+            // Check the validity of the current window
+            if (!max_deque.empty() && a[max_deque.front()] == x) {
+                long long needed_sum = current_sum - s;
+                if (prefix_count.find(needed_sum) != prefix_count.end()) {
+                    count += prefix_count[needed_sum];
+                }
+            }
+
+            // Update prefix sums count
+            prefix_count[current_sum]++;
+        }
+
+        cout << count << '\n';
+    }
+
+    return 0;
+}

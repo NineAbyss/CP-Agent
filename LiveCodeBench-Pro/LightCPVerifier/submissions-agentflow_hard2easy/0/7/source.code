@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    int M = -1;
+    vector<vector<int>> a(n, vector<int>(m));
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            cin >> a[i][j];
+            M = max(M, a[i][j]);
+        }
+    }
+    
+    vector<int> row_cnt(n, 0);
+    vector<int> col_cnt(m, 0);
+    int total_max = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            if (a[i][j] == M) {
+                row_cnt[i]++;
+                col_cnt[j]++;
+                total_max++;
+            }
+        }
+    }
+    
+    bool can_reduce = false;
+    if (total_max == 1) {
+        can_reduce = true;
+    } else {
+        bool single_row = false, single_col = false;
+        for (int i = 0; i < n; i++) if (row_cnt[i] == total_max) single_row = true;
+        for (int j = 0; j < m; j++) if (col_cnt[j] == total_max) single_col = true;
+        if (single_row || single_col) {
+            can_reduce = true;
+        } else {
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < m; j++) {
+                    int covered = row_cnt[i] + col_cnt[j] - (a[i][j] == M ? 1 : 0);
+                    if (covered == total_max) {
+                        can_reduce = true;
+                        goto done;
+                    }
+                }
+            }
+        }
+    }
+done:
+    if (can_reduce) cout << M - 1 << '\n';
+    else cout << M << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

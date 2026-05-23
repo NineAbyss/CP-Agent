@@ -1,0 +1,69 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+
+using namespace std;
+
+void solve(int n, long long m) {
+    // 可行性检查
+    if (m < n || m > static_cast<long long>(n) * (n + 1) / 2) {
+        cout << "-1\n";
+        return;
+    }
+
+    vector<int> depth(n + 1, 0);
+    depth[1] = 1;
+    long long divinity_sum = 1;
+    int node = 2;
+    queue<int> q;
+    q.push(1);
+
+    vector<pair<int, int>> edges;
+
+    // 构建树
+    while (node <= n && !q.empty()) {
+        int parent = q.front();
+        q.pop();
+
+        while (node <= n && divinity_sum + depth[parent] + 1 <= m) {
+            depth[node] = depth[parent] + 1;
+            divinity_sum += depth[node];
+            edges.emplace_back(parent, node);
+            q.push(node);
+            node++;
+        }
+    }
+
+    // 调整
+    for (int i = n; i > 0 && divinity_sum < m; --i) {
+        long long adjust = min(static_cast<long long>(m - divinity_sum), static_cast<long long>(depth[i] - 1));
+        divinity_sum += adjust;
+        depth[i] -= adjust;
+    }
+
+    if (divinity_sum != m) {
+        cout << "-1\n";
+        return;
+    }
+
+    // 输出结果
+    cout << "1\n";
+    for (auto &edge : edges) {
+        cout << edge.first << " " << edge.second << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long m;
+        cin >> n >> m;
+        solve(n, m);
+    }
+    return 0;
+}

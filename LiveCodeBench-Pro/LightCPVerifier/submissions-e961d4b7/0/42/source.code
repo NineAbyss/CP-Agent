@@ -1,0 +1,63 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const long long INF = 4e18;
+
+bool check(long long X, int n, const vector<long long>& b, const vector<vector<pair<int, long long>>>& adj) {
+    vector<long long> need(n + 1, INF);
+    need[n] = 0;
+    for (int v = n; v >= 1; v--) {
+        for (auto& [u, w] : adj[v]) {
+            if (need[u] >= INF) continue;
+            long long val = max(w, need[u] - b[u]);
+            if (val <= X) {
+                if (val < need[v]) {
+                    need[v] = val;
+                }
+            }
+        }
+    }
+    return need[1] <= b[1] && need[1] < INF;
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<long long> b(n + 1);
+        for (int i = 1; i <= n; i++) {
+            cin >> b[i];
+        }
+        vector<vector<pair<int, long long>>> adj(n + 1);
+        for (int i = 0; i < m; i++) {
+            int s, t;
+            long long w;
+            cin >> s >> t >> w;
+            adj[s].push_back({t, w});
+        }
+        
+        long long lo = 0, hi = 2e18;
+        long long ans = -1;
+        while (lo <= hi) {
+            long long mid = lo + (hi - lo) / 2;
+            if (check(mid, n, b, adj)) {
+                ans = mid;
+                hi = mid - 1;
+            } else {
+                lo = mid + 1;
+            }
+        }
+        cout << ans << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve_one(const vector<int>& a) {
+    int n = a.size();
+    int ans = n;
+    for (int mn_val = 1; mn_val <= 50; mn_val++) {
+        for (int mx_val = mn_val; mx_val <= 50; mx_val++) {
+            if ((mn_val + mx_val) % 2 != 0) continue;
+            bool has_min = false, has_max = false;
+            int remove_cnt = 0;
+            for (int x : a) {
+                if (x < mn_val || x > mx_val) {
+                    remove_cnt++;
+                } else {
+                    if (x == mn_val) has_min = true;
+                    if (x == mx_val) has_max = true;
+                }
+            }
+            if (has_min && has_max) {
+                ans = min(ans, remove_cnt);
+            }
+        }
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        cout << solve_one(a) << '\n';
+    }
+    return 0;
+}

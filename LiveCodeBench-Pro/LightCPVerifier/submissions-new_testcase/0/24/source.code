@@ -1,0 +1,101 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+#include <bitset>
+using namespace std;
+
+int popcount(long long x) {
+    return __builtin_popcountll(x);
+}
+
+const long long INF = 1LL << 62;
+
+long long next_popcount(long long a, int m) {
+    if (m > 60) return INF;
+    long long best = INF;
+    if (popcount(a) == m) best = a;
+    for (int i = 0; i <= 60; i++) {
+        if ((a >> i) & 1) continue;
+        long long y = a;
+        y |= (1LL << i);
+        y &= ~((1LL << i) - 1);
+        int cur = popcount(y);
+        if (cur > m) continue;
+        int need = m - cur;
+        if (need < 0) continue;
+        if (need > i) continue;
+        y |= (1LL << need) - 1;
+        if (y >= a) {
+            if (y < best) best = y;
+        }
+    }
+    return best;
+}
+
+void solve() {
+    int n;
+    long long k;
+    cin >> n >> k;
+    vector<long long> a(n);
+    long long total_pop = 0;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        total_pop += popcount(a[i]);
+    }
+    // for each number, compute options
+    vector<vector<pair<int, long long>>> options(n);
+    for (int i = 0; i < n; i++) {
+        int base = popcount(a[i]);
+        options[i].push_back({0, 0});
+        for (int d = 1; d <= 60; d++) {
+            int m = base + d;
+            long long x = next_popcount(a[i], m);
+            if (x == INF) break;
+            long long cost = x - a[i];
+            if (cost > k) break;
+            options[i].push_back({d, cost});
+        }
+    }
+    int max_delta = 60 * n;
+    vector<long long> dp(max_delta + 1, INF);
+    dp[0] = 0;
+    int current_max = 0;
+    for (int i = 0; i < n; i++) {
+        vector<long long> ndp = dp; // start with previous dp, representing not taking any option? but we already have option delta=0 with cost=0, so ndp initially is dp which includes not taking. // Actually, ndp = dp means we keep the previous values, which corresponds to taking delta=0 option.
+        // Now update for other options
+        for (auto [d, c] : options[i]) {
+            if (c == 0) continue; // already considered in ndp = dp
+            for (int j = 0; j <= current_max; j++) {
+                if (dp[j] == INF) continue;
+                if (dp[j] + c > k) continue;
+                int nj = j + d;
+                if (ndp[nj] > dp[j] + c) {
+                    ndp[nj] = dp[j] + c;
+                }
+            }
+        }
+        dp = move(ndp);
+        // update current_max
+        while (current_max < max_delta && dp[current_max+1] < INF) current_max++;
+        current_max = min(current_max + 60, max_delta); // safe bound
+    }
+    int best_delta = 0;
+    for (int j = 0; j <= max_delta; j++) {
+        if (dp[j] <= k) {
+            best_delta = j;
+        }
+    }
+    cout << total_pop + best_delta << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

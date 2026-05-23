@@ -1,0 +1,17 @@
+#include <iostream>
+#include <vector>
+
+int main() {
+    int t;
+    std::cin >> t;
+    std::vector<long long> results(t);
+    for (int i = 0; i < t; ++i) {
+        long long n;
+        std::cin >> n;
+        results[i] = 2 * n;
+    }
+    for (const auto& result : results) {
+        std::cout << result << std::endl;
+    }
+    return 0;
+}

@@ -1,0 +1,112 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <map>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+
+        if (k == 1) {
+            cout << "! -1\n";
+            cout.flush();
+            continue;
+        }
+
+        map<int, int> pos_to_val;
+        int q = 0;
+        int low_p = -1, high_p = -1;
+
+        bool found_bad = false;
+        for (int i = k; i <= min(2*k, n); i++) {
+            for (int j = i-k+1; j <= i; j++) {
+                if (pos_to_val.count(j)) continue;
+                cout << "? " << j << endl;
+                cout.flush();
+                q++;
+                cin >> pos_to_val[j];
+                if (q >= 250) break;
+            }
+            if (q >= 250) break;
+
+            set<int> win;
+            bool dup = false;
+            for (int j = i-k+1; j <= i; j++) {
+                if (win.count(pos_to_val[j])) {
+                    dup = true;
+                    break;
+                }
+                win.insert(pos_to_val[j]);
+            }
+            if (dup) {
+                low_p = i - k + 1;
+                high_p = i - 1;
+                found_bad = true;
+                break;
+            }
+        }
+
+        if (!found_bad) {
+            cout << "! -1\n";
+            cout.flush();
+            continue;
+        }
+
+        int L = max(k, low_p);
+        int R = min(n-k, high_p);
+        if (L > R) {
+            cout << "! -1\n";
+            cout.flush();
+            continue;
+        }
+
+        vector<int> candidates;
+        for (int p = L; p <= R; p++) {
+            bool valid = true;
+            for (int j = k; j <= p; j++) {
+                set<int> win;
+                bool ok = true;
+                for (int pos = j-k+1; pos <= j; pos++) {
+                    if (!pos_to_val.count(pos)) {
+                        if (q >= 250) {
+                            ok = false;
+                            break;
+                        }
+                        cout << "? " << pos << endl;
+                        cout.flush();
+                        q++;
+                        cin >> pos_to_val[pos];
+                    }
+                    int v = pos_to_val[pos];
+                    if (win.count(v)) {
+                        ok = false;
+                        break;
+                    }
+                    win.insert(v);
+                }
+                if (!ok) {
+                    valid = false;
+                    break;
+                }
+            }
+            if (valid) {
+                candidates.push_back(p);
+            }
+        }
+
+        if (candidates.size() == 1) {
+            cout << "! " << candidates[0] << " " << n - candidates[0] << "\n";
+        } else {
+            cout << "! -1\n";
+        }
+        cout.flush();
+    }
+    return 0;
+}

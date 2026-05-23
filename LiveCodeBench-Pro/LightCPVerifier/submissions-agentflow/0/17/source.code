@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+// Function to count the number of set bits in an integer
+int countSetBits(int x) {
+    return __builtin_popcount(x);
+}
+
+// Function to find the smallest power of 2 not captured by x (position of the first 0 bit)
+long long nextPowerIncrement(int x) {
+    long long pos = 1;
+    while (x & pos) {
+        pos <<= 1;
+    }
+    return pos;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+
+        vector<int> a(n);
+        long long totalBeauty = 0;
+
+        // Priority queue as a min-heap for tracking the lowest increment
+        priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> increments;
+
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+            totalBeauty += countSetBits(a[i]);
+            long long increment = nextPowerIncrement(a[i]);
+            increments.push(make_pair(increment, i));
+        }
+
+        while (!increments.empty() && k > 0) {
+            auto [increment, idx] = increments.top();
+            increments.pop();
+
+            if (increment <= k) {
+                k -= increment;
+                a[idx] += increment;
+                totalBeauty++;
+                long long newIncrement = nextPowerIncrement(a[idx]);
+                increments.push(make_pair(newIncrement, idx));
+            }
+        }
+
+        cout << totalBeauty << "\n";
+    }
+
+    return 0;
+}

@@ -1,0 +1,133 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 70005;
+const int LOG = 17;
+
+vector<int> tree[MAXN];
+int depth[MAXN];
+int parent[MAXN][LOG];
+
+void dfs_lca(int u, int p) {
+    parent[u][0] = p;
+    for (int i = 1; i < LOG; ++i) {
+        if (parent[u][i-1] != -1) {
+            int prev = parent[u][i-1];
+            parent[u][i] = (prev != -1 && parent[prev][i-1] != -1) ? parent[prev][i-1] : -1;
+        } else {
+            parent[u][i] = -1;
+        }
+    }
+    for (int v : tree[u]) {
+        if (v != p) {
+            depth[v] = depth[u] + 1;
+            dfs_lca(v, u);
+        }
+    }
+}
+
+void precompute_lca(int n) {
+    memset(parent, -1, sizeof(parent));
+    for (int i = 1; i <= n; ++i) {
+        depth[i] = 0;
+    }
+    dfs_lca(1, -1);
+}
+
+int lca(int u, int v) {
+    if (u == v) return u;
+    if (depth[u] < depth[v]) swap(u, v);
+    int diff = depth[u] - depth[v];
+    for (int i = 0; i < LOG; ++i) {
+        if (diff & (1 << i)) {
+            if (u == -1) break;
+            u = parent[u][i];
+        }
+    }
+    if (u == -1 || u == v) return v;
+    for (int i = LOG - 1; i >= 0; --i) {
+        if (parent[u][i] != parent[v][i]) {
+            u = parent[u][i];
+            v = parent[v][i];
+        }
+    }
+    return parent[u][0];
+}
+
+int dist(int u, int v) {
+    int w = lca(u, v);
+    return depth[u] + depth[v] - 2 * depth[w];
+}
+
+string s;
+vector<int> active;
+bool visited[MAXN];
+int ans[MAXN];
+
+int dfs_nice(int cur, long long last_d) {
+    int max_len = 1;
+    for (int next : active) {
+        if (visited[next]) continue;
+        long long d = dist(cur, next);
+        if (d >= 2 * last_d) {
+            visited[next] = true;
+            int len = 1 + dfs_nice(next, d);
+            max_len = max(max_len, len);
+            visited[next] = false;
+        }
+    }
+    return max_len;
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    cin >> s;
+
+    for (int i = 1; i <= n; ++i) {
+        tree[i].clear();
+        depth[i] = 0;
+    }
+
+    for (int i = 0; i < n - 1; ++i) {
+        int u, v;
+        cin >> u >> v;
+        tree[u].push_back(v);
+        tree[v].push_back(u);
+    }
+
+    precompute_lca(n);
+
+    active.clear();
+    for (int i = 0; i < n; ++i) {
+        if (s[i] == '1') {
+            active.push_back(i+1);
+        }
+    }
+
+    fill(ans, ans + n + 1, -1);
+    fill(visited, visited + n + 1, false);
+
+    for (int start : active) {
+        visited[start] = true;
+        ans[start] = dfs_nice(start, 0);
+        visited[start] = false;
+    }
+
+    for (int i = 1; i <= n; ++i) {
+        cout << ans[i] << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

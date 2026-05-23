@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+bool check(const vector<vector<int>>& statements, int l, int r, int n) {
+    vector<int> cover(n+1, 0);
+    // apply type0
+    for (int i = l-1; i < r; i++) {
+        if (statements[i][0] == 0) {
+            int a = statements[i][1], b = statements[i][2];
+            for (int j = a; j <= b; j++) cover[j] = 1;
+        }
+    }
+    // check type1
+    for (int i = l-1; i < r; i++) {
+        if (statements[i][0] == 1) {
+            int a = statements[i][1], b = statements[i][2];
+            bool ok = false;
+            for (int j = a; j <= b; j++) {
+                if (cover[j] == 0) { ok = true; break; }
+            }
+            if (!ok) return false;
+        }
+    }
+    return true;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<vector<int>> statements(m);
+        for (int i = 0; i < m; i++) {
+            int x, a, b;
+            cin >> x >> a >> b;
+            statements[i] = {x, a, b};
+        }
+        int q;
+        cin >> q;
+        while (q--) {
+            int l, r;
+            cin >> l >> r;
+            bool ans = check(statements, l, r, n);
+            cout << (ans ? "YES" : "NO") << '\n';
+        }
+    }
+    return 0;
+}

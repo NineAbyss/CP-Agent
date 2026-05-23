@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<string> grid(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> grid[i];
+        }
+        
+        // 一维前缀和，大小 (n+1)*(m+1)
+        int total_size = (n+1)*(m+1);
+        vector<int> empty_sum(total_size, 0);
+        
+        auto idx = [&](int r, int c) {
+            return r*(m+1) + c;
+        };
+        
+        // 计算空单元格前缀和
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                int val = (grid[i][j] == '.');
+                empty_sum[idx(i+1, j+1)] = empty_sum[idx(i+1, j)] + empty_sum[idx(i, j+1)] - empty_sum[idx(i, j)] + val;
+            }
+        }
+        
+        auto rect_sum = [&](int r1, int c1, int r2, int c2) {
+            if (r1 > r2 || c1 > c2) return 0;
+            return empty_sum[idx(r2+1, c2+1)] - empty_sum[idx(r1, c2+1)] - empty_sum[idx(r2+1, c1)] + empty_sum[idx(r1, c1)];
+        };
+        
+        int ans = 0;
+        for (int r = 0; r < n; ++r) {
+            for (int c = 0; c < m; ++c) {
+                if (grid[r][c] != 'g') continue;
+                bool ok = false;
+                
+                // 上边界：爆炸中心在行 r+k
+                int row_up = r + k;
+                if (row_up >= 0 && row_up < n) {
+                    int c1 = max(c - k, 0);
+                    int c2 = min(c + k, m-1);
+                    if (c1 <= c2 && rect_sum(row_up, c1, row_up, c2) > 0)
+                        ok = true;
+                }
+                if (ok) { ans++; continue; }
+                
+                // 下边界：爆炸中心在行 r-k
+                int row_down = r - k;
+                if (row_down >= 0 && row_down < n) {
+                    int c1 = max(c - k, 0);
+                    int c2 = min(c + k, m-1);
+                    if (c1 <= c2 && rect_sum(row_down, c1, row_down, c2) > 0)
+                        ok = true;
+                }
+                if (ok) { ans++; continue; }
+                
+                // 左边界：爆炸中心在列 c+k
+                int col_left = c + k;
+                if (col_left >= 0 && col_left < m) {
+                    int r1 = max(r - k, 0);
+                    int r2 = min(r + k, n-1);
+                    if (r1 <= r2 && rect_sum(r1, col_left, r2, col_left) > 0)
+                        ok = true;
+                }
+                if (ok) { ans++; continue; }
+                
+                // 右边界：爆炸中心在列 c-k
+                int col_right = c - k;
+                if (col_right >= 0 && col_right < m) {
+                    int r1 = max(r - k, 0);
+                    int r2 = min(r + k, n-1);
+                    if (r1 <= r2 && rect_sum(r1, col_right, r2, col_right) > 0)
+                        ok = true;
+                }
+                if (ok) ans++;
+            }
+        }
+        
+        cout << ans << '\n';
+    }
+    return 0;
+}

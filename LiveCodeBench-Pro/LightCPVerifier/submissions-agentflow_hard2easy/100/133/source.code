@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        int cnt0 = 0;
+        for (char c : s) if (c == '0') cnt0++;
+        if (cnt0 == n) { // all zeros
+            cout << 1LL * n * (n - 1) / 2 << '\n';
+            continue;
+        }
+        // prefix sums for zeros: sum of (n - j) and (j - 1)
+        vector<ll> pref_nj(n + 2, 0), pref_j1(n + 2, 0);
+        for (int j = 1; j <= n; ++j) {
+            pref_nj[j] = pref_nj[j - 1];
+            pref_j1[j] = pref_j1[j - 1];
+            if (s[j - 1] == '0') {
+                pref_nj[j] += (n - j);
+                pref_j1[j] += (j - 1);
+            }
+        }
+        // left_zero[i] = length of consecutive zeros ending at i (including i if zero) // right_zero[i] = length of consecutive zeros starting at i
+        vector<int> left_zero(n + 2, 0), right_zero(n + 2, 0);
+        for (int i = 1; i <= n; ++i) {
+            if (s[i - 1] == '0') left_zero[i] = left_zero[i - 1] + 1;
+            else left_zero[i] = 0;
+        }
+        for (int i = n; i >= 1; --i) {
+            if (s[i - 1] == '0') right_zero[i] = right_zero[i + 1] + 1;
+            else right_zero[i] = 0;
+        }
+        ll ans = 0;
+        for (int i = 1; i <= n; ++i) {
+            if (s[i - 1] == '1') {
+                int left_len = (i > 1) ? left_zero[i - 1] : 0;
+                int right_len = (i < n) ? right_zero[i + 1] : 0;
+                ll left_sum = pref_nj[i - 1] - pref_nj[i - 1 - left_len];
+                ll right_sum = pref_j1[i + right_len] - pref_j1[i];
+                ll total = left_sum + right_sum + 1; // +1 for cell (i,i)
+                if (total > ans) ans = total;
+            }
+        }
+        cout << ans << '\n';
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

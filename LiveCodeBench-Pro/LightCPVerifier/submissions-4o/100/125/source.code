@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+vector<int> graph[MAXN];
+bool dp[10005]; // For dynamic programming on the multiset values
+
+// Breadth First Search to find shortest path lengths from source
+vector<int> bfs(int source, int n) {
+    vector<int> dist(n + 1, -1);
+    queue<int> q;
+    q.push(source);
+    dist[source] = 0;
+    while (!q.empty()) {
+        int cur = q.front();
+        q.pop();
+        for (int adj : graph[cur]) {
+            if (dist[adj] == -1) {
+                dist[adj] = dist[cur] + 1;
+                q.push(adj);
+            }
+        }
+    }
+    return dist;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, l;
+        cin >> n >> m >> l;
+
+        for (int i = 1; i <= n; ++i) {
+            graph[i].clear();
+        }
+
+        vector<int> A(l);
+        for (int i = 0; i < l; ++i) {
+            cin >> A[i];
+        }
+
+        for (int i = 0; i < m; ++i) {
+            int u, v;
+            cin >> u >> v;
+            graph[u].push_back(v);
+            graph[v].push_back(u);
+        }
+
+        // Run BFS from vertex 1
+        vector<int> dist = bfs(1, n);
+
+        // Initialize DP array
+        fill(dp, dp + 10005, false);
+        dp[0] = true; // base case: walk of length 0
+
+        // Update reachable distances using elements in multiset A
+        for (int length : A) {
+            for (int j = 10004; j >= length; --j) {
+                if(dp[j - length]) {
+                    dp[j] = true;
+                }
+            }
+        }
+
+        // Generating the output binary string
+        string result(n, '0');
+        for (int i = 1; i <= n; ++i) {
+            if (dist[i] != -1 && dp[dist[i]]) {
+                result[i - 1] = '1';
+            }
+        }
+
+        cout << result << '\n';
+    }
+
+    return 0;
+}

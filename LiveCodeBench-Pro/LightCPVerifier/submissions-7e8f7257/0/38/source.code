@@ -1,0 +1,69 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+#include <stack>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n+1);
+        for (int i=1; i<=n; i++) cin >> a[i];
+        vector<vector<int>> adj(n+1);
+        for (int i=0; i<n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+        vector<long long> threat(n+1);
+        // iterative DFS
+        stack<tuple<int, int, int, long long, int>> stk;
+        stk.emplace(1, 0, 0, 0, 0);
+        long long maxM = LLONG_MIN;
+        long long minM = LLONG_MAX;
+        stack<long long> maxHistory;
+        stack<long long> minHistory;
+        
+        while (!stk.empty()) {
+            auto [u, p, d, curC, state] = stk.top();
+            stk.pop();
+            if (state == 0) {
+                long long val = a[u];
+                if (d % 2 == 1) val = -val;
+                long long C = curC + val;
+                long long M = val - C;
+                maxHistory.push(maxM);
+                minHistory.push(minM);
+                if (M > maxM) maxM = M;
+                if (M < minM) minM = M;
+                if (d % 2 == 0) {
+                    threat[u] = C + maxM;
+                } else {
+                    threat[u] = -C - minM;
+                }
+                stk.emplace(u, p, d, curC, 1);
+                for (int v : adj[u]) {
+                    if (v == p) continue;
+                    stk.emplace(v, u, d+1, C, 0);
+                }
+            } else {
+                maxM = maxHistory.top(); maxHistory.pop();
+                minM = minHistory.top(); minHistory.pop();
+            }
+        }
+        
+        for (int i=1; i<=n; i++) {
+            cout << threat[i];
+            if (i < n) cout << ' ';
+        }
+        cout << '\n';
+    }
+    return 0;
+}

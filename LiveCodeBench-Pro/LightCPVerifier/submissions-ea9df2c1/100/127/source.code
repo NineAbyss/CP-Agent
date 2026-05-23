@@ -1,0 +1,103 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        // 快速检查是否完全递增或完全递减
+        bool all_cute = true;
+        for (int i = 1; i < n; i++) {
+            if (a[i] <= a[i-1]) {
+                all_cute = false;
+                break;
+            }
+        }
+        if (all_cute) {
+            long long ans = (long long)n * (n + 1) / 2;
+            cout << ans << '\n';
+            continue;
+        }
+        
+        all_cute = true;
+        for (int i = 1; i < n; i++) {
+            if (a[i] >= a[i-1]) {
+                all_cute = false;
+                break;
+            }
+        }
+        if (all_cute) {
+            long long ans = (long long)n * (n + 1) / 2;
+            cout << ans << '\n';
+            continue;
+        }
+        
+        long long cute_count = 0;
+        
+        // 对于每个左端点
+        for (int l = 0; l < n; l++) {
+            vector<vector<int>> tableau;
+            
+            // 向右扩展
+            for (int r = l; r < n; r++) {
+                // Robinson-Schensted 插入 a[r]
+                int x = a[r];
+                int row = 0;
+                int y = x;
+                
+                while (true) {
+                    if (row >= tableau.size()) {
+                        tableau.push_back({y});
+                        break;
+                    }
+                    
+                    auto it = lower_bound(tableau[row].begin(), tableau[row].end(), y);
+                    if (it == tableau[row].end()) {
+                        tableau[row].push_back(y);
+                        break;
+                    } else {
+                        int temp = *it;
+                        *it = y;
+                        y = temp;
+                        row++;
+                    }
+                }
+                
+                // 检查是否是钩子形状：除了第一行外，每行长度必须为1
+                bool is_hook = true;
+                if (tableau.size() > 1) {
+                    for (int i = 1; i < tableau.size(); i++) {
+                        if (tableau[i].size() > 1) {
+                            is_hook = false;
+                            break;
+                        }
+                    }
+                }
+                
+                if (!is_hook) {
+                    // 一旦不是钩子，对于这个左端点，更大的右端点也不会是钩子
+                    break;
+                }
+                
+                cute_count++;
+            }
+        }
+        
+        cout << cute_count << '\n';
+    }
+    
+    return 0;
+}

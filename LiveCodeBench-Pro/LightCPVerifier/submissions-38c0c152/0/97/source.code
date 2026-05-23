@@ -1,0 +1,84 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+const long long INF = LLONG_MAX/2;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<vector<long long>> dist(n, vector<long long>(n, INF));
+    for(int i=0;i<n;i++) dist[i][i]=0;
+    for(int i=0;i<m;i++) {
+        int x,y,z;
+        cin >> x >> y >> z;
+        x--; y--;
+        if(z < dist[y][x]) dist[y][x] = z;
+    }
+    // Floyd-Warshall
+    for(int k=0;k<n;k++)
+        for(int i=0;i<n;i++)
+            for(int j=0;j<n;j++)
+                if(dist[i][k] < INF && dist[k][j] < INF)
+                    dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]);
+    
+    int q;
+    cin >> q;
+    while(q--) {
+        long long k;
+        cin >> k;
+        vector<long long> a(n);
+        for(int i=0;i<n;i++) cin >> a[i];
+        string ans(n, '0');
+        for(int i=0;i<n;i++) {
+            // compute all v_j = a_j + dist[j][i]
+            vector<long long> vals;
+            for(int j=0;j<n;j++) {
+                if(dist[j][i] < INF) {
+                    vals.push_back(a[j] + dist[j][i]);
+                }
+            }
+            sort(vals.begin(), vals.end());
+            // remove duplicates
+            vals.erase(unique(vals.begin(), vals.end()), vals.end());
+            // count how many are <= a[i]
+            int cnt = 0;
+            for(long long v : vals) if(v <= a[i]) cnt++;
+            if(cnt >= 2) {
+                ans[i] = '1';
+                continue;
+            }
+            // if only one, check if we can create another by decreasing
+            if(cnt == 1) {
+                // the smallest value that is > a[i]
+                long long next_val = INF;
+                for(long long v : vals) if(v > a[i]) { next_val = v; break; }
+                if(next_val != INF) {
+                    // need to decrease a[i] so that next_val <= a[i] - delta // delta >= a[i] - next_val + 1
+                    long long need = a[i] - next_val + 1;
+                    if(need <= k) ans[i] = '1';
+                } else {
+                    // all values are <= a[i] and only one distinct value // need to decrease some source to create a new distinct value
+                    if(k >= 1) ans[i] = '1';
+                }
+            } else {
+                // cnt == 0, all values > a[i] // need to decrease a[i] so that at least two distinct values <= reduced a[i]
+                // take two smallest distinct values
+                if(vals.size() >= 2) {
+                    long long v1 = vals[0], v2 = vals[1];
+                    // need delta such that v1 <= a[i]-delta and v2 <= a[i]-delta
+                    long long delta = max(a[i] - v1 + 1, a[i] - v2 + 1);
+                    if(delta <= k) ans[i] = '1';
+                } else {
+                    // only one distinct value // need to decrease a[i] so that it becomes less than that value, and also decrease source to create another value
+                    // Actually, we can decrease the source by 1 to create two distinct values
+                    if(k >= 1) ans[i] = '1';
+                }
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

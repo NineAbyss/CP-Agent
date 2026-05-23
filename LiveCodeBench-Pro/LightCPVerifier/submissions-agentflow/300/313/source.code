@@ -1,0 +1,190 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const long long INF = 1e18;
+
+struct Edge {
+    int to, rev;
+    long long cap;
+};
+
+class FastDinic {
+public:
+    vector<vector<Edge>> g;
+    vector<int> level, iter;
+    
+    FastDinic(int n) {
+        g.resize(n);
+        level.resize(n);
+        iter.resize(n);
+    }
+    
+    void add_edge(int from, int to, long long cap) {
+        g[from].push_back({to, (int)g[to].size(), cap});
+        g[to].push_back({from, (int)g[from].size() - 1, 0});
+    }
+    
+    void bfs(int s) {
+        fill(level.begin(), level.end(), -1);
+        level[s] = 0;
+        vector<int> q;
+        q.push_back(s);
+        for(int i = 0; i < (int)q.size(); i++) {
+            int v = q[i];
+            for(auto& e : g[v]) {
+                if(e.cap > 0 && level[e.to] < 0) {
+                    level[e.to] = level[v] + 1;
+                    q.push_back(e.to);
+                }
+            }
+        }
+    }
+    
+    long long dfs(int v, int t, long long f) {
+        if(v == t) return f;
+        for(int &i = iter[v]; i < (int)g[v].size(); i++) {
+            Edge &e = g[v][i];
+            if(e.cap > 0 && level[v] < level[e.to]) {
+                long long d = dfs(e.to, t, min(f, e.cap));
+                if(d > 0) {
+                    e.cap -= d;
+                    g[e.to][e.rev].cap += d;
+                    return d;
+                }
+            }
+        }
+        return 0;
+    }
+    
+    long long max_flow(int s, int t) {
+        long long flow = 0;
+        while(true) {
+            bfs(s);
+            if(level[t] < 0) return flow;
+            fill(iter.begin(), iter.end(), 0);
+            long long f;
+            while((f = dfs(s, t, INF)) > 0) {
+                flow += f;
+            }
+        }
+    }
+};
+
+long long solve_k_days(int n, int k, 
+                      vector<long long>& s,
+                      vector<vector<long long>>& a,
+                      vector<vector<long long>>& b,
+                      vector<vector<long long>>& c) {
+    // 节点分配： // 第i层开始节点: i * n 到 i * n + n - 1 (0 ≤ i ≤ k)
+    // 第i层检查节点: (k+1) * n + i * n 到 (k+1) * n + i * n + n - 1 // 第i层运输前节点: (k+1) * n * 2 + i * n 到 (k+1) * n * 2 + i * n + n - 1
+    // 第i层运输后节点: (k+1) * n * 3 + i * n 到 (k+1) * n * 3 + i * n + n - 1
+    
+    int start_nodes = (k + 1) * n;
+    int check_nodes = (k + 1) * n;
+    int transport_prev_nodes = (k + 1) * n;
+    int transport_next_nodes = (k + 1) * n;
+    
+    int total_nodes = start_nodes + check_nodes + transport_prev_nodes + transport_next_nodes + 2;
+    int S = total_nodes - 2;
+    int T = total_nodes - 1;
+    
+    FastDinic dinic(total_nodes);
+    
+    // 源点到第0层开始节点
+    for(int j = 0; j < n; j++) {
+        if(s[j] > 0) {
+            dinic.add_edge(S, 0 * n + j, s[j]);
+        }
+    }
+    
+    // 构建每天的转移
+    for(int day = 0; day < k; day++) {
+        int day_start = day * n;
+        int next_day_start = (day + 1) * n;
+        
+        int check_start = start_nodes + day * n;
+        int transport_prev_start = start_nodes + check_nodes + day * n;
+        int transport_next_start = start_nodes + check_nodes + transport_prev_nodes + day * n;
+        
+        // 从开始节点分配流量
+        for(int j = 0; j < n; j++) {
+            int prev = (j - 1 + n) % n;
+            int next = (j + 1) % n;
+            
+            // 留在本机场检查
+            dinic.add_edge(day_start + j, check_start + j, INF);
+            
+            // 运输到前一个机场
+            if(a[day][j] > 0) {
+                dinic.add_edge(day_start + j, transport_prev_start + prev, a[day][j]);
+            }
+            
+            // 运输到后一个机场
+            if(c[day][j] > 0) {
+                dinic.add_edge(day_start + j, transport_next_start + next, c[day][j]);
+            }
+        }
+        
+        // 检查节点到下一层开始节点（容量b）
+        for(int j = 0; j < n; j++) {
+            if(b[day][j] > 0) {
+                dinic.add_edge(check_start + j, next_day_start + j, b[day][j]);
+            }
+        }
+        
+        // 运输节点到下一层开始节点
+        for(int j = 0; j < n; j++) {
+            dinic.add_edge(transport_prev_start + j, next_day_start + j, INF);
+            dinic.add_edge(transport_next_start + j, next_day_start + j, INF);
+        }
+    }
+    
+    // 第k层开始节点到汇点
+    for(int j = 0; j < n; j++) {
+        dinic.add_edge(k * n + j, T, INF);
+    }
+    
+    return dinic.max_flow(S, T);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while(t--) {
+        int n, m;
+        cin >> n >> m;
+        
+        vector<long long> s(n);
+        for(int i = 0; i < n; i++) {
+            cin >> s[i];
+        }
+        
+        vector<vector<long long>> a(m, vector<long long>(n));
+        vector<vector<long long>> b(m, vector<long long>(n));
+        vector<vector<long long>> c(m, vector<long long>(n));
+        
+        for(int i = 0; i < m; i++) {
+            for(int j = 0; j < n; j++) {
+                cin >> a[i][j];
+            }
+            for(int j = 0; j < n; j++) {
+                cin >> b[i][j];
+            }
+            for(int j = 0; j < n; j++) {
+                cin >> c[i][j];
+            }
+        }
+        
+        // 对于每个k，计算答案
+        for(int k = 1; k <= m; k++) {
+            long long ans = solve_k_days(n, k, s, a, b, c);
+            cout << ans << "\n";
+        }
+    }
+    
+    return 0;
+}

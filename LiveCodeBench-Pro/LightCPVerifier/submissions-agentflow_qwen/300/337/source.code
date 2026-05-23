@@ -1,0 +1,87 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <set>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+
+        // Special case: if n == 2*k, only possible split is a = k, b = k
+        if (n == 2 * k) {
+            cout << "! " << k << " " << k << endl;
+            cout.flush();
+            continue;
+        }
+
+        vector<int> query_pos;
+        int total_query = min(250, n);
+
+        if (n <= 250) {
+            for (int i = 1; i <= n; i++) {
+                query_pos.push_back(i);
+            }
+        } else {
+            // Query first 125 and last 125 to cover both ends
+            for (int i = 1; i <= 125; i++) {
+                query_pos.push_back(i);
+            }
+            for (int i = n - 124; i <= n; i++) {
+                if (i > 125) { // avoid duplicates
+                    query_pos.push_back(i);
+                }
+            }
+        }
+
+        map<int, int> pos_to_value;
+        vector<pair<int, int>> constraints;
+
+        bool found_singleton = false;
+        int L_final = k, R_final = n - k;
+
+        for (int pos : query_pos) {
+            cout << "? " << pos << endl;
+            cout.flush();
+
+            int val;
+            cin >> val;
+            pos_to_value[pos] = val;
+
+            // Check all previously queried positions within distance < k
+            for (auto & [other_pos, other_val] : pos_to_value) {
+                if (other_pos == pos) continue;
+                if (abs(pos - other_pos) >= k) continue;
+                if (val == other_val) {
+                    int low = min(pos, other_pos);
+                    int high = max(pos, other_pos) - 1;
+                    constraints.push_back({low, high});
+                }
+            }
+
+            // Recompute intersection of all constraints
+            L_final = k;
+            R_final = n - k;
+            for (auto & [l, r] : constraints) {
+                L_final = max(L_final, l);
+                R_final = min(R_final, r);
+            }
+
+            // If we have a unique answer, we could break early, but continue to use up to 250 queries // as it's safe and might add more constraints
+        }
+
+        if (L_final > R_final || L_final < k || R_final > n - k) {
+            cout << "! -1" << endl;
+        } else if (L_final == R_final) {
+            cout << "! " << L_final << " " << (n - L_final) << endl;
+        } else {
+            cout << "! -1" << endl;
+        }
+        cout.flush();
+    }
+    return 0;
+}

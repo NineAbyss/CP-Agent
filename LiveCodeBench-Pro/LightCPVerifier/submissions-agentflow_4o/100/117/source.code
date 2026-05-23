@@ -1,0 +1,43 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Function to fill the grid according to given n, m, k
+void solve(int n, int m, int k) {
+    vector<vector<int>> grid(n, vector<int>(m));
+    
+    // Fill the grid with checkerboard pattern to prevent adjacent duplicates
+    int num_per_group = (n * m) / k;
+    int num = 1;
+    
+    for (int block = 0; block < num_per_group; ++block) {
+        for (int shift = 0, i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                grid[i][j] = 1 + (num + shift) % k;
+                shift++;
+            }
+            num++;
+        }
+    }
+    
+    // Print the grid
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            cout << grid[i][j] << " ";
+        }
+        cout << "\n";
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        solve(n, m, k);
+    }
+    
+    return 0;
+}

@@ -1,0 +1,114 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+string solve(string s, vector<pair<char,char>> ops) {
+    int n = s.size();
+    int q = ops.size();
+    vector<int> used(q, 0);
+    string t = s;
+    
+    // 预处理每个操作 (x,y) 的位置列表
+    vector<int> pos_map[3][3];
+    for (int i = 0; i < q; ++i) {
+        int x = ops[i].first - 'a';
+        int y = ops[i].second - 'a';
+        pos_map[x][y].push_back(i);
+    }
+    
+    // 指针数组
+    int ptr[3][3] = {0};
+    
+    for (int p = 0; p < n; ++p) {
+        // 尝试变成 'a'
+        char cur = t[p];
+        if (cur != 'a') {
+            // 直接变
+            int x = cur - 'a';
+            int y = 0; // 'a'
+            bool found = false;
+            while (ptr[x][y] < (int)pos_map[x][y].size()) {
+                int idx = pos_map[x][y][ptr[x][y]];
+                if (!used[idx]) {
+                    used[idx] = 1;
+                    t[p] = 'a';
+                    found = true;
+                    break;
+                }
+                ptr[x][y]++;
+            }
+            if (!found) {
+                // 间接变 cur -> mid -> 'a'
+                for (int mid = 0; mid < 3; ++mid) {
+                    if (mid == x || mid == 0) continue;
+                    // 找 cur -> mid
+                    int op1 = -1;
+                    while (ptr[x][mid] < (int)pos_map[x][mid].size()) {
+                        int idx = pos_map[x][mid][ptr[x][mid]];
+                        if (!used[idx]) {
+                            op1 = idx;
+                            break;
+                        }
+                        ptr[x][mid]++;
+                    }
+                    if (op1 == -1) continue;
+                    // 找 mid -> 'a'
+                    int op2 = -1;
+                    while (ptr[mid][0] < (int)pos_map[mid][0].size()) {
+                        int idx = pos_map[mid][0][ptr[mid][0]];
+                        if (!used[idx] && idx > op1) {
+                            op2 = idx;
+                            break;
+                        }
+                        ptr[mid][0]++;
+                    }
+                    if (op2 != -1) {
+                        used[op1] = used[op2] = 1;
+                        t[p] = 'a';
+                        found = true;
+                        break;
+                    }
+                }
+            }
+        }
+        // 如果没变成 'a'，尝试变成 'b'
+        if (t[p] > 'b') {
+            int x = t[p] - 'a';
+            int y = 1; // 'b'
+            bool found = false;
+            while (ptr[x][y] < (int)pos_map[x][y].size()) {
+                int idx = pos_map[x][y][ptr[x][y]];
+                if (!used[idx]) {
+                    used[idx] = 1;
+                    t[p] = 'b';
+                    found = true;
+                    break;
+                }
+                ptr[x][y]++;
+            }
+        }
+    }
+    return t;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        string s;
+        cin >> s;
+        vector<pair<char,char>> ops(q);
+        for (int i = 0; i < q; ++i) {
+            cin >> ops[i].first >> ops[i].second;
+        }
+        cout << solve(s, ops) << '\n';
+    }
+    return 0;
+}

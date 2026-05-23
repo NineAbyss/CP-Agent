@@ -1,0 +1,29 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int a, x, y;
+        cin >> a >> x >> y;
+
+        int d_ax = abs(a - x);
+        int d_ay = abs(a - y);
+
+        bool found = false;
+        for (int b = 1; b <= 100; b++) {
+            if (b == a) continue;
+            if (abs(b - x) < d_ax && abs(b - y) < d_ay) {
+                found = true;
+                break;
+            }
+        }
+
+        cout << (found ? "YES" : "NO") << endl;
+    }
+
+    return 0;
+}

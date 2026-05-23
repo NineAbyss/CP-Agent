@@ -1,0 +1,69 @@
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+const int MOD = 1e9 + 7;
+
+// Function to execute DFS and calculate subtree sums
+void dfs(int node, int parent, const vector<vector<int>>& tree, vector<int>& subtreeSum, const vector<int>& a) {
+    subtreeSum[node] = a[node];
+    for (int child : tree[node]) {
+        if (child != parent) {
+            dfs(child, node, tree, subtreeSum, a);
+            subtreeSum[node] += subtreeSum[child];
+        }
+    }
+}
+
+// Function to determine if all subtree sums are unique
+bool areSubtreeSumsUnique(const vector<int>& subtreeSum) {
+    set<int> uniqueSums;
+    for (int sum : subtreeSum) {
+        if (!uniqueSums.insert(sum).second) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Calculate the number of unique arrays considering unique subtree sums
+int countSpecialArrays(int n, vector<vector<int>>& tree) {
+    vector<int> a(n + 1, 1);
+    vector<int> subtreeSum(n + 1, 0);
+
+    dfs(1, -1, tree, subtreeSum, a);
+
+    if (!areSubtreeSumsUnique(subtreeSum)) return 0;
+
+    // Calculate number of valid configurations
+    long long configurations = 1;
+    for (int i = 1; i <= n; ++i) {
+        configurations = (configurations * 2) % MOD;
+    }
+    return configurations;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> tree(n + 1);
+
+        for (int i = 0; i < n - 1; ++i) {
+            int u, v;
+            cin >> u >> v;
+            tree[u].push_back(v);
+            tree[v].push_back(u);
+        }
+
+        cout << countSpecialArrays(n, tree) << "\n";
+    }
+
+    return 0;
+}

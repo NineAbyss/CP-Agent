@@ -1,0 +1,159 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int n;
+vector<pair<int,int>> edges;
+vector<int> dir;
+
+int count_good_pairs() {
+    vector<vector<int>> g(n);
+    for (int i=0; i<n-1; i++) {
+        int u = edges[i].first, v = edges[i].second;
+        if (dir[i]==0) g[u].push_back(v);
+        else g[v].push_back(u);
+    }
+    int total = 0;
+    for (int s=0; s<n; s++) {
+        vector<bool> vis(n, false);
+        queue<int> q;
+        q.push(s);
+        vis[s]=true;
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            for (int v: g[u]) {
+                if (!vis[v]) {
+                    vis[v]=true;
+                    q.push(v);
+                }
+            }
+        }
+        for (int t=0; t<n; t++) if (t!=s && vis[t]) total++;
+    }
+    return total;
+}
+
+bool try_all() {
+    int total_dirs = 1 << (n-1);
+    for (int mask=0; mask<total_dirs; mask++) {
+        for (int i=0; i<n-1; i++) dir[i] = (mask>>i)&1;
+        if (count_good_pairs() == n) return true;
+    }
+    return false;
+}
+
+void output_orientation() {
+    for (int i=0; i<n-1; i++) {
+        int u = edges[i].first, v = edges[i].second;
+        if (dir[i]==0) cout << u+1 << " " << v+1 << '\n';
+        else cout << v+1 << " " << u+1 << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        cin >> n;
+        edges.resize(n-1);
+        for (int i=0; i<n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            edges[i] = {u, v};
+        }
+        if (n == 2) {
+            cout << "NO" << '\n';
+            continue;
+        }
+        // Check if star
+        vector<int> deg(n,0);
+        for (auto& e : edges) {
+            deg[e.first]++;
+            deg[e.second]++;
+        }
+        bool star = false;
+        for (int i=0; i<n; i++) {
+            if (deg[i] == n-1) {
+                star = true;
+                break;
+            }
+        }
+        if (star && n >= 4) {
+            cout << "NO" << '\n';
+            continue;
+        }
+        // For n <= 10, try all orientations
+        if (n <= 10) {
+            dir.resize(n-1);
+            if (try_all()) {
+                cout << "YES" << '\n';
+                output_orientation();
+            } else {
+                cout << "NO" << '\n';
+            }
+            continue;
+        }
+        // For n > 10, we use a heuristic orientation that works for non-star trees. // We'll choose a vertex with degree >=2 as root, orient all edges away from root,
+        // then reverse one edge incident to root. // This may not always work, but we hope.
+        cout << "YES" << '\n';
+        // Find a vertex with degree >=2
+        int root = 0;
+        for (int i=0; i<n; i++) {
+            if (deg[i] >= 2) {
+                root = i;
+                break;
+            }
+        }
+        // Build adjacency list
+        vector<vector<int>> adj(n);
+        for (auto& e : edges) {
+            adj[e.first].push_back(e.second);
+            adj[e.second].push_back(e.first);
+        }
+        // BFS to get parent
+        vector<int> parent(n, -1);
+        queue<int> q;
+        q.push(root);
+        parent[root] = root;
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            for (int v : adj[u]) {
+                if (parent[v] == -1) {
+                    parent[v] = u;
+                    q.push(v);
+                }
+            }
+        }
+        // Orient edges: from parent to child, except reverse one edge from root to its first child
+        bool reversed = false;
+        int first_child = -1;
+        for (int v : adj[root]) {
+            if (parent[v] == root) {
+                first_child = v;
+                break;
+            }
+        }
+        for (auto& e : edges) {
+            int u = e.first, v = e.second;
+            if (parent[v] == u) {
+                if (!reversed && u == root && v == first_child) {
+                    cout << v+1 << ' ' << u+1 << '\n';
+                    reversed = true;
+                } else {
+                    cout << u+1 << ' ' << v+1 << '\n';
+                }
+            } else {
+                // parent[u] == v
+                if (!reversed && v == root && u == first_child) {
+                    cout << u+1 << ' ' << v+1 << '\n';
+                    reversed = true;
+                } else {
+                    cout << v+1 << ' ' << u+1 << '\n';
+                }
+            }
+        }
+    }
+    return 0;
+}

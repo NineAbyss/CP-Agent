@@ -1,0 +1,38 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <numeric> // For accumulate
+using namespace std;
+
+string findWinner(int n, int k, vector<int>& a) {
+    int max_apples = *max_element(a.begin(), a.end());
+    int min_apples = *min_element(a.begin(), a.end());
+
+    // Check the initial difference
+    if (max_apples - min_apples > k) {
+        return "Jerry";
+    }
+
+    // Total number of apples (total moves possible)
+    int total_apples = accumulate(a.begin(), a.end(), 0);
+
+    // Determine winner based on total moves
+    return total_apples % 2 == 1 ? "Tom" : "Jerry";
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        cout << findWinner(n, k, a) << endl;
+    }
+    return 0;
+}

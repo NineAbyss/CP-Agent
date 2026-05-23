@@ -1,0 +1,66 @@
+#include <iostream>
+#include <string>
+#include <map>
+#include <set>
+using namespace std;
+
+bool outcome(int a, int b, int n) {
+    if (a == 1 && b == n) return true;
+    if (a == n && b == 1) return false; // n does not beat 1
+    return a > b;
+}
+
+map<int, bool> memo;
+set<int> visited;
+
+bool win(int mask, int n) {
+    if (mask == 0) return false;
+    if (mask == (1 << n) - 1) return true;
+    if (memo.count(mask)) return memo[mask];
+    if (visited.count(mask)) return false;
+    visited.insert(mask);
+    bool result = false;
+    for (int i = 0; i < n; i++) {
+        if (!(mask >> i & 1)) continue;
+        bool bob_can_make_alice_lose = false;
+        for (int j = 0; j < n; j++) {
+            if (mask >> j & 1) continue;
+            int new_mask;
+            if (outcome(i+1, j+1, n)) {
+                new_mask = mask | (1 << j);
+            } else {
+                new_mask = mask & ~(1 << i);
+            }
+            if (!win(new_mask, n)) {
+                bob_can_make_alice_lose = true;
+                break;
+            }
+        }
+        if (!bob_can_make_alice_lose) {
+            result = true;
+            break;
+        }
+    }
+    visited.erase(mask);
+    memo[mask] = result;
+    return result;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+        int mask = 0;
+        for (int i = 0; i < n; i++) {
+            if (s[i] == 'A') mask |= (1 << i);
+        }
+        memo.clear();
+        visited.clear();
+        cout << (win(mask, n) ? "Alice" : "Bob") << '\n';
+    }
+    return 0;
+}

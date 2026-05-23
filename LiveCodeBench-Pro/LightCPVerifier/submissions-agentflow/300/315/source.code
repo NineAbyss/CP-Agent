@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+
+int modpow(int a, int e) {
+    int res = 1;
+    while (e) {
+        if (e & 1) res = 1LL * res * a % MOD;
+        a = 1LL * a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+struct pair_hash {
+    template <class T1, class T2>
+    std::size_t operator () (const std::pair<T1,T2> &p) const {
+        auto h1 = std::hash<T1>{}(p.first);
+        auto h2 = std::hash<T2>{}(p.second);
+        return h1 ^ (h2 << 1);
+    }
+};
+
+unordered_map<pair<int,int>, int, pair_hash> memo;
+
+int F(int L, int x, int m) {
+    if (L < 0) return 0;
+    if (m == 0) return 1;
+    auto key = make_pair(L, x);
+    if (memo.find(key) != memo.end()) return memo[key];
+    int high_bit = 1 << (m-1);
+    int x_high = (x >> (m-1)) & 1;
+    int L_high = (L >> (m-1)) & 1;
+    int x_low = x & (high_bit - 1);
+    int L_low = L & (high_bit - 1);
+    int res;
+    if (L_high == 0) {
+        res = F(L_low, x_low, m-1);
+    } else {
+        int part1 = F(high_bit - 1, x_low, m-1);
+        int part2 = F(L_low, x_low, m-1);
+        if (x_high) part2 = (MOD - part2) % MOD;
+        res = (part1 + part2) % MOD;
+    }
+    memo[key] = res;
+    return res;
+}
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    int N = 1 << m;
+    memo.clear();
+    vector<int> prod(N, 1);
+    for (int i = 0; i < n; i++) {
+        int l, r;
+        cin >> l >> r;
+        for (int x = 0; x < N; x++) {
+            int val = (F(r, x, m) - (l > 0 ? F(l-1, x, m) : 0)) % MOD;
+            if (val < 0) val += MOD;
+            prod[x] = 1LL * prod[x] * val % MOD;
+        }
+    }
+    // 逆 WHT
+    vector<int> f = prod;
+    for (int len = 1; len < N; len <<= 1) {
+        for (int i = 0; i < N; i += len * 2) {
+            for (int j = 0; j < len; j++) {
+                int u = f[i+j], v = f[i+j+len];
+                f[i+j] = (u + v) % MOD;
+                f[i+j+len] = (u - v + MOD) % MOD;
+            }
+        }
+    }
+    int invN = modpow(N, MOD-2);
+    for (int i = 0; i < N; i++) {
+        f[i] = 1LL * f[i] * invN % MOD;
+    }
+    int h = 0;
+    for (int x = 0; x < N; x++) {
+        int g = 1LL * f[x] * modpow(2, x) % MOD;
+        h ^= g;
+    }
+    cout << h << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

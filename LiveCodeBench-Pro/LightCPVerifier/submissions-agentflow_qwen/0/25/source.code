@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        int ans = 0;
+        int r = n;
+
+        while (r > 0) {
+            set<int> current(a.begin(), a.begin() + r);
+            if (current.empty()) break;
+
+            set<int> seen;
+            int pos = r - 1;
+            while (pos >= 0 && seen.size() < current.size()) {
+                if (current.find(a[pos]) != current.end()) {
+                    seen.insert(a[pos]);
+                }
+                pos--;
+            }
+            ans++;
+            r = pos + 1;
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

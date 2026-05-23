@@ -1,0 +1,52 @@
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+int main() {
+    string s;
+    char c;
+    while (cin >> c) {
+        if (c == '0') break;
+        s += c;
+    }
+    int n = s.size();
+    string t = "";
+    int left = 0, right = 0; // 1-indexed positions of current palindrome in t
+    for (int i = 0; i < n; ++i) {
+        char c = s[i];
+        t += c;
+        int len = i+1;
+        if (left == 0) {
+            left = len;
+            right = len;
+            cout << "0 0" << endl;
+        } else {
+            if (c == t[left-1]) {
+                // place to the right
+                if (right+1 <= len) {
+                    cout << right+1 << " " << len << endl;
+                    swap(t[right+1-1], t[len-1]);
+                    right++;
+                } else {
+                    cout << "0 0" << endl;
+                    right = len;
+                }
+            } else {
+                // place to the left
+                if (left-1 >= 1) {
+                    cout << left-1 << " " << len << endl;
+                    swap(t[left-1-1], t[len-1]);
+                    left--;
+                } else {
+                    // left == 1, cannot place to left, so place to right
+                    cout << left << " " << len << endl;
+                    swap(t[left-1], t[len-1]);
+                    right = len;
+                }
+            }
+        }
+        cout.flush();
+    }
+    return 0;
+}

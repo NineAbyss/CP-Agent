@@ -1,0 +1,149 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1000000007;
+
+// 四连通方向
+int dx[4] = {0, 0, 1, -1};
+int dy[4] = {1, -1, 0, 0};
+
+// 获取某点的四邻域
+vector<pair<int, int>> get_neighbors(int x, int y, int n, int m) {
+    vector<pair<int, int>> res;
+    for (int d = 0; d < 4; ++d) {
+        int nx = x + dx[d], ny = y + dy[d];
+        if (1 <= nx && nx <= n && 1 <= ny && ny <= m) {
+            res.push_back({nx, ny});
+        }
+    }
+    return res;
+}
+
+// 求两个向量的交集
+vector<pair<int, int>> intersect(vector<pair<int, int>>& a, vector<pair<int, int>>& b) {
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+    vector<pair<int, int>> res;
+    set_intersection(a.begin(), a.end(), b.begin(), b.end(), back_inserter(res));
+    return res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<pair<int, int>> fixed(k + 1);
+        set<pair<int, int>> fixed_set;
+        for (int i = 0; i <= k; ++i) {
+            cin >> fixed[i].first >> fixed[i].second;
+            fixed_set.insert(fixed[i]);
+        }
+
+        // 存储每一段的候选中间点
+        vector<vector<pair<int, int>>> choices;
+        bool valid = true;
+
+        for (int i = 0; i < k; ++i) {
+            auto a = fixed[i];     // p_{2i-1}
+            auto c = fixed[i+1];   // p_{2i+1}
+            auto na = get_neighbors(a.first, a.second, n, m);
+            auto nc = get_neighbors(c.first, c.second, n, m);
+            auto common = intersect(na, nc);
+
+            // 移除在 fixed_set 中的点
+            vector<pair<int, int>> filtered;
+            for (auto& pt : common) {
+                if (!fixed_set.count(pt)) {
+                    filtered.push_back(pt);
+                }
+            }
+            if (filtered.empty()) {
+                valid = false;
+            }
+            choices.push_back(filtered);
+        }
+
+        if (!valid) {
+            cout << 0 << '\n';
+            continue;
+        }
+
+        // 现在构建 segment conflict graph 并进行连通块分解 // 我们将使用 union-find 或 DFS 来分组 segments
+        // 实际上，我们关心的是 candidate point 共享
+
+        // 建立映射：candidate point -> 它 appear in which segments
+        map<pair<int, int>, vector<int>> candidate_to_segments;
+        for (int i = 0; i < k; ++i) {
+            for (auto& pt : choices[i]) {
+                candidate_to_segments[pt].push_back(i);
+            }
+        }
+
+        // 使用并查集 or DFS on segments based on shared candidates
+        vector<bool> seg_visited(k, false);
+        vector<vector<int>> components;
+
+        for (int i = 0; i < k; ++i) {
+            if (seg_visited[i]) continue;
+            vector<int> comp;
+            stack<int> st;
+            st.push(i);
+            seg_visited[i] = true;
+
+            while (!st.empty()) {
+                int u = st.top(); st.pop();
+                comp.push_back(u);
+
+                // 遍历 u 的所有候选点，找到这些候选点所在的其他段
+                for (auto& pt : choices[u]) {
+                    for (int v_seg : candidate_to_segments[pt]) {
+                        if (!seg_visited[v_seg]) {
+                            seg_visited[v_seg] = true;
+                            st.push(v_seg);
+                        }
+                    }
+                }
+            }
+            components.push_back(comp);
+        }
+
+        long long ans = 1;
+
+        // 对每个 component，DFS 计算 assignment 方案数
+        for (auto& comp : components) {
+            // 用于 DFS 的状态：当前处理到第几个 segment，以及哪些点已被使用 // 但我们不能 easily bitmask points
+
+            // 改为：DFS over segments in comp, try choices // state: index in comp, and a set of used points
+            // use recursion with map for used set
+
+            // Since comp size may be small, we can do recursion with memo using tuple? not necessary.
+
+            function<long long(int, set<pair<int, int>>)> dfs = [&](int idx, set<pair<int, int>> used) -> long long {
+                if (idx == comp.size()) return 1;
+                int seg_idx = comp[idx];
+                const auto& opts = choices[seg_idx];
+                long long res = 0;
+                for (auto& pt : opts) {
+                    if (!used.count(pt)) {
+                        auto new_used = used;
+                        new_used.insert(pt);
+                        res = (res + dfs(idx + 1, new_used)) % MOD;
+                    }
+                }
+                return res;
+            };
+
+            set<pair<int, int>> empty_set;
+            long long ways = dfs(0, empty_set);
+            ans = (ans * ways) % MOD;
+        }
+
+        cout << ans << '\n';
+    }
+    return 0;
+}

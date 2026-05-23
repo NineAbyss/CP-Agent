@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, d;
+        cin >> n >> d;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        // 简单解法：每次减少最大值，贪心分组 // 对于每个高度h，计算需要多少次操作
+        long long max_val = *max_element(a.begin(), a.end());
+        long long ans = 0;
+        
+        // 对于每个高度h
+        for (long long h = max_val; h >= 1; h--) {
+            // 收集高度>=h的位置
+            vector<int> positions;
+            for (int i = 0; i < n; i++) {
+                if (a[i] >= h) {
+                    positions.push_back(i);
+                }
+            }
+            
+            // 贪心分组
+            sort(positions.begin(), positions.end());
+            int groups = 0;
+            int i = 0;
+            while (i < positions.size()) {
+                int start = i;
+                int cover_until = positions[start] + d - 1;
+                while (i < positions.size() && positions[i] <= cover_until) {
+                    i++;
+                }
+                groups++;
+            }
+            ans += groups;
+        }
+        
+        cout << ans << '\n';
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    solve();
+    return 0;
+}

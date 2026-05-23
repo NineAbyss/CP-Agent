@@ -1,0 +1,194 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Node {
+    int priority;
+    Node *left, *right;
+    int size;
+    int head_val; // 当前最小值
+    bool has_zero; // 子树中是否存在 head_val == 0 的节点
+    set<int> elements; // 存储集合中的元素
+    bool reversed;
+    
+    Node() : priority(rand()), left(nullptr), right(nullptr), size(1), head_val(0), has_zero(true), reversed(false) {}
+    
+    void update() {
+        size = 1;
+        has_zero = (head_val == 0);
+        if (left) {
+            size += left->size;
+            if (left->has_zero) has_zero = true;
+        }
+        if (right) {
+            size += right->size;
+            if (right->has_zero) has_zero = true;
+        }
+    }
+    
+    void push_rev() {
+        if (!reversed) return;
+        swap(left, right);
+        if (left) left->reversed ^= 1;
+        if (right) right->reversed ^= 1;
+        reversed = false;
+    }
+};
+
+int get_size(Node* node) {
+    return node ? node->size : 0;
+}
+
+void split(Node* node, int k, Node*& left, Node*& right) {
+    if (!node) {
+        left = right = nullptr;
+        return;
+    }
+    node->push_rev();
+    int left_size = get_size(node->left);
+    if (k <= left_size) {
+        split(node->left, k, left, node->left);
+        right = node;
+    } else {
+        split(node->right, k - left_size - 1, node->right, right);
+        left = node;
+    }
+    node->update();
+}
+
+Node* merge(Node* left, Node* right) {
+    if (!left) return right;
+    if (!right) return left;
+    left->push_rev();
+    right->push_rev();
+    if (left->priority > right->priority) {
+        left->right = merge(left->right, right);
+        left->update();
+        return left;
+    } else {
+        right->left = merge(left, right->left);
+        right->update();
+        return right;
+    }
+}
+
+// 在子树node中，将前cnt个空集合（head_val==0）插入元素val // 返回实际插入的数量
+int insert_zero_nodes(Node* node, int cnt, int val, vector<Node*>& modified_nodes) {
+    if (!node || cnt == 0) return 0;
+    node->push_rev();
+    int inserted = 0;
+    // 检查左子树
+    if (node->left && node->left->has_zero) {
+        inserted += insert_zero_nodes(node->left, cnt, val, modified_nodes);
+    }
+    if (inserted < cnt && node->head_val == 0) {
+        // 当前节点为空集合
+        node->elements.insert(val);
+        node->head_val = val;
+        modified_nodes.push_back(node);
+        inserted++;
+    }
+    if (inserted < cnt && node->right && node->right->has_zero) {
+        inserted += insert_zero_nodes(node->right, cnt - inserted, val, modified_nodes);
+    }
+    node->update();
+    return inserted;
+}
+
+struct Solver {
+    int n, q;
+    Node* root;
+    vector<set<Node*>> sets_containing; // 每个元素被哪些节点包含
+    
+    Solver(int n, int q) : n(n), q(q), root(nullptr), sets_containing(q+1) {
+        // 创建n个节点，每个节点代表一个集合
+        for (int i = 0; i < n; i++) {
+            Node* node = new Node();
+            root = merge(root, node);
+        }
+    }
+    
+    // 插入元素val到前r个集合，但只插入空集合
+    void insert(int r, int val) {
+        Node *left, *right;
+        split(root, r, left, right);
+        vector<Node*> modified_nodes;
+        insert_zero_nodes(left, r, val, modified_nodes);
+        for (Node* node : modified_nodes) {
+            sets_containing[val].insert(node);
+        }
+        root = merge(left, right);
+    }
+    
+    // 反转前r个集合
+    void reverse(int r) {
+        Node *left, *right;
+        split(root, r, left, right);
+        if (left) left->reversed ^= 1;
+        root = merge(left, right);
+    }
+    
+    // 删除元素x
+    void delete_element(int x) {
+        for (Node* node : sets_containing[x]) {
+            node->elements.erase(x);
+            // 更新head_val
+            if (node->elements.empty()) {
+                node->head_val = 0;
+            } else {
+                node->head_val = *node->elements.begin();
+            }
+            node->update();
+        }
+        sets_containing[x].clear();
+    }
+    
+    // 查询第p个集合的最小值
+    int query(int p) {
+        Node *left, *mid, *right;
+        split(root, p-1, left, mid);
+        split(mid, 1, mid, right);
+        int ans = mid ? mid->head_val : 0;
+        root = merge(merge(left, mid), right);
+        return ans;
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    srand(time(0));
+    
+    int n, q;
+    cin >> n >> q;
+    
+    Solver solver(n, q);
+    int ans_prev = 0;
+    
+    for (int i = 1; i <= q; i++) {
+        int a, b, c;
+        cin >> a >> b >> c;
+        
+        int r, p, x;
+        if (a == 1 || a == 2) {
+            r = (b + ans_prev - 1) % n + 1;
+            p = (c + ans_prev - 1) % n + 1;
+        } else {
+            x = (b + ans_prev - 1) % q + 1;
+            p = (c + ans_prev - 1) % n + 1;
+        }
+        
+        if (a == 1) {
+            solver.insert(r, i);
+        } else if (a == 2) {
+            solver.reverse(r);
+        } else if (a == 3) {
+            solver.delete_element(x);
+        }
+        
+        int ans = solver.query(p);
+        cout << ans << '\n';
+        ans_prev = ans;
+    }
+    
+    return 0;
+}

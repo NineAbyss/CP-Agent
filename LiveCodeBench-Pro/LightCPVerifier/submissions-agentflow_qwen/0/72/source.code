@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int cost(const string& s) {
+    if (s.empty()) return 0;
+    int n = s.size();
+    int res = n;
+    if (s[0] == '1') res++;
+    for (int i = 1; i < n; i++) {
+        if (s[i] != s[i-1]) res++;
+    }
+    return res;
+}
+
+void solve() {
+    int n;
+    string s;
+    cin >> n >> s;
+    int ans = cost(s);
+
+    // 1. Try all prefix reversals: reverse [0, i]
+    string t = s;
+    for (int i = 0; i < n; i++) {
+        reverse(t.begin(), t.begin() + i + 1);
+        ans = min(ans, cost(t));
+        reverse(t.begin(), t.begin() + i + 1); // revert
+    }
+
+    // 2. Try all suffix reversals: reverse [i, n-1]
+    for (int i = 0; i < n; i++) {
+        reverse(t.begin() + i, t.end());
+        ans = min(ans, cost(t));
+        reverse(t.begin() + i, t.end()); // revert
+    }
+
+    // 3. Try short substrings of length at most 5
+    for (int i = 0; i < n; i++) {
+        for (int j = i; j < n && j < i + 5; j++) {
+            string u = s;
+            reverse(u.begin() + i, u.begin() + j + 1);
+            ans = min(ans, cost(u));
+        }
+    }
+
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,150 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    
+    vector<int> d(n);
+    for (int i = 0; i < n; i++) {
+        cin >> d[i];
+    }
+    
+    vector<pair<int, int>> obstacles(n);
+    for (int i = 0; i < n; i++) {
+        cin >> obstacles[i].first >> obstacles[i].second;
+    }
+    
+    // Forward pass: compute possible height ranges
+    vector<int> low(n+1), high(n+1);
+    low[0] = high[0] = 0;
+    
+    for (int i = 1; i <= n; i++) {
+        if (d[i-1] == 0) {
+            low[i] = low[i-1];
+            high[i] = high[i-1];
+        } else if (d[i-1] == 1) {
+            low[i] = low[i-1] + 1;
+            high[i] = high[i-1] + 1;
+        } else { // d[i-1] == -1
+            low[i] = low[i-1];
+            high[i] = high[i-1] + 1;
+        }
+        
+        // Intersect with obstacle interval
+        low[i] = max(low[i], obstacles[i-1].first);
+        high[i] = min(high[i], obstacles[i-1].second);
+        
+        if (low[i] > high[i]) {
+            cout << -1 << endl;
+            return;
+        }
+    }
+    
+    // Backward construction
+    vector<int> h(n+1);
+    vector<int> ans_d(n);
+    
+    // Try h[n] = low[n] first
+    h[n] = low[n];
+    bool success = true;
+    
+    for (int i = n; i >= 1; i--) {
+        // Possible range for h[i-1]
+        int min_possible = max(low[i-1], h[i] - 1);
+        int max_possible = min(high[i-1], h[i]);
+        
+        if (d[i-1] == 0) {
+            if (h[i] >= low[i-1] && h[i] <= high[i-1]) {
+                h[i-1] = h[i];
+                ans_d[i-1] = 0;
+            } else {
+                success = false;
+                break;
+            }
+        } else if (d[i-1] == 1) {
+            if (h[i]-1 >= low[i-1] && h[i]-1 <= high[i-1]) {
+                h[i-1] = h[i] - 1;
+                ans_d[i-1] = 1;
+            } else {
+                success = false;
+                break;
+            }
+        } else { // d[i-1] == -1
+            if (min_possible <= max_possible) {
+                // Try to choose max_possible (make h[i-1] as large as possible)
+                h[i-1] = max_possible;
+                ans_d[i-1] = h[i] - h[i-1];
+            } else {
+                success = false;
+                break;
+            }
+        }
+    }
+    
+    if (success && h[0] == 0) {
+        for (int i = 0; i < n; i++) {
+            cout << ans_d[i] << (i == n-1 ? "\n" : " ");
+        }
+        return;
+    }
+    
+    // If failed, try h[n] = high[n]
+    h[n] = high[n];
+    success = true;
+    
+    for (int i = n; i >= 1; i--) {
+        int min_possible = max(low[i-1], h[i] - 1);
+        int max_possible = min(high[i-1], h[i]);
+        
+        if (d[i-1] == 0) {
+            if (h[i] >= low[i-1] && h[i] <= high[i-1]) {
+                h[i-1] = h[i];
+                ans_d[i-1] = 0;
+            } else {
+                success = false;
+                break;
+            }
+        } else if (d[i-1] == 1) {
+            if (h[i]-1 >= low[i-1] && h[i]-1 <= high[i-1]) {
+                h[i-1] = h[i] - 1;
+                ans_d[i-1] = 1;
+            } else {
+                success = false;
+                break;
+            }
+        } else { // d[i-1] == -1
+            if (min_possible <= max_possible) {
+                // Try to choose min_possible (make h[i-1] as small as possible)
+                h[i-1] = min_possible;
+                ans_d[i-1] = h[i] - h[i-1];
+            } else {
+                success = false;
+                break;
+            }
+        }
+    }
+    
+    if (success && h[0] == 0) {
+        for (int i = 0; i < n; i++) {
+            cout << ans_d[i] << (i == n-1 ? "\n" : " ");
+        }
+        return;
+    }
+    
+    cout << -1 << endl;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

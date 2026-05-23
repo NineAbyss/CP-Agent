@@ -1,0 +1,19 @@
+#include <iostream>
+
+using namespace std;
+
+// Function to calculate number of distinct f(p) values for a given n
+int countDistinctFValues(int n) {
+    return n * (n - 1) / 2 + 1;  // Number of distinct values from 0 to n(n-1)/2
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        cout << countDistinctFValues(n) << endl;
+    }
+    return 0;
+}

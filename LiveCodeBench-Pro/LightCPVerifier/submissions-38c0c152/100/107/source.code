@@ -1,0 +1,87 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+#include <functional>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int i = 0; i < n; i++) cin >> b[i];
+    
+    // 计算目标最大值
+    set<int> all;
+    for (int x : a) all.insert(x);
+    for (int x : b) all.insert(x);
+    int U = all.size();
+    
+    const int MAXV = 2*n+5;
+    vector<int> deg(MAXV, 0);
+    vector<vector<pair<int,int>>> g(MAXV);
+    for (int i = 0; i < n; i++) {
+        int u = a[i], v = b[i];
+        g[u].push_back({v, i});
+        g[v].push_back({u, i});
+        deg[u]++;
+        deg[v]++;
+    }
+    vector<bool> vis(MAXV, false);
+    int x = 0;
+    for (int v = 1; v < MAXV; v++) {
+        if (deg[v] == 0 || vis[v]) continue;
+        vector<int> comp;
+        function<void(int)> dfs = [&](int u) {
+            vis[u] = true;
+            comp.push_back(u);
+            for (auto &e : g[u]) {
+                int v = e.first;
+                if (!vis[v]) dfs(v);
+            }
+        };
+        dfs(v);
+        int k = comp.size();
+        int leaf = 0;
+        for (int u : comp) if (deg[u] == 1) leaf++;
+        x += k - leaf;
+    }
+    int target = U + x;
+    
+    // 贪心构造
+    set<int> sa, sb;
+    for (int i = 0; i < n; i++) {
+        sa.insert(a[i]);
+        sb.insert(b[i]);
+    }
+    int cur = sa.size() + sb.size();
+    for (int i = 0; i < n; i++) {
+        // 尝试交换
+        set<int> sa2 = sa, sb2 = sb;
+        sa2.erase(a[i]);
+        sb2.erase(b[i]);
+        sa2.insert(b[i]);
+        sb2.insert(a[i]);
+        int ncur = sa2.size() + sb2.size();
+        if (ncur > cur) {
+            swap(a[i], b[i]);
+            sa = sa2;
+            sb = sb2;
+            cur = ncur;
+        }
+        if (cur == target) break;
+    }
+    
+    cout << target << endl;
+    for (int i = 0; i < n; i++) cout << a[i] << " \n"[i==n-1];
+    for (int i = 0; i < n; i++) cout << b[i] << " \n"[i==n-1];
+}
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

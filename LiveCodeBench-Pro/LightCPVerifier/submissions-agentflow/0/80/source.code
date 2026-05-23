@@ -1,0 +1,36 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int calculate_min_clones(const vector<int>& weights) {
+    vector<int> piles;
+    for (int weight : weights) {
+        auto it = upper_bound(piles.begin(), piles.end(), weight, greater<int>());
+        if (it == piles.end()) {
+            piles.push_back(weight); // New subsequence (clone) needed
+        } else {
+            *it = weight; // Add to existing subsequence
+        }
+    }
+    return piles.size(); // Each pile represents one clone
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> weights(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> weights[i];
+        }
+        cout << calculate_min_clones(weights) << "\n"; // Output the number of clones required
+    }
+
+    return 0;
+}

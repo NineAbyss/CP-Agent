@@ -1,0 +1,91 @@
+#include <iostream>
+#include <algorithm>
+#include <cassert>
+using namespace std;
+
+using ll = long long;
+
+ll floor_div(ll a, ll b) {
+    if (b == 0) return 0;
+    ll q = a / b;
+    ll r = a % b;
+    if (r != 0 && ((a < 0) ^ (b < 0))) q--;
+    return q;
+}
+
+ll ceil_div(ll a, ll b) {
+    if (b == 0) return 0;
+    ll q = a / b;
+    ll r = a % b;
+    if (r != 0 && ((a < 0) ^ (b < 0)) == 0) q++;
+    return q;
+}
+
+// 检查在给定顺序下，是否存在 p (0<=p<=n) 使得可以烹饪 p 份类型A和 q=n-p 份类型B
+bool feasible_order(ll n, ll k, ll rA, ll dA, ll rB, ll dB) {
+    // p 的最大值来自条件1
+    ll P_max;
+    if (k >= rA) {
+        P_max = (k - rA) / dA + 1;
+    } else {
+        P_max = -1; // p 必须为 0
+    }
+    ll p_low = 0, p_high = n;
+    if (P_max >= 0) {
+        p_high = min(p_high, P_max);
+    } else {
+        p_high = 0;
+    }
+    // 条件2: k - p*dA - (q-1)*dB >= rB, 其中 q = n-p // 等价于 p*(dB - dA) >= rB - k + n*dB - dB
+    ll R = rB - k + n*dB - dB; // 即 rB - k + (n-1)*dB
+    ll d = dB - dA;
+    if (d == 0) {
+        if (R > 0) return false;
+        // R <= 0，则任何 p 都满足条件2
+        return p_low <= p_high;
+    } else if (d > 0) {
+        // p >= ceil(R / d)
+        ll need = ceil_div(R, d);
+        if (need < 0) need = 0;
+        p_low = max(p_low, need);
+    } else { // d < 0 // p <= floor(R / d)
+        ll limit = floor_div(R, d);
+        p_high = min(p_high, limit);
+    }
+    return p_low <= p_high;
+}
+
+// 对于给定顺序，计算最大总份数
+ll solve_order(ll k, ll rA, ll dA, ll rB, ll dB) {
+    if (k < rA && k < rB) return 0;
+    ll lo = 0, hi = k + 1; // 上界为 k+1
+    while (lo < hi) {
+        ll mid = (lo + hi + 1) / 2;
+        if (feasible_order(mid, k, rA, dA, rB, dB)) {
+            lo = mid;
+        } else {
+            hi = mid - 1;
+        }
+    }
+    return lo;
+}
+
+ll solve_one(ll k, ll a, ll b, ll x, ll y) {
+    // 尝试两种顺序
+    ll ans1 = solve_order(k, a, x, b, y); // 先类型1
+    ll ans2 = solve_order(k, b, y, a, x); // 先类型2
+    return max(ans1, ans2);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        ll k, a, b, x, y;
+        cin >> k >> a >> b >> x >> y;
+        cout << solve_one(k, a, b, x, y) << '\n';
+    }
+    return 0;
+}

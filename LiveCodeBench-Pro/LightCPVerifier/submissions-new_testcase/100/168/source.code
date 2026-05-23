@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int lis(const vector<int>& arr) {
+    vector<int> tails;
+    for (int x : arr) {
+        auto it = lower_bound(tails.begin(), tails.end(), x);
+        if (it == tails.end()) tails.push_back(x);
+        else *it = x;
+    }
+    return tails.size();
+}
+
+int lds(const vector<int>& arr) {
+    vector<int> tails;
+    for (int x : arr) {
+        auto it = lower_bound(tails.begin(), tails.end(), x, greater<int>());
+        if (it == tails.end()) tails.push_back(x);
+        else *it = x;
+    }
+    return tails.size();
+}
+
+bool is_cute(const vector<int>& arr) {
+    int m = arr.size();
+    return lis(arr) + lds(arr) == m + 1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        long long ans = 0;
+        // 暴力枚举所有子数组
+        for (int l = 0; l < n; l++) {
+            vector<int> tails_inc, tails_dec;
+            for (int r = l; r < n; r++) {
+                // 在线计算 LIS 和 LDS？可能仍然很慢。 // 改为使用向量
+                vector<int> sub(a.begin()+l, a.begin()+r+1);
+                if (is_cute(sub)) ans++;
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

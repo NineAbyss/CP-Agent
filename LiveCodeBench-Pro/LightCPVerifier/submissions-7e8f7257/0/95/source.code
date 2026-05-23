@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        long long x;
+        cin >> n >> k >> x;
+        vector<int> a(n);
+        long long S = 0;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            S += a[i];
+        }
+        long long T = 1LL * k * S - x;
+        if (T < 0) {
+            cout << 0 << '\n';
+            continue;
+        }
+        vector<long long> pref(n+1, 0);
+        for (int i = 0; i < n; i++) {
+            pref[i+1] = pref[i] + a[i];
+        }
+        long long ans = 0;
+        for (int r = 0; r < n; r++) {
+            long long pr = pref[r];
+            if (pr > T) continue;
+            long long q_max = (T - pr) / S;
+            if (q_max > k-1) q_max = k-1;
+            // q_max >= 0 guaranteed because pr <= T
+            ans += q_max + 1;
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

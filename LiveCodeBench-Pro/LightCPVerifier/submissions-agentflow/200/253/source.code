@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXM = 500000;
+const int INF = 1e9;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    vector<int> cost_c(MAXM+1, INF);
+    vector<int> f(MAXM+1, INF);
+    vector<bool> valid_c(MAXM+1, false);
+    
+    cost_c[3] = 1;
+    valid_c[3] = true;
+    
+    // iterate until convergence (10 iterations enough for given constraints)
+    for (int iter = 0; iter < 10; iter++) {
+        // compute f: minimal total cost to achieve product g
+        fill(f.begin(), f.end(), INF);
+        f[1] = 0;
+        for (int c = 3; c <= MAXM; c++) {
+            if (!valid_c[c]) continue;
+            int w = cost_c[c];
+            for (int g = 1; g <= MAXM / c; g++) {
+                if (f[g] < INF) {
+                    int new_g = g * c;
+                    if (f[new_g] > f[g] + w) {
+                        f[new_g] = f[g] + w;
+                    }
+                }
+            }
+        }
+        // generate new contributions from f
+        for (int g = 1; g <= MAXM; g++) {
+            if (f[g] < INF) {
+                int c = g + 2;
+                if (c <= MAXM) {
+                    int new_cost = 1 + f[g];
+                    if (cost_c[c] > new_cost) {
+                        cost_c[c] = new_cost;
+                        valid_c[c] = true;
+                    }
+                }
+            }
+        }
+    }
+    
+    // answer array
+    vector<int> ans(MAXM+1, -1);
+    for (int m = 1; m <= MAXM; m++) {
+        if (f[m] < INF) {
+            ans[m] = 1 + f[m];
+        }
+    }
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int m;
+        cin >> m;
+        cout << ans[m] << '\n';
+    }
+    
+    return 0;
+}

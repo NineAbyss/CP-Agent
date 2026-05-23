@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Platform {
+    int x1, y1, x2, y2, z;
+    Platform(int x1, int y1, int x2, int y2, int z) : x1(x1), y1(y1), x2(x2), y2(y2), z(z) {}
+};
+
+int n, H;
+vector<int> cubes;
+bool found;
+
+void dfs(vector<Platform>& platforms, int mask) {
+    if (mask == (1<<n)-1) {
+        found = true;
+        return;
+    }
+    if (found) return;
+    // try each cube not used
+    for (int idx = 0; idx < n; ++idx) {
+        if (mask & (1<<idx)) continue;
+        int s = cubes[idx];
+        // try each platform
+        for (size_t pi = 0; pi < platforms.size(); ++pi) {
+            Platform& pl = platforms[pi];
+            int w = pl.x2 - pl.x1;
+            int l = pl.y2 - pl.y1;
+            if (s > w || s > l) continue;
+            if (pl.z + s > H) continue;
+            // place cube here
+            vector<Platform> newPlatforms;
+            // add remaining regions from this platform // right region
+            if (pl.x1 + s < pl.x2) {
+                newPlatforms.emplace_back(pl.x1 + s, pl.y1, pl.x2, pl.y2, pl.z);
+            }
+            // top region (above the cube)
+            if (pl.y1 + s < pl.y2) {
+                newPlatforms.emplace_back(pl.x1, pl.y1 + s, pl.x1 + s, pl.y2, pl.z);
+            }
+            // add other unchanged platforms
+            for (size_t i = 0; i < platforms.size(); ++i) {
+                if (i == pi) continue;
+                newPlatforms.push_back(platforms[i]);
+            }
+            // add top of the cube as a new platform
+            newPlatforms.emplace_back(pl.x1, pl.y1, pl.x1 + s, pl.y1 + s, pl.z + s);
+            // recurse
+            dfs(newPlatforms, mask | (1<<idx));
+            if (found) return;
+        }
+    }
+}
+
+bool solveBox(vector<int>& cubesOrig, int w, int l, int h) {
+    cubes = cubesOrig;
+    sort(cubes.begin(), cubes.end(), greater<int>());
+    n = cubes.size();
+    H = h;
+    found = false;
+    vector<Platform> platforms;
+    platforms.emplace_back(0, 0, w, l, 0);
+    dfs(platforms, 0);
+    return found;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<int> fib(n+1);
+        fib[1] = 1;
+        if (n >= 2) fib[2] = 2;
+        for (int i = 3; i <= n; ++i) fib[i] = fib[i-1] + fib[i-2];
+        vector<int> cubes(n);
+        for (int i = 0; i < n; ++i) cubes[i] = fib[i+1];
+        string ans;
+        for (int i = 0; i < m; ++i) {
+            int w, l, h;
+            cin >> w >> l >> h;
+            bool ok = solveBox(cubes, w, l, h) || solveBox(cubes, l, w, h);
+            ans.push_back(ok ? '1' : '0');
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

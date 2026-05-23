@@ -1,0 +1,74 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+// Calculate minimum weight of the tree using a star configuration
+long long minWeight(int n) {
+    return n - 1;
+}
+
+// Calculate maximum weight of the tree
+long long maxWeight(int n) {
+    long long weight = 0;
+    for (int d = 1; d < n; ++d) {
+        weight += d * (n - d);
+    }
+    return weight;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+
+        long long minW = minWeight(n);
+        long long maxW = maxWeight(n);
+
+        if (k < minW || k > maxW) {
+            cout << "No\n";
+            continue;
+        }
+
+        cout << "Yes\n";
+        // Try to construct a tree with k or k±1 weight using a star or chain approach.
+        if (k == minW) {
+            // Star configuration: root 1 connected to all
+            for (int i = 2; i <= n; ++i) {
+                cout << "1 " << i << "\n";
+            }
+        } else {
+            // Trying to adjust between star and max weight line configuration
+            int current_depth = 1;
+            vector<int> parents(n+1, 1);
+            vector<int> depths(n+1, 0);
+
+            // Using balanced tree approach to construct intermediate depths
+            long long current_weight = minW;
+            for (int i = 2; i <= n; ++i) {
+                depths[i] = current_depth;
+                int potential_extra_weight = current_weight + (current_depth - depths[parents[i]]);
+                if (potential_extra_weight < k) {
+                    current_depth++;
+                    parents[i] = i - 1;  // Condition to create a line pattern
+                    current_weight += current_depth;
+                } else {
+                    current_weight += current_depth;
+                }
+            }
+            
+            for (int i = 2; i <= n; ++i) {
+                cout << parents[i] << " " << i << "\n";
+            }
+        }
+    }
+    return 0;
+}

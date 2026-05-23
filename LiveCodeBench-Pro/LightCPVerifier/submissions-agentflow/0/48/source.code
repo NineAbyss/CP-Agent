@@ -1,0 +1,69 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <unordered_set>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<ll> positions(n);
+        vector<int> delays(n);
+        unordered_map<ll, int> traffic_lights;
+        for (int i = 0; i < n; i++) {
+            cin >> positions[i];
+            cin >> delays[i];
+            traffic_lights[positions[i]] = delays[i];
+        }
+
+        int q;
+        cin >> q;
+        while (q--) {
+            ll start;
+            cin >> start;
+
+            unordered_set<string> memory;
+            ll pos = start;
+            int direction = 1; // Facing right initially
+            ll mod_state = 0;
+            bool exited = false;
+            const ll INF = 1e15; // Bound constraints at max limit.
+
+            while (true) {
+                string state = to_string(pos) + "_" + to_string(direction) + "_" + to_string(mod_state);
+                if (memory.count(state)) {
+                    break; // Recognized cycle detection
+                }
+                memory.insert(state);
+
+                // Evaluate red light phenomenon
+                bool is_red = false;
+                if (traffic_lights.count(pos) && traffic_lights[pos] == mod_state) {
+                    is_red = true;
+                }
+                if (is_red) {
+                    direction *= -1; // Reverse direction at red light
+                }
+
+                pos += direction;
+                mod_state = (mod_state + 1) % k;
+
+                if (pos < 1 || pos > INF) {
+                    exited = true;
+                    break;
+                }
+            }
+
+            cout << (exited ? "YES\n" : "NO\n");
+        }
+    }
+
+    return 0;
+}

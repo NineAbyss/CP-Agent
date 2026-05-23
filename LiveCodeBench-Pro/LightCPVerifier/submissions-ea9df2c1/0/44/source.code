@@ -1,0 +1,41 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string response;
+        // 命令 1: digit
+        cout << "digit" << endl;
+        cout.flush();
+        cin >> response; // 应为 "1" // 命令 2: digit
+        cout << "digit" << endl;
+        cout.flush();
+        cin >> response;
+        // 命令 3: digit
+        cout << "digit" << endl;
+        cout.flush();
+        cin >> response;
+        // 命令 4: mul 9
+        cout << "mul 9" << endl;
+        cout.flush();
+        cin >> response;
+        // 命令 5: digit
+        cout << "digit" << endl;
+        cout.flush();
+        cin >> response;
+        // 命令 6: add (n-9)
+        cout << "add " << (n - 9) << endl;
+        cout.flush();
+        cin >> response;
+        // 最终检查
+        cout << "!" << endl;
+        cout.flush();
+        cin >> response; // 应为 "1"
+    }
+    return 0;
+}

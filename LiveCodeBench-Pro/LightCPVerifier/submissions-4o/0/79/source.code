@@ -1,0 +1,94 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <set>
+#include <tuple>
+#include <algorithm>
+
+using namespace std;
+
+// Helper type to store a state: (cost, grid configuration)
+struct State {
+    long long cost;
+    vector<vector<long long>> grid;
+
+    bool operator<(const State &other) const {
+        return cost > other.cost; // Reverse for min-heap
+    }
+};
+
+// Helper function to check if grid is beautiful
+bool isBeautiful(const vector<vector<long long>>& h, int n) {
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n - 1; ++j) {
+            if (h[i][j] == h[i][j + 1]) return false;
+            if (j < n - 1 && h[j][i] == h[j + 1][i]) return false;
+        }
+    }
+    return true;
+}
+
+long long solve(int n, vector<vector<long long>>& h, vector<long long>& a, vector<long long>& b) {
+    if (isBeautiful(h, n)) return 0;
+
+    priority_queue<State> pq;
+    set<vector<vector<long long>>> seen;
+    
+    pq.push({0, h});
+    
+    while (!pq.empty()) {
+        State current = pq.top(); pq.pop();
+        
+        // If already processed this configuration, skip
+        if (seen.find(current.grid) != seen.end()) continue;
+        seen.insert(current.grid);
+
+        // Try applying each worker at company A
+        for (int i = 0; i < n; ++i) {
+            auto newGrid = current.grid;
+            for (int j = 0; j < n; ++j) {
+                newGrid[i][j] += 1;  // Increase row heights by 1
+            }
+            if (isBeautiful(newGrid, n)) {
+                return current.cost + a[i]; // Found a beautiful configuration
+            }
+            pq.push({current.cost + a[i], newGrid});
+        }
+
+        // Try applying each worker at company B
+        for (int j = 0; j < n; ++j) {
+            auto newGrid = current.grid;
+            for (int i = 0; i < n; ++i) {
+                newGrid[i][j] += 1; // Increase column heights by 1
+            }
+            if (isBeautiful(newGrid, n)) {
+                return current.cost + b[j]; // Found a beautiful configuration
+            }
+            pq.push({current.cost + b[j], newGrid});
+        }
+    }
+
+    return -1;  // Impossible to make the city beautiful
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<long long>> h(n, vector<long long>(n));
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < n; ++j) {
+                cin >> h[i][j];
+            }
+        }
+        vector<long long> a(n), b(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        for (int i = 0; i < n; ++i) cin >> b[i];
+        
+        cout << solve(n, h, a, b) << endl;
+    }
+    
+    return 0;
+}

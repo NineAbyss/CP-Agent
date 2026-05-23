@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXV = 100000;
+
+vector<int> factors[MAXV + 1];
+
+void init_factors() {
+    for (int i = 1; i <= MAXV; i++) {
+        for (int j = i; j <= MAXV; j += i) {
+            factors[j].push_back(i);
+        }
+    }
+}
+
+void solve() {
+    int n, q;
+    cin >> n >> q;
+    vector<int> a(n + 1);
+    vector<vector<int>> pos(MAXV + 1);
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+        pos[a[i]].push_back(i);
+    }
+    
+    while (q--) {
+        int k, l, r;
+        cin >> k >> l >> r;
+        long long ans = 0;
+        int cur_k = k;
+        int cur_pos = l;
+        while (cur_pos <= r) {
+            int next_j = r + 1;
+            // 枚举 cur_k 的所有因子
+            for (int d : factors[cur_k]) {
+                if (d < 2) continue;
+                if (pos[d].empty()) continue;
+                auto it = lower_bound(pos[d].begin(), pos[d].end(), cur_pos);
+                if (it != pos[d].end() && *it <= r) {
+                    next_j = min(next_j, *it);
+                }
+            }
+            if (next_j == r + 1) {
+                // 没有能整除的位置了
+                ans += (long long)cur_k * (r - cur_pos + 1);
+                break;
+            } else {
+                // 处理不能整除的区间
+                if (next_j > cur_pos) {
+                    ans += (long long)cur_k * (next_j - cur_pos);
+                }
+                // 处理位置 next_j
+                while (cur_k % a[next_j] == 0) {
+                    cur_k /= a[next_j];
+                }
+                ans += cur_k;
+                cur_pos = next_j + 1;
+            }
+        }
+        cout << ans << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    init_factors();
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

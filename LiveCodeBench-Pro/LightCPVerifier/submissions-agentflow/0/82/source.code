@@ -1,0 +1,38 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+using namespace std;
+
+// Function to calculate distinct f(p) values for a given n
+int distinct_f_values(int n) {
+    vector<int> perm(n);
+    for (int i = 0; i < n; ++i)
+        perm[i] = i + 1;
+    
+    set<int> f_values;
+    do {
+        int f = 0;
+        for (int i = 0; i < n; ++i) {
+            f += abs(perm[i] - (i + 1));
+        }
+        f_values.insert(f);
+    } while (next_permutation(perm.begin(), perm.end()));
+    
+    return f_values.size();
+}
+
+int main() {
+    int t;
+    cin >> t;
+    vector<int> results;
+    for (int i = 0; i < t; ++i) {
+        int n;
+        cin >> n;
+        results.push_back(distinct_f_values(n));
+    }
+    for (int result : results) {
+        cout << result << "\n";
+    }
+    return 0;
+}

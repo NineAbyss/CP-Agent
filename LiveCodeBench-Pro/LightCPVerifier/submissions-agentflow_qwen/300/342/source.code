@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int count_cycles(const vector<int>& g) {
+    int n = g.size() - 1;
+    vector<int> state(n+1, 0);
+    int cycles = 0;
+    for (int i = 1; i <= n; i++) {
+        if (state[i] != 0) continue;
+        int cur = i;
+        while (state[cur] == 0) {
+            state[cur] = 1;
+            cur = g[cur];
+        }
+        if (state[cur] == 1) {
+            cycles++;
+        }
+        int temp = i;
+        while (state[temp] == 1) {
+            state[temp] = 2;
+            temp = g[temp];
+        }
+    }
+    return cycles;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+    vector<int> g(n+1);
+    for (int i = 1; i <= n; i++) {
+        cin >> g[i];
+    }
+
+    while (q--) {
+        int x, y, k;
+        cin >> x >> y >> k;
+        g[x] = y;
+
+        int num_cycles = count_cycles(g);
+        int r = k % 3;
+        int ans;
+        if (r == 0) {
+            ans = 0;
+        } else if (r == 1) {
+            ans = 1;
+        } else {
+            ans = (num_cycles % 2 == 0) ? 1 : 2;
+        }
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

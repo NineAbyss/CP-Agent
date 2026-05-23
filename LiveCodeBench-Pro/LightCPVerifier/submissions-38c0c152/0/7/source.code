@@ -1,0 +1,29 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, s;
+        cin >> n >> s;
+        vector<int> x(n);
+        for (int i = 0; i < n; i++) cin >> x[i];
+        int x1 = x[0];
+        int xn = x[n-1];
+        int ans;
+        if (s <= x1) {
+            ans = xn - s;
+        } else if (s >= xn) {
+            ans = s - x1;
+        } else {
+            int opt1 = xn + s - 2*x1;
+            int opt2 = 2*xn - x1 - s;
+            ans = min(opt1, opt2);
+        }
+        cout << ans << endl;
+    }
+    return 0;
+}

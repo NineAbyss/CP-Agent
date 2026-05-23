@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+ll gcd(ll a, ll b) {
+    while (b) {
+        a %= b;
+        swap(a, b);
+    }
+    return a;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<ll> a(n);
+        map<ll, int> freq;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            freq[a[i]]++;
+        }
+
+        vector<ll> distinct;
+        for (auto& p : freq) {
+            distinct.push_back(p.first);
+        }
+        
+        string ans = "No";
+        
+        for (ll x : distinct) {
+            int count_x = freq[x];
+            
+            // Build D: all elements >= x and divisible by x
+            vector<ll> D;
+            for (ll val : a) {
+                if (val >= x && val % x == 0) {
+                    D.push_back(val);
+                }
+            }
+            
+            if (D.empty()) continue;
+            
+            // Compute gcd of D
+            ll g = D[0];
+            for (int i = 1; i < D.size(); i++) {
+                g = gcd(g, D[i]);
+                if (g < x) break;
+            }
+            
+            if (g != x) continue;
+            
+            // Build D_no_x: elements in D that are > x
+            vector<ll> D_no_x;
+            for (ll d : D) {
+                if (d > x) {
+                    D_no_x.push_back(d);
+                }
+            }
+            
+            if (D_no_x.empty()) {
+                if (count_x >= 2) {
+                    ans = "Yes";
+                    break;
+                }
+            } else {
+                // Compute gcd of D_no_x
+                ll h = D_no_x[0];
+                for (int i = 1; i < D_no_x.size(); i++) {
+                    h = gcd(h, D_no_x[i]);
+                    if (h < x) break;
+                }
+                
+                if (h == x) {
+                    ans = "Yes";
+                    break;
+                }
+            }
+        }
+        
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

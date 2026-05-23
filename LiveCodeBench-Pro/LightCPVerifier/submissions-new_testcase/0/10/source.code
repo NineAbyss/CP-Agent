@@ -1,0 +1,33 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+long long max_portions(long long k, long long a, long long b, long long x, long long y) {
+    // 先类型1再类型2
+    long long p1 = (k >= a) ? (k - a) / x + 1 : 0;
+    long long temp1 = k - p1 * x;
+    long long q1 = (temp1 >= b) ? (temp1 - b) / y + 1 : 0;
+    long long total1 = p1 + q1;
+    
+    // 先类型2再类型1
+    long long p2 = (k >= b) ? (k - b) / y + 1 : 0;
+    long long temp2 = k - p2 * y;
+    long long q2 = (temp2 >= a) ? (temp2 - a) / x + 1 : 0;
+    long long total2 = p2 + q2;
+    
+    return max(total1, total2);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        long long k, a, b, x, y;
+        cin >> k >> a >> b >> x >> y;
+        cout << max_portions(k, a, b, x, y) << '\n';
+    }
+    return 0;
+}

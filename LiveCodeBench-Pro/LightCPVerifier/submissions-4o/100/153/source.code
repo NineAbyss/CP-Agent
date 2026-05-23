@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int main() {
+    string t = "";
+    char ch;
+
+    while (cin >> ch && ch != '0') {  // Read characters one by one until '0'.
+        t += ch;  // Append the character to t.
+
+        int n = t.size();  // Current length of t.
+
+        // Check if we need to ensure palindrome symmetry
+        if (n > 1 && t[n - 1] != t[n - 2]) {
+            // If the last two characters are different, swap the last character with a matching character near the start.
+            int swap_pos = -1;
+            for (int i = 0; i < n - 1; ++i) {
+                if (t[i] == t[n - 1]) {
+                    swap_pos = i;
+                    break;
+                }
+            }
+            // If a swap position is found, perform the swap.
+            if (swap_pos != -1) {
+                cout << swap_pos + 1 << " " << n << endl;  // Swap to ensure symmetry.
+                swap(t[swap_pos], t[n - 1]);
+            } else {
+                cout << n - 1 << " " << n << endl;  // Otherwise, swap with the previous character.
+                swap(t[n - 2], t[n - 1]);
+            }
+        } else {
+            cout << "0 0" << endl;  // No swap needed.
+        }
+
+        cout.flush();  // Ensure output is flushed timely.
+    }
+
+    return 0;
+}

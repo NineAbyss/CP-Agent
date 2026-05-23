@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // We want to find the maximum size of a beautiful subsequence. // Observation:
+        // For a subsequence x_1, x_2, ..., x_m to be beautiful, there must exist distinct y_i
+        // such that x_i * y_i = C (same constant) for all i.
+        // Then y_i = C / x_i. Since y_i must be distinct and positive integers,  // we require that C is divisible by each x_i, and C/x_i are all distinct.
+
+        // Alternatively, note: if two elements in the subsequence are equal, say x_i = x_j, // then y_i = C/x_i and y_j = C/x_j would be equal, violating distinctness unless we pick only one.
+        // So we cannot have duplicate values in the chosen subsequence? Not exactly — wait.
+
+        // Actually, suppose we have two equal values, say x_i = x_j = v. // Then y_i = C/v and y_j = C/v → y_i = y_j → not allowed unless i=j.
+        // Therefore, we cannot have repeated values in the subsequence.
+
+        // But wait! What if we choose different C? No, C is fixed for the whole sequence.
+
+        // So all x_i in the subsequence must be distinct? Not necessarily — but their corresponding y_i = C/x_i must be distinct. // If x_i = x_j, then y_i = y_j → not allowed. So indeed, all x_i in the subsequence must be distinct.
+
+        // However, here's a catch: maybe we can use same value twice if we assign different y_i? But y_i = C/x_i forces them to be same. // So no, we cannot use the same value twice.
+
+        // Therefore, we can use at most one occurrence of any number.
+
+        // But now, given a set S of distinct numbers, when can we find a constant C such that: //   C is divisible by every x in S, and C/x are all distinct?
+        // The distinctness of C/x is automatically satisfied if the x are distinct? Not quite: //   Suppose x1 = 2, x2 = 4, and C = 8 → then C/x1 = 4, C/x2 = 2 → distinct.
+        //   But if x1 = 2, x2 = 3, x3 = 6, and C = 6 → then y1=3, y2=2, y3=1 → distinct.
+        // In fact, if all x are distinct, then C/x are distinct if and only if the mapping x -> C/x is injective.
+        // But since x are distinct, C/x are distinct unless C/x_i = C/x_j → x_i = x_j. So they are distinct.
+
+        // Therefore, for any set of distinct numbers, we can form a beautiful array by choosing C = LCM of all x_i. // Then y_i = C / x_i are integers and distinct because x_i are distinct.
+
+        // BUT WAIT: what about the example: [3, 1, 4, 1, 5] → answer is 4.
+        // The array has two 1s. If we pick both 1s, then we'd need two distinct y_i such that 1*y_i = C → so y_i = C for both → same → invalid.
+        // So we can pick at most one 1.
+
+        // So the problem reduces to: pick as many elements as possible such that the values are distinct? // Then the answer would be the number of distinct elements.
+
+        // But in the first test case: [1,2,3] → distinct count = 3 → matches.
+        // Second test case: [3,1,4,1,5] → distinct: {1,3,4,5} → 4 → matches.
+        // Third test case: [1] → 1 → matches.
+
+        // So is the answer simply the number of distinct elements?
+
+        // Let me reexamine: can we always form a beautiful sequence from any set of distinct numbers?
+        // Yes: let S = {x1, x2, ..., xk}, all distinct.
+        // Let C = LCM(S). Then define y_i = C / x_i. Then: //   - y_i are integers (by definition of LCM)
+        //   - y_i are distinct: because if y_i = y_j then C/x_i = C/x_j → x_i = x_j → contradiction.
+        //   - x_i * y_i = C for all i → same product.
+
+        // Therefore, any set of distinct numbers forms a beautiful sequence.
+
+        // And we cannot include duplicates (as shown above), so the maximum size is the number of distinct elements.
+
+        // However, wait: what if we skip some distinct values and include duplicates in a clever way?
+        // Example: can we include two 1s? Only if we can assign two different y_i such that 1*y_i = C → y_i = C → so both y_i equal → not allowed.
+        // So no.
+
+        // What about non-distinct values that yield distinct quotients? But if x_i = x_j, then y_i = C/x_i = C/x_j = y_j → same.
+
+        // Therefore, the answer is simply the number of distinct elements in the array.
+
+        set<int> distinct;
+        for (int x : a) {
+            distinct.insert(x);
+        }
+        cout << distinct.size() << '\n';
+    }
+
+    return 0;
+}

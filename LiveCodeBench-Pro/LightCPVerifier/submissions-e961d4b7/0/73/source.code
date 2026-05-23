@@ -1,0 +1,95 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+typedef long long ll;
+
+const ll INF = LLONG_MAX / 2;
+
+ll solve_rows(int n, const vector<vector<int>>& h, const vector<ll>& a) {
+    // forbid_row[i][d+1] = true if difference d is forbidden between row i and i+1
+    vector<vector<bool>> forbid_row(n, vector<bool>(3, false));
+    for (int i = 0; i < n-1; i++) {
+        for (int j = 0; j < n; j++) {
+            int d = h[i+1][j] - h[i][j];
+            if (d >= -1 && d <= 1) {
+                forbid_row[i][d+1] = true;
+            }
+        }
+    }
+    
+    vector<vector<ll>> dp(n, vector<ll>(2, INF));
+    dp[0][0] = 0;
+    dp[0][1] = a[0];
+    for (int i = 0; i < n-1; i++) {
+        for (int x = 0; x < 2; x++) {
+            if (dp[i][x] >= INF) continue;
+            for (int y = 0; y < 2; y++) {
+                int diff = x - y; // -1,0,1
+                if (forbid_row[i][diff+1]) continue;
+                dp[i+1][y] = min(dp[i+1][y], dp[i][x] + (y == 1 ? a[i+1] : 0));
+            }
+        }
+    }
+    return min(dp[n-1][0], dp[n-1][1]);
+}
+
+ll solve_cols(int n, const vector<vector<int>>& h, const vector<ll>& b) {
+    vector<vector<bool>> forbid_col(n, vector<bool>(3, false));
+    for (int j = 0; j < n-1; j++) {
+        for (int i = 0; i < n; i++) {
+            int d = h[i][j+1] - h[i][j];
+            if (d >= -1 && d <= 1) {
+                forbid_col[j][d+1] = true;
+            }
+        }
+    }
+    
+    vector<vector<ll>> dp(n, vector<ll>(2, INF));
+    dp[0][0] = 0;
+    dp[0][1] = b[0];
+    for (int j = 0; j < n-1; j++) {
+        for (int x = 0; x < 2; x++) {
+            if (dp[j][x] >= INF) continue;
+            for (int y = 0; y < 2; y++) {
+                int diff = x - y;
+                if (forbid_col[j][diff+1]) continue;
+                dp[j+1][y] = min(dp[j+1][y], dp[j][x] + (y == 1 ? b[j+1] : 0));
+            }
+        }
+    }
+    return min(dp[n-1][0], dp[n-1][1]);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> h(n, vector<int>(n));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                cin >> h[i][j];
+            }
+        }
+        vector<ll> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        
+        ll row_cost = solve_rows(n, h, a);
+        ll col_cost = solve_cols(n, h, b);
+        
+        if (row_cost >= INF || col_cost >= INF) {
+            cout << -1 << '\n';
+        } else {
+            cout << row_cost + col_cost << '\n';
+        }
+    }
+    return 0;
+}

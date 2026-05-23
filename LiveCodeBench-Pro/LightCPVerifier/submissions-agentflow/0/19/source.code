@@ -1,0 +1,38 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Function to determine if the array can be exploded using the operations
+bool canExplode(vector<long long>& a, int n) {
+    long long left_sum = 0;
+    for (int i = 0; i < n; ++i) {
+        left_sum += a[i];
+        if (left_sum < i * (i + 1) / 2) return false;  // Check sum needed from the left
+    }
+
+    long long right_sum = 0;
+    for (int i = n - 1; i >= 0; --i) {
+        right_sum += a[i];
+        if (right_sum < (n - i - 1) * (n - i) / 2) return false;  // Check sum needed from the right
+    }
+
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        cout << (canExplode(a, n) ? "YES" : "NO") << '\n';
+    }
+    return 0;
+}

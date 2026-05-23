@@ -1,0 +1,34 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;  
+        cin >> n;
+        vector<int> a(n);
+        unordered_map<int, int> last_occurrence;
+
+        // 记录每个元素的最后一次出现位置
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+            last_occurrence[a[i]] = i;
+        }
+
+        int max_segments = 0;
+        int current_segment_end = 0;
+
+        // 遍历数组以计算出最大段数
+        for (int i = 0; i < n; ++i) {
+            current_segment_end = max(current_segment_end, last_occurrence[a[i]]);
+            if (i == current_segment_end) {
+                ++max_segments;
+            }
+        }
+        cout << max_segments << endl;
+    }
+    return 0;
+}

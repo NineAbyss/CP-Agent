@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+vector<int> get_divisors(int n) {
+    vector<int> divs;
+    for (int i = 1; i * i <= n; ++i) {
+        if (n % i == 0) {
+            divs.push_back(i);
+            if (i != n / i) divs.push_back(n / i);
+        }
+    }
+    sort(divs.begin(), divs.end());
+    return divs;
+}
+
+int min_len_bfs(int n, int k) {
+    if (n == 1) return 0;
+    vector<int> divs = get_divisors(n);
+    int sz = divs.size();
+    // map value to index
+    unordered_map<int, int> idx;
+    for (int i = 0; i < sz; ++i) idx[divs[i]] = i;
+    vector<int> dist(sz, -1);
+    int start = idx[n];
+    dist[start] = 0;
+    queue<int> q;
+    q.push(start);
+    while (!q.empty()) {
+        int cur_idx = q.front(); q.pop();
+        int cur = divs[cur_idx];
+        if (cur == 1) break;
+        for (int d_idx = 0; d_idx < sz; ++d_idx) {
+            int d = divs[d_idx];
+            if (d > k || d <= 1) continue;
+            if (cur % d != 0) continue;
+            int next = cur / d;
+            int next_idx = idx[next];
+            if (dist[next_idx] == -1) {
+                dist[next_idx] = dist[cur_idx] + 1;
+                q.push(next_idx);
+            }
+        }
+    }
+    int one_idx = idx[1];
+    return dist[one_idx];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int x, y, k;
+        cin >> x >> y >> k;
+        int g = gcd(x, y);
+        int xp = x / g;
+        int yp = y / g;
+        int steps_p = min_len_bfs(yp, k);
+        int steps_q = min_len_bfs(xp, k);
+        int ans = -1;
+        if (steps_p != -1 && steps_q != -1) ans = steps_p + steps_q;
+        cout << ans << '\n';
+    }
+    return 0;
+}

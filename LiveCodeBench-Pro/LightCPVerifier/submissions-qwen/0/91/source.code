@@ -1,0 +1,602 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Precompute the minimum number of vertices for each m up to 500000
+vector<int> precompute() {
+    const int MAX_M = 500000;
+    vector<int> min_vertices(MAX_M + 1, -1); // min_vertices[m] = minimum number of vertices for m beautiful colorings
+
+    // We'll use BFS-like approach to generate all possible numbers of colorings // For a tree rooted at root, we can think recursively:
+    // Each subtree contributes multiplicatively to the total number of colorings.
+
+    // However, note from examples: // - A single node: 1 coloring -> [g]
+    // - Root with k children: the structure matters.
+
+    // Insight:
+    // After analyzing the constraints and examples, we observe that the number of beautiful colorings
+    // in a tree corresponds to products of terms based on the degrees or structure.
+    
+    // Actually, from known solutions to similar problems (e.g., CodeForces), this problem is known. // The key idea:
+    //   Let f(n) be the number of beautiful colorings of a tree with n nodes.
+    //   But we want inverse: for given m, find minimal n such that there exists a tree with exactly m colorings.
+
+    // Known fact: The number of beautiful colorings of a tree rooted at r is equal to the product over all nodes v ≠ r  // of (1 + deg(v)), but this does not match.
+
+    // Alternate Insight: // Consider building trees where the root has several subtrees. Each child of the root can be independently colored,
+    // but constraints link colors.
+
+    // From analysis of conditions: // - Root is green.
+    // - Blue/Green form a connected component (no yellow separating them).
+    // - Yellow/Green form a connected component (no blue separating them).
+
+    // This implies that the set of blue nodes must be connected to the root via green/blue only, // and yellow similarly.
+
+    // It turns out that the entire tree's coloring is determined by assigning to each edge a "type", // but more importantly, known similar problems (e.g., CF Round #781) show:
+
+    // If the root has children v1, v2, ..., vk, then the number of beautiful colorings is:
+    //   ∏_{i=1}^{k} (1 + 2 * size_of_subtree_i) ??? Not quite.
+
+    // Another known solution approach: // After reading known problems: This is very similar to a problem where the answer depends on
+    // representing m in base-3 or using Fibonacci-like sequences.
+
+    // But let's analyze the examples: // m = 1 -> n = 1
+    // m = 3 -> n = 2 // m = 5 -> n = 3
+    // m = 7 -> n = 4 // m = 9 -> n = 3
+
+    // How can we get 9 with 3 nodes? Only if root has two children. So tree: root with two leaves.
+
+    // Let’s denote: // For a node u, define dp[u][color] but we need to count total valid colorings.
+
+    // Instead, known result from competitive programming:
+    // The number of beautiful colorings of a tree is always of the form:
+    //   m = ∏_{i} a_i, where each a_i is either 1, 2, or an odd integer >= 3? // But 5 is prime, 7 is prime, 9 = 3*3.
+
+    // Actually, after deeper thought and known problems (e.g., CodeForces 1672F), we realize:
+    // The number of beautiful colorings equals the product over all direct children of the root
+    // of (1 + 2 * (size of the branch))? No.
+
+    // Alternate known solution (from similar past problem): // Observation:
+    // - The constraints imply that the removal of yellow vertices leaves blue/green connected — so blue/green is connected. // - Similarly, yellow/green is connected.
+    // - So green connects everything.
+
+    // Key: Every blue vertex must lie in the same connected component as the root in the subgraph induced by {blue, green}.
+    // Same for yellow.
+
+    // This is equivalent to: There is no edge between a blue and a yellow vertex.
+
+    // Moreover, the only place where color changes matter is at edges.
+
+    // Known solution approach found in contests:
+    // The number of beautiful colorings of a tree is equal to the product over all edges (u,v) of some factor?
+    // Or rather, it's multiplicative across subtrees.
+
+    // Insight: Root is green. For any other node, its color choice may depend on its parent.
+
+    // But here's a crucial observation from known editorial (similar problem):
+    // In fact, the number of beautiful colorings is equal to the product over all nodes v (except the root)
+    // of (1 + c_v), where c_v is the number of constraints? Not exactly.
+
+    // After checking example: // n=1: only one coloring -> m=1.
+    // n=2: root and one child. The child can be g, b, y -> 3 colorings -> m=3. // n=3 chain: root -- u -- v
+    //   root: g //   u: g -> v: g, b, y
+    //   u: b -> v: b (cannot be y because then blue-yellow edge; cannot be g? wait)
+    //      But if u=b, v=g: then path from root(g) to v(g) goes through u(b) – allowed since b is in blue/green.
+    //      Also, v=g is in yellow/green, and root is connected via u=b? But b is not in yellow/green! //      So path from root to v in yellow/green would require non-blue vertices. But u=b blocks it.
+    //      Therefore, if u=b, then v cannot be yellow or green? Contradiction.
+
+    // Correction: // Condition 2: All blue and green vertices are reachable from each other without passing through yellow.
+    // So if u=b and v=g, then root(g)-u(b)-v(g): all are in {b,g}, no yellow → ok for condition 2. // Condition 3: All yellow and green vertices must be connected without passing through blue.
+    // Now, root(g) and v(g) are both green, but the only path is root-u-v, and u=b which is blue → not allowed. // So we cannot have a blue vertex between two green/yellow vertices that need to communicate in the yellow-green graph.
+
+    // Therefore, once you leave the green path from the root, you cannot come back.
+
+    // Specifically, the set of green vertices must form a connected subtree containing the root. // And each maximal monochromatic (blue or yellow) subtree must be attached to the green core.
+
+    // Moreover, no edge between blue and yellow is allowed.
+
+    // Even stronger: the entire tree's coloring decomposes into: // - A green connected core (containing the root),
+    // - Blue subtrees hanging off the green core (but not connected to yellow), // - Yellow subtrees hanging off the green core.
+
+    // And within a blue subtree, every node must be blue or green? But if a green appears in a blue subtree, // it becomes part of the core.
+
+    // Actually, the core is fixed: the green nodes must be connected and include the root.
+
+    // Then, any non-green node must be entirely blue or entirely yellow, and its parent must be green.
+    // Why? Because if a blue node has a green child, that's fine, but then the child could connect elsewhere.
+    // But consider: if a blue node has a green child, then that green child must connect to the root through green nodes.
+    // The only path goes through the blue parent → blocked for yellow/green connectivity.
+
+    // Therefore, **any green node must have only green children**? Not necessarily: what if the child is green?
+    // But if a green node has a blue child, that's acceptable, as long as the blue child doesn't connect to yellow.
+
+    // However, the critical point: **a non-green node cannot have a green child**, because that would create // a blue-green or yellow-green edge, and the green child would need to connect to the root through the non-green parent,
+    // which is forbidden in the respective subgraphs.
+
+    // Therefore:
+    // - The green nodes form a connected subtree containing the root.
+    // - Any edge from a green node to a non-green node is allowed. // - But a non-green node cannot have a green child.
+    // - Additionally, a blue node cannot have a yellow child or vice versa (because that would create a blue-yellow edge).
+
+    // But also, a blue node can have blue children, yellow can have yellow children.
+
+    // So the coloring is determined by: // - Choose a connected green core S containing the root.
+    // - Each node not in S must be colored blue or yellow, but with the constraint that if a node is colored, then
+    //   the entire subtree rooted at that node must be uniformly colored (in the sense: once you go blue, you can only have blue descendants; same for yellow).
+
+    // However, wait: can a green node have both blue and yellow children? Yes! Example: root has two children, one blue, one yellow → coloring [g,b,y] is valid.
+
+    // Now, how many colorings are there?
+
+    // Actually, we can do a DFS and assign: // - Root is green.
+    // - For each child of a green node, we can choose: //     a) make it green,
+    //     b) make it blue (and then its whole subtree must be blue-only: each node has choices? no, because if we allow green later, blocked) //     c) make it yellow.
+
+    // But if we make a child blue, then that child's children can be...? // They cannot be green (because then disconnected from root in yellow/green graph).
+    // They cannot be yellow (because blue-yellow edge). // So they must be blue.
+
+    // Similarly, once you choose blue or yellow for a node, the entire subtree under it must be that color.
+
+    // BUT: wait, what if under a blue node we have another green node? We already said no, because the green node would be disconnected from the root.
+
+    // Therefore, the rules are: // - The root is green.
+    // - For any node: //     - If it is green, each of its children can independently be:
+    //           green, blue, or yellow. //     - If it is blue, each of its children must be blue.
+    //     - If it is yellow, each of its children must be yellow.
+
+    // Is that sufficient?
+
+    // Check connectivity: // - Blue and green: all green are connected (by green edges). Blue nodes are attached to green nodes (via parent), so they connect to the green core. No yellow inside → connected.
+    // - Yellow and green: similarly.
+
+    // And no blue-yellow edge because they are separated by green.
+
+    // So YES.
+
+    // Therefore, the number of beautiful colorings of a tree is computed recursively:
+
+    // Let F(u) = number of ways to color the subtree rooted at u. // But we need to know the color of u.
+
+    // Alternatively, define: //   Let G(u) = number of colorings of subtree rooted at u given that u is green.
+    //   Let B(u) = number of colorings of subtree rooted at u given that u is blue. //   Let Y(u) = number of colorings of subtree rooted at u given that u is yellow.
+
+    // Then:
+    //   B(u) = 1 (only all blue) — actually, no: if u is blue, then each child v must be blue, and recursively, the whole subtree is forced to be blue. So only 1 way.
+    //   Similarly, Y(u) = 1.
+    //   G(u) = ∏_{v ∈ children(u)} [G(v) + B(v) + Y(v)] = ∏_{v} (1 + 1 + 1) = ∏_{v} 3? 
+
+    // But wait: when u is green, each child v can be green, blue, or yellow independently.
+    // And if v is green, then the number of ways for v's subtree is G(v).
+    // But G(v) itself depends on v's children.
+
+    // Actually, we have: //   B(u) = 1
+    //   Y(u) = 1
+    //   G(u) = ∏_{v ∈ children(u)} (G(v) + B(v) + Y(v)) = ∏_{v} (G(v) + 2)
+
+    // But G(v) is at least 1 (if v is leaf, G(v)=1, so term = 1+2=3).
+
+    // However, note: if v is a leaf, then: //   G(v) = 1 (only green)
+    //   B(v) = 1 //   Y(v) = 1
+    // So G(u) for a node u with one leaf child: G(u) = (1+1+1) = 3.
+
+    // But what if u has two leaf children? Then G(u) = 3 * 3 = 9.
+
+    // And the root must be green, so total colorings = G(root).
+
+    // So the total number of beautiful colorings is G(root), computed as: //   For a leaf: G(leaf)=1.
+    //   For an internal node: G(u) = ∏_{v ∈ children} (G(v) + 2)
+
+    // But note: the root is fixed to be green, so we don't multiply by anything else.
+
+    // Therefore, the number of beautiful colorings is completely determined by the tree structure through this recurrence.
+
+    // Now, our task: given m, find the minimum number of vertices in a tree such that G(root) = m.
+
+    // We are to minimize the number of nodes.
+
+    // How do we build a tree to achieve exactly m?
+
+    // We can use dynamic programming or BFS over possible values.
+
+    // Let dp[x] = minimum number of nodes needed to achieve x colorings (i.e., G(root)=x).
+
+    // We start with dp[1] = 1 (a single node).
+
+    // Then, we can build larger trees: if we have a root with children whose subtrees have values a1, a2, ..., ak,
+    // then G(root) = ∏_{i=1}^{k} (ai + 2), and the total number of nodes is 1 + sum_{i} (nodes in subtree i).
+
+    // So to compute dp[m], we consider all factorizations of m.
+
+    // Steps: //   Initialize dp[1] = 1.
+    //   For each value v from 1 to MAX_M:
+    //       If dp[v] is not infinity, then for any multiple w = v * k, we might update dp[w]?
+    //       But actually, the root can have multiple children, each contributing a factor.
+
+    //   Alternatively, we iterate over all possible products.
+
+    //   For each value x (>=1), if dp[x] is known, then we can create a new tree by making x the contribution of one child.
+    //   Then, if we have a root with several children with values a1, a2, ..., ak, then total product P = ∏ (ai+2) = m,
+    //   and total nodes = 1 + sum dp[ai].
+
+    //   So for a fixed m, we need to find a factorization:
+    //        m = ∏_{i=1}^{k} f_i,   where each f_i >= 3 (since ai>=1 => ai+2>=3) OR possibly f_i=1? 
+    //        But note: if a child subtree has value a, then factor is (a+2) >= 3.
+    //        However, what if the root has no children? then product over empty set = 1 -> m=1.
+
+    //   So factors are integers >=3, except m=1 is allowed.
+
+    //   But wait: can we have a factor of 1 or 2? //        Factor = a+2, a>=1 -> factor>=3. So yes, only factors >=3.
+
+    //   However, m=1: handled by no children. //   m=3: factorization: 3 -> one factor of 3 -> then a+2=3 -> a=1 -> need a child subtree with 1 coloring, which takes dp[1]=1 node.
+    //         total nodes = 1 (root) + 1 (child) = 2.
+
+    //   m=5: 5 is prime, so only factorization: [5] -> then a+2=5 -> a=3 -> need a child with 3 colorings, which requires dp[3]=2 nodes. //         total nodes = 1 + 2 = 3.
+
+    //   m=7: prime -> factor 7 -> a=5 -> dp[5]=3 -> total nodes = 1+3=4.
+
+    //   m=9: factorizations: [9] -> a=7 -> dp[7]=4 -> total nodes=5; or [3,3] -> two children, each with a=1 -> each takes 1 node -> total nodes=1+1+1=3. //         so minimum is 3.
+
+    //   This matches the sample: m=9 -> n=3.
+
+    //   So algorithm:
+
+    //   Let dp[1] = 1. //   For m from 2 to MAX_M:
+    //        dp[m] = infinity //        Consider all factorizations of m into factors >=3.
+    //        For each factorization: m = f1 * f2 * ... * fk, where fi>=3
+    //             then for each fi, let ai = fi - 2, and we require that dp[ai] is defined.
+    //             total_nodes = 1 + sum_{i=1}^{k} dp[ai] //             then dp[m] = min(dp[m], total_nodes)
+
+    //   But iterating over all factorizations for each m up to 500000 is too expensive.
+
+    //   Alternative: iterate by smallest factor.
+
+    //   We can do:
+    //      for m from 1 to MAX_M:
+    //          if dp[m] is not INF, then for every multiple of m: skip? //      Instead, we do a kind of sieve:
+
+    //      for (int i = 1; i <= MAX_M; i++) {
+    //          if (dp[i] == INF) continue;
+    //          for (int j = 3; ; j++) {
+    //              long long nxt = (long long)i * j;
+    //              if (nxt > MAX_M) break;
+    //              int a = j - 2;   // because factor j = a+2 -> a = j-2
+    //              if (a < 1) continue;
+    //              if (dp[a] == INF) continue;
+    //              int total_nodes = 1 + dp[a];   // one child with value a //              // But wait: we are multiplying current value i by j, meaning we add one more child with factor j?
+    //              // No: our state dp[x] is for a single subtree achieving x. //              // We are trying to build a new subtree whose root has multiple children.
+    //          }
+    //      }
+
+    //   This is not straightforward.
+
+    //   Better: we iterate over all possible values of m, and for each m, iterate over all divisors d of m such that d>=3.
+    //   Then, if we let one child contribute factor d (so its subtree has value a = d-2), and the rest of the children contribute product m/d,
+    //   then we need to know the minimal nodes to achieve product m/d.
+
+    //   But note: the root can have multiple children, and the total product is multiplicative.
+
+    //   So we can use: //        dp[1] = 1
+    //        for m from 2 to MAX_M: //            dp[m] = INF
+    //            // Option 1: the root has one child with factor m -> then a = m-2, so if a>=1 and dp[a] != INF, then candidate = 1 + dp[a] //            // Option 2: the root has more than one child: factorize m = d * (m/d), and assume one child gives factor d, and the others give product m/d.
+    //            // But the others are independent: we can combine any two configurations multiplicatively.
+
+    //   Actually, the total number of nodes for a product m is:
+    //        dp[m] = min_{d | m, d>=3} { 1 + dp[d-2] + dp[m/d] }   ??? No, because the "rest" is not a single subtree.
+
+    //   Correction: the root has several children. The total product is the product of (value_i + 2) for each child i.
+    //   So if we split the children into two groups: one child with value a (so factor a+2 = d), and the rest having product P = m / d,
+    //   then the total nodes = 1 + dp[a] + (nodes for the rest).
+
+    //   But the rest is not a single subtree — it's multiple subtrees. However, we can design the rest arbitrarily.
+
+    //   Actually, the minimal number of nodes to achieve a product P for the other children is exactly dp[P]?  //   NO: dp[P] is the minimal number of nodes to have a single tree with G(root)=P. But here we want the combined effect of several children.
+
+    //   But wait: our dp[x] is defined as the minimal number of nodes to have a tree whose root has G(root)=x. //   And that tree's root may have children that achieve the product.
+
+    //   However, when we are building the main tree, the root has several children, each being the root of a subtree. //   So the total number of nodes contributed by the children is the sum of the sizes of their subtrees.
+
+    //   And the product is multiplicative.
+
+    //   Therefore, to achieve a total product m, we can do: //        Try every divisor d of m with d>=3:
+    //            Let a = d - 2. We need a subtree that gives value a, which takes dp[a] nodes. //            Then, the remaining product is m / d, which must be achieved by the other children.
+    //            The minimal nodes for the other children to achieve product m/d is dp[m/d]? 
+    //            But dp[m/d] is for one tree achieving m/d, not for a collection of trees achieving product m/d.
+
+    //   This is not matching.
+
+    //   We need a different DP: let f(m) = minimal number of nodes in a forest of rooted trees (each satisfying the property) such that the product of (G(root_i)+2) over trees is m.
+
+    //   But note: in our case, the root has children, each child is the root of a subtree. The factor for child i is (G(subtree_i)+2)? 
+    //   Actually, no: the factor is (G(child_tree) + 2) only if we are using the recurrence? Wait:
+
+    //   Recall: for a node u, G(u) = ∏_{v in children} (G(v) + 2)
+
+    //   So if we have a root with children whose subtrees have values a1, a2, ..., ak, then G(root) = ∏ (ai+2).
+
+    //   So we want to write m = ∏_{i=1}^{k} (ai+2), and minimize 1 + sum_{i} (size of subtree achieving ai).
+
+    //   So define: //        dp[m] = minimal total number of nodes in a collection of subtrees (possibly empty) such that the product of (ai+2) = m.
+    //        Then the entire tree has 1 + dp[m] nodes.
+
+    //   But wait: we want the whole tree including the root.
+
+    //   Actually, let: //        Let f(m) = minimal number of nodes in a tree (with root) such that G(root) = m.
+    //        Then f(m) = 1 + g(m), where g(m) is the minimal number of nodes in a forest of subtrees (the children) such that the product of (G(subtree_i)+2) = m.
+
+    //   And g(m) is computed as:
+    //        g(1) = 0   [empty forest]
+    //        for m>1: g(m) = min_{d | m, d>=3, and a=d-2>=1} { f(a) + g(m/d) }
+
+    //   But note: the forest can have multiple trees, and we can break m = d * (m/d) and assign one tree for d and the rest for m/d.
+
+    //   However, we might also break into more than two.
+
+    //   So we do: //        g(1) = 0
+    //        for m from 2 to MAX_M: //            g(m) = INF
+    //            for each divisor d of m with d>=3: //                a = d - 2
+    //                if a < 1: skip
+    //                if f(a) is INF: skip
+    //                if g(m/d) is INF: skip //                g(m) = min(g(m), f(a) + g(m/d))
+
+    //        then f(m) = 1 + g(m)
+
+    //   But we haven't defined f without g.
+
+    //   Actually, we can do iterative relaxation:
+
+    //        f(1) = 1 //        g(1) = 0
+    //        Then for m>=2, we compute g(m) using divisors, then f(m)=1+g(m)
+
+    //   However, f(a) is used in g(m), and a can be any value, so we need to compute f in increasing order.
+
+    //   But note: a = d-2, and d>=3, so a>=1. And d divides m, so d<=m, so a<=m-2. So when computing g(m), we only need f(a) for a<=m-2, which we have computed.
+
+    //   But g(m/d) might be for m/d < m, so we can iterate m from 1 to MAX_M.
+
+    //   Steps:
+
+    //        f[1] = 1 //        g[1] = 0
+    //        for m from 2 to MAX_M: //            g[m] = INF
+    //            // iterate over divisors d of m, d>=3
+    //            for d in divisors of m:
+    //                if d < 3: continue
+    //                if m % d != 0: continue
+    //                a = d - 2
+    //                if a < 1: continue
+    //                if f[a] == INF: continue //                rest = m / d
+    //                if g[rest] == INF: continue //                g[m] = min(g[m], f[a] + g[rest])
+    //            }
+    //            if g[m] != INF:
+    //                f[m] = 1 + g[m]
+    //            else:
+    //                f[m] = INF
+
+    //   But note: the forest might have more than two trees, but the recurrence by divisors will capture any factorization because we break one tree at a time.
+
+    //   However, this only breaks into two parts. But because we do it iteratively, and g[rest] is computed optimally for the rest, it should be fine.
+
+    //   But we must iterate over all divisors.
+
+    //   Complexity: O(M * (#divisors)) ~ 500000 * 100 ~ 50e6, which is acceptable.
+
+    //   But note: we need to iterate for each m, and for each divisor d of m.
+
+    //   How to do that? Precompute divisors for all numbers up to MAX_M.
+
+    //   Alternatively, iterate d from 3 to MAX_M, and for each multiple m of d.
+
+    //   Let's do:
+
+    //        vector<vector<int>> divisors(MAX_M+1);
+    //        for (int d = 1; d <= MAX_M; d++) {
+    //            for (int m = d; m <= MAX_M; m += d) {
+    //                divisors[m].push_back(d);
+    //            }
+    //        }
+
+    //   Then use above.
+
+    //   However, memory: about 500000 * log(500000) ~ 5e6 integers, acceptable.
+
+    //   But note: we only need d>=3.
+
+    //   Also, we must initialize: //        f[1] = 1
+    //        g[1] = 0
+    //        for m from 2 to MAX_M: initially g[m] = INF, f[m]=INF
+
+    //   Then for m from 2 to MAX_M:
+    //        for each divisor d of m with d>=3:
+    //            a = d-2
+    //            if a>=1 and a<=MAX_M and f[a]!=INF and g[m/d]!=INF:
+    //                g[m] = min(g[m], f[a] + g[m/d])
+
+    //        if g[m] != INF: f[m] = 1 + g[m]
+
+    //   But note: m/d might not be integer? We are iterating divisors, so m%d==0.
+
+    //   However, m/d might be fractional in integer division? No, d divides m.
+
+    //   But m/d might be greater than MAX_M? No, because d>=3, m/d <= m/3 < m <= MAX_M.
+
+    //   But m/d is at most MAX_M, and we are iterating m from 2 to MAX_M, so when we compute g[m], we have already computed g[m/d] for m/d < m.
+
+    //   So we can do increasing m.
+
+    //   But note: m/d might be 1, which we have.
+
+    //   Let's test with m=3: //        divisors of 3: [1,3] -> take d=3 (>=3)
+    //        a = 3-2 = 1 //        f[1]=1 (known)
+    //        rest = 3/3 = 1, g[1]=0 //        g[3] = min(INF, 1+0) = 1
+    //        then f[3] = 1 + g[3] = 2.
+
+    //   m=9: //        divisors: 1,3,9 -> take d=3,9
+    //        d=3: a=1, f[1]=1, rest=9/3=3, g[3]=1 -> total = 1+1=2 //        d=9: a=7, f[7] = ?
+    //             we need f[7]:  //                 m=7: divisors: 1,7 -> d=7: a=5, f[5]=?
+    //                 m=5: divisors: 1,5 -> d=5: a=3, f[3]=2, rest=1, g[1]=0 -> g[5]=2, f[5]=3. //                 then m=7: d=7: a=5, f[5]=3, rest=1, g[1]=0 -> g[7]=3, f[7]=4.
+    //        so d=9: a=7, f[7]=4, rest=1, g[1]=0 -> total=4 //        so g[9] = min(2,4) = 2
+    //        f[9] = 1+2 = 3.
+
+    //   This matches.
+
+    //   But wait: the forest for m=9 with d=3: we have one tree with a=1 (which takes f[1]=1 node) and the rest of the forest has product 3, which takes g[3]=1 node.
+    //   So total forest nodes = 1+1 = 2.
+    //   Then the whole tree has 1 (root) + 2 = 3 nodes.
+
+    //   What does this tree look like? //        Root has two children.
+    //        First child: a subtree with value 1 -> a single node (green) -> so that child is green? But then factor = (1+2)=3. //        Second child: a subtree with value a such that a+2=3 -> a=1 -> also a single node.
+    //        So two children, each a leaf. //        Then G(root) = (1+2)*(1+2)=3*3=9.
+
+    //   And total nodes: 1 (root) + 1 + 1 = 3.
+
+    //   Perfect.
+
+    //   However, note: we might also consider the factorization 9=9, which gives one child with a=7, which takes f[7]=4 nodes -> total nodes=1+4=5, which is worse.
+
+    //   So we take the minimum.
+
+    //   But note: we might also break into three factors: 3*3*3? But 3*3*3=27, not 9.
+
+    //   Our recurrence considers any factorization by breaking one factor at a time, and because g[rest] is computed optimally, it will capture multi-factor cases.
+
+    //   For example, m=27: //        d=3: a=1, rest=9, g[9]=2 -> total = f[1]+g[9]=1+2=3
+    //        so g[27]=3, f[27]=4.
+
+    //   Which corresponds to three children, each a leaf: 1+1+1=3 nodes in children, plus root -> 4 nodes.
+
+    //   Correct.
+
+    //   Implementation:
+
+    //   We'll precompute: //        f[1..MAX_M] and g[1..MAX_M]
+    //        Precompute divisors for all numbers.
+
+    //   But note: memory and time.
+
+    //   Time: O(MAX_M * log(MAX_M)) for divisor generation, and then for each m, we iterate over divisors, so total O(MAX_M * log(MAX_M)).
+
+    //   MAX_M=500000, log factor about 10-15, so 500000*15 = 7.5e6, acceptable.
+
+    //   However, we must be cautious.
+
+    //   Let's code accordingly.
+
+    //   But note: the problem says "if such a tree does not exist, print -1".
+
+    //   In our dp, if f[m] is INF, we output -1.
+
+    //   But is it possible that m cannot be represented? 
+    //        Only if m cannot be written as a product of integers >=3.
+    //        But note: m=1 is allowed (empty product).
+    //        m=2: cannot be written as a product of integers>=3 -> so no tree has exactly 2 beautiful colorings.
+
+    //   But the input guarantee: m>=1, and we have t test cases.
+
+    //   Example: m=2 -> no divisor d>=3 that divides 2 -> so g[2] remains INF, f[2] remains INF -> output -1.
+
+    //   However, the sample input does not include 2.
+
+    //   But the problem says: "if such a tree does not exist, print -1".
+
+    //   So we do that.
+
+    //   But note: what about m=4? //        divisors: 1,2,4 -> d>=3: d=4
+    //        a=4-2=2 -> we need f[2]. But f[2] is INF (since 2 cannot be achieved). //        so g[4] = INF, f[4]=INF -> output -1.
+
+    //   But is there a tree with 4 colorings? //        We need G(root)=4.
+    //        Factorization: 4 = 4 -> then a=2 -> need a subtree with 2 colorings -> but we just saw none exists. //        Or 4=2*2, but 2<3 -> not allowed.
+    //        So no.
+
+    //   So output -1.
+
+    //   But the sample: m=1,3,5,7,9 -> all work.
+
+    //   We'll implement accordingly.
+
+    //   However, note: we might have m=1, which is handled.
+
+    //   One more: m=6: //        divisors: 1,2,3,6 -> d=3,6
+    //        d=3: a=1, f[1]=1, rest=2, g[2]=INF -> skip //        d=6: a=4, f[4]=INF -> skip
+    //        so g[6]=INF -> f[6]=INF -> -1.
+
+    //   But 6=3*2, but 2<3 -> invalid factor. //   So no.
+
+    //   But wait: could we have a tree with two children: one giving factor 3, one giving factor 2? -> no, because factor must be>=3.
+
+    //   So indeed, no.
+
+    //   Therefore, we implement:
+
+    const int MAX_M = 500000;
+    vector<int> f(MAX_M+1, INT_MAX/2); // f[m] = minimal nodes for a tree with m colorings
+    vector<int> g(MAX_M+1, INT_MAX/2); // g[m] = minimal nodes in a forest such that the product of (a_i+2) = m
+
+    // Precompute divisors
+    vector<vector<int>> divisors(MAX_M+1);
+    for (int d = 1; d <= MAX_M; d++) {
+        for (int m = d; m <= MAX_M; m += d) {
+            divisors[m].push_back(d);
+        }
+    }
+
+    // Base case
+    f[1] = 1;
+    g[1] = 0;
+
+    // Iterate m from 2 to MAX_M
+    for (int m = 2; m <= MAX_M; m++) {
+        g[m] = INT_MAX/2;
+        for (int d : divisors[m]) {
+            if (d < 3) continue;
+            int a = d - 2;
+            int rest = m / d;
+            // We need a>=1 and within bounds
+            if (a < 1 || a > MAX_M) continue;
+            if (f[a] >= INT_MAX/2 || g[rest] >= INT_MAX/2) continue;
+            if (f[a] + g[rest] < g[m]) {
+                g[m] = f[a] + g[rest];
+            }
+        }
+        if (g[m] < INT_MAX/2) {
+            f[m] = 1 + g[m];
+        }
+        // else remains INF
+    }
+
+    // Now, f[m] is the answer for m.
+    // But note: the problem asks for the minimum number of vertices in a tree with exactly m beautiful colorings.
+    // That is f[m].
+
+    // However, we must return f[m] for each test case, or -1 if not possible.
+
+    // But note: we computed f[m] for m in [1,500000].
+
+    // We'll store answers in an array.
+
+    vector<int> ans(MAX_M+1, -1);
+    for (int m = 1; m <= MAX_M; m++) {
+        if (f[m] < INT_MAX/2) {
+            ans[m] = f[m];
+        } else {
+            ans[m] = -1;
+        }
+    }
+
+    return ans;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    // Precompute answers for all m in [1, 500000]
+    vector<int> ans = precompute();
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int m;
+        cin >> m;
+        cout << ans[m] << '\n';
+    }
+
+    return 0;
+}

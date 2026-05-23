@@ -1,0 +1,40 @@
+#include <iostream>
+using namespace std;
+
+long long mod(long long x, long long m) {
+    return ((x % m) + m) % m;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long w, h, a, b, x1, y1, x2, y2;
+        cin >> w >> h >> a >> b >> x1 >> y1 >> x2 >> y2;
+        
+        long long x1m = mod(x1, a);
+        long long x2m = mod(x2, a);
+        long long y1m = mod(y1, b);
+        long long y2m = mod(y2, b);
+        
+        bool xalign = (x1m == x2m);
+        bool yalign = (y1m == y2m);
+        
+        bool ok = false;
+        if (xalign && yalign) {
+            ok = true;
+        } else if (xalign) {
+            long long dx = x2 - x1;
+            // Since xalign, dx is divisible by a
+            long long cols_diff = dx / a; // integer division
+            if (cols_diff != 0) ok = true;
+        } else if (yalign) {
+            long long dy = y2 - y1;
+            long long rows_diff = dy / b;
+            if (rows_diff != 0) ok = true;
+        }
+        
+        cout << (ok ? "Yes" : "No") << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,58 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // If all elements are already equal, cost is 0
+        bool all_equal = true;
+        for (int i = 1; i < n; i++) {
+            if (a[i] != a[0]) {
+                all_equal = false;
+                break;
+            }
+        }
+        if (all_equal) {
+            cout << 0 << '\n';
+            continue;
+        }
+
+        long long min_cost = 1e18;
+
+        // Try making all elements equal to a[i] for each i
+        for (int i = 0; i < n; i++) {
+            long long cost = 0;
+
+            // Cost to make all elements to the left of i equal to a[i]
+            // We can do this by choosing position i+1 (if i > 0)
+            if (i > 0) {
+                cost += 1LL * i * a[i];
+            }
+
+            // Cost to make all elements to the right of i equal to a[i]
+            // We can do this by choosing position i+1 (if i < n-1)
+            if (i < n - 1) {
+                cost += 1LL * (n - 1 - i) * a[i];
+            }
+
+            min_cost = min(min_cost, cost);
+        }
+
+        cout << min_cost << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,136 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <unordered_map>
+#include <stack>
+using namespace std;
+
+struct State {
+    int i;
+    int dir_in; // 0 for from left, 1 for from right
+    long long T;
+    bool operator==(const State& other) const {
+        return i == other.i && dir_in == other.dir_in && T == other.T;
+    }
+};
+
+namespace std {
+    template<> struct hash<State> {
+        size_t operator()(const State& s) const {
+            return hash<int>()(s.i) ^ hash<int>()(s.dir_in) ^ hash<long long>()(s.T);
+        }
+    };
+}
+
+unordered_map<State, bool> memo;
+
+bool dfs(int start_i, int start_dir_in, long long start_T, const vector<long long>& p, const vector<long long>& d, long long k) {
+    State st{start_i, start_dir_in, start_T};
+    if (memo.count(st)) {
+        return memo[st];
+    }
+    stack<State> stk;
+    stk.push(st);
+    unordered_map<State, bool, hash<State>> visited;
+    visited[st] = false;
+    while (!stk.empty()) {
+        State cur = stk.top();
+        int i = cur.i;
+        int dir_in = cur.dir_in;
+        long long T = cur.T;
+        if (memo.count(cur)) {
+            stk.pop();
+            continue;
+        }
+        bool turn = (T == d[i]);
+        int dir_out;
+        if (turn) {
+            dir_out = (dir_in == 0) ? -1 : 1;
+        } else {
+            dir_out = (dir_in == 0) ? 1 : -1;
+        }
+        if (dir_out == 1) {
+            if (i == (int)p.size() - 1) {
+                memo[cur] = true;
+                stk.pop();
+                continue;
+            }
+            long long dist = p[i+1] - p[i];
+            long long next_T = (T + dist) % k;
+            State next{i+1, 0, next_T};
+            if (memo.count(next)) {
+                memo[cur] = memo[next];
+                stk.pop();
+            } else if (visited.count(next)) {
+                memo[cur] = false;
+                stk.pop();
+            } else {
+                visited[next] = false;
+                stk.push(next);
+            }
+        } else {
+            if (i == 0) {
+                memo[cur] = true;
+                stk.pop();
+                continue;
+            }
+            long long dist = p[i] - p[i-1];
+            long long next_T = (T + dist) % k;
+            State next{i-1, 1, next_T};
+            if (memo.count(next)) {
+                memo[cur] = memo[next];
+                stk.pop();
+            } else if (visited.count(next)) {
+                memo[cur] = false;
+                stk.pop();
+            } else {
+                visited[next] = false;
+                stk.push(next);
+            }
+        }
+    }
+    return memo[st];
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        vector<long long> p(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> p[i];
+        }
+        vector<long long> d(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> d[i];
+        }
+        int q;
+        cin >> q;
+        memo.clear();
+        while (q--) {
+            long long a;
+            cin >> a;
+            auto it = lower_bound(p.begin(), p.end(), a);
+            int idx = it - p.begin();
+            long long T;
+            if (it != p.end() && *it == a) {
+                T = 0;
+            } else {
+                if (it == p.end()) {
+                    cout << "YES" << '\n';
+                    continue;
+                }
+                T = (p[idx] - a) % k;
+            }
+            int dir_in = 0;
+            bool res = dfs(idx, dir_in, T, p, d, k);
+            cout << (res ? "YES" : "NO") << '\n';
+        }
+    }
+    return 0;
+}

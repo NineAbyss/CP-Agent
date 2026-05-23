@@ -1,0 +1,26 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;   // Number of test cases
+    
+    while (t--) {
+        int n, m, l, r;
+        cin >> n >> m >> l >> r;
+        
+        // The center position of the final segment after n days
+        int center = (l + r) / 2;  
+        
+        // The length of the segment on day m
+        int lenM = m + 1;
+        
+        // Construct [l', r'] around the center
+        int lPrime = center - (lenM - 1) / 2;
+        int rPrime = lPrime + lenM - 1;
+        
+        cout << lPrime << " " << rPrime << endl;
+    }
+    
+    return 0;
+}

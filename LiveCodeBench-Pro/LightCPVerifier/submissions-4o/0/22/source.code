@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+void solve(int n) {
+    vector<int> permutation(n);
+    
+    // Split the range into two parts
+    int mid = (n + 1) / 2; // Ceiling of n/2
+    int left = 0, right = mid;
+
+    for (int i = 0; i < n; ++i) {
+        if (i % 2 == 0) {
+            // Fill with elements from the second half
+            permutation[i] = right + 1;
+            ++right;
+        } else {
+            // Fill with elements from the first half
+            permutation[i] = left + 1;
+            ++left;
+        }
+    }
+
+    // Print the permutation
+    for (int num : permutation) {
+        cout << num << " ";
+    }
+    cout << endl;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        solve(n);
+    }
+
+    return 0;
+}

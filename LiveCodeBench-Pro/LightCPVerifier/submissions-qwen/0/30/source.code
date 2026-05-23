@@ -1,0 +1,47 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        int ans = 0;
+        int i = n - 1;
+        vector<bool> must( n+1, false );
+
+        while (i >= 0) {
+            vector<bool> now(n+1, false);
+            int j = i;
+            while (j >= 0) {
+                now[a[j]] = true;
+                bool valid = true;
+                for (int k = 1; k <= n; k++) {
+                    if (now[k] && !must[k]) {
+                        valid = false;
+                        break;
+                    }
+                }
+                if (valid) {
+                    // must is empty or now is subset of must
+                    // if must is empty, then valid only if we have at least one element
+                    // we can break
+                    break;
+                }
+                j--;
+            }
+            must = now;
+            ans++;
+            i = j - 1;
+        }
+        cout << ans << '\n';
+    }
+}

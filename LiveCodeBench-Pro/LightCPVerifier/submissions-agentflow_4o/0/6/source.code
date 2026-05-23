@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+// A function to generate the coloring order based on constraints
+vector<pair<int,int>> generateOrder(int n, int m) {
+    vector<pair<int,int>> order;
+    // Calculate the center
+    int centerX = (n - 1) / 2;
+    int centerY = (m - 1) / 2;
+    
+    // Create concentric circles around the center
+    for (int d = 0; d <= max(n - 1, m - 1); ++d) {
+        vector<pair<int,int>> pos;
+        for (int x = max(0, centerX - d); x <= min(n - 1, centerX + d); ++x) {
+            for (int y = max(0, centerY - d); y <= min(m - 1, centerY + d); ++y) {
+                if (max(abs(centerX - x), abs(centerY - y)) == d) {
+                    pos.push_back({x, y});
+                }
+            }
+        }
+        // Sort by Manhattan distance within each layer
+        stable_sort(pos.begin(), pos.end(), [&centerX, &centerY](const pair<int,int>& a, const pair<int,int>& b) {
+            return abs(centerX - a.first) + abs(centerY - a.second) < abs(centerX - b.first) + abs(centerY - b.second);
+        });
+        // Add the sorted list to the order
+        order.insert(order.end(), pos.begin(), pos.end());
+    }
+
+    return order;
+}
+
+int main() {
+    int t;
+    cin >> t;  // Number of test cases
+    while (t--) {
+        int n, m;
+        cin >> n >> m;  // Grid size for each test case
+
+        vector<pair<int,int>> order = generateOrder(n, m);
+
+        // Print the order in 1-based index
+        for (auto &cell : order) {
+            cout << cell.first + 1 << " " << cell.second + 1 << "\n";
+        }
+        if (t) cout << "\n";  // Separate test case outputs
+    }
+    return 0;
+}

@@ -1,0 +1,110 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MOD = 1000000007;
+
+long long mod_pow(long long base, long long exp, long long mod) {
+    long long result = 1;
+    while (exp > 0) {
+        if (exp & 1) result = (result * base) % mod;
+        base = (base * base) % mod;
+        exp >>= 1;
+    }
+    return result;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // Get fixed values and positions
+        vector<bool> is_fixed(n, false);
+        vector<int> pos(n, -1);
+        int fixed_count = 0;
+        for (int i = 0; i < n; i++) {
+            if (a[i] != -1) {
+                is_fixed[a[i]] = true;
+                pos[a[i]] = i;
+                fixed_count++;
+            }
+        }
+        int size_U = n - fixed_count;
+
+        // Precompute factorials and inverse factorials
+        vector<long long> fact(max(size_U+1, 1)), inv_fact(max(size_U+1, 1));
+        fact[0] = 1;
+        for (int i = 1; i <= size_U; i++) {
+            fact[i] = fact[i-1] * i % MOD;
+        }
+        for (int i = 0; i <= size_U; i++) {
+            inv_fact[i] = mod_pow(fact[i], MOD-2, MOD);
+        }
+
+        // Precompute r1[k] = number of missing values in [0, k-1]
+        vector<int> r1(n+1, 0);
+        for (int k = 1; k <= n; k++) {
+            r1[k] = r1[k-1];
+            if (k-1 < n && !is_fixed[k-1]) {
+                r1[k]++;
+            }
+        }
+
+        // Precompute prefix_free: prefix_free[i] = number of free positions in [0, i-1]
+        vector<int> prefix_free(n+1, 0);
+        for (int i = 0; i < n; i++) {
+            prefix_free[i+1] = prefix_free[i] + (a[i] == -1 ? 1 : 0);
+        }
+
+        auto free_in_range = [&](int l, int r) {
+            return prefix_free[r+1] - prefix_free[l];
+        };
+
+        long long ans = 0;
+
+        // Iterate over all segments [l, r]
+        for (int l = 0; l < n; l++) {
+            for (int r = l; r < n; r++) {
+                int free_here = free_in_range(l, r);
+                // Find smallest fixed value outside [l,r]
+                int x_min_bad = n;
+                for (int x = 0; x < n; x++) {
+                    if (is_fixed[x] && (pos[x] < l || pos[x] > r)) {
+                        x_min_bad = min(x_min_bad, x);
+                    }
+                }
+
+                // Binary search for largest k such that r1[k] <= free_here
+                int low = 1, high = n, k_max = 0;
+                while (low <= high) {
+                    int mid = (low + high) / 2;
+                    if (r1[mid] <= free_here) {
+                        k_max = mid;
+                        low = mid + 1;
+                    } else {
+                        high = mid - 1;
+                    }
+                }
+
+                int effective_k = min(x_min_bad, k_max);
+                for (int k = 1; k <= effective_k; k++) {
+                    int rk = r1[k];
+                    if (free_here < rk) continue;
+                    long long ways = fact[free_here] * inv_fact[free_here - rk] % MOD;
+                    ways = ways * fact[size_U - rk] % MOD;
+                    ans = (ans + ways) % MOD;
+                }
+            }
+        }
+        cout << ans << endl;
+    }
+    return 0;
+}

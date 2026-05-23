@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1000000;
+const int MAXK = 26;
+
+int next_pos[MAXN+1][MAXK];
+int f[MAXN+2];  // f[i] for i in [0, n], and f[n+1] might be used
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    string s;
+    cin >> s;
+
+    // Initialize next_pos for i = n
+    for (int c = 0; c < k; c++) {
+        next_pos[n][c] = -1;
+    }
+
+    // Build next_pos[i][c] for i from n-1 down to 0
+    for (int i = n-1; i >= 0; i--) {
+        for (int c = 0; c < k; c++) {
+            next_pos[i][c] = next_pos[i+1][c];
+        }
+        int c = s[i] - 'a';
+        next_pos[i][c] = i;
+    }
+
+    // f[i] for i from n down to 0
+    f[n] = 1;
+    f[n+1] = 1; // safety
+    for (int i = n-1; i >= 0; i--) {
+        bool has_invalid = false;
+        for (int c = 0; c < k; c++) {
+            if (next_pos[i][c] == -1) {
+                has_invalid = true;
+                break;
+            }
+        }
+        if (has_invalid) {
+            f[i] = 1;
+        } else {
+            int min_next = INT_MAX;
+            for (int c = 0; c < k; c++) {
+                int nxt_index = next_pos[i][c] + 1;
+                if (nxt_index > n+1) continue;
+                min_next = min(min_next, f[nxt_index]);
+            }
+            f[i] = 1 + min_next;
+        }
+    }
+
+    int q;
+    cin >> q;
+    while (q--) {
+        string t;
+        cin >> t;
+        int cur = -1;
+        bool valid = true;
+        for (char ch : t) {
+            int c = ch - 'a';
+            int start_pos = cur + 1;
+            if (start_pos > n) {
+                valid = false;
+                break;
+            }
+            int pos = next_pos[start_pos][c];
+            if (pos == -1) {
+                valid = false;
+                break;
+            }
+            cur = pos;
+        }
+        if (!valid) {
+            cout << 0 << '\n';
+        } else {
+            int start = cur + 1;
+            if (start > n) {
+                cout << 1 << '\n';
+            } else {
+                cout << f[start] << '\n';
+            }
+        }
+    }
+
+    return 0;
+}

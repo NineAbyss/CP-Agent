@@ -1,0 +1,119 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int query(int pos, map<int, int>& cache) {
+    if (cache.count(pos)) return cache[pos];
+    cout << "? " << pos << endl;
+    cout.flush();
+    int val;
+    cin >> val;
+    cache[pos] = val;
+    return val;
+}
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    
+    if (k == 1) {
+        cout << "! -1" << endl;
+        cout.flush();
+        return;
+    }
+    
+    if (n == 2 * k) {
+        cout << "! " << k << " " << k << endl;
+        cout.flush();
+        return;
+    }
+    
+    map<int, int> cache;
+    vector<int> PA(k);
+    for (int i = 1; i <= k; ++i) {
+        PA[i-1] = query(i, cache);
+    }
+    
+    // binary search for smallest i > k such that C[i] != C[i-k]
+    int lo = k+1, hi = n;
+    while (lo < hi) {
+        int mid = (lo + hi) / 2;
+        int val_mid = query(mid, cache);
+        int val_mid_k = query(mid - k, cache);
+        if (val_mid != val_mid_k) {
+            hi = mid;
+        } else {
+            lo = mid + 1;
+        }
+    }
+    int i = lo;
+    
+    // if i > n, then no such i found
+    if (i > n) {
+        // all equal, so PA == PB, cannot determine
+        cout << "! -1" << endl;
+        cout.flush();
+        return;
+    }
+    
+    // now a is in [i-k, i-1]
+    int L = i - k;
+    int R = i - 1;
+    vector<int> candidates;
+    for (int a = L; a <= R; ++a) {
+        if (a < k || n - a < k) continue;
+        bool ok = true;
+        vector<int> PB(k, -1);
+        for (auto& entry : cache) {
+            int pos = entry.first;
+            int val = entry.second;
+            if (pos <= a) {
+                int expected = PA[(pos-1) % k];
+                if (val != expected) {
+                    ok = false;
+                    break;
+                }
+            } else {
+                int idx = (pos - a - 1) % k;
+                if (idx < 0) idx += k;
+                if (PB[idx] == -1) {
+                    PB[idx] = val;
+                } else if (PB[idx] != val) {
+                    ok = false;
+                    break;
+                }
+            }
+        }
+        // check PB is a permutation of 1..k
+        if (ok) {
+            vector<bool> used(k+1, false);
+            for (int j = 0; j < k; ++j) {
+                if (PB[j] == -1) continue;
+                if (PB[j] < 1 || PB[j] > k || used[PB[j]]) {
+                    ok = false;
+                    break;
+                }
+                used[PB[j]] = true;
+            }
+        }
+        if (ok) {
+            candidates.push_back(a);
+        }
+    }
+    
+    if (candidates.size() == 1) {
+        int a = candidates[0];
+        cout << "! " << a << " " << n - a << endl;
+    } else {
+        cout << "! -1" << endl;
+    }
+    cout.flush();
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

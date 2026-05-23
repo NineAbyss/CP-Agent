@@ -1,0 +1,19 @@
+#include <iostream>
+#include <cmath>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int a, x, y;
+        cin >> a >> x >> y;
+        int da = abs(a - x);
+        int db = abs(a - y);
+        int L = max(x - da + 1, y - db + 1);
+        int R = min(x + da - 1, y + db - 1);
+        cout << (L <= R ? "YES" : "NO") << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXM = 500000;
+const int INF = 1e9;
+
+vector<int> dp(MAXM + 1, INF);
+
+void precompute() {
+    dp[1] = 1;
+    // 只处理奇数，因为偶数不可能
+    for (int x = 3; x <= MAXM; x += 2) {
+        // 单个子节点的情况：x = 2 + a
+        if (x - 2 >= 1 && dp[x - 2] < INF) {
+            dp[x] = 1 + dp[x - 2];
+        }
+        // 枚举奇因子 d，d >= 3
+        int limit = sqrt(x);
+        for (int d = 3; d <= limit; d += 2) {
+            if (x % d == 0) {
+                int a = d - 2;
+                int r = x / d;
+                if (dp[a] < INF && dp[r] < INF) {
+                    dp[x] = min(dp[x], dp[a] + dp[r]);
+                }
+                // 检查另一个因子 x/d
+                int d2 = x / d;
+                if (d2 != d) {
+                    int a2 = d2 - 2;
+                    int r2 = x / d2; // 即 d
+                    if (dp[a2] < INF && dp[r2] < INF) {
+                        dp[x] = min(dp[x], dp[a2] + dp[r2]);
+                    }
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    precompute();
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int m;
+        cin >> m;
+        if (m % 2 == 0) {
+            cout << -1 << '\n';
+        } else {
+            int ans = dp[m];
+            if (ans >= INF) ans = -1;
+            cout << ans << '\n';
+        }
+    }
+    return 0;
+}

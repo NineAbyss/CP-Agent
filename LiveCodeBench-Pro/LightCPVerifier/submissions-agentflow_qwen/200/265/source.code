@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1000000;
+const int ALPHA = 26;
+const int INF_val = 10000000;
+
+int nxt[MAXN+1][ALPHA];
+int g[MAXN+1];
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, k;
+    cin >> n >> k;
+    string s;
+    cin >> s;
+
+    // Initialize next occurrence table
+    for (int c = 0; c < ALPHA; c++) {
+        nxt[n][c] = INF_val;
+    }
+
+    // Build nxt table from the end
+    for (int i = n-1; i >= 0; i--) {
+        for (int c = 0; c < ALPHA; c++) {
+            nxt[i][c] = nxt[i+1][c];
+        }
+        nxt[i][s[i] - 'a'] = i;
+    }
+
+    // Compute g[i]: min appends needed starting at position i
+    for (int i = n; i >= 0; i--) {
+        bool any_missing = false;
+        for (int c = 0; c < k; c++) {
+            if (nxt[i][c] == INF_val) {
+                any_missing = true;
+                break;
+            }
+        }
+        if (any_missing) {
+            g[i] = 1;
+        } else {
+            int m = INF_val;
+            for (int c = 0; c < k; c++) {
+                int next_state = nxt[i][c] + 1;
+                if (next_state > n) {
+                    m = min(m, 1);
+                } else {
+                    m = min(m, g[next_state]);
+                }
+            }
+            g[i] = 1 + m;
+        }
+    }
+
+    int q;
+    cin >> q;
+    while (q--) {
+        string t;
+        cin >> t;
+        int cur = 0;
+        bool valid = true;
+        for (char ch : t) {
+            int c = ch - 'a';
+            if (c >= k || nxt[cur][c] == INF_val) {
+                valid = false;
+                break;
+            }
+            cur = nxt[cur][c] + 1;
+        }
+        cout << (valid ? g[cur] : 0) << '\n';
+    }
+
+    return 0;
+}

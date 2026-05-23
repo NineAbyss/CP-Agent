@@ -1,0 +1,99 @@
+#include <iostream>
+#include <string>
+#include <utility>
+using namespace std;
+
+using ull = unsigned long long;
+
+ull coord_to_num(int n, int x, int y) {
+    ull start = 1;
+    int r = 1, c = 1;
+    int len = 1 << n;
+    while (len > 2) {
+        int mid = len / 2;
+        ull block = (ull)mid * mid;
+        if (x < r + mid && y < c + mid) {
+            // top-left, start unchanged
+        } else if (x >= r + mid && y >= c + mid) {
+            // bottom-right
+            start += block;
+            r += mid;
+            c += mid;
+        } else if (x >= r + mid && y < c + mid) {
+            // bottom-left
+            start += 2 * block;
+            r += mid;
+        } else {
+            // top-right
+            start += 3 * block;
+            c += mid;
+        }
+        len = mid;
+    }
+    // len == 2
+    int dx = x - r;
+    int dy = y - c;
+    if (dx == 0 && dy == 0) return start;
+    if (dx == 1 && dy == 1) return start + 1;
+    if (dx == 1 && dy == 0) return start + 2;
+    return start + 3; // dx == 0 && dy == 1
+}
+
+pair<int, int> num_to_coord(int n, ull d) {
+    ull start = 1;
+    int r = 1, c = 1;
+    int len = 1 << n;
+    while (len > 2) {
+        int mid = len / 2;
+        ull block = (ull)mid * mid;
+        if (d < start + block) {
+            // top-left
+        } else if (d < start + 2 * block) {
+            // bottom-right
+            start += block;
+            r += mid;
+            c += mid;
+        } else if (d < start + 3 * block) {
+            // bottom-left
+            start += 2 * block;
+            r += mid;
+        } else {
+            // top-right
+            start += 3 * block;
+            c += mid;
+        }
+        len = mid;
+    }
+    // len == 2
+    ull offset = d - start; // 0,1,2,3
+    if (offset == 0) return {r, c};
+    if (offset == 1) return {r + 1, c + 1};
+    if (offset == 2) return {r + 1, c};
+    return {r, c + 1};
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        while (q--) {
+            string op;
+            cin >> op;
+            if (op == "->") {
+                int x, y;
+                cin >> x >> y;
+                cout << coord_to_num(n, x, y) << '\n';
+            } else { // "<-"
+                ull d;
+                cin >> d;
+                auto [x, y] = num_to_coord(n, d);
+                cout << x << ' ' << y << '\n';
+            }
+        }
+    }
+    return 0;
+}

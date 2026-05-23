@@ -1,0 +1,28 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        int n = s.size();
+        int prefix_zero = 0;
+        int max_len = 0;
+        for (int i = 0; i < n; ++i) {
+            if (s[i] != '0') {
+                int len = 1 + prefix_zero;
+                if (len > max_len) max_len = len;
+            } else {
+                prefix_zero++;
+            }
+        }
+        // 至少有一个非零数字，所以 max_len >= 1
+        int ans = n - max_len;
+        cout << ans << endl;
+    }
+    return 0;
+}

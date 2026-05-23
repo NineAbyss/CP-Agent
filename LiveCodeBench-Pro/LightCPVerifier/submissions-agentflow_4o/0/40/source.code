@@ -1,0 +1,33 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+pair<int, int> find_treasure(const vector<pair<int, int>>& bulbs) {
+    int x_xor = 0, y_xor = 0;
+    for (const auto& bulb : bulbs) {
+        x_xor ^= bulb.first;
+        y_xor ^= bulb.second;
+    }
+    return {x_xor, y_xor};
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<pair<int, int>> bulbs(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> bulbs[i].first >> bulbs[i].second;
+        }
+
+        auto treasure_position = find_treasure(bulbs);
+        cout << treasure_position.first << " " << treasure_position.second << "\n";
+    }
+
+    return 0;
+}

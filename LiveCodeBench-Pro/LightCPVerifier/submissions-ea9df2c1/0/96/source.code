@@ -1,0 +1,68 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+
+ll solve_case(int n, int k, ll x, vector<int>& a) {
+    vector<ll> pref(n + 1, 0);
+    for (int i = 1; i <= n; ++i) pref[i] = pref[i - 1] + a[i - 1];
+    ll sum_a = pref[n];
+    ll ans = 0;
+    for (int p = 1; p <= n; ++p) {
+        ll suffix = sum_a - pref[p - 1];
+        ll len;
+        if (suffix >= x) {
+            // 同一个周期内
+            int lo = p, hi = n;
+            while (lo < hi) {
+                int mid = (lo + hi) / 2;
+                if (pref[mid] - pref[p - 1] >= x) hi = mid;
+                else lo = mid + 1;
+            }
+            len = lo - p + 1;
+        } else {
+            ll need = x - suffix;
+            if (need > sum_a * k) {
+                // 即使取满 k 个完整周期也不够
+                len = (ll)n * k + 1; // 使 numerator 为负
+            } else {
+                ll t = (need + sum_a - 1) / sum_a; // 完整周期数，t >= 1
+                ll rem = need - (t - 1) * sum_a;
+                int lo = 1, hi = n;
+                while (lo < hi) {
+                    int mid = (lo + hi) / 2;
+                    if (pref[mid] >= rem) hi = mid;
+                    else lo = mid + 1;
+                }
+                int q = lo;
+                len = (n - p + 1) + (t - 1) * n + q;
+            }
+        }
+        ll numerator = (ll)n * k - p - len + 1;
+        ll c_max;
+        if (numerator < 0) c_max = 0;
+        else c_max = numerator / n + 1;
+        if (c_max > k) c_max = k;
+        if (c_max < 0) c_max = 0;
+        ans += c_max;
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        ll x;
+        cin >> n >> k >> x;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        cout << solve_case(n, k, x, a) << '\n';
+    }
+    return 0;
+}

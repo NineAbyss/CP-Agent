@@ -1,0 +1,210 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9+7;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<pair<int, int>> odd(k + 1);
+        for (int i = 0; i <= k; i++) {
+            cin >> odd[i].first >> odd[i].second;
+        }
+        
+        auto neighbors = [&](int x, int y) {
+            vector<pair<int, int>> res;
+            if (x > 1) res.emplace_back(x - 1, y);
+            if (x < n) res.emplace_back(x + 1, y);
+            if (y > 1) res.emplace_back(x, y - 1);
+            if (y < m) res.emplace_back(x, y + 1);
+            return res;
+        };
+        
+        vector<vector<pair<int, int>>> cand(k);
+        bool impossible = false;
+        for (int i = 0; i < k; i++) {
+            auto &A = odd[i];
+            auto &B = odd[i + 1];
+            int dist = abs(A.first - B.first) + abs(A.second - B.second);
+            if (dist != 2) {
+                impossible = true;
+                break;
+            }
+            auto nA = neighbors(A.first, A.second);
+            auto nB = neighbors(B.first, B.second);
+            set<pair<int, int>> common;
+            for (auto &na : nA) {
+                for (auto &nb : nB) {
+                    if (na == nb) common.insert(na);
+                }
+            }
+            if (common.empty()) {
+                impossible = true;
+                break;
+            }
+            cand[i].assign(common.begin(), common.end());
+        }
+        
+        if (impossible) {
+            cout << "0\n";
+            continue;
+        }
+        
+        // Map cells to IDs
+        map<pair<int, int>, int> cell_id;
+        int id_counter = 0;
+        for (int i = 0; i < k; i++) {
+            for (auto &cell : cand[i]) {
+                if (!cell_id.count(cell)) {
+                    cell_id[cell] = id_counter++;
+                }
+            }
+        }
+        
+        // Check if any candidate coincides with odd cell
+        set<pair<int, int>> odd_set(odd.begin(), odd.end());
+        for (auto &cell : cell_id) {
+            if (odd_set.count(cell.first)) {
+                impossible = true;
+                break;
+            }
+        }
+        if (impossible) {
+            cout << "0\n";
+            continue;
+        }
+        
+        // Build conflict graph between pairs
+        vector<vector<int>> conflict(k); // conflict[i] lists pairs that share a candidate with i
+        vector<map<int, int>> candidate_index(k); // candidate_index[i][cell_id] = index (0 or 1) in cand[i]
+        for (int i = 0; i < k; i++) {
+            for (int idx = 0; idx < (int)cand[i].size(); idx++) {
+                int cid = cell_id[cand[i][idx]];
+                candidate_index[i][cid] = idx;
+            }
+        }
+        
+        // For each cell, list pairs that contain it
+        vector<vector<int>> cell_to_pairs(id_counter);
+        for (int i = 0; i < k; i++) {
+            for (auto &cell : cand[i]) {
+                int cid = cell_id[cell];
+                cell_to_pairs[cid].push_back(i);
+            }
+        }
+        
+        // Build conflict edges
+        for (int cid = 0; cid < id_counter; cid++) {
+            auto &v = cell_to_pairs[cid];
+            if (v.size() == 2) {
+                int a = v[0], b = v[1];
+                conflict[a].push_back(b);
+                conflict[b].push_back(a);
+            } else if (v.size() > 2) {
+                impossible = true;
+                break;
+            }
+        }
+        
+        if (impossible) {
+            cout << "0\n";
+            continue;
+        }
+        
+        // Now each connected component in conflict graph is path or cycle
+        vector<bool> vis(k, false);
+        long long ans = 1;
+        
+        for (int i = 0; i < k; i++) {
+            if (vis[i]) continue;
+            vector<int> comp;
+            queue<int> q;
+            q.push(i);
+            vis[i] = true;
+            while (!q.empty()) {
+                int u = q.front(); q.pop();
+                comp.push_back(u);
+                for (int v : conflict[u]) {
+                    if (!vis[v]) {
+                        vis[v] = true;
+                        q.push(v);
+                    }
+                }
+            }
+            
+            // Sort comp to get order // Since degree <= 2, comp is path or cycle
+            // Find degree 1 node as start of path
+            int start = -1;
+            for (int u : comp) {
+                if (conflict[u].size() == 1) {
+                    start = u;
+                    break;
+                }
+            }
+            
+            if (start == -1) {
+                // cycle
+                if (comp.size() == 1) {
+                    // single node with no conflict? means two candidates not shared
+                    // Actually if no conflict, this pair independent, multiply by 2
+                    ans = ans * 2 % MOD;
+                    continue;
+                }
+                // cycle length > 1 // For cycle, number of valid assignments = 2
+                ans = ans * 2 % MOD;
+            } else {
+                // path // Get order of nodes in path
+                vector<int> order;
+                int cur = start, prev = -1;
+                while (true) {
+                    order.push_back(cur);
+                    int nxt = -1;
+                    for (int v : conflict[cur]) {
+                        if (v != prev) {
+                            nxt = v;
+                            break;
+                        }
+                    }
+                    if (nxt == -1) break;
+                    prev = cur;
+                    cur = nxt;
+                }
+                
+                // DP on path
+                int sz = order.size();
+                // dp0: ways if first node chooses its first candidate (relative to shared cell) // Actually we need to track which candidate each node chooses
+                // Since each conflict corresponds to a shared cell, we can deduce constraints
+                // For simplicity, if path length = L, number of valid assignments = L+1
+                // Wait, that's not right. Let's compute via DP.
+                
+                // Map node to its two candidates // For consecutive nodes u,v in order, they share a cell X
+                // Let idx_u be index of X in cand[u], idx_v be index of X in cand[v] // Constraint: not (u chooses idx_u and v chooses idx_v)
+                // This is a 2-SAT on path, number of solutions = Fibonacci
+                // Let f[n] = solutions for path of n nodes
+                // f[1] = 2 (independent) // f[2] = 3? Let's compute: two nodes with one shared cell.
+                // Actually for two nodes with one shared cell, each has two candidates.
+                // Let shared cell be candidate 0 for both.
+                // Valid assignments: (0,1), (1,0), (1,1) -> 3 // So f[2] = 3
+                // Recurrence: f[n] = f[n-1] + f[n-2] // Because: first node chooses non-shared candidate -> f[n-1]
+                //          first node chooses shared candidate -> second node must choose non-shared -> f[n-2]
+                vector<long long> fib(sz + 2);
+                fib[0] = 1;
+                fib[1] = 2; // one node
+                for (int j = 2; j <= sz; j++) {
+                    fib[j] = (fib[j-1] + fib[j-2]) % MOD;
+                }
+                ans = ans * fib[sz] % MOD;
+            }
+        }
+        
+        cout << ans << "\n";
+    }
+    
+    return 0;
+}

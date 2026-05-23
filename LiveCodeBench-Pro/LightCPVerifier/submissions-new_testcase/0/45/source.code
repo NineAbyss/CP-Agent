@@ -1,0 +1,68 @@
+#include <iostream>
+#include <cmath>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+bool canFormSquare(int l1, int b1, int l2, int b2, int l3, int b3, int S) {
+    vector<pair<int,int>> rects = {{l1,b1},{l2,b2},{l3,b3}};
+    sort(rects.begin(), rects.end());
+    do {
+        int L1=rects[0].first, B1=rects[0].second;
+        int L2=rects[1].first, B2=rects[1].second;
+        int L3=rects[2].first, B3=rects[2].second;
+        
+        // 1. 三个矩形水平并排
+        if (B1==S && B2==S && B3==S && L1+L2+L3==S) return true;
+        
+        // 2. 三个矩形竖直叠放
+        if (L1==S && L2==S && L3==S && B1+B2+B3==S) return true;
+        
+        // 3. 两个矩形在上并排，一个在下
+        if (B1==B2 && L1+L2==S && L3==S && B3==S-B1) return true;
+        
+        // 4. 两个矩形在下并排，一个在上
+        if (B2==B3 && L2+L3==S && L1==S && B1==S-B2) return true;
+        
+        // 5. 两个矩形在左上下叠放，一个在右
+        if (L1==L2 && B1+B2==S && B3==S && L3==S-L1) return true;
+        
+        // 6. 两个矩形在右上下叠放，一个在左
+        if (L2==L3 && B2+B3==S && B1==S && L1==S-L2) return true;
+        
+        // 7. 一个在左，两个在右上下叠放
+        if (B1==S && L2==L3 && L2==S-L1 && B2+B3==S) return true;
+        
+        // 8. 一个在右，两个在左上下叠放
+        if (B3==S && L1==L2 && L1==S-L3 && B1+B2==S) return true;
+        
+        // 9. 一个在上，两个在下左右并排
+        if (L1==S && B2==B3 && B2==S-B1 && L2+L3==S) return true;
+        
+        // 10. 一个在下，两个在上左右并排
+        if (L3==S && B1==B2 && B1==S-B3 && L1+L2==S) return true;
+        
+    } while(next_permutation(rects.begin(), rects.end()));
+    return false;
+}
+
+bool check(int l1, int b1, int l2, int b2, int l3, int b3) {
+    int area = l1*b1 + l2*b2 + l3*b3;
+    int S = sqrt(area);
+    if (S*S != area) return false;
+    return canFormSquare(l1,b1,l2,b2,l3,b3,S);
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int l1,b1,l2,b2,l3,b3;
+        cin >> l1 >> b1 >> l2 >> b2 >> l3 >> b3;
+        if (check(l1,b1,l2,b2,l3,b3))
+            cout << "YES" << endl;
+        else
+            cout << "NO" << endl;
+    }
+    return 0;
+}

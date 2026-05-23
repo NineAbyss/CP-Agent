@@ -1,0 +1,116 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1000000007;
+const int MAXN = 5005;
+
+long long fact[MAXN];
+long long comb[MAXN][MAXN];
+
+void precompute() {
+    fact[0] = 1;
+    for (int i = 1; i < MAXN; i++) {
+        fact[i] = fact[i-1] * i % MOD;
+    }
+    for (int i = 0; i < MAXN; i++) {
+        comb[i][0] = 1;
+        for (int j = 1; j <= i; j++) {
+            comb[i][j] = (comb[i-1][j-1] + comb[i-1][j]) % MOD;
+        }
+    }
+}
+
+int main() {
+    precompute();
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        vector<bool> fixed_val(n, false);
+        vector<int> pos(n, -1); // pos[x] = index if fixed, else -1
+        int hole_count = 0;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            if (a[i] != -1) {
+                fixed_val[a[i]] = true;
+                pos[a[i]] = i;
+            } else {
+                hole_count++;
+            }
+        }
+
+        // missing values
+        vector<int> missing;
+        for (int x = 0; x < n; x++) {
+            if (!fixed_val[x]) {
+                missing.push_back(x);
+            }
+        }
+        int H = missing.size(); // should equal hole_count
+
+        long long ans = 0;
+
+        // Iterate over k from 1 to n (mex >= k)
+        for (int k = 1; k <= n; k++) {
+            set<int> need_k;
+            for (int x = 0; x < k; x++) {
+                need_k.insert(x);
+            }
+
+            // Iterate over all segments [l, r]
+            for (int l = 0; l < n; l++) {
+                for (int r = l; r < n; r++) {
+                    // Collect real numbers in [l, r]
+                    set<int> real_in;
+                    for (int i = l; i <= r; i++) {
+                        if (a[i] != -1) {
+                            real_in.insert(a[i]);
+                        }
+                    }
+                    int hole_in = (r - l + 1) - real_in.size();
+
+                    // already have in need_k
+                    set<int> already_have;
+                    for (int x : real_in) {
+                        if (need_k.count(x)) {
+                            already_have.insert(x);
+                        }
+                    }
+                    set<int> need_inside;
+                    for (int x : need_k) {
+                        if (!already_have.count(x)) {
+                            need_inside.insert(x);
+                        }
+                    }
+
+                    // Check if any needed missing value is fixed outside [l,r]
+                    bool valid = true;
+                    int u = 0;
+                    for (int x : need_inside) {
+                        if (fixed_val[x]) {
+                            if (pos[x] < l || pos[x] > r) {
+                                valid = false;
+                                break;
+                            }
+                        } else {
+                            u++; // this x is missing, so must be placed inside
+                        }
+                    }
+                    if (!valid || u > hole_in) {
+                        continue;
+                    }
+
+                    // ways = C(hole_in, u) * fact[u] % MOD * fact[H - u] % MOD
+                    long long ways = comb[hole_in][u];
+                    ways = ways * fact[u] % MOD;
+                    ways = ways * fact[H - u] % MOD;
+                    ans = (ans + ways) % MOD;
+                }
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        vector<int> cnt(51, 0); // indices 0..50, we use 1..50
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            if (a[i] >= 1 && a[i] <= 50) {
+                cnt[a[i]]++;
+            }
+        }
+
+        int max_keep = 1; // at least one element can be kept // Enumerate all possible min and max values that exist in the array
+        for (int L = 1; L <= 50; L++) {
+            if (cnt[L] == 0) continue;
+            for (int R = L; R <= 50; R++) {
+                if (cnt[R] == 0) continue;
+                if ((L + R) % 2 != 0) continue;
+                int total = 0;
+                for (int x = L; x <= R; x++) {
+                    total += cnt[x];
+                }
+                if (total > max_keep) {
+                    max_keep = total;
+                }
+            }
+        }
+
+        cout << n - max_keep << '\n';
+    }
+    return 0;
+}

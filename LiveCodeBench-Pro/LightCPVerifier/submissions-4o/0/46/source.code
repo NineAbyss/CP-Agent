@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+void solve(int n) {
+    // We will use the command 'digit' to narrow down the value of x quickly
+    cout << "digit" << endl;
+    cout.flush();
+    int r;
+    cin >> r;
+    // Assume x has become the sum of its digits, call it as `sum_digits`.
+
+    int sum_digits = 0; // This is the x after applying 'digit', assuming it's highly reduced now
+
+    // Attempt to adjust `sum_digits` to match `n` using a combination of operations
+    while (sum_digits != n) {
+        int diff = n - sum_digits;
+        if (diff > 0) {
+            // If n is larger, try to add some value
+            cout << "add " << diff << endl;
+        } else if (diff < 0) {
+            // If n is smaller, division might help. Find a divisor of sum_digits.
+            for (int i = 2; i <= sum_digits; ++i) {
+                if (sum_digits % i == 0) {
+                    cout << "div " << i << endl;
+                    break;
+                }
+            }
+        }
+        cout.flush();
+        cin >> r;
+        if (r == 1) {
+            // If the operation was successful, calculate the current x.
+            sum_digits += diff;  // or sum_digits /= i if 'div' was successful.
+        } else {
+            break; // If the operation fails, fallback or exit.
+        }
+    }
+
+    // Once successfully modified `x`, confirm with the judge.
+    cout << "!" << endl;
+    cout.flush();
+    cin >> r;
+    if (r != 1) {
+        exit(-1); // If judging fails, quit the program.
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+
+        // Use function to solve each test case
+        solve(n);
+    }
+    return 0;
+}

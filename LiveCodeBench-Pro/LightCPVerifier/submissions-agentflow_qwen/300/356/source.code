@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long compute_beauty(vector<int> a, int n) {
+    long long beauty = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = i; j < n; j++) {
+            if ((j - i + 1) % 2 == 1) {
+                beauty += max(a[i], a[j]);
+            } else {
+                beauty += min(a[i], a[j]);
+            }
+        }
+    }
+    return beauty;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        vector<bool> used(n+1, false);
+        vector<int> zeros;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            if (a[i] != 0) {
+                used[a[i]] = true;
+            } else {
+                zeros.push_back(i);
+            }
+        }
+
+        // Collect missing values
+        vector<int> missing;
+        for (int i = 1; i <= n; i++) {
+            if (!used[i]) {
+                missing.push_back(i);
+            }
+        }
+
+        sort(zeros.begin(), zeros.end());
+
+        long long best = 0;
+        int k = missing.size();
+
+        if (k <= 10) {
+            // Try all permutations
+            sort(missing.begin(), missing.end());
+            do {
+                vector<int> b = a;
+                for (int i = 0; i < k; i++) {
+                    b[zeros[i]] = missing[i];
+                }
+                best = max(best, compute_beauty(b, n));
+            } while (next_permutation(missing.begin(), missing.end()));
+        } else {
+            // Try increasing order
+            vector<int> a_inc = a;
+            sort(missing.begin(), missing.end());
+            for (int i = 0; i < k; i++) {
+                a_inc[zeros[i]] = missing[i];
+            }
+            best = compute_beauty(a_inc, n);
+
+            // Try decreasing order
+            vector<int> a_dec = a;
+            for (int i = 0; i < k; i++) {
+                a_dec[zeros[i]] = missing[k - 1 - i];
+            }
+            best = max(best, compute_beauty(a_dec, n));
+        }
+
+        cout << best << '\n';
+    }
+    return 0;
+}

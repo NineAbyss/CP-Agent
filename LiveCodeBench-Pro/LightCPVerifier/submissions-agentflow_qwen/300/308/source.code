@@ -1,0 +1,35 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        // Compute g
+        int g = min(n / (m+1), n - m*k);
+        int S = max(k, g);
+        vector<int> a(n, 1000000000); // Initialize with large number
+
+        // Place values 0 to g-1
+        for (int i = 0; i < g; i++) {
+            for (int j = 0; j <= m; j++) {
+                long long pos = 1LL * j * S + i;
+                if (pos < n) {
+                    a[pos] = i;
+                }
+            }
+        }
+
+        // Output
+        for (int i = 0; i < n; i++) {
+            cout << a[i];
+            if (i < n-1) cout << " ";
+        }
+        cout << "\n";
+    }
+    return 0;
+}

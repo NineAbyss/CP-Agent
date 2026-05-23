@@ -1,0 +1,152 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long beauty(const vector<int>& p) {
+    int n = p.size();
+    long long total = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = i; j < n; j++) {
+            int len = j - i + 1;
+            if (len % 2 == 1) {
+                total += max(p[i], p[j]);
+            } else {
+                total += min(p[i], p[j]);
+            }
+        }
+    }
+    return total;
+}
+
+long long solve(vector<int> a) {
+    int n = a.size();
+    
+    // 如果没有缺失值，直接计算
+    bool has_zero = false;
+    for (int x : a) if (x == 0) { has_zero = true; break; }
+    if (!has_zero) return beauty(a);
+    
+    // 尝试单调递增
+    vector<bool> used(n+1, false);
+    for (int x : a) if (x != 0) used[x] = true;
+    
+    vector<int> p_inc = a;
+    int next = 1;
+    bool inc_ok = true;
+    for (int i = 0; i < n; i++) {
+        if (p_inc[i] == 0) {
+            while (next <= n && used[next]) next++;
+            if (next > n) { inc_ok = false; break; }
+            p_inc[i] = next;
+            used[next] = true;
+        }
+    }
+    if (inc_ok) {
+        for (int i = 1; i < n; i++) {
+            if (p_inc[i] < p_inc[i-1]) { inc_ok = false; break; }
+        }
+    }
+    
+    // 尝试单调递减
+    fill(used.begin(), used.end(), false);
+    for (int x : a) if (x != 0) used[x] = true;
+    
+    vector<int> p_dec = a;
+    next = n;
+    bool dec_ok = true;
+    for (int i = 0; i < n; i++) {
+        if (p_dec[i] == 0) {
+            while (next >= 1 && used[next]) next--;
+            if (next < 1) { dec_ok = false; break; }
+            p_dec[i] = next;
+            used[next] = true;
+        }
+    }
+    if (dec_ok) {
+        for (int i = 1; i < n; i++) {
+            if (p_dec[i] > p_dec[i-1]) { dec_ok = false; break; }
+        }
+    }
+    
+    long long best = 0;
+    if (inc_ok) best = max(best, beauty(p_inc));
+    if (dec_ok) best = max(best, beauty(p_dec));
+    
+    // 收集自由位置和可用数字
+    vector<int> free_pos;
+    for (int i = 0; i < n; i++) if (a[i] == 0) free_pos.push_back(i);
+    
+    vector<int> available;
+    for (int x = 1; x <= n; x++) {
+        bool found = false;
+        for (int y : a) if (y == x) { found = true; break; }
+        if (!found) available.push_back(x);
+    }
+    
+    // 计算权重
+    vector<long long> w(n, 0);
+    for (int k = 0; k < n; k++) {
+        for (int t = 0; t < n; t++) {
+            if (t == k) continue;
+            int len = abs(k - t) + 1;
+            if (len % 2 == 1) w[k] += 1;
+            else w[k] -= 1;
+        }
+    }
+    
+    // 尝试4种变体
+    for (int variant = 0; variant < 4; variant++) {
+        vector<int> free_pos2 = free_pos;
+        vector<int> available2 = available;
+        
+        if (variant == 0) {
+            sort(free_pos2.begin(), free_pos2.end(), [&](int x, int y) {
+                if (w[x] != w[y]) return w[x] > w[y];
+                return x < y;
+            });
+            sort(available2.begin(), available2.end());
+        } else if (variant == 1) {
+            sort(free_pos2.begin(), free_pos2.end(), [&](int x, int y) {
+                if (w[x] != w[y]) return w[x] > w[y];
+                return x > y;
+            });
+            sort(available2.begin(), available2.end());
+        } else if (variant == 2) {
+            sort(free_pos2.begin(), free_pos2.end(), [&](int x, int y) {
+                if (w[x] != w[y]) return w[x] > w[y];
+                return x < y;
+            });
+            sort(available2.rbegin(), available2.rend());
+        } else {
+            sort(free_pos2.begin(), free_pos2.end(), [&](int x, int y) {
+                if (w[x] != w[y]) return w[x] > w[y];
+                return x > y;
+            });
+            sort(available2.rbegin(), available2.rend());
+        }
+        
+        vector<int> p = a;
+        for (int i = 0; i < free_pos2.size(); i++) {
+            p[free_pos2[i]] = available2[i];
+        }
+        best = max(best, beauty(p));
+    }
+    
+    return best;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        cout << solve(a) << '\n';
+    }
+    
+    return 0;
+}

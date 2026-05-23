@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX_M = 500000;
+int dp[MAX_M + 1];
+
+void precompute() {
+    const int INF = 1e9;
+    for (int i = 1; i <= MAX_M; i++) {
+        dp[i] = INF;
+    }
+    dp[1] = 0;
+    // Iterate over all odd f >= 3
+    for (int f = 3; f <= MAX_M; f += 2) {
+        for (int m = f; m <= MAX_M; m += f) {
+            int k = m / f;
+            int candidate = (f - 1) / 2 + dp[k];
+            if (candidate < dp[m]) {
+                dp[m] = candidate;
+            }
+        }
+    }
+}
+
+int main() {
+    precompute();
+    int t;
+    cin >> t;
+    while (t--) {
+        int m;
+        cin >> m;
+        if (dp[m] >= 1e9) {
+            cout << -1 << '\n';
+        } else {
+            cout << 1 + dp[m] << '\n';
+        }
+    }
+    return 0;
+}

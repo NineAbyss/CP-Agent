@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int i = 0; i < n; i++) cin >> b[i];
+    
+    vector<int> pref(n + 1, 0), suff(n + 2, 0);
+    
+    // 计算前缀最大匹配数
+    for (int i = 1; i <= n; i++) {
+        pref[i] = pref[i - 1];
+        if (a[i - 1] == b[i - 1]) {
+            pref[i] = max(pref[i], pref[i - 1] + 1);
+        }
+        if (i >= 2 && a[i - 2] == b[i - 1] && b[i - 2] == a[i - 1]) {
+            pref[i] = max(pref[i], pref[i - 2] + 2);
+        }
+    }
+    
+    // 计算后缀最大匹配数
+    for (int i = n; i >= 1; i--) {
+        suff[i] = suff[i + 1];
+        if (a[i - 1] == b[i - 1]) {
+            suff[i] = max(suff[i], suff[i + 1] + 1);
+        }
+        if (i + 1 <= n && a[i - 1] == b[i] && b[i - 1] == a[i]) {
+            suff[i] = max(suff[i], suff[i + 2] + 2);
+        }
+    }
+    
+    int ans = pref[n]; // 不删除
+    for (int d = 1; d <= n; d++) {
+        ans = max(ans, pref[d - 1] + suff[d + 1]);
+    }
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

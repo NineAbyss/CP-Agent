@@ -1,0 +1,35 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for(int i=0;i<n;i++) cin >> a[i];
+    vector<int> pos;
+    for(int i=0;i<n;i++) if(a[i] <= k) pos.push_back(i+1);
+    int C = pos.size();
+    if(C == 0) { cout << "NO\n"; return; }
+    if(C >= 3) { cout << "YES\n"; return; }
+    if(C == 1) { cout << "NO\n"; return; }
+    // C == 2
+    int p1 = pos[0], p2 = pos[1];
+    bool ok = false;
+    // case A: first and second subarray
+    if(p1 <= 2 && p2 - p1 <= 3) ok = true;
+    // case B: first and third subarray
+    if(p1 <= 2 && p2 >= n-1) ok = true;
+    // case C: second and third subarray
+    if(p1 >= n-3 && p2 >= n-1) ok = true;
+    cout << (ok ? "YES" : "NO") << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while(t--) solve();
+    return 0;
+}

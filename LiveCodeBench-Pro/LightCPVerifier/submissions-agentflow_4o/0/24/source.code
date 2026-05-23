@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> towers(n);
+
+        for (int i = 0; i < n; ++i) {
+            cin >> towers[i];
+        }
+
+        vector<int> increments(n + 1, 0); // Extending one beyond to avoid overflow
+        vector<int> finalHeights(n, 0);
+
+        // Calculate increments
+        for (int i = 0; i < n; ++i) {
+            if (i + towers[i] < n) {
+                increments[i + towers[i]]--;
+            }
+            increments[i]++;
+        }
+
+        // Calculate final heights using increments array
+        int currentHeight = 0;
+        for (int i = 0; i < n; ++i) {
+            currentHeight += increments[i];
+            finalHeights[i] = currentHeight;
+        }
+
+        // Find the MEX
+        int mex = 0;
+        for (int i = 0; i < n; ++i) {
+            if (finalHeights[i] == mex) {
+                ++mex;
+            }
+        }
+        
+        cout << mex << endl;
+    }
+
+    return 0;
+}

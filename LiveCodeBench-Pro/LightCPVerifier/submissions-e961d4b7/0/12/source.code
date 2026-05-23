@@ -1,0 +1,88 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve(string L, string R) {
+    int n = L.size();
+    int p = 0;
+    while (p < n && L[p] == R[p]) p++;
+    if (p == n) return 2 * n; // L == R
+    int ans = 2 * n;
+    // Case A: choose a digit between L[p] and R[p] (exclusive)
+    if (R[p] - L[p] >= 2) {
+        ans = min(ans, 2 * p);
+    }
+    // Case B: x[p] = L[p]
+    {
+        string X = L.substr(0, p+1);
+        bool gtL = false; // prefix already strictly greater than L
+        bool ltR = true;  // prefix already strictly less than R (since L[p] < R[p])
+        int extra = 0;
+        for (int i = p+1; i < n; i++) {
+            char low = '0', high = '9';
+            if (!gtL) low = L[i];
+            if (!ltR) high = R[i];
+            char best = '?';
+            for (char d = low; d <= high; d++) {
+                if (d != L[i] && d != R[i]) {
+                    best = d;
+                    break;
+                }
+            }
+            if (best != '?') {
+                X += best;
+                if (!gtL && best > L[i]) gtL = true;
+                if (!ltR && best < R[i]) ltR = true;
+            } else {
+                // must equal L[i] or R[i] // choose L[i] (could also choose R[i], but same contribution)
+                X += L[i];
+                extra += (L[i] == R[i] ? 2 : 1);
+                // constraints remain unchanged
+            }
+        }
+        ans = min(ans, 2 * p + 1 + extra);
+    }
+    // Case C: x[p] = R[p]
+    {
+        string X = R.substr(0, p+1);
+        bool gtL = true;  // since R[p] > L[p]
+        bool ltR = false; // prefix not yet strictly less than R
+        int extra = 0;
+        for (int i = p+1; i < n; i++) {
+            char low = '0', high = '9';
+            if (!gtL) low = L[i];
+            if (!ltR) high = R[i];
+            char best = '?';
+            for (char d = low; d <= high; d++) {
+                if (d != L[i] && d != R[i]) {
+                    best = d;
+                    break;
+                }
+            }
+            if (best != '?') {
+                X += best;
+                if (!gtL && best > L[i]) gtL = true;
+                if (!ltR && best < R[i]) ltR = true;
+            } else {
+                // choose R[i]
+                X += R[i];
+                extra += (L[i] == R[i] ? 2 : 1);
+                // constraints remain unchanged
+            }
+        }
+        ans = min(ans, 2 * p + 1 + extra);
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        string l, r;
+        cin >> l >> r;
+        cout << solve(l, r) << '\n';
+    }
+    return 0;
+}

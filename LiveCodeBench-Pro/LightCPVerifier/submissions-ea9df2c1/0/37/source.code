@@ -1,0 +1,26 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        string s;
+        cin >> n >> k >> s;
+        int cnt0 = count(s.begin(), s.end(), '0');
+        int cnt1 = n - cnt0;
+        int m = n / 2;
+        int L = max(0, m + k - cnt1);
+        int R = min(2 * k, cnt0 - (m - k));
+        if (L > R) {
+            cout << "NO\n";
+            continue;
+        }
+        if (L % 2 == 1) L++;
+        cout << (L <= R ? "YES" : "NO") << "\n";
+    }
+    return 0;
+}

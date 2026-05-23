@@ -1,0 +1,190 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<vector<int>> a(n, vector<int>(m));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                cin >> a[i][j];
+            }
+        }
+
+        // Find global minimum
+        int global_min = 100;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                global_min = min(global_min, a[i][j]);
+            }
+        }
+
+        // Precompute row and column minima
+        vector<int> row_min(n, 101), col_min(m, 101);
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                row_min[i] = min(row_min[i], a[i][j]);
+                col_min[j] = min(col_min[j], a[i][j]);
+            }
+        }
+
+        int ans = 100;
+        // We don't need to try every cell - we can reason about it
+
+        // The idea: after operation (r,c), each cell decreases by 1 if it's in row r or col c // So the new value at (i,j) is:
+        //   a[i][j] - 1 if i==r or j==c //   a[i][j] otherwise
+
+        // Let's precompute what the maximum would be more efficiently
+
+        // Instead of simulating all, notice that the answer cannot exceed global_min+1 // But let's do a smarter simulation
+
+        // Actually, given constraints (n*m <= 10^5 per test, but sum over test cases <= 2*10^5), // and values are small (<=100), we can try optimizing by analyzing candidates.
+
+        // However, worst-case number of (r,c) pairs is n*m which could be 10^5, and checking all cells would be 10^10. // We need better.
+
+        // Alternate approach: // For fixed (r,c), the maximum value after operation is:
+        // max(
+        //   max_{i != r, j != c} a[i][j],
+        //   max_{j} (a[r][j] - 1),
+        //   max_{i} (a[i][c] - 1)
+        // ) // But note: a[r][c]-1 appears in both row and column, so we don't double subtract.
+
+        // So we can precompute: // - overall max excluding row r and col c
+        // - max in row r // - max in col c
+
+        vector<int> row_max(n), col_max(m);
+        for (int i = 0; i < n; i++) {
+            row_max[i] = *max_element(a[i].begin(), a[i].end());
+        }
+        for (int j = 0; j < m; j++) {
+            int mx = 0;
+            for (int i = 0; i < n; i++) {
+                mx = max(mx, a[i][j]);
+            }
+            col_max[j] = mx;
+        }
+
+        // Precompute 2D prefix/suffix max for fast "matrix without row r and col c" max? // But n*m <= 10^5 per test case, but total across test cases only 2*10^5, so worst-case 2 test cases.
+        // So we can afford O(n*m) per candidate (r,c) only if we have few candidates.
+
+        // But worst-case n*m can be ~300, so total operations 300*300=90k per test case, acceptable.
+
+        // Actually, worst-case n*m <= 10^5, so n and m individually can be large, e.g., n=1, m=10^5 -> then trying all c would be 10^5 * 10^5 = 10^10.
+
+        // Need better.
+
+        // Let's change strategy: instead of iterating over all (r,c), we can consider that optimal (r,c) is limited.
+
+        // Observation: The final answer is the minimum over (r,c) of: //   max(
+        //     (max over all elements not in row r and not in col c), //     (row_max[r] - 1),
+        //     (col_max[c] - 1) //   )
+
+        // How to compute "max over all elements not in row r and not in col c" quickly?
+
+        // We can precompute the global structure.
+
+        // Idea: sort all elements with positions. But maybe simpler: since total n*m across test cases <= 200000, // and the number of distinct (r,c) pairs across all test cases might be large, but note that sum of n*m <= 200000,
+        // so the total number of cells across test cases is <= 200000.
+
+        // Therefore, the total number of (r,c) pairs across all test cases is sum(n_i * m_i) <= 200000? No!
+        // Because for one test case with n*m=10^5, there are 10^5 choices of (r,c), and we have up to 2 such test cases -> 200000 total (r,c) pairs.
+
+        // And for each (r,c), if we spend O(n*m) time, total time would be O((n*m)^2) per test case -> too slow.
+
+        // We need to compute for each (r,c) the max outside row r and col c in O(1) or O(log).
+
+        // Precomputation: // - Find the maximum value in the entire matrix.
+        // - If there is only one occurrence of the global maximum, then removing a row/col containing it will reduce the max in that line. // But still complicated.
+
+        // Alternative idea: // Since values are small (1 to 100), we can try binary search on the answer?
+
+        // But let's reconsider constraints: total sum of n*m <= 200000, but this is the total input size. // The number of test cases t <= 10000, but sum of n*m <= 200000, so at most 200000/1 = 200000 cells in all test cases.
+        // So maximum number of test cases is 200000 (if each is 1x1), but t <= 10000.
+
+        // Actually, worst-case: 10000 test cases, each with n*m = 20 on average.
+
+        // So worst-case individual test case has n*m up to 10^5, but there can be only 2 such test cases.
+
+        // And for a test case with n*m = K, we have K possible (r,c) pairs, and checking each in O(K) gives O(K^2) = 10^10.
+
+        // We must optimize the evaluation of each (r,c).
+
+        // How to quickly get max of all cells not in row r and not in col c? // Precompute:
+        //   Let M = global max.
+        //   We want max{ a[i][j] | i != r, j != c }
+
+        // We can precompute: //   Create a list of all values with coordinates.
+        //   Then for each (r,c), we want the maximum value among cells not in row r or col c.
+
+        // But we can precompute a 2D RMQ? Too heavy.
+
+        // Instead, precompute the following: //   Let's collect all values and sort them in descending order.
+        //   For each (r,c), we iterate from largest value downward until we find one not in row r and not in col c.
+
+        // Since values are only up to 100, we can do:
+
+        // Precompute for each value v, the set of positions (i,j) where a[i][j] = v.
+
+        // Then for a fixed (r,c), the maximum value outside row r and col c is the largest v for which there exists (i,j) with a[i][j]=v, i!=r, j!=c.
+
+        // We can iterate v from 100 down to 1, and for each v check if there's a cell with that value not in row r or col c.
+
+        // But we need to do this for each (r,c), and there are n*m such pairs.
+
+        // Total work: O(100 * n * m) per test case -> worst-case 100 * 10^5 = 10^7, acceptable.
+
+        // Let's implement that.
+
+        // But wait, we can do even better: precompute for each value v, the count per row and per col?
+
+        // Actually, let's do:
+
+        vector<set<pair<int, int>>> val_pos(101);  // val_pos[v] = set of (i,j) with a[i][j] == v
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                val_pos[a[i][j]].insert({i, j});
+            }
+        }
+
+        int best_ans = 100;
+        // Iterate over all possible (r,c)
+        for (int r = 0; r < n; r++) {
+            for (int c = 0; c < m; c++) {
+                // Find maximum value that remains in cells not in row r and not in col c
+                int max_outside = 0;
+                // Check from high value to low
+                for (int v = 100; v >= 1; v--) {
+                    if (val_pos[v].empty()) continue;
+                    // Check if there's any cell with value v not in row r and not in col c
+                    bool found = false;
+                    for (auto [i, j] : val_pos[v]) {
+                        if (i != r && j != c) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (found) {
+                        max_outside = v;
+                        break;
+                    }
+                }
+
+                int max_in_row = row_max[r] - 1;
+                int max_in_col = col_max[c] - 1;
+
+                int cur_max = max({max_outside, max_in_row, max_in_col});
+                best_ans = min(best_ans, cur_max);
+            }
+        }
+
+        cout << best_ans << '\n';
+    }
+
+    return 0;
+}

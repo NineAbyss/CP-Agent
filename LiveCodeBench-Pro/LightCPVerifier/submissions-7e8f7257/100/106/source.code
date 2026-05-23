@@ -1,0 +1,42 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int simulate(const vector<int>& a, const vector<int>& b) {
+    int n = a.size();
+    int i = 0, j = 0, score = 0;
+    for (int round = 0; round < n; round++) {
+        if (i < n && a[i] > b[j]) {
+            score++;
+            i++;
+        } else {
+            j++;
+        }
+    }
+    return score;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        int ans = simulate(a, b);
+        // 枚举所有交换，但只交换不同的牌
+        for (int p = 0; p < n; p++) {
+            for (int q = p + 1; q < n; q++) {
+                if (a[p] == a[q]) continue;
+                swap(a[p], a[q]);
+                ans = max(ans, simulate(a, b));
+                swap(a[p], a[q]);
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

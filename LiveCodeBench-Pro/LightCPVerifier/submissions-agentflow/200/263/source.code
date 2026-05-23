@@ -1,0 +1,170 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long tri_sum(long long x) {
+    return x * (x + 1) / 2;
+}
+
+long long solve_small_n(vector<long long> a, long long k) {
+    int n = a.size();
+    sort(a.begin(), a.end());
+    
+    long long S = 0;
+    for (auto x : a) S += x;
+    
+    long long best = LLONG_MAX;
+    
+    // 尝试所有可能的L（最小值）
+    for (long long L = 0; L <= S; L++) {
+        long long R = L + k + 1;
+        
+        // 快速可行性检查
+        if (S < n * L || S > n * R) continue;
+        
+        // 构建b：尽可能接近a
+        vector<long long> b(n);
+        long long total_increase = 0;
+        long long total_decrease = 0;
+        long long current_sum = 0;
+        
+        for (int i = 0; i < n; i++) {
+            if (a[i] < L) {
+                b[i] = L;
+                total_increase += L - a[i];
+            } else if (a[i] > R) {
+                b[i] = R;
+                total_decrease += a[i] - R;
+            } else {
+                b[i] = a[i];
+            }
+            current_sum += b[i];
+        }
+        
+        // 移动的车辆数
+        long long moves = max(total_increase, total_decrease);
+        
+        // 调整总和
+        long long diff = S - current_sum;
+        
+        if (diff > 0) {
+            // 需要增加：优先增加最小的b
+            for (int i = 0; i < n && diff > 0; i++) {
+                if (b[i] < R) {
+                    long long can_add = R - b[i];
+                    long long add = min(can_add, diff);
+                    b[i] += add;
+                    diff -= add;
+                }
+            }
+        } else if (diff < 0) {
+            // 需要减少：优先减少最大的b
+            diff = -diff;
+            for (int i = n-1; i >= 0 && diff > 0; i--) {
+                if (b[i] > L) {
+                    long long can_reduce = b[i] - L;
+                    long long reduce = min(can_reduce, diff);
+                    b[i] -= reduce;
+                    diff -= reduce;
+                }
+            }
+        }
+        
+        if (diff != 0) continue;
+        
+        // 计算成本
+        long long cost = 0;
+        for (auto x : b) cost += tri_sum(x);
+        cost += k * moves;
+        
+        best = min(best, cost);
+    }
+    
+    return best;
+}
+
+long long solve_large_n(vector<long long> a, long long k) {
+    int n = a.size();
+    
+    multiset<long long> ms;
+    for (auto x : a) ms.insert(x);
+    
+    long long total_anger = 0;
+    for (auto x : a) total_anger += x * (x + 1) / 2;
+    
+    while (true) {
+        auto max_it = prev(ms.end());
+        auto min_it = ms.begin();
+        
+        long long max_val = *max_it;
+        long long min_val = *min_it;
+        
+        if (max_val - min_val <= k + 1) break;
+        
+        // 获取次大值和次小值
+        long long second_max = max_val;
+        if (ms.size() > 1) {
+            auto second_max_it = prev(prev(ms.end()));
+            second_max = *second_max_it;
+        }
+        
+        long long second_min = min_val;
+        if (ms.size() > 1) {
+            auto second_min_it = next(ms.begin());
+            second_min = *second_min_it;
+        }
+        
+        // 计算最大安全移动数
+        long long x1 = max_val - second_max;
+        long long x2 = second_min - min_val;
+        long long x3 = (max_val - min_val - (k + 1) + 1) / 2;
+        
+        long long moves = min({x1, x2, x3});
+        if (moves <= 0) moves = 1;
+        
+        // 计算成本变化
+        long long total_change = moves * (min_val - max_val + k) + moves * moves;
+        
+        if (total_change >= 0) break;
+        
+        // 执行移动
+        ms.erase(max_it);
+        ms.erase(min_it);
+        
+        ms.insert(max_val - moves);
+        ms.insert(min_val + moves);
+        
+        total_anger += total_change;
+    }
+    
+    return total_anger;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        long long result;
+        if (n <= 15) {
+            result = solve_small_n(a, k);
+        } else {
+            result = solve_large_n(a, k);
+        }
+        
+        cout << result << '\n';
+    }
+    
+    return 0;
+}

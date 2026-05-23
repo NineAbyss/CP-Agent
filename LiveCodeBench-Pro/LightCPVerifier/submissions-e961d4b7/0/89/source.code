@@ -1,0 +1,58 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<string> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    
+    vector<vector<string>> b(m, vector<string>(n));
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < n; j++) {
+            cin >> b[i][j];
+        }
+    }
+    
+    // 检查每个位置是否有神经网络能提供目标值
+    vector<bool> pos_ok(n, false);
+    for (int j = 0; j < n; j++) {
+        for (int i = 0; i < m; i++) {
+            if (b[i][j] == a[j]) {
+                pos_ok[j] = true;
+                break;
+            }
+        }
+        if (!pos_ok[j]) {
+            cout << -1 << '\n';
+            return;
+        }
+    }
+    
+    // 计算每个神经网络的覆盖大小
+    int max_cover = 0;
+    for (int i = 0; i < m; i++) {
+        int cnt = 0;
+        for (int j = 0; j < n; j++) {
+            if (b[i][j] == a[j]) cnt++;
+        }
+        max_cover = max(max_cover, cnt);
+    }
+    
+    cout << n + 2 * (n - max_cover) << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

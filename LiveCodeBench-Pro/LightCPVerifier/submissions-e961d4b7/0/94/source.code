@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        ll x;
+        cin >> n >> k >> x;
+        vector<int> a(n);
+        ll S = 0;
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            S += a[i];
+        }
+        vector<ll> suffix(n);
+        ll suf = 0;
+        for (int i = n-1; i >= 0; i--) {
+            suf += a[i];
+            suffix[i] = suf;
+        }
+        ll ans = 0;
+        for (int p = 0; p < n; p++) {
+            ll need = x - suffix[p];
+            if (need <= 0) {
+                ans += k;
+            } else {
+                // need > 0
+                ll r_min = (need + S - 1) / S; // ceil
+                if (r_min <= k-1) {
+                    ll c_max = k - r_min;
+                    ans += c_max;
+                }
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

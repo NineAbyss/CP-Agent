@@ -1,0 +1,155 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int LOG = 30;
+
+struct TrieNode {
+    int cnt;
+    TrieNode* child[2];
+    TrieNode() : cnt(0) {
+        child[0] = child[1] = nullptr;
+    }
+};
+
+class Trie {
+public:
+    TrieNode* root;
+    Trie() {
+        root = new TrieNode();
+    }
+    
+    ~Trie() {
+        clear(root);
+    }
+    
+    void clear(TrieNode* node) {
+        if (!node) return;
+        clear(node->child[0]);
+        clear(node->child[1]);
+        delete node;
+    }
+    
+    void insert(int x) {
+        TrieNode* node = root;
+        node->cnt++;
+        for (int i = LOG-1; i >= 0; --i) {
+            int b = (x >> i) & 1;
+            if (!node->child[b]) {
+                node->child[b] = new TrieNode();
+            }
+            node = node->child[b];
+            node->cnt++;
+        }
+    }
+    
+    void remove(int x) {
+        TrieNode* node = root;
+        node->cnt--;
+        for (int i = LOG-1; i >= 0; --i) {
+            int b = (x >> i) & 1;
+            TrieNode* next = node->child[b];
+            next->cnt--;
+            if (next->cnt == 0) {
+                clear(next);
+                node->child[b] = nullptr;
+                break;
+            }
+            node = next;
+        }
+    }
+    
+    bool has_pair_ge(int k) {
+        if (k == 0) {
+            return root->cnt >= 1;
+        }
+        return dfs(root, root, LOG-1, k);
+    }
+    
+private:
+    bool dfs(TrieNode* node1, TrieNode* node2, int bit, int k) {
+        if (!node1 || !node2 || node1->cnt == 0 || node2->cnt == 0) return false;
+        if (bit < 0) {
+            if (node1 == node2) return node1->cnt >= 2;
+            else return true;
+        }
+        int kb = (k >> bit) & 1;
+        TrieNode* c10 = node1->child[0];
+        TrieNode* c11 = node1->child[1];
+        TrieNode* c20 = node2->child[0];
+        TrieNode* c21 = node2->child[1];
+        
+        if (kb == 0) {
+            if (node1 != node2) {
+                if ((c10 && c21 && c10->cnt > 0 && c21->cnt > 0) ||
+                    (c11 && c20 && c11->cnt > 0 && c20->cnt > 0)) {
+                    return true;
+                }
+            } else {
+                if (c10 && c11 && c10->cnt > 0 && c11->cnt > 0) {
+                    return true;
+                }
+            }
+            int new_k = k & ((1 << bit) - 1);
+            if (node1 != node2) {
+                if (c10 && c20 && dfs(c10, c20, bit-1, new_k)) return true;
+                if (c11 && c21 && dfs(c11, c21, bit-1, new_k)) return true;
+            } else {
+                if (c10 && c10->cnt >= 2 && dfs(c10, c10, bit-1, new_k)) return true;
+                if (c11 && c11->cnt >= 2 && dfs(c11, c11, bit-1, new_k)) return true;
+            }
+            return false;
+        } else {
+            int new_k = k & ((1 << bit) - 1);
+            if (node1 != node2) {
+                if (c10 && c21 && dfs(c10, c21, bit-1, new_k)) return true;
+                if (c11 && c20 && dfs(c11, c20, bit-1, new_k)) return true;
+            } else {
+                if (c10 && c11 && dfs(c10, c11, bit-1, new_k)) return true;
+            }
+            return false;
+        }
+    }
+};
+
+int solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<int> a(n);
+    for (int i = 0; i < n; ++i) cin >> a[i];
+    
+    if (k == 0) {
+        return 1;
+    }
+    
+    Trie trie;
+    int l = 0, r = -1;
+    int ans = n + 1;
+    while (r < n) {
+        if (trie.has_pair_ge(k)) {
+            ans = min(ans, r - l + 1);
+            trie.remove(a[l]);
+            l++;
+        } else {
+            r++;
+            if (r < n) {
+                trie.insert(a[r]);
+            }
+        }
+    }
+    if (ans == n + 1) return -1;
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << solve() << '\n';
+    }
+    return 0;
+}

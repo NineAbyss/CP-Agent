@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    string s;
+    cin >> n >> s;
+    
+    vector<int> d(n, 1);
+    for (int i = n-2; i >= 0; i--) {
+        if (s[i] == s[i+1]) {
+            d[i] = d[i+1] + 1;
+        } else {
+            d[i] = 1;
+        }
+    }
+    
+    vector<int> ans(n);
+    int L = 1, R = n;
+    
+    for (int i = n-1; i >= 0; i--) {
+        if (i == n-1 || s[i] == '>') {
+            ans[i] = R - d[i] + 1;
+            R = ans[i] - 1;
+        } else {
+            ans[i] = L + d[i] - 1;
+            L = ans[i] + 1;
+        }
+    }
+    
+    for (int i = 0; i < n; i++) {
+        cout << ans[i] << " \n"[i == n-1];
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

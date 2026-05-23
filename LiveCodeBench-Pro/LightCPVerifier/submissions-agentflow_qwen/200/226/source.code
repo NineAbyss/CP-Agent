@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+void solve() {
+    ll n, m;
+    cin >> n >> m;
+
+    // Minimum possible sum is n
+    if (m < n) {
+        cout << "-1\n";
+        return;
+    }
+
+    // Try every possible root r from n down to 1
+    for (ll r = n; r >= 1; r--) {
+        ll min_sum, max_sum;
+        if (r == 1) {
+            min_sum = max_sum = n;
+        } else {
+            min_sum = r + n - 1;
+            max_sum = (r-1)*r/2 + r*(n - r + 1);
+        }
+
+        if (m >= min_sum && m <= max_sum) {
+            cout << r << "\n";
+
+            if (r == 1) {
+                for (ll v = 2; v <= n; v++) {
+                    cout << 1 << " " << v << "\n";
+                }
+                return;
+            }
+
+            ll rem = max_sum - m;
+            ll num_high = 0;
+            if (r < n) {
+                num_high = min(rem / (r-1), n - r);
+                rem -= num_high * (r-1);
+            }
+
+            ll v0 = -1;
+            if (rem > 0) {
+                v0 = rem + 1;
+            }
+
+            cout << r << " " << 1 << "\n";
+
+            for (ll v = 2; v < r; v++) {
+                if (v == v0) continue;
+                cout << r << " " << v << "\n";
+            }
+
+            ll count_high = 0;
+            for (ll v = r+1; v <= n; v++) {
+                if (count_high < num_high) {
+                    cout << 1 << " " << v << "\n";
+                    count_high++;
+                } else {
+                    cout << r << " " << v << "\n";
+                }
+            }
+
+            if (v0 != -1) {
+                cout << 1 << " " << v0 << "\n";
+            }
+
+            return;
+        }
+    }
+
+    cout << "-1\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<pair<int, int>> edges(n-1);
+    vector<vector<int>> adj(n);
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        u--; v--;
+        edges[i] = {u, v};
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    if (n == 2) {
+        cout << "NO\n";
+        return;
+    }
+    
+    // Check if star (vertex with degree n-1)
+    for (int i = 0; i < n; i++) {
+        if ((int)adj[i].size() == n-1) {
+            cout << "NO\n";
+            return;
+        }
+    }
+    
+    // Find a vertex with degree at least 2
+    int r = -1;
+    for (int i = 0; i < n; i++) {
+        if (adj[i].size() >= 2) {
+            r = i;
+            break;
+        }
+    }
+    
+    // Find a neighbor of r that is a leaf if possible
+    int s = -1;
+    for (int v : adj[r]) {
+        if (adj[v].size() == 1) {
+            s = v;
+            break;
+        }
+    }
+    if (s == -1) {
+        s = adj[r][0];
+    }
+    
+    // Build parent array with DFS from r
+    vector<int> parent(n, -1);
+    function<void(int, int)> dfs = [&](int u, int p) {
+        parent[u] = p;
+        for (int v : adj[u]) {
+            if (v != p) {
+                dfs(v, u);
+            }
+        }
+    };
+    dfs(r, -1);
+    
+    cout << "YES\n";
+    for (auto [u, v] : edges) {
+        if (u == r && v == s) {
+            cout << u+1 << " " << v+1 << "\n";
+        } else if (v == r && u == s) {
+            cout << v+1 << " " << u+1 << "\n";
+        } else {
+            if (parent[u] == v) {
+                cout << u+1 << " " << v+1 << "\n";
+            } else {
+                cout << v+1 << " " << u+1 << "\n";
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

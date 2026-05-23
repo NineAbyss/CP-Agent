@@ -1,0 +1,288 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, m, p, q;
+        cin >> n >> m >> p >> q;
+
+        // Key observation: if every p consecutive elements sum to q, // then the array must be periodic with period p in terms of overlapping sums.
+        
+        // Consider the constraints:
+        // Let S_i = a_i + a_{i+1} + ... + a_{i+p-1} = q for all valid i.
+        // Then S_1 = q, S_2 = q, ..., S_{n-p+1} = q.
+
+        // From S_1 and S_2: // a_1 + ... + a_p = q
+        // a_2 + ... + a_{p+1} = q
+        // Subtract: a_1 = a_{p+1}
+        // Similarly, we get: a_i = a_{i+p} whenever both indices are <= n.
+        // So the sequence is periodic with period p: a_i = a_{i mod p}, with appropriate indexing.
+
+        // But note: not all positions are fully constrained. The structure depends on how many full blocks we can form.
+
+        // How many overlapping segments are there? (n - p + 1) segments. // Each element a_i appears in exactly min(i, p, n - i + 1, n - p + 1) segments?
+        // Actually, more precisely: element at position i appears in the number of segments that cover it: // It appears in segments starting from max(1, i - p + 1) to min(i, n - p + 1)
+        // => count[i] = min(i, n - p + 1) - max(1, i - p + 1) + 1
+
+        // Alternatively, simpler idea:
+        // Since a_i = a_{i+p}, the array is periodic with period p.
+        // So let’s define base values x_1, x_2, ..., x_p such that:
+        // a_i = x_{(i-1)%p + 1}
+
+        // Now, what is the total sum m? // We need to compute how many times each x_j appears in the array of length n.
+
+        // For j from 1 to p: // Position j, j+p, j+2p, ... <= n
+        // Count = ((n - j) / p) + 1
+
+        // Also, each segment of p consecutive elements must sum to q. // But because of periodicity, the sum of any p consecutive elements is always x_1 + x_2 + ... + x_p.
+        // Therefore: x_1 + ... + x_p = q.
+
+        // So the total sum of the array is:
+        // m = sum_{j=1}^p [count_j * x_j], where count_j = ((n - j) / p) + 1
+
+        // But we also have: sum_{j=1}^p x_j = q.
+
+        // Let c_j = ((n - j) / p) + 1. // Then m = sum c_j * x_j.
+
+        // We want to know: does there exist real numbers x_j (and since integers are allowed, even negative)  // satisfying:
+        //   sum x_j = q //   sum c_j * x_j = m
+
+        // This is a linear system. We can eliminate variables.
+
+        // Let d_j = c_j - c_1 for j >= 2, then:
+        // m - c_1 * q = sum_{j=1}^p (c_j - c_1) * x_j = sum_{j=2}^p (c_j - c_1) * x_j
+
+        // But this doesn't guarantee integer solution unless we check consistency.
+
+        // However, note: we are only asked whether **some** integer assignment exists.
+
+        // Important: Because the equations are linear and homogeneous in differences, a solution exists over reals 
+        // if and only if the two equations are not contradictory.
+
+        // But wait: we can always choose x_j arbitrarily as long as they satisfy the two linear equations? // Actually, we have one equation (sum x_j = q) and we want sum c_j x_j = m.
+
+        // The minimal and maximal possible value of sum c_j x_j given sum x_j = q?
+
+        // Since x_j can be any integers (positive or negative), the set of achievable values of sum c_j x_j  // given sum x_j = q is all integers congruent to something modulo gcd(...)? Actually no restriction?
+
+        // Actually: fix x_2, ..., x_p arbitrarily, then x_1 = q - (x_2 + ... + x_p).
+        // Then sum c_j x_j = c_1*(q - sum_{j=2}^p x_j) + sum_{j=2}^p c_j x_j
+        // = c_1 q + sum_{j=2}^p (c_j - c_1) x_j
+
+        // Since x_j can be any integers, the term sum_{j=2}^p (c_j - c_1) x_j can achieve any integer value 
+        // if at least one (c_j - c_1) != 0, or only 0 if all c_j = c_1.
+
+        // So:
+        // Case 1: all c_j are equal -> then c_j = C for all j -> then m = C * q must hold.
+        // Case 2: not all c_j are equal -> then we can achieve any integer m (because coefficients are integers and not all zero, and we can pick x_j to make the sum any integer).
+
+        // But wait: can we really achieve any integer? Yes, because the coefficients (c_j - c_1) are integers, 
+        // and if at least one is non-zero, say d, then by varying x_j corresponding to that coefficient, 
+        // we can add any multiple of d. But to get every integer, we need gcd of the coefficients to be 1?
+
+        // Actually no: we don't need every integer, we just need to know if m is achievable.
+
+        // But note: the expression is: m = c_1 * q + K, where K is an integer linear combination of the differences. // The set of possible K is the set of multiples of g = gcd(c_2 - c_1, c_3 - c_1, ..., c_p - c_1).
+
+        // So m must satisfy: (m - c_1 * q) must be divisible by g?
+
+        // However, wait: we are allowed to pick any integers x_j. The set of values of sum_{j=2}^p d_j x_j  // (with d_j = c_j - c_1) is exactly the set of multiples of g = gcd(d_2, ..., d_p).
+
+        // BUT: here's a catch — we don't require the gcd condition if we can use arbitrary integers?  // Actually yes: the subgroup of Z generated by the d_j's is gZ.
+
+        // So condition: (m - c_1 * q) must be divisible by g.
+
+        // However, let us reconsider with small examples.
+
+        // Example 1: n=3, p=2 -> c_1 = (3-1)/2 + 1 = 2/2+1 = 2, c_2 = (3-2)/2+1 = 1/2+1 = 1 -> so c_1=2, c_2=1. // Then g = gcd(c_2 - c_1) = |1-2| = 1 -> so any m is possible as long as m - 2*q is divisible by 1 -> always true.
+        // But we also have the constraint that x_1+x_2=q, and m = 2*x_1 + 1*x_2 = 2*x_1 + (q - x_1) = x_1 + q. // So m = x_1 + q -> x_1 = m - q. Then x_2 = q - x_1 = 2*q - m.
+        // So we can always choose integers x_1, x_2 as long as they are integers? Which they are if m,q are integers.
+        // So for any integer m,q, we can find integer solution.
+
+        // But wait: in our problem, m and q are given as integers, so x_1 and x_2 will be integers.
+
+        // So actually: as long as the system has a solution over reals, it has a solution over integers? 
+        // Not necessarily: but in this case, the solution is rational (in fact integer if m,q are integers) only if the coefficients allow.
+
+        // But observe: the solution we found: x_1 = m - q, x_2 = 2*q - m, which are integers when m,q are integers.
+
+        // Why did that happen? Because the transformation was unimodular?
+
+        // Actually, the key is: we have two equations and p variables. As long as p>=2 and the coefficient vectors are not parallel, we have freedom.
+
+        // But let's go back: do we really need the gcd condition?
+
+        // Alternate approach: instead of going through gcd, notice that the system:
+        //   sum_{j=1}^p x_j = q
+        //   sum_{j=1}^p c_j x_j = m
+        // has an integer solution if and only if the difference between the two weighted sums is compatible.
+
+        // But we can always assign: // Let x_1 = A, and x_2 = B, and x_3 = x_4 = ... = x_p = 0? Not necessarily, because we need to satisfy the first equation.
+
+        // Instead, set x_1 = a, x_2 = b, and x_3 = ... = x_{p-1} = 0, and x_p = q - a - b. // Then total sum = c_1*a + c_2*b + c_p*(q - a - b) = (c_1 - c_p)*a + (c_2 - c_p)*b + c_p*q.
+        // We want this to be m.
+
+        // So: (c_1 - c_p)*a + (c_2 - c_p)*b = m - c_p*q.
+
+        // This is a linear Diophantine equation in two variables. It has an integer solution (a,b) if and only if 
+        // gcd(|c_1 - c_p|, |c_2 - c_p|) divides (m - c_p*q). But if both coefficients are zero, then we require m == c_p*q.
+
+        // But this seems messy.
+
+        // Let us change perspective.
+
+        // Insight: In fact, because the array is periodic with period p, the entire array is determined by the first p elements. // And we know that the sum of every p consecutive elements is q -> so the sum of the first p elements is q.
+
+        // Now, how many complete periods are there in n elements? // The number of times the j-th element (1-indexed) appears is:
+        //   count[j] = 1 + (n - j) / p   [integer division]
+
+        // Let c[j] = 1 + (n - j) / p, for j=1..p.
+
+        // Total sum = sum_{j=1}^{p} c[j] * x_j = m.
+
+        // We are free to choose integers x_1,...,x_p as long as:
+        //   (1) sum_{j=1}^{p} x_j = q
+        //   (2) sum_{j=1}^{p} c[j] * x_j = m
+
+        // Let d_j = c[j]. Then we can write: //   sum d_j x_j = m
+        //   sum x_j = q
+
+        // Multiply the second equation by d_avg? Or subtract a multiple.
+
+        // Let D = d_1. Then: //   sum (d_j - D) x_j = m - D * q
+
+        // Let v_j = d_j - D. Then we have:
+        //   sum_{j=1}^{p} v_j x_j = m - D * q
+
+        // Note: v_1 = 0.
+
+        // So: sum_{j=2}^{p} v_j x_j = m - D * q.
+
+        // Now, the left-hand side is an integer linear combination of the integers x_2,...,x_p. // The set of values it can take is the set of multiples of g = gcd(v_2, v_3, ..., v_p).
+
+        // But note: we can choose x_2,...,x_p arbitrarily? Not quite: we also have x_1 = q - (x_2+...+x_p), 
+        // and x_1 must be integer (which it will be if others are). So the only constraint is that 
+        // m - D * q must be representable as an integer linear combination of the v_j's (j>=2).
+
+        // That is: g must divide (m - D * q), where g = gcd(v_2, ..., v_p).
+
+        // However, if all v_j = 0 (i.e., all d_j are equal), then the left side is always 0, so we require m - D*q = 0.
+
+        // Therefore:
+        //   if all c[j] are equal -> then m must equal c[1] * q
+        //   else -> let g = gcd of non-zero v_j's (for j=2..p), then we require g divides (m - c[1]*q)
+
+        // BUT: is that sufficient? Yes, because if g divides (m - c[1]*q), then there exist integers x_2,...,x_p  // (by properties of linear Diophantine equations in multiple variables) such that the equation holds,
+        // and then x_1 = q - sum_{j=2}^p x_j is an integer.
+
+        // However, note: the gcd of a set of integers including zeros is the gcd of the non-zero ones.
+
+        // But wait: what if p=1? Then j from 2 to p is empty. Then the sum is 0, so we require m - D*q = 0.
+        // And indeed, if p=1, then c[1] = 1 + (n-1)/1 = 1 + n-1 = n.
+        // And the conditions: each single element is q -> so the array is [q, q, ..., q] (n times) -> total sum = n*q. // So we require m = n*q.
+
+        // So the formula works for p=1.
+
+        // Let's test with the examples:
+
+        // Example 1: n=3, m=2, p=2, q=1. // c[1] = 1 + (3-1)/2 = 1 + 2/2 = 2
+        // c[2] = 1 + (3-2)/2 = 1 + 1/2 = 1 (integer division: 1//2=0) -> so c[2]=1 // Then v_2 = c[2]-c[1] = 1-2 = -1 -> g = gcd() of [-1] -> 1.
+        // Check: m - c[1]*q = 2 - 2*1 = 0. Does 1 divide 0? Yes -> YES.
+
+        // Example 2: n=1, m=1, p=1, q=1. // c[1] = 1 + (1-1)/1 = 1+0=1.
+        // All c[j] are equal (only one) -> so we require m = 1*q -> 1=1 -> YES.
+
+        // Example 3: n=5, m=4, p=2, q=3. // c[1] = 1 + (5-1)/2 = 1+4/2=3
+        // c[2] = 1 + (5-2)/2 = 1+3/2=1+1=2  [since 3//2=1] // v_2 = 2-3 = -1 -> g=1
+        // m - c[1]*q = 4 - 3*3 = 4-9 = -5 -> 1 divides -5 -> YES.
+
+        // Example 4: n=10, m=7, p=5, q=2.
+        // Compute c[j] for j=1..5:
+        // c[1] = 1 + (10-1)/5 = 1+9/5=1+1=2 // c[2] = 1 + (10-2)/5 = 1+8/5=1+1=2
+        // c[3] = 1 + (10-3)/5 = 1+7/5=1+1=2 // c[4] = 1 + (10-4)/5 = 1+6/5=1+1=2
+        // c[5] = 1 + (10-5)/5 = 1+5/5=1+1=2 // So all c[j]=2 -> then we require m = 2*q -> 7 = 2*2 = 4 -> 7==4? No -> NO.
+
+        // Example 5: n=4, m=4, p=1, q=3. // p=1: c[1]=1+(4-1)/1=1+3=4.
+        // all equal -> require m = 4*q -> 4 = 4*3 = 12? No -> NO.
+
+        // This matches the expected output: YES, YES, YES, NO, NO.
+
+        // Therefore, algorithm per test case:
+
+        // Step 1: Precompute c[0..p-1] (0-indexed) where c[i] = 1 + (n - (i+1)) / p   [integer division]
+        // Step 2: Check if all c[i] are equal:
+        //         If yes, then we require m == c[0] * q -> then YES, else NO.
+        //         If no, then compute g = gcd of (c[i] - c[0]) for i=1 to p-1 (only non-zero differences matter, but gcd handles zeros)
+        //                then check if (m - c[0]*q) is divisible by g (taking care: if g==0, but we already handled all equal, so g won't be zero? 
+        //                actually if not all equal, then at least one difference is non-zero -> g>0).
+
+        // However, note: gcd(0, a) = |a|, and gcd(0,0) is 0, but we skip if all equal.
+
+        // Implementation:
+
+        // But note: we are dealing with small n,p (<=100), so we can do:
+
+        int c[100];
+        for (int i = 0; i < p; i++) {
+            c[i] = 1 + (n - (i+1)) / p; // integer division
+        }
+
+        // Check if all c[i] are equal
+        bool allEqual = true;
+        for (int i = 1; i < p; i++) {
+            if (c[i] != c[0]) {
+                allEqual = false;
+                break;
+            }
+        }
+
+        if (allEqual) {
+            if (m == c[0] * q) {
+                cout << "YES\n";
+            } else {
+                cout << "NO\n";
+            }
+        } else {
+            // Compute g = gcd of (c[i] - c[0]) for i=1 to p-1
+            int g = 0;
+            for (int i = 1; i < p; i++) {
+                int diff = c[i] - c[0];
+                // gcd should be positive, but we can use absolute value in gcd computation
+                int a = abs(diff);
+                // Euclidean algorithm to update gcd
+                int temp = g;
+                while (a != 0) {
+                    int r = temp % a;
+                    temp = a;
+                    a = r;
+                }
+                g = temp;
+            }
+            // Now, g is the gcd of the absolute values of the differences? Actually, gcd is defined for absolute values. // We require that (m - c[0]*q) is divisible by g.
+            int diff_total = m - c[0] * q;
+            if (g == 0) {
+                // This should not happen because not all equal, but to be safe
+                if (diff_total == 0) {
+                    cout << "YES\n";
+                } else {
+                    cout << "NO\n";
+                }
+            } else {
+                // Check divisibility: note that negative is fine: g divides diff_total if diff_total % g == 0
+                if (diff_total % g == 0) {
+                    cout << "YES\n";
+                } else {
+                    cout << "NO\n";
+                }
+            }
+        }
+    }
+
+    return 0;
+}

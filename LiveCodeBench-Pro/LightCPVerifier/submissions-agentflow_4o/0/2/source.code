@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+// Helper function to calculate the sum of the first x natural numbers
+long long sum_of_first_x(long long x) {
+    return x * (x + 1) / 2;
+}
+
+// Main function to compute and display minimized total angriness
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        vector<long long> a(n);
+        
+        long long total_cars = 0;
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+            total_cars += a[i];
+        }
+
+        long long fair_cars_per_lane = total_cars / n;
+        long long extra_cars = total_cars % n;
+
+        vector<long long> b(n, fair_cars_per_lane);
+        for (int i = 0; i < extra_cars; ++i) {
+            b[i]++;
+        }
+        
+        // Sort a for excess penalty calculations
+        sort(a.begin(), a.end());
+
+        // Calculate the minimum angriness
+        long long minimal_angriness = 0;
+        int excess_index = 0;
+        
+        for (int i = 0; i < n; ++i) {
+            minimal_angriness += sum_of_first_x(b[i]);
+
+            if (a[i] > b[i]) {
+                minimal_angriness += (a[i] - b[i]) * k;
+                excess_index++;
+            }
+        }
+
+        cout << minimal_angriness << "\n";
+    }
+    return 0;
+}

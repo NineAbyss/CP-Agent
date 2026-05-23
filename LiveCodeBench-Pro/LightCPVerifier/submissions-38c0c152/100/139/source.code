@@ -1,0 +1,157 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <set>
+#include <utility>
+#include <cstring>
+#include <functional>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<pair<int, int>> odd;
+        for (int i = 0; i < k + 1; i++) {
+            int x, y;
+            cin >> x >> y;
+            odd.push_back({x, y});
+        }
+        
+        // 检查每个间隙
+        vector<vector<pair<int, int>>> candidates(k);
+        bool possible = true;
+        set<pair<int, int>> odd_set(odd.begin(), odd.end());
+        
+        for (int i = 0; i < k; i++) {
+            auto [x1, y1] = odd[i];
+            auto [x2, y2] = odd[i + 1];
+            int dx = abs(x1 - x2);
+            int dy = abs(y1 - y2);
+            if (dx + dy != 2) {
+                possible = false;
+                break;
+            }
+            if (dx == 2 && dy == 0) {
+                int mx = (x1 + x2) / 2;
+                candidates[i].push_back({mx, y1});
+            } else if (dx == 0 && dy == 2) {
+                int my = (y1 + y2) / 2;
+                candidates[i].push_back({x1, my});
+            } else if (dx == 1 && dy == 1) {
+                candidates[i].push_back({x1, y2});
+                candidates[i].push_back({x2, y1});
+            } else {
+                possible = false;
+                break;
+            }
+            // 移除与奇数位置重合的候选
+            vector<pair<int, int>> valid;
+            for (auto cand : candidates[i]) {
+                if (odd_set.count(cand) == 0) {
+                    valid.push_back(cand);
+                }
+            }
+            candidates[i] = valid;
+            if (candidates[i].empty()) {
+                possible = false;
+                break;
+            }
+        }
+        
+        if (!possible) {
+            cout << "0\n";
+            continue;
+        }
+        
+        // 建立图：间隙 -> 候选格子
+        map<pair<int, int>, vector<int>> cell_to_gap;
+        for (int i = 0; i < k; i++) {
+            for (auto cand : candidates[i]) {
+                cell_to_gap[cand].push_back(i);
+            }
+        }
+        
+        // 构建连通分量
+        vector<bool> gap_visited(k, false);
+        long long ans = 1;
+        
+        for (int start = 0; start < k; start++) {
+            if (gap_visited[start]) continue;
+            
+            // BFS/DFS 遍历这个连通分量
+            vector<int> gaps_in_comp;
+            vector<pair<int, int>> cells_in_comp;
+            map<pair<int, int>, int> cell_id;
+            map<int, int> gap_local_id;
+            
+            vector<int> stack = {start};
+            gap_visited[start] = true;
+            
+            while (!stack.empty()) {
+                int g = stack.back();
+                stack.pop_back();
+                gap_local_id[g] = gaps_in_comp.size();
+                gaps_in_comp.push_back(g);
+                for (auto cand : candidates[g]) {
+                    if (cell_id.count(cand) == 0) {
+                        cell_id[cand] = cells_in_comp.size();
+                        cells_in_comp.push_back(cand);
+                    }
+                    // 遍历这个候选格子连接的其他间隙
+                    for (int other_gap : cell_to_gap[cand]) {
+                        if (!gap_visited[other_gap]) {
+                            gap_visited[other_gap] = true;
+                            stack.push_back(other_gap);
+                        }
+                    }
+                }
+            }
+            
+            int L = gaps_in_comp.size();
+            int R = cells_in_comp.size();
+            if (L > R) {
+                ans = 0;
+                break;
+            }
+            
+            // 建立邻接表：左节点 -> 右节点（局部编号）
+            vector<vector<int>> adj_left(L);
+            for (int i = 0; i < L; i++) {
+                int g = gaps_in_comp[i];
+                for (auto cand : candidates[g]) {
+                    int rid = cell_id[cand];
+                    adj_left[i].push_back(rid);
+                }
+            }
+            
+            // 暴力枚举匹配
+            vector<int> match_right(R, -1);
+            long long comp_ways = 0;
+            
+            function<void(int)> dfs = [&](int left_idx) {
+                if (left_idx == L) {
+                    comp_ways++;
+                    return;
+                }
+                for (int rid : adj_left[left_idx]) {
+                    if (match_right[rid] == -1) {
+                        match_right[rid] = left_idx;
+                        dfs(left_idx + 1);
+                        match_right[rid] = -1;
+                    }
+                }
+            };
+            
+            dfs(0);
+            ans = ans * comp_ways % MOD;
+        }
+        
+        cout << ans << '\n';
+    }
+    return 0;
+}

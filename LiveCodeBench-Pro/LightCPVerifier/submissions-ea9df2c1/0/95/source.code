@@ -1,0 +1,119 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        
+        // position of each value in a
+        vector<int> pos_a(n + 1);
+        for (int i = 0; i < n; i++) {
+            pos_a[a[i]] = i;
+        }
+        
+        // permutation f = b ∘ a^{-1}
+        vector<int> f(n + 1);
+        for (int x = 1; x <= n; x++) {
+            f[x] = b[pos_a[x]];
+        }
+        
+        // check cycle lengths
+        vector<bool> vis(n + 1, false);
+        int self_loop = 0;
+        bool bad = false;
+        vector<pair<int, int>> cycles; // pairs of values forming a 2-cycle
+        int self_val = -1;
+        for (int x = 1; x <= n; x++) {
+            if (!vis[x]) {
+                int cur = x;
+                vector<int> path;
+                while (!vis[cur]) {
+                    vis[cur] = true;
+                    path.push_back(cur);
+                    cur = f[cur];
+                }
+                int len = path.size();
+                if (len == 1) {
+                    self_loop++;
+                    self_val = path[0];
+                } else if (len == 2) {
+                    cycles.push_back({path[0], path[1]});
+                } else {
+                    bad = true;
+                    break;
+                }
+            }
+        }
+        if (bad) {
+            cout << "-1" << endl;
+            continue;
+        }
+        if (n % 2 == 0 && self_loop > 0) {
+            cout << "-1" << endl;
+            continue;
+        }
+        if (n % 2 == 1 && self_loop != 1) {
+            cout << "-1" << endl;
+            continue;
+        }
+        
+        // build target permutation of objects
+        vector<int> target(n); // target[i] = initial index of object that should be at position i
+        int left = 0, right = n - 1;
+        // place self-loop at the middle if exists
+        if (self_loop == 1) {
+            int mid = n / 2; // n is odd, mid is the central index (0‑based)
+            target[mid] = pos_a[self_val];
+        }
+        // place pairs of 2‑cycles
+        for (auto& cyc : cycles) {
+            int x = cyc.first, y = cyc.second;
+            int p1 = pos_a[x]; // object with a=x, b=y
+            int p2 = pos_a[y]; // object with a=y, b=x
+            target[left] = p1;
+            target[right] = p2;
+            left++;
+            right--;
+        }
+        
+        // generate swaps to achieve the target permutation
+        vector<int> loc(n); // object currently at position i
+        vector<int> rev(n); // current position of object i
+        for (int i = 0; i < n; i++) {
+            loc[i] = i;
+            rev[i] = i;
+        }
+        vector<pair<int, int>> ops;
+        for (int i = 0; i < n; i++) {
+            if (loc[i] != target[i]) {
+                int j = rev[target[i]];
+                // swap positions i and j
+                swap(loc[i], loc[j]);
+                rev[loc[i]] = i;
+                rev[loc[j]] = j;
+                ops.push_back({i + 1, j + 1}); // output 1‑based indices
+            }
+        }
+        
+        // output answer
+        cout << ops.size() << endl;
+        for (auto& op : ops) {
+            cout << op.first << " " << op.second << endl;
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

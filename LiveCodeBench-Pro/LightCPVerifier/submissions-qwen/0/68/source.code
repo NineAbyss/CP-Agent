@@ -1,0 +1,522 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200005;
+
+// We simulate the binary search path and determine which positions must be fixed
+// The idea: simulate the binary search from [l, r] for value k.
+// At each step, we know the mid index m. If p[m] == k -> success (d=0). // Otherwise, we follow the branch based on comparison with k.
+// But Cow can rearrange any set of indices (except those where p[i] == k) to guide the binary search.
+
+// However, note: we cannot change k's position? Actually, k must be placed at some index in [l, r] eventually?
+// But wait: Cow cannot touch any index i where p[i] == k. So if k is not in [l, r], then we cannot bring it in -> impossible.
+
+// Key observations:
+// 1. If k is not in the segment [l, r], then we cannot make the binary search find k because we can't move k into [l, r] (we can't modify an index that has k). So answer -1.
+// 2. Otherwise, we can simulate the binary search path. The binary search will visit a sequence of midpoints: m1, m2, ... until it hits the position of k or goes out of bounds. // 3. But we are allowed to rearrange other elements arbitrarily (as long as we don't touch positions with k). So we can control the comparisons at each midpoint.
+
+// How does binary search proceed? // It starts at [l, r], computes m = (l+r)/2.
+// Then:
+//   if p[m] == k -> success.
+//   if p[m] < k -> go to right half: [m+1, r]
+//   if p[m] > k -> go to left half: [l, m-1]
+
+// We want to minimize d = number of indices we rearrange (excluding any index with k).
+
+// Strategy: // We can choose to place k at any position in [l, r]? No: we cannot move k. So k must already be in [l, r].
+// But note: we are allowed to rearrange other values arbitrarily. However, we cannot change the fact that k is at its current position. 
+// Therefore, k must be located in [l, r] initially; otherwise, we return -1.
+
+// Now, suppose k is at position pos (so p[pos] = k) and l <= pos <= r.
+
+// We can simulate the binary search path from [l, r]. The binary search will visit a sequence of midpoints. 
+// At each midpoint m, we have three cases:
+//   - if m == pos: then we succeed -> no more changes needed.
+//   - else: we need to ensure that the comparison at m leads us toward the half that contains pos.
+
+// Specifically:
+//   - if m < pos: then we need to go to the right half -> we need p[m] < k at this step.
+//   - if m > pos: then we need to go to the left half -> we need p[m] > k at this step.
+
+// But currently, p[m] might not satisfy this condition. So if p[m] >= k when we need p[m] < k, we must fix it (by swapping so that at m we have a value < k). Similarly for the other case.
+
+// However, note: we are allowed to rearrange multiple indices arbitrarily. But we cannot use the index pos (because p[pos]=k). 
+
+// Important: we don't necessarily have to fix every bad midpoint independently. We can fix several at once by reordering a set of indices. But note: we are counting the total number of indices we choose to rearrange (and then we can assign any values to them, as long as we don't use k again? but k only appears once).
+
+// But here's a catch: we can assign any permutation of the chosen indices' values. So if we choose a set S of indices (none of which has value k), we can assign the values arbitrarily among them.
+
+// Therefore, the problem reduces to: what is the minimum size of a set S (subset of [l, r] excluding pos) such that we can assign values to the indices in S so that along the binary search path, at every midpoint m (until we hit pos) the value at m satisfies the required condition?
+
+// How do we know the required condition at each midpoint? // We can simulate the binary search path assuming we fix the comparisons appropriately. But the path depends on our fixes? Actually, no: the path is predetermined by the requirement to reach pos.
+
+// Specifically, the binary search path from [l, r] to pos is fixed: at each step, the midpoint m is fixed (it's just (l+r)//2). Then:
+//   - if m == pos -> done.
+//   - if m < pos -> we need to go right -> require p[m] < k.
+//   - if m > pos -> we need to go left -> require p[m] > k.
+
+// So we can precompute the entire path of midpoints that the binary search would take if we were to guide it correctly to pos.
+
+// Then, for each midpoint m in the path (until we hit pos), we check:
+//   - if m == pos: break.
+//   - if m != pos: we require a specific condition on p[m]: either < k or > k.
+
+// But currently, p[m] might not satisfy that. So if it doesn't, then we must include m in the set S (because we need to change the value at m).
+
+// However, wait: could we avoid including m by changing some other index that affects the path earlier? No, because the path is deterministic: the midpoints are fixed by the current [l, r] interval, which only depends on the branching decisions. And the branching decision at m is determined solely by the value at m.
+
+// Therefore, the set of midpoints we visit is fixed regardless of what we do? Actually, no: if we change the value at an earlier midpoint, that changes the next interval. But note: we are going to fix the comparisons so that we always go in the direction of pos. So the entire path is predetermined: we start at [l, r], then go to the half that contains pos, and so on.
+
+// Example: [1,7] and pos=4.
+//   m1 = (1+7)/2 = 4 -> we are there? if not, then we compare and branch. But if we are guiding to 4, then when we are at m1=4, we are done.
+
+// Actually, the path is independent of the values: it only depends on the current interval and the target pos? Not exactly: the branching is determined by the value at m. But we are going to force the branching to go toward pos. So the intervals become: //   [l0, r0] = [l, r]
+//   m0 = (l0+r0)/2
+//   if m0 == pos -> stop.
+//   if m0 < pos -> next interval [m0+1, r0]
+//   if m0 > pos -> next interval [l0, m0-1]
+
+// This is exactly the same as the standard binary search for the index pos? Actually, yes: we are simulating the binary search for the index of k, but we are forcing the decisions to go toward the known position.
+
+// Therefore, the sequence of midpoints is uniquely determined by l, r, and pos.
+
+// Algorithm for one query:
+// Step 1: Find pos such that p[pos] = k. If no such pos in [l, r], return -1.
+// Step 2: Simulate the binary search path from [l, r] to pos (by forcing the branches toward pos). For each midpoint m in the path (in order):
+//   - if m == pos: break -> success.
+//   - else if m < pos: we require p[m] < k. If currently p[m] >= k, then we must fix index m (so we count it).
+//   - else (m > pos): we require p[m] > k. If currently p[m] <= k, then we must fix index m.
+// Step 3: The answer is the number of indices m in the path (excluding the last one when m==pos) that require fixing.
+
+// But wait: can we fix multiple indices at once? Yes, but we are counting the total number of indices we choose. Each index m that needs to be changed must be in the set S. Even if we fix several indices together, we still have to include each one that we change. So the minimal d is the number of midpoints in the path (before reaching pos) that currently have incorrect values.
+
+// Why is this minimal? Because we must fix every such m: if we leave one unfixed, then at that step the binary search will take the wrong branch and may never reach pos.
+
+// Example: second example, first query: "3 4 2" //   n=7, p = [3,1,5,2,7,6,4], query: l=3, r=4, k=2.
+//   Find pos: p[4]=2 -> pos=4 (1-indexed). Check: 3<=4<=4 -> valid. //   Simulate path:
+//      [3,4]: m = (3+4)/2 = 3 (1-indexed).  //          m=3, pos=4 -> m<pos -> need p[3] < 2. But p[3]=5 -> 5>=2 -> fails -> must fix index 3.
+//      Then we go to [4,4]: m=(4+4)/2=4 -> m==pos -> success. //   So we need to fix 1 index? But expected answer is 2.
+
+// Wait! The example says: "you may choose the indices 2, 3, and swap them" -> so they chose 2 indices. Why?
+
+// Let me re-read: they swapped indices 2 and 3. But note: the array becomes [3,5,1,2,...] -> wait, that doesn't match.
+
+// Original: index1:3, index2:1, index3:5, index4:2 -> after swapping index2 and index3: index2 becomes 5, index3 becomes 1 -> [3,5,1,2,...]
+
+// Then f(3,4,2):  //   m = (3+4)/2 = 3 -> p[3]=1 < 2 -> go to [4,4]
+//   m=4 -> p[4]=2 -> found.
+
+// So why did they choose two indices? Because they had to pick both index2 and index3? But only index3 was used in the path? 
+
+// But note: we are allowed to rearrange the chosen indices arbitrarily. So if we choose a set S, we can assign the values arbitrarily to the indices in S. However, the values that go into S must be exactly the values that originally were in S.
+
+// In the example: originally, indices 2 and 3 have values 1 and 5. After rearrangement, we want index3 to have a value < 2. The available values in {index2, index3} are {1,5}. We can assign 1 to index3 and 5 to index2. So we achieve p[3]=1 which is <2.
+
+// But why couldn't we just choose index3? Then we would have only one index. Then we can assign to index3 any value? But no: we can only assign a value that originally was in the set of chosen indices. If we only choose index3, then we can only assign the value that was originally at index3, which is 5. So we cannot change it to 1.
+
+// Therefore, to get a value <2 at index3, we need to bring in the value 1. The value 1 is at index2. So we must also include index2 in the set.
+
+// Hence, the set S must contain all indices whose original values we wish to use. But we are constrained: we can only use the values that are originally in the indices we choose.
+
+// Therefore, to fix a midpoint m that requires a value < k, we need to assign to m a value from the set of values in S that is < k. Similarly for > k.
+
+// But we are free to assign arbitrarily. So for a set S, we can assign any permutation of the multiset { p[i] for i in S } to the indices in S.
+
+// Therefore, the necessary and sufficient condition for a set S to work is:
+//   For every midpoint m in the path (that is not pos) that requires a condition:
+//      - if m < pos: we need to assign to m a value < k.
+//      - if m > pos: we need to assign to m a value > k.
+//   And we cannot assign k to any index in S (because k is not in the values of S: since we didn't include the index where k is).
+
+// But note: k might appear in S? Only if we include the index where k is. But we are not allowed to include that index. So the values in S do not include k.
+
+// So the problem becomes: we have a set of constraints on some indices (the midpoints in the path). For each such index m, we require that the value assigned to m is in a certain set:
+//   - if m < pos: value < k
+//   - if m > pos: value > k
+
+// And we can assign the values arbitrarily from the multiset V = { p[i] for i in S }.
+
+// We wish to minimize |S|.
+
+// How to solve this assignment feasibility? This is a bipartite matching? But note: we can assign arbitrarily, so we only care about counts.
+
+// Conditions: //   Let A = the set of midpoints that require a value < k.
+//   Let B = the set of midpoints that require a value > k.
+//   Note: A and B are disjoint (each midpoint is either < or > pos).
+
+// We need: //   - The number of values in V that are < k must be at least |A|.
+//   - The number of values in V that are > k must be at least |B|.
+
+// But V is the multiset of p[i] for i in S.
+
+// Also, S must contain all the midpoints that are in A ∪ B (because we are going to assign a value to each such midpoint, and we are going to use the index m as a location to put a value). But wait: do we have to include the midpoint indices? Yes, because we are going to assign a new value to that index.
+
+// However, note: we might use a value from an index j not in the path to fix a midpoint m in the path. But we must include j in S to use its value, and we must include m in S to assign a new value to m.
+
+// Therefore, S must contain:
+//   - All the midpoints in the path (except pos) that we wish to fix (but actually even if they are already correct, we might not need to fix? but if they are correct, we don't need to change them, so we don't need to include them? unless we want to use their value elsewhere?).
+
+// But wait: if a midpoint m is already satisfying the condition, then we don't need to change it. So we don't need to include m in S. However, we might still want to include m in S to use its value for another index? But that would change p[m] and might break the condition. So if we include m and it was already good, we must assign it a value that still satisfies the condition.
+
+// Therefore, if we include an index that is already good, we must be careful: we can reassign it as long as we give it a value that satisfies the condition.
+
+// But our goal is to minimize |S|. So if an index is already good, we prefer not to include it. However, we might be forced to include it if we need its value (which is <k or >k) to fix another index.
+
+// This becomes complex.
+
+// Alternate approach: we are allowed to choose any set S (of indices not containing the one with k). We wish to know the minimum |S| such that:
+//   Let V = { p[i] : i in S }
+//   Let F = the set of midpoints in the path (excluding pos) that are not already satisfying the condition.
+//   But actually, even if a midpoint is currently satisfying the condition, if we include it in S we might change it to break it. So we must ensure that after reassignment, every midpoint m in the path (excluding pos) has:
+//        if m < pos: value < k
+//        if m > pos: value > k
+
+// So we have constraints on the values assigned to the midpoints in the path (excluding pos). Let T be the set of these midpoints.
+
+// We can break T into:
+//   T1 = { m in T: m < pos } -> require value < k
+//   T2 = { m in T: m > pos } -> require value > k
+
+// We are going to assign values to the indices in T. But we can also assign values to other indices in S arbitrarily. However, the values come from V.
+
+// We can assign the values arbitrarily to the indices in S. So we can assign to the indices in T any |T| values from V, as long as we don't violate the constraints.
+
+// But we are not forced to assign the values only to T? We have to assign values to every index in S. But the constraints only care about the values at T.
+
+// So the necessary conditions are:
+//   - The number of values in V that are < k must be at least the number of indices in T1 that we assign a value < k. But we can assign any value from V to any index in T, so we can assign up to (number of values in V that are < k) to T1, and similarly for T2.
+
+// However, we are not forced to assign the values from V only to T. But the entire set V must be assigned to the |S| indices. The constraints only apply to the indices in T.
+
+// Therefore, we can assign the values arbitrarily. So we can assign to T1 any values from V that are < k, and to T2 any values from V that are > k, as long as we have enough.
+
+// But note: an index in T might be already in S? Actually, we are going to assign new values to every index in S. So if an index in T is not in S, then its value remains unchanged. But we require that after reassignment, the value at every index in T meets the condition.
+
+// Therefore, for an index m in T:
+//   - if m is not in S, then we rely on the original p[m] to meet the condition.
+//   - if m is in S, then we can assign it any value from V, but we must assign it a value that meets the condition.
+
+// So we can avoid including an index m in T if p[m] already meets the condition.
+
+// Therefore, let:
+//   U1 = { m in T1 such that p[m] >= k }  -> must be included in S and assigned a value < k
+//   U2 = { m in T2 such that p[m] <= k }  -> must be included in S and assigned a value > k
+
+// Additionally, we might include other indices to provide extra values of the needed types.
+
+// Let x = |U1|, y = |U2|.
+
+// We need to form a set S such that: //   - S contains U1 ∪ U2.
+//   - Let V = { p[i] for i in S }. //   - The number of values in V that are < k is at least x.
+//   - The number of values in V that are > k is at least y.
+
+// But note: the values in V come from the indices in S. The values at indices in U1 and U2 are also in V. However, these values might not be of the type we need.
+
+// Specifically, for an index i in U1: p[i] >= k -> so it is not < k, but it might be > k? or =k? but k only once and not at i (since i≠pos) -> so p[i] > k? actually, p[i]>=k and ≠k -> so p[i]>k. Similarly, for i in U2: p[i]<=k and ≠k -> p[i]<k.
+
+// Therefore: //   - The values from U1 are all > k.
+//   - The values from U2 are all < k.
+
+// So if we only take S0 = U1 ∪ U2, then: //   count_<k = |U2|   (from U2)
+//   count_>k = |U1|   (from U1)
+
+// We require: //   count_<k >= x = |U1|
+//   count_>k >= y = |U2|
+
+// So we require |U2| >= |U1| and |U1| >= |U2| -> so |U1| = |U2|.
+
+// If |U1| = |U2|, then S0 works.
+
+// Otherwise, we need to add extra indices to balance.
+
+// Let a = max(|U1|, |U2|) - min(|U1|, |U2|) = ||U1| - |U2||.
+
+// We need to add a extra indices that provide the missing type.
+
+// But we can add an index i (not in U1∪U2 and not pos) that has p[i] < k: then we get one more value < k. // Or an index i with p[i] > k: then we get one more value > k.
+
+// We wish to minimize |S| = |U1|+|U2| + (number of extra indices).
+
+// We need to cover the deficit: //   deficit_<k = max(0, |U1| - |U2|)
+//   deficit_>k = max(0, |U2| - |U1|)
+
+// So we need to add at least deficit_<k indices with p[i] < k and deficit_>k indices with p[i] > k.
+
+// But we can add one index that provides one unit of the needed type.
+
+// Therefore, total extra = deficit_<k + deficit_>k = ||U1| - |U2||.
+
+// So total |S| = |U1| + |U2| + ||U1| - |U2|| = 2 * max(|U1|, |U2|).
+
+// However, wait: we might be able to kill two birds with one stone? But each extra index gives one value of one type.
+
+// But note: we can also consider including an index that is not in the path? and we don't care what value it gets as long as the values in V have enough of each type.
+
+// Therefore, the minimal |S| is 2 * max(|U1|, |U2|).
+
+// Let's test with the example:  //   Query: l=3, r=4, k=2, p=[3,1,5,2,7,6,4] (1-indexed)
+//   pos = 4 (since p[4]=2) //   Path:
+//        [3,4]: m = (3+4)/2 = 3 -> m=3, pos=4 -> m<pos -> need p[3] < 2 -> but p[3]=5 -> fails -> so U1: indices in T1 that fail -> T1={3}, and p[3]=5>=2 -> so U1={3} -> |U1|=1. //        Then [4,4]: m=4 -> equals pos -> done.
+//   T2 is empty -> |U2|=0. //   Then |S| = 2 * max(1,0) = 2.
+
+// That matches.
+
+// Another example: first query of first test: "1 5 4" //   p = [1,2,3,4,5], k=4 -> pos=4.
+//   Path: [1,5]: m=3 -> p[3]=3<4 -> so we need to go right -> condition: since m=3<4, we require p[3]<4 -> 3<4 -> true -> so U1: no failure -> U1={} //         [4,5]: m=4 -> p[4]=4 -> found -> done.
+//   So |U1|=0, |U2|=0 -> |S|=0.
+
+// Second query: "1 3 4": 
+//   k=4, but we need to check if 4 is in [1,3]: p[1]=1, p[2]=2, p[3]=3 -> no 4 -> so -1.
+
+// Third query: "3 4 4":  //   k=4, pos=4 -> in [3,4] -> valid.
+//   Path: [3,4]: m=(3+4)/2=3 -> m=3<4 -> need p[3]<4 -> p[3]=3<4 -> good -> U1={} -> then [4,4]: m=4 -> found. //   So |S|=0.
+
+// Another example from the input: second test, second query: "2 3 5" //   p = [3,1,5,2,7,6,4], k=5 -> pos=3 (p[3]=5), and [2,3] -> 2<=3<=3 -> valid.
+//   Path: [2,3]: m=(2+3)/2=2 -> m=2<3 -> need p[2]<5 -> p[2]=1<5 -> good -> so U1: not needed. //         Then [3,3]: m=3 -> found.
+//   So |S|=0.
+
+// Third query: "1 5 6":  //   k=6 -> pos: p[6]=6 -> pos=6. Is 6 in [1,5]? 6>5 -> no -> -1.
+
+// Fourth query: "1 7 3":  //   k=3 -> pos=1 (p[1]=3). [1,7] -> valid.
+//   Path: 
+//      [1,7]: m=4 -> m=4>1 -> need p[4]>3 -> p[4]=2 -> 2<=3 -> fails -> so U2: indices in T2 that fail -> T2={4} -> p[4]=2<=3 -> so U2={4} -> |U2|=1.
+//      Then [1,3]: m=2 -> m=2>1 -> need p[2]>3 -> p[2]=1 -> 1<=3 -> fails -> U2={4,2} -> |U2|=2. //      Then [1,1]: m=1 -> found.
+//   So |U1|=0, |U2|=2 -> |S|=2*max(0,2)=4.
+
+// But the expected output is 4.
+
+// However, the example output says: "2 0 -1 4", so the fourth query outputs 4.
+
+// But wait: the example input says:  //   "1 7 3" -> output 4.
+
+// So it matches.
+
+// But wait: in the simulation above for "1 7 3", we had: //   Step1: [1,7] -> m=4 -> need p[4]>3 -> p[4]=2 -> fails -> so we mark index4 as needing fix (must be in S) and we require it to be assigned a value>3.
+//   Step2: [1,3] -> m=2 -> need p[2]>3 -> p[2]=1 -> fails -> mark index2. //   Step3: [1,1] -> m=1 -> found.
+
+// So U1 = {} (no m<pos that fails), U2 = {2,4} (two indices) -> |U2|=2 -> |S|=4.
+
+// Why 4? because we need 2 extra indices to provide two values>3? But wait: 
+//   Currently, S0 = U1 ∪ U2 = {2,4}. 
+//   The values at these indices: p[2]=1 (<3), p[4]=2 (<3).  //   So in V, we have two values that are <3, and none >3.
+//   We need to assign to the two indices in U2 (which are 2 and 4) two values that are >3. //   But we don't have any value >3 in V.
+
+// So we need to add extra indices that have values>3. How many? we need 2 values>3.
+
+// We can add two indices i (not in {2,4} and not pos=1) such that p[i]>3.  //   Available:
+//      index3: p[3]=5>3 -> good. //      index5: p[5]=7>3 -> good.
+//      index6: p[6]=6>3 -> good. //      index7: p[7]=4>3 -> good.
+//   So we can pick two of them.
+
+// Then S = {2,4, i, j} for two indices i,j with p[i]>3, p[j]>3.
+
+// Then V = {1,2,5,7} (if we pick 3 and 5) -> values: 1,2,5,7 -> 
+//   count_<3: 2 (1 and 2) -> we don't need any for U1, but we need to assign to U2 two values>3 -> we have 5 and 7 -> enough.
+
+// So we can assign:  //   to index2: 5
+//   to index4: 7 //   to index3: 1 (or 2)
+//   to index5: 2 (or 1)
+
+// But note: we don't care about the values at the extra indices as long as the ones at U2 are >3.
+
+// So total |S|=4.
+
+// But wait: could we do with 3? 
+//   Suppose we pick S = {2,4,3}. Then V = {1,2,5}. 
+//   We need to assign to index2 and index4 two values>3. We have only one value>3: 5.  //   So we cannot assign two values>3.
+//   Therefore, we need at least 4.
+
+// Hence, the formula: |S| = 2 * max(|U1|, |U2|) = 2 * max(0,2)=4.
+
+// But wait: what if we have U1 and U2 both nonzero?  //   Example: U1 has 3 failures, U2 has 1 failure.
+//   Then |S| = 2 * max(3,1)=6. //   Why?
+//     We start with S0 = U1 ∪ U2 -> 4 indices. //     Values in V:
+//        from U1: 3 values that are >k (because they failed: p[i]>=k -> and not k -> >k) //        from U2: 1 value that is <k
+//     So we have:  //        count_<k = 1
+//        count_>k = 3 //     We need:
+//        for U1: 3 values <k -> we have only 1 -> deficit = 2
+//        for U2: 1 value >k -> we have 3 -> enough.
+//     So we need 2 more values <k. //     We can add 2 indices j with p[j]<k.
+//     Then S has 4+2=6 indices. //     Then V has:
+//        <k: 1 (from U2) + 2 (from new) = 3 -> enough for U1.
+//        >k: 3 (from U1) -> and we don't need to assign >k to U1? no: U1 requires <k, and U2 requires >k -> we have 3>k values -> enough for U2 (only 1 needed) and we can assign the rest arbitrarily.
+//     So we can assign:  //        to the 3 indices in U1: 3 values <k (the one from U2 and the two new ones)
+//        to the 1 index in U2: one value >k (from the U1 group, we have 3>k values, so we use one) //        the remaining 2>k values go to the two new indices (which we don't care about) and the U1 indices that provided >k values? but we are reassigning everything.
+
+//     Actually, we are reassigning all indices in S arbitrarily. So we have 6 values:  //        3 values <k (from U2 and the two new indices)
+//        3 values >k (from U1 and ???) -> wait: the two new indices have values <k, so they don't contribute >k.  //        The values:
+//           U1: 3 values that are >k //           U2: 1 value that is <k
+//           new: 2 values that are <k //        So total:
+//           <k: 1+2 = 3 //           >k: 3
+//        We need to assign: //           U1 (3 indices): 3 values <k -> use the 3<k values.
+//           U2 (1 index): 1 value >k -> use one of the >k values. //           The other 2 indices (the new ones): assign the remaining 2>k values.
+//        This works.
+
+//     So total |S|=6.
+
+//     But note: we could also try to use the values from U1 to help U2? but we are already using the U1 indices to be assigned <k values, so we cannot use their original values for anything else? Actually, we are taking all the values from S and reassigning arbitrarily.
+
+//     The formula:  //        We need:
+//           count_<k_in_V >= |U1| = 3 //           count_>k_in_V >= |U2| = 1
+//        Initially, with S0 = U1 ∪ U2:  //           count_<k = |U2| = 1
+//           count_>k = |U1| = 3 //        So we are short by 2 in <k.
+//        We add 2 indices with <k -> then count_<k becomes 1+2=3 -> meets requirement. //        Total |S| = |U1|+|U2|+2 = 3+1+2 = 6.
+
+//     And 2 * max(|U1|,|U2|) = 2*3=6.
+
+//     So the formula holds.
+
+// Therefore, algorithm per query:
+
+//   Step 1: Find the position pos of k in the array. If pos is not in [l, r], output -1. //   Step 2: Simulate the binary search path from [l, r] to pos (by always going toward pos) and collect:
+//        U1 = 0, U2 = 0 //        current_l = l, current_r = r
+//        while current_l <= current_r: //            m = (current_l + current_r) / 2   (floor division, integer)
+//            if m == pos: break
+//            if m < pos:
+//                // we need to go right: so we require p[m] < k
+//                if p[m] >= k: 
+//                    U1++   // because this index m fails and must be fixed //                current_l = m+1
+//            else: // m > pos //                // we need to go left: so we require p[m] > k
+//                if p[m] <= k: //                    U2++
+//                current_r = m-1 //
+//   Step 3: d = 2 * max(U1, U2)
+
+// But wait: what if during the simulation we hit an index that is not in the domain? We are only using indices in [l, r] and we know pos is in [l, r], so the path should eventually hit pos.
+
+// However, note: the path is defined by the standard binary search intervals. It will eventually hit pos?  //   The intervals are halved each time, and we are guiding toward pos, so yes.
+
+// But what if the path skips pos?  //   Example: [1,3], pos=2.
+//      m1 = (1+3)/2 = 2 -> hit. //   Example: [1,2], pos=2:
+//      m1 = (1+2)/2 = 1 -> 1<2 -> go to [2,2] -> then m2=2 -> hit.
+
+// So it will hit.
+
+// However, note: we break when m==pos. But what if we never hit m==pos?  //   Consider: [1,3], pos=1.
+//      m1 = 2 -> 2>1 -> go to [1,1] -> m2=1 -> hit.
+
+// So it will hit.
+
+// Therefore, code:
+
+//   Precompute the position array: pos_in_p[k] = i such that p[i] = k.
+
+//   For each query (l, r, k): //        pos = pos_in_p[k]
+//        if pos < l || pos > r: 
+//            print -1
+//        else: //            U1 = 0, U2 = 0
+//            cur_l = l, cur_r = r
+//            while (cur_l <= cur_r) {
+//                m = (cur_l + cur_r) / 2;
+//                if (m == pos) break;
+//                if (m < pos) {
+//                    if (p[m-1] >= k) {   // because p is 0-indexed: p[0] is first
+//                        U1++;
+//                    }
+//                    cur_l = m+1;
+//                } else { // m > pos
+//                    if (p[m-1] <= k) {
+//                        U2++;
+//                    }
+//                    cur_r = m-1;
+//                }
+//            }
+//            d = 2 * max(U1, U2);
+//            print d
+
+// But wait: in the example "1 7 3":  //   p = [3,1,5,2,7,6,4] -> 0-indexed: p[0]=3, p[1]=1, p[2]=5, p[3]=2, p[4]=7, p[5]=6, p[6]=4
+//   k=3 -> pos = 0 (0-indexed) -> but we are using 1-indexed in the problem.
+
+// We stored the array in 0-indexed, but the input is 1-indexed.
+
+// How we store: 
+//   We read p[0..n-1] for the n numbers.
+
+// The position of k: we can create an array `where` such that where[x] = index (0-indexed) of x in p.
+
+// But the query uses 1-indexed indices: l, r, and the array p is given in 1-indexed positions.
+
+// So the element at 1-indexed position i is p[i-1].
+
+// The position of k: if we find that p[i] = k, then the 1-indexed position is i+1.
+
+// But we want to check if the 1-indexed position of k is in [l, r]. 
+
+// So: //   Let pos_1indexed = where[k] + 1.
+//   if pos_1indexed < l || pos_1indexed > r -> -1.
+
+// Then in the simulation, the midpoints m are computed in 1-indexed?  //   The problem: the binary search is on [l, r] (1-indexed).
+//   So we do: //        cur_l = l, cur_r = r   (1-indexed)
+//        while (cur_l <= cur_r) {
+//            m = (cur_l + cur_r) / 2;   // 1-indexed
+//            if (m == pos_1indexed) break;
+//            if (m < pos_1indexed) {
+//                // check p at 1-indexed m: that is p[m-1]
+//                if (p[m-1] >= k) U1++;
+//                cur_l = m+1;
+//            } else {
+//                if (p[m-1] <= k) U2++;
+//                cur_r = m-1;
+//            }
+//        }
+
+// Example: "1 7 3":  //   k=3, where[3]=0 -> pos_1indexed=1.
+//   l=1, r=7 -> valid. //   cur_l=1, cur_r=7 -> m=(1+7)/2=4 -> m=4, pos_1indexed=1 -> m>pos -> so we need p[4-1]=p[3]=2 <=3 -> true -> so U2++ -> U2=1.
+//   Then cur_r = 4-1=3 -> [1,3] //   m=(1+3)/2=2 -> m=2>1 -> need p[1]=1<=3 -> true -> U2=2.
+//   Then cur_r=2-1=1 -> [1,1] //   m=1 -> equals pos_1indexed -> break.
+//   d = 2 * max(0,2)=4.
+
+// Correct.
+
+// But note: what if the array has duplicate values? It doesn't: permutation.
+
+// Also, k is between 1 and n.
+
+// Implementation:
+
+//   We'll create an array `pos_of` of size n+1: pos_of[x] = the 0-indexed index where x appears.
+
+//   Then for each query:
+//        int pos1 = pos_of[k] + 1;
+//        if (pos1 < l || pos1 > r) {
+//            cout << -1 << '\n';
+//        } else {
+//            int U1 = 0, U2 = 0;
+//            int cur_l = l, cur_r = r;
+//            while (cur_l <= cur_r) {
+//                int m = (cur_l + cur_r) / 2;   // floor division
+//                if (m == pos1) break;
+//                if (m < pos1) { //                    // need p[m-1] < k
+//                    if (p[m-1] >= k) {
+//                        U1++;
+//                    }
+//                    cur_l = m+1;
+//                } else { //                    // m > pos1
+//                    if (p[m-1] <= k) {
+//                        U2++;
+//                    }
+//                    cur_r = m-1;
+//                }
+//            }
+//            cout << 2 * max(U1, U2) << '\n';
+//        }
+
+// Let's run the first example:  //   "1 5 4":
+//        p = [1,2,3,4,5] -> pos_of[4]=3 -> pos1=4. //        l=1, r=5 -> valid.
+//        cur_l=1, cur_r=5 -> m=3 -> 3<4 -> need p[2]=3<4 -> true -> so no increment -> U1=0 -> then cur_l=4. //        [4,5]: m=(4+5)/2=4 -> m==4 -> break.
+//        d=0.
+
+//   "1 3 4":  //        pos1=4, but [1,3] -> 4 not in [1,3] -> -1.
+
+//   "3 4 4": //        pos1=4, in [3,4] -> valid.
+//        [3,4]: m=(3+4)/2=3 -> 3<4 -> need p[2]=3<4 -> true -> U1=0 -> then [4,4]: m=4 -> break. //        d=0.
+
+// Matches.
+
+// But note: the problem says the total sum of n and q over test cases <= 200000?  //   Actually: "It is guaranteed that the sum of n and the sum of q over all cases do not exceed 2⋅10^5."
+//   So t up to 10000, but the sum of n and the sum of q over test cases <= 200000.
+
+// Therefore, we can iterate over each query and simulate the binary search path (which is O(log n)) per query.
+
+// Total complexity: O(q * log n) per test case, but the total q over test cases <= 200000, and log n <= 18, so 200000*18 ~ 3.6e6, acceptable.
+
+// Code:

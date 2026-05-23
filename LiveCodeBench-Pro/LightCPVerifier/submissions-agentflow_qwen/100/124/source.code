@@ -1,0 +1,28 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    int t; cin >> t;
+    while (t--) {
+        int n; cin >> n;
+        vector<ll> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        ll ans = 1e18;
+        for (int k = 1; k <= n; k++) {
+            ll cost = 0;
+            for (int i = 0; i < n; i++) {
+                if (i < k) {
+                    cost += a[i];
+                } else {
+                    cost += min(a[i], (ll)k);
+                }
+            }
+            ans = min(ans, cost);
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

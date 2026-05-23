@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool check(int n, int m, int k, int T) {
+    if (T <= 0) return false;
+    // 每个值至少出现次数
+    int cnt = n / T;
+    // 每个长度为 k 的区间最多覆盖 ceil(k/T) 个同值点
+    int points_per_interval = (k + T - 1) / T;
+    // 需要的最小区间数
+    int need = (cnt + points_per_interval - 1) / points_per_interval;
+    return need > m;
+}
+
+void solve() {
+    int n, m, k;
+    cin >> n >> m >> k;
+    // 二分最大 T
+    int lo = 0, hi = n;
+    while (lo < hi) {
+        int mid = (lo + hi + 1) / 2;
+        if (check(n, m, k, mid)) {
+            lo = mid;
+        } else {
+            hi = mid - 1;
+        }
+    }
+    int T = lo;
+    if (T == 0) T = 1; // 至少一个值 // 构造序列
+    for (int i = 0; i < n; ++i) {
+        cout << i % T << " \n"[i == n-1];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

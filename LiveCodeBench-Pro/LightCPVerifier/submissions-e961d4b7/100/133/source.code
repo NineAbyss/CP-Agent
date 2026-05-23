@@ -1,0 +1,145 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int n;
+vector<vector<int>> g;
+vector<int> sz, parent, in, out;
+int timer;
+
+void dfs(int u, int p) {
+    sz[u] = 1;
+    parent[u] = p;
+    in[u] = ++timer;
+    for (int v : g[u]) {
+        if (v == p) continue;
+        dfs(v, u);
+        sz[u] += sz[v];
+    }
+    out[u] = timer;
+}
+
+bool is_ancestor(int u, int v) {
+    return in[u] <= in[v] && out[v] <= out[u];
+}
+
+int f(int s, int m) {
+    return min(s, m - s);
+}
+
+void solve() {
+    cin >> n;
+    g.assign(n+1, {});
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+    
+    sz.assign(n+1, 0);
+    parent.assign(n+1, 0);
+    in.assign(n+1, 0);
+    out.assign(n+1, 0);
+    timer = 0;
+    dfs(1, 0);
+    
+    int m = n-1;
+    // 计算常数 base = sum_{v=2..n} f(sz[v], m)
+    long long base = 0;
+    vector<long long> diff(n+1, 0);
+    for (int v = 2; v <= n; v++) {
+        int contrib = f(sz[v], m);
+        base += contrib;
+        diff[v] = contrib - f(sz[v]-1, m);
+    }
+    
+    // 计算每个顶点的子树 diff 和
+    vector<long long> subtree_diff(n+1, 0);
+    for (int v = n; v >= 2; v--) {
+        subtree_diff[v] += diff[v];
+        subtree_diff[parent[v]] += subtree_diff[v];
+    }
+    
+    // 枚举每条边 (a,b) a<b
+    long long best_total = -1;
+    pair<int, int> best_edge;
+    for (int a = 1; a <= n; a++) {
+        for (int b : g[a]) {
+            if (a > b) continue;
+            // 计算总贡献
+            long long total = base - subtree_diff[b];
+            // 加上新边的贡献
+            for (int x : g[b]) {
+                if (x == a) continue;
+                int szx;
+                if (parent[x] == b) { // x 是 b 的子节点
+                    szx = sz[x];
+                } else { // x 是 b 的父节点
+                    szx = n - sz[b];
+                }
+                total += f(szx, m);
+            }
+            if (total > best_total) {
+                best_total = total;
+                best_edge = {a, b};
+            }
+        }
+    }
+    
+    // 输出最优边
+    cout << best_edge.first << " " << best_edge.second << endl;
+    
+    // 构造颜色分配
+    int a = best_edge.first, b = best_edge.second;
+    vector<vector<int>> new_g(n+1);
+    for (int u = 1; u <= n; u++) {
+        if (u == b) continue;
+        for (int v : g[u]) {
+            if (v == b) continue;
+            new_g[u].push_back(v);
+        }
+    }
+    for (int x : g[b]) {
+        if (x == a) continue;
+        new_g[a].push_back(x);
+        new_g[x].push_back(a);
+    }
+    vector<int> dfs_order;
+    vector<bool> vis(n+1, false);
+    function<void(int)> dfs2 = [&](int u) {
+        vis[u] = true;
+        dfs_order.push_back(u);
+        for (int v : new_g[u]) {
+            if (!vis[v]) dfs2(v);
+        }
+    };
+    dfs2(a);
+    vector<int> color(n+1, 0);
+    color[b] = 0;
+    int col_id = 1;
+    int m2 = dfs_order.size();
+    for (int i = 0; i < m2/2; i++) {
+        int u = dfs_order[i];
+        int v = dfs_order[m2-1-i];
+        color[u] = col_id;
+        color[v] = col_id;
+        col_id++;
+    }
+    // 输出颜色
+    for (int i = 1; i <= n; i++) {
+        cout << color[i] << (i == n ? '\n' : ' ');
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

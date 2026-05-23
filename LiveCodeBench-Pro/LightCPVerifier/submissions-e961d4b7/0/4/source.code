@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        // 输入保证非递减
+        int total_max = a[n - 1];
+        long long ans = 0;
+        
+        for (int i = 0; i < n; ++i) {
+            for (int j = i + 1; j < n; ++j) {
+                int x = a[i], y = a[j];
+                
+                // Case A: k < n-1
+                if (j + 1 <= n - 2) {
+                    int low = total_max - x - y + 1;   // need a[k] > total_max - x - y
+                    int high = x + y - 1;             // need a[k] < x + y
+                    if (low <= high) {
+                        auto it_l = lower_bound(a.begin() + j + 1, a.begin() + n - 1, low);
+                        auto it_r = upper_bound(a.begin() + j + 1, a.begin() + n - 1, high);
+                        ans += (it_r - it_l);
+                    }
+                }
+                
+                // Case B: k = n-1
+                if (j < n - 1 && x + y > total_max) {
+                    int S = x + y + total_max;
+                    // find second_max: maximum element except i, j, n-1
+                    int second_max = -1;
+                    for (int p = n - 2; p >= 0; --p) {
+                        if (p != i && p != j) {
+                            second_max = a[p];
+                            break;
+                        }
+                    }
+                    if (S > second_max) {
+                        ++ans;
+                    }
+                }
+            }
+        }
+        
+        cout << ans << '\n';
+    }
+    return 0;
+}

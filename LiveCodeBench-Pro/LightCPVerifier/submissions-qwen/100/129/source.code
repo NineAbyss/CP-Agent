@@ -1,0 +1,515 @@
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+int main() {
+    string t = "";
+    char c;
+    
+    while (cin >> c) {
+        if (c == '0') {
+            break;
+        }
+        
+        // Append the received character to t
+        t += c;
+        int n = t.size();
+        
+        // We need to make sure that after all steps, t is a palindrome. // At step i (1-indexed), we can swap any two characters in t[0..i-1].
+        // Our goal is to maintain symmetry as much as possible.
+        
+        int l = 0, r = 0;
+        
+        if (n == 1) {
+            // Only one character, nothing to swap
+            l = 0; r = 0;
+        } else {
+            // We try to fix the palindrome property around the center. // The current last character is at position n-1 (0-indexed).
+            // Its mirror position should be at index (n - 1) - (n - 1) = 0? 
+            // Actually, for position i (0-indexed), mirror is n-1-i.
+            // But we are building step by step.
+            
+            // Let's consider: we want t[i] == t[n-1-i] for all i. // Currently, we added a new char at position n-1.
+            // So we care about its mirror: pos = n - 1 - (n - 1) = 0? No. // Actually, the mirror of the last character (index n-1) is index 0.
+            // The mirror of index n-2 is index 1, etc.
+            
+            int mirror = n - 1 - (n - 1); // This is always 0? That's not right.
+            // Wait: for index i in [0, n-1], mirror is n-1-i.
+            // So the last character (index = n-1) has mirror index = n-1 - (n-1) = 0. // So we want t[0] == t[n-1].
+            
+            if (t[0] != t[n-1]) {
+                // Find an index j in [1, n-2] such that swapping t[j] and t[n-1] makes t[0] == t[n-1] // But actually, we can swap any two positions. Best idea:
+                // If t[0] != t[n-1], we can swap t[0] with some other char? Or better:
+                // We can look for a position j where t[j] == t[0], and swap it with t[n-1].
+                // But simpler: just swap t[0] and t[n-1] — then t[0] becomes the new char, and t[n-1] becomes old t[0]. // But then t[0] is changed — which might break previous palindromic structure?
+                
+                // Alternate strategy: since the length is odd and we're allowed to do arbitrary swaps, // we can maintain that the string is almost palindrome, with only center possibly mismatched?
+                // But note: we can reorganize arbitrarily over time.
+                
+                // Insight: because we can swap any two characters at any time, we don't have to fix only the ends.
+                // However, a known solution for such interactive palindrome problems is:
+                // At step i (odd), do nothing.
+                // At step i (even), if the new char doesn't match the first, swap the first with the last.
+                // But let's test on example: // Step 1: 'a' -> t="a", output 0 0 -> ok.
+                // Step 2: 'a' -> t="aa", now check: t[0] == t[1] -> yes, so no swap? But example output is "1 2" // But wait, example input 1:
+                // s = "aab", steps: // 1: read 'a', t="a" -> output "0 0"
+                // 2: read 'a', t="aa" -> output "1 2" -> swapping pos 1 and 2 -> still "aa" // 3: read 'b', t="aab" -> output "2 3": swap pos 2 and 3 -> t becomes "aba", which is palindrome.
+                // // So at step 2, they swapped 1 and 2 (same char), which does nothing.
+                // Why? Maybe their algorithm is: // Always at even step, swap the two middle elements? Not clear.
+                // // Another known solution: maintain the string as palindrome by fixing the outer layer.
+                // When adding a new char at the end, compare it with the beginning. // If they are equal, do nothing.
+                // Otherwise, swap the first character with the last. // But in example 1:
+                // Step 1: t="a", do nothing -> ok. // Step 2: add 'a', now t="aa", first='a', last='a' -> equal -> do nothing? But expected "1 2"
+                // They did swap 1 and 2 anyway. //
+                // Alternatively, maybe they always swap the first and last at even steps? // Step 2: swap 1 and 2 -> still "aa" -> ok.
+                // Step 3: now we have "aab". We want to make palindrome. We can swap positions 2 and 3 (1-indexed): // So swap index 1 and 2 (0-indexed): "aab" -> "aba" -> palindrome.
+                // How to decide? We note that after step 3, length=3, center is index 1. // We want t[0]==t[2]. Currently t[0]='a', t[2]='b'. Not equal.
+                // So we need to bring an 'a' to position 2. // There is an 'a' at position 0 and 1. So we can swap position 1 (0-indexed index 1) with 2.
+                // That is 1-indexed: 2 and 3 -> matches example. //
+                // Proposed strategy: // After appending the new character, we have t of length n.
+                // We want t to eventually be palindrome. We don't need it to be palindrome at every step, // but at the final step it must be.
+                // However, we can rearrange arbitrarily at each step, so we can fix mismatches incrementally. //
+                // But note: we can only swap two characters per step. // We can use the following greedy:
+                // At step n (current length), we look at the two ends: left = 0, right = n-1. // If t[left] == t[right], we don't need to fix this pair.
+                // Otherwise, we need to find a character somewhere inside that equals t[left], and swap it to the end? // But we can only do one swap.
+                // // Actually, we can do:
+                // If t[0] != t[n-1], then we swap t[0] and t[n-1]. But that would make t[0] = new char, t[n-1] = old t[0]. // But then the front changes — which might break previous matching?
+                // However, note that we are allowed to change anything at any time. The only requirement is the final string is palindrome. //
+                // But consider: what if we delay fixing until the end? We cannot, because we must respond immediately. //
+                // Known similar problem: "Interactive Palindrome" from Codeforces. // Standard solution:
+                //   For even-length steps (i % 2 == 0), if the first character is not equal to the newly added one,  //   then swap the first character with the last one.
+                // But in example 1, step 2: both are 'a', so no swap? But they did swap. //
+                // Looking at example 2: // s = "ababa"? Wait, input is: a, a, b, a, b -> so s = "aabab", length=5.
+                // Steps: // 1: t="a" -> output "0 0"
+                // 2: t="aa" -> output "2 1" -> swap pos 2 and 1 -> same string. // 3: t="aab" -> output "3 2" -> swap pos 3 and 2 -> t becomes "aba"
+                // 4: t="abaa" -> output "4 4" -> swap pos 4 with itself -> no change. // 5: t="abab" -> wait, no: after step 4: we append 'a', so t="abaa" -> then swap 4 and 4 -> still "abaa"
+                // Then step 5: append 'b', t="abaab", then swap 4 and 5 -> swap 4th and 5th: "ababa" -> palindrome. //
+                // So after step 5: t = "ababa", which is palindrome. //
+                // Pattern: // At step i:
+                //   if i is even: compare t[0] and t[i-1] (last char). If not equal, swap t[0] and t[i-1]?  //   But step 2: i=2, t[0]=='a', t[1]=='a' -> equal, but they swapped anyway? They did "2 1", which is same as "1 2".
+                //   It's a no-op. //
+                // Actually, maybe the solution is: //   At step i:
+                //     if i is even and t[0] != t[i-1], then swap position 1 and i (1-indexed) //     otherwise, do nothing (output 0 0)
+                //   But example 2 step 2: t[0]=='a', t[1]=='a' -> equal -> should do nothing? But they did swap. //
+                // Alternatively, they always do a swap at even steps: swap position 1 and i, regardless. // Step 2: swap 1 and 2 -> no change.
+                // Step 4: swap 4 and 4 -> no change? But they output "4 4", which is self-swap.
+                // Why 4 and 4? Because at step 4, if we were to swap 1 and 4: t[0] and t[3]: 
+                //   t = "aba" + 'a' -> "abaa", t[0]='a', t[3]='a' -> equal, so no need? But they did swap 4 and 4. //
+                // Another possibility: the solution is to always ensure that after even steps, the string is of the form xx or xyxy, but not necessarily palindrome. //
+                // Insight from known solutions to similar problems: // We can do the following:
+                //   At step i (1-indexed):
+                //      if i is odd: do nothing (0 0)
+                //      if i is even: 
+                //          if t[0] != t[i-1] (i.e., first vs last), then swap position 1 and i (1-indexed)
+                //          else: do nothing // Let's test on example 1:
+                //   Step1 (odd): 0 0 -> ok. //   Step2 (even): t[0]=='a', t[1]=='a' -> equal -> do nothing -> output "0 0"
+                //   But expected output at step2 is "1 2", not "0 0". // So that doesn't match.
+                //
+                // What if we do:
+                //   At even step: always swap 1 and i, regardless? //   Step2: swap 1 and 2 -> "aa" -> same -> output "1 2" -> matches.
+                //   Step3: odd -> 0 0? But expected "2 3" //   So no.
+                // // How about:
+                //   At step i:
+                //      if i is odd: do nothing
+                //      if i is even: swap position 1 and i //   Then at step3 (odd): 0 0 -> but expected "2 3"
+                //   Doesn't match. //
+                // Let me re-read example outputs: // Example 1:
+                //   Output: //     0 0
+                //     1 2 //     2 3
+                // Example 2: //     0 0
+                //     2 1 //     3 2
+                //     4 4 //     4 5
+                // // Notice: in example 2, the second line is "2 1", which is same as "1 2" (swap is commutative).
+                // Third line: "3 2" -> swap positions 3 and 2. // Fourth: "4 4" -> self-swap.
+                // Fifth: "4 5" -> swap 4 and 5. //
+                // Pattern in the numbers: // Example 1: 0 0, then 1 2, then 2 3.
+                // Example 2: 0 0, then 2 1, then 3 2, then 4 4, then 4 5. //
+                // It looks like at step i, they output (i-1, i) for i>=2, except sometimes adjusted. // Step2: (1,2) or (2,1) -> same.
+                // Step3: (2,3) or (3,2) -> same. // Step4: (4,4) -> not (3,4)
+                // Step5: (4,5) //
+                // Why step4 is (4,4)? Maybe because at step4, after appending, the string is already good? //
+                // Let's simulate example 2 with the actual swaps: // s = "aabab"
+                // Step1: read 'a' -> t = "a" //        output: 0 0 -> t remains "a"
+                // Step2: read 'a' -> t = "aa" //        output: 2 1 -> swap pos2 and pos1 -> t becomes "aa" (same)
+                // Step3: read 'b' -> t = "aab" //        output: 3 2 -> swap pos3 and pos2 -> swap last two: "aab" -> "aba"
+                // Step4: read 'a' -> t = "abaa" //        output: 4 4 -> self-swap -> still "abaa"
+                // Step5: read 'b' -> t = "abaab" //        output: 4 5 -> swap pos4 and pos5 -> swap 4th and 5th: "abaa" + 'b' -> "abaab" -> swap index 3 and 4 (0-indexed):
+                //               'a' and 'b' -> becomes "ababa", which is palindrome. //
+                // So the final string is "ababa", palindrome. //
+                // How did they decide the swaps? // Observation:
+                //   At step i, they seem to be trying to fix the palindrome by ensuring symmetry.
+                //   Specifically, after step i, they want the prefix of length i to be such that when the process completes, 
+                //   it can easily be made into a palindrome. //
+                // Another known solution from Codeforces for a similar problem: //   Maintain that the current string t is always a palindrome.
+                //   But initially, after step1: "a" -> palindrome. //   Step2: we get another char, say 'a', so t becomes "aa" -> already palindrome -> no swap needed.
+                //   But they did a swap anyway. //
+                // Alternatively, they don't maintain palindrome at every step, but only at the end. //
+                // Insight: we can use the fact that the total length is odd, and we can rearrange arbitrarily. // We can accumulate the counts and then build a palindrome at the end, but we have to respond at each step.
+                // // However, note: we are allowed to swap any two characters at each step. So we can gradually build the palindrome.
+                // // A robust strategy:
+                //   We will aim to build the palindrome from the outside in. //   At step i, after appending s_i, we have string t of length i.
+                //   We consider the outermost unmatched pair: positions 0 and i-1. //   If t[0] == t[i-1], then this pair is matched, and we can focus on the inner part later.
+                //   Otherwise, we need to fix it. We can either: //        - find a character in the interior (positions 1 to i-2) that equals t[0], and swap it to position i-1, OR
+                //        - find a character in the interior that equals t[i-1], and swap it to position 0. //   But we can only do one swap.
+                // //   However, we can simply swap t[0] and t[i-1] to try to fix the mismatch? But that doesn't help:
+                //        before: t[0]=x, t[i-1]=y, x!=y. //        after swap: t[0]=y, t[i-1]=x -> still x!=y.
+                // //   So we need to bring a matching character from inside.
+                // //   Strategy:
+                //     If t[0] == t[i-1]: //         do nothing.
+                //     Else:
+                //         Look for an index j in [1, i-2] such that t[j] == t[0]. 
+                //         If found, swap t[j] and t[i-1] -> then t[i-1] becomes t[0], so t[0]==t[i-1].
+                //         Else, look for an index j in [1, i-2] such that t[j] == t[i-1], and swap t[j] and t[0].
+                //         But if neither exists? That shouldn't happen because we have at least one more character than the two ends. //         Actually, at step i>=3, the interior has at least one character.
+                //         And since the string has only 'a' and 'b', and we have three characters, by pigeonhole, one letter appears at least twice.
+                //         But we need specifically to match one of the ends.
+                // //   However, consider: t = "aab", i=3:
+                //        t[0]='a', t[2]='b' -> not equal.
+                //        Look for j in [1,1]: t[1]=='a' -> equals t[0] -> so swap t[1] and t[2]: 
+                //             swap index1 and index2 (0-indexed) -> positions 2 and 3 in 1-indexed -> output "2 3" -> matches example1. //
+                //   Example2 step3: t="aab" -> same as above -> swap "2 3" -> but they output "3 2", which is the same. //
+                //   Now step2: i=2, t="aa":  //        t[0]=='a', t[1]=='a' -> equal -> do nothing -> output "0 0"
+                //        but expected "1 2" or "2 1" //
+                //   So we have a discrepancy at even steps when the two are equal. //
+                //   But the problem does not require us to minimize swaps. We can do unnecessary swaps.
+                //   However, doing an unnecessary swap might break something? But if we swap two identical characters, it's harmless.
+                // //   But why does example2 step2 output "2 1" instead of "0 0"?
+                //   And step4 output "4 4"? //
+                //   Let me see what happens if we do nothing at step2:  //        t="aa", which is fine.
+                //   Then step3: we get 'b', t="aab", then we do our fix: swap pos2 and pos3 -> "aba", good. //   Then step4: append 'a', t="abaa"
+                //        Check: t[0]=='a', t[3]=='a' -> equal -> do nothing -> output "0 0" //   Then step5: append 'b', t="abaab"
+                //        Check: t[0]=='a', t[4]=='b' -> not equal.
+                //        Look for j in [1,3] with t[j]=='a': we have t[1]=='b', t[2]=='a', t[3]=='a'. 
+                //        So we can take j=2 or j=3. Swap t[2] (0-indexed index=2) with t[4] (index=4):  //             swap 1-indexed positions 3 and 5 -> output "3 5"
+                //        Then t becomes: "ab" + (swap 'a' and 'b') -> "ab" + "ba" becomes "ab" + "b" -> wait: //             positions:
+                //                 0:a, 1:b, 2:a, 3:a, 4:b -> swap index2 and index4:  //                 0:a, 1:b, 2:b, 3:a, 4:a -> "abbaa", which is not palindrome.
+                //        We wanted to make t[0]==t[4]: currently after swap, t[0]='a', t[4]='a' -> good. //        But now we also need t[1]==t[3]: t[1]='b', t[3]='a' -> not equal.
+                // //   The issue is that by only fixing the outer pair, we might break the inner pairs that were fixed earlier.
+                //
+                //   Therefore, we cannot assume that the inner part is already palindrome.
+                // //   Alternative strategy: do not try to maintain palindrome at every step, but only ensure that at the final step it is palindrome.
+                //   But we have to make swaps at every step, and we don't know the future. //
+                //   However, the interactor is non-adaptive, so the whole string s is fixed in advance. //   But we don't know the future characters.
+                // //   Another idea: since the final string must be palindrome, the frequency of 'a' and 'b' must allow a palindrome.
+                //   In a palindrome of odd length, exactly one character has odd count, the rest even. //   But we don't control s, so the jury ensures that? The problem says the string s consists of 'a' and 'b', but doesn't guarantee palindrome feasibility.
+                //   But the problem says "your task is to ensure that after the |s|-th step, the string t is a palindrome", so it must be possible.
+                //   And since we can swap arbitrarily at each step, we can rearrange freely. So any string can be rearranged into a palindrome if and only if at most one character has odd frequency.
+                //   But the problem does not state that, however, the constraints say only 'a' and 'b', and odd length, so one of them will have odd frequency, the other even -> always possible. //
+                //   Therefore, we can afford to do nothing until the end, but we must output swaps at each step. //   However, we don't know the future, so we cannot wait.
+                //
+                //   Known accepted solution for this exact problem (from Codeforces):
+                //        if (i % 2 == 0) {
+                //            if (t[0] != t[i-1]) {
+                //                swap(t[0], t[i-1]);
+                //                cout << 1 << " " << i << endl;
+                //            } else {
+                //                cout << 1 << " " << 1 << endl; // or any self-swap or safe swap
+                //            }
+                //        } else {
+                //            // for odd i>1, do something //            // but in examples, at step3 (i=3, odd), they did swap
+                //        } //
+                //   After research, a known solution is:
+                //        for i in range(1, n+1):
+                //            if i % 2 == 0:
+                //                if s[i-1] != t[0]:
+                //                    swap(t[0], t[i-1]) //                    print(1, i)
+                //                else: //                    print(i, i)   # self-swap
+                //            else:
+                //                if i > 1:
+                //                    # for odd i>=3 //                    # find a character in the middle that can be used
+                //                    # but simpler: do nothing?  //                    # but example does swap at step3 and step5.
+                //        This doesn't match. //
+                //   Another known solution from a past contest: //        always at step i:
+                //          if i is even, then swap the first character with the last character if they are different, otherwise do nothing. //        but again, doesn't explain example.
+                // //   Let's try to reverse-engineer the example2:
+                //        We want after step5: "ababa" //        How can we achieve that?
+                //        Step1: 'a' -> t="a" -> output "0 0" //        Step2: 'a' -> t="aa" -> they swap 2 and 1 -> still "aa"
+                //        Step3: 'b' -> t="aab" -> swap 3 and 2 -> t="aba" //        Step4: 'a' -> t="abaa" -> swap 4 and 4 -> still "abaa"
+                //        Step5: 'b' -> t="abaab" -> swap 4 and 5 -> "ababa" //
+                //   Notice: after step3: "aba" -> palindrome. //   after step4: "abaa" -> not palindrome.
+                //   after step5: "ababa" -> palindrome. //
+                //   So they only ensure palindrome at the final step. //
+                //   Strategy in example2: //     step2: swap first and last (1 and 2) -> but they are equal, so no change.
+                //     step3: they could have done nothing because "aab" -> we can fix later, but they chose to swap the last two. //     step4: self-swap.
+                //     step5: swap the fourth and fifth. //
+                //   Observing the output indices: 
+                //        step2: (2,1) -> which is (i, 1) for i=2.
+                //        step3: (3,2) -> (i, i-1) //        step4: (4,4) -> (i,i)
+                //        step5: (4,5) -> (i-1, i) //
+                //   No clear pattern. //
+                //   But wait, in example1: //        step2: (1,2) -> (1,2) = (1, i)
+                //        step3: (2,3) -> (2,3) = (2, i) = (i-1, i) //
+                //   In example2: //        step2: (2,1) = (i,1)
+                //        step3: (3,2) = (i, i-1) //        step4: (4,4) = (i,i)
+                //        step5: (4,5) = (i-1, i) //
+                //   Could it be that the solution is:
+                //        if i is even:
+                //            if the first char != last char, then swap first and last (1 and i)
+                //            else, swap i and i (self-swap)
+                //        if i is odd and i>1: //            swap i-1 and i
+                // //   Test example1:
+                //        i=1: odd, but i==1 -> output "0 0" //        i=2: even, 'a'=='a' -> so self-swap? but they output "1 2", not "2 2"
+                //        unless they do: if equal, output "1 2" anyway? 
+                //        or if even, always output "1 2" (which is swap first and last) regardless.
+                //        then for i=2: swap first and last -> 'a' and 'a' -> no change. //        i=3: odd and >1 -> swap i-1 and i = 2 and 3 -> positions 2 and 3.
+                //        -> matches example1. //
+                //   Test example2: //        i=1: 0 0
+                //        i=2: even -> swap 1 and 2:  //              t="aa" -> swap first and last -> still "aa"
+                //              output "1 2", but expected "2 1" -> same thing. //        i=3: odd and >1 -> swap 2 and 3:
+                //              t="aab" -> swap positions 2 and 3 (1-indexed) -> "aba" //              output "2 3", but expected "3 2" -> same.
+                //        i=4: even -> swap 1 and 4:  //              t = "aba" + 'a' = "abaa"
+                //              swap first and last: 'a' and 'a' -> no change. //              output "1 4", but expected "4 4"
+                //        -> not match. //
+                //   So not that. //
+                //   How about for even i: if first==last, then output "i i", else output "1 i"
+                //   for odd i>1: output "i-1 i"
+                // //   Example2:
+                //        i=2: even, first==last -> output "2 2", but expected "2 1" //   not match.
+                // //   Another possibility: the solution in example2 might be:
+                //        if i is even:
+                //            if first != last, then swap first and last (1 and i)
+                //            else, swap last and last (i and i)
+                //        if i is odd and i>1:
+                //            swap (i-1) and i //
+                //   Then example2: //        i=2: even, first==last -> output "2 2", but expected "2 1"
+                //   not match. //
+                //   Unless the condition is reversed. //
+                //   Let me try: 
+                //        if i is even and first != last, then output "i i"
+                //        if i is even and first == last, then output "1 i" //   doesn't make sense.
+                // //   Given the complexity, and that the string is short (<=99), we can try to solve it by:
+                //        At step i, after appending, we have string t of length i. //        We want to eventually make it palindrome, but we can only do one swap.
+                //        We can try to make the string as close to palindrome as possible.
+                //        Specifically, we can try to fix the outermost mismatch.
+                //
+                //   Algorithm for step i (after appending s_i):
+                //        Let left = 0, right = i-1.
+                //        while left < right:
+                //            if t[left] != t[right]:
+                //                break;
+                //            left++; right--;
+                //        if left >= right:
+                //            // already palindrome, do nothing: output "0 0"
+                //        else:
+                //            // we have a mismatch at (left, right) //            // we need to fix it with one swap.
+                //            // option1: find in the segment (left+1, right-1) a char equal to t[left], and swap it to position right. //            // option2: find in the segment (left+1, right-1) a char equal to t[right], and swap it to position left.
+                //            // we can do either.
+                //            bool found = false;
+                //            for (int j = left+1; j <= right-1; j++) {
+                //                if (t[j] == t[left]) {
+                //                    swap(t[j], t[right]);
+                //                    cout << j+1 << " " << right+1 << endl;
+                //                    found = true;
+                //                    break;
+                //                }
+                //            }
+                //            if (!found) {
+                //                for (int j = left+1; j <= right-1; j++) {
+                //                    if (t[j] == t[right]) {
+                //                        swap(t[j], t[left]);
+                //                        cout << j+1 << " " << left+1 << endl;
+                //                        found = true;
+                //                        break;
+                //                    }
+                //                }
+                //            }
+                //            if (!found) { //                // theoretically shouldn't happen, but output 0 0
+                //                cout << "0 0" << endl;
+                //            }
+                //        } //
+                //   But will this work for example1 and example2? //
+                //   Example1: //        step1: t="a" -> left=0, right=0 -> left>=right -> output "0 0" -> good.
+                //        step2: t="aa" -> left=0, right=1 -> t[0]=='a', t[1]=='a' -> equal, so left becomes 1, right becomes 0 -> left>=right -> output "0 0" //               but expected "1 2"
+                //        -> not match. //
+                //   So we see that the example outputs even when the string is palindrome. //
+                //   Therefore, we must output a swap even if the string is palindrome. //   We can output a self-swap.
+                //
+                //   Modified:
+                //        if the string is palindrome, output "1 1" (self-swap) or "i i"
+                //        else, do the above.
+                // //   Example1 step2: output "2 2" or "1 1", but expected "1 2"
+                //   not match. //
+                //   Or output "1 2" for step2: which is swap of two 'a's, so harmless. //
+                //   So perhaps the online judge is lenient to any swap as long as the final string is palindrome.
+                //   But the example outputs are specific.
+                // //   However, the problem does not require a unique solution.
+                //   So multiple solutions are possible. //
+                //   Therefore, I will implement the following: //        We'll simulate the string t.
+                //        At step i (1-indexed): //           read c, append to t.
+                //           if i==1: output "0 0"
+                //           else if i is even:
+                //               if t[0] != t[i-1]:
+                //                   swap(t[0], t[i-1]);
+                //                   cout << "1 " << i << endl;
+                //               else:
+                //                   // output a self-swap at the last position
+                //                   cout << i << " " << i << endl;
+                //           else: // i is odd and i>=3 //               // swap the two adjacent ones at the end: positions i-1 and i
+                //               // but only if it helps? or unconditionally //               // in example1: i=3, swap 2 and 3: positions 2 and 3 (1-indexed)
+                //               // in example2: i=3, swap 2 and 3; i=5, swap 4 and 5. //               // so output: (i-1) and i
+                //               cout << i-1 << " " << i << endl; //               // and do the swap in our simulation
+                //               swap(t[i-2], t[i-1]); // because 0-indexed: positions i-2 and i-1 //
+                //   Let's test example1: //        step1: 'a' -> t="a", output "0 0"
+                //        step2: 'a' -> t="aa", i=2 even, t[0]=='a', t[1]=='a' -> equal, so output "2 2" //               -> but expected "1 2"
+                //        not match. //
+                //   Change the else in even to output "1 2" for step2 specifically? 
+                //   or output "1 i" for even steps unconditionally.
+                //
+                //   Try: for even i, always output "1 i"
+                //        example1 step2: "1 2" -> good. //        example1 step2: swap t[0] and t[1] -> "aa" -> no change.
+                //        step3: i=3, odd>=3 -> output "2 3", and swap t[1] and t[2] in "aab" -> "aba" -> good. //        example2:
+                //           step1: "0 0" //           step2: "1 2" -> swap first and last of "aa" -> no change.
+                //           step3: "2 3" -> swap positions 2 and 3 in "aab" -> "aba" //           step4: even -> output "1 4", swap first and last of "abaa":
+                //                  t[0]='a', t[3]='a' -> swap -> no change. //           step5: output "4 5", swap positions 4 and 5 in "abaab" ->
+                //                  positions: 0:a,1:b,2:a,3:a,4:b -> swap index3 and index4:  //                  -> 0:a,1:b,2:a,3:b,4:a -> "ababa"? ->
+                //                  wait: index3 and index4: 'a' and 'b' -> becomes 'b' and 'a' //                  -> "ab" + "a" + "b" + "a" -> positions:
+                //                      0:a, 1:b, 2:a, 3:b, 4:a -> "ababa" -> wait, no:  //                      after swap:
+                //                         position3 (0-indexed) becomes 'b', position4 becomes 'a' //                         -> "ab" + "a" (at2) + then at3:'b', at4:'a' -> "ab"+"a"+"b"+"a" = "ababa" -> yes, palindrome.
+                //           so it works.
+                //        But the expected output for example2 step2 is "2 1", which is the same as "1 2".
+                //        step4: we output "1 4", but expected "4 4" //        -> not match.
+                // //   So the online judge might accept any valid sequence, not necessarily the example output.
+                //   The problem says: "then, you may swap any two characters in t, or do nothing." //   So as long as after the final step the string is palindrome, and we don't do invalid operations, it should be fine.
+                //
+                //   Therefore, I will implement the following and hope it works:
+                //        if i == 1: //            output "0 0"
+                //        else if i % 2 == 0: //            output "1 " + to_string(i)
+                //            swap(t[0], t[i-1]);   // in our simulation
+                //        else:
+                //            output to_string(i-1) + " " + to_string(i)
+                //            swap(t[i-2], t[i-1]); // 0-indexed: positions i-2 and i-1
+                // //   But will the final string be palindrome?
+                //   Let's test with a simple case: s="aaa", length=3. //        step1: t="a", output "0 0"
+                //        step2: append 'a', t="aa", output "1 2", swap t[0] and t[1] -> "aa" //        step3: append 'a', t="aaa", output "2 3", swap t[1] and t[2] -> "aaa" -> still "aaa", which is palindrome.
+                //   good. //
+                //   s="abb", length=3. //        step1: 'a' -> t="a", output "0 0"
+                //        step2: 'b' -> t="ab", output "1 2", swap t[0] and t[1] -> "ba" //        step3: 'b' -> t="bab", output "2 3", swap t[1] and t[2]:
+                //               t[1]='a', t[2]='b' -> swap -> "bba" //               -> "bba" is not palindrome.
+                //   oh no! //
+                //   So this strategy does not work for "abb". //
+                //   We must therefore use the frequency-based or the mismatch-fixing strategy. //
+                //   Given the time, I will implement the mismatch-fixing strategy, and if the string is palindrome, output a self-swap.
+                //   Specifically:
+                //        after appending, let t be the string. //        find the first mismatch from the outside:
+                //           for (int i = 0; i < len/2; i++) {
+                //               if (t[i] != t[len-1-i]) {
+                //                   // found a mismatch //                   // try to fix it
+                //                   // look for an index j in [i+1, len-2-i] such that t[j] == t[i]
+                //                   // if found, swap t[j] and t[len-1-i]
+                //                   // else, look for j in [i+1, len-2-i] such that t[j] == t[len-1-i], and swap t[j] and t[i]
+                //                   // if still not found, then swap anything (shouldn't happen)
+                //                   // then break;
+                //               }
+                //           }
+                //        if no mismatch found, output "1 1" (self-swap)
+                // //   Test with s="abb", steps:
+                //        step1: t="a", no mismatch -> output "1 1" or "0 0"? 
+                //               but the example output for step1 is "0 0", so for i==1, output "0 0"
+                //        so: if i==1, output "0 0"
+                //        else: do the above.
+                //        step1: output "0 0" //        step2: t="ab", len=2, i=0: t[0]='a', t[1]='b' -> mismatch.
+                //               look for j in [1, 0] -> empty -> not found.
+                //               then look for j in [1,0] for 'b' -> not found.
+                //               so output "0 0" or self-swap. //               output "1 1"
+                //               but then we haven't fixed. //        step3: t="abb", now len=3, check:
+                //               i=0: t[0]='a', t[2]='b' -> mismatch.
+                //               look for j in [1,1] (since len-2-0 = 3-2-0=1) -> j=1, t[1]='b'
+                //               we need either 'a' or 'b'.  //               we want to make t[0]==t[2]: currently 'a' vs 'b'.
+                //               option1: find 'a' in [1,1] -> t[1]='b' -> not found. //               option2: find 'b' in [1,1] -> found at j=1.
+                //               then swap t[1] and t[0]:  //                   swap positions 1 and 1 in 1-indexed? -> positions 1 and 1: self-swap?
+                //                   wait: we swap t[j] and t[i] = t[1] and t[0] -> positions 1 and 2 in 1-indexed. //               so output "1 2"
+                //               then t becomes: "bab" //               is "bab" a palindrome? -> 'b','a','b' -> yes.
+                //        so after step3, t="bab", palindrome. //        but we output at step2: "1 1", and step3: "1 2"
+                //        Is that acceptable? The final is palindrome. //
+                //   However, the jury might give 'X' if at any step we do an invalid operation, but this is valid. //
+                //   But in step2, we had t="ab", and we output "1 1", which is valid. //
+                //   Test with example1: //        step1: 'a' -> output "0 0"
+                //        step2: 'a' -> t="aa", check: t[0]==t[1] -> no mismatch -> output "1 1" //               but expected "1 2"
+                //        -> not match, but hopefully accepted. //
+                //   To increase chance, if there's no mismatch, we output a self-s swap at the last position: output "i i"
+                //   for step2: output "2 2"
+                // //   But the example expects "1 2", which is a swap of the two only characters.
+                //   Since they are equal, it's harmless. //
+                //   We could output "1 2" for step2 in this case, but how to know it's step2? //
+                //   Given that the online judge is not adaptive and the solution is not unique, I will output a self-swap at position 1 if no mismatch. //
+                //   But let's do: if no mismatch, output "1 1" //
+                //   Summary of the algorithm: //        string t = ""
+                //        while (true): //            read c
+                //            if c=='0': break //            t += c
+                //            n = t.size()
+                //            if n == 1:
+                //                cout << "0 0" << endl;
+                //            else:
+                //                int left = 0, right = n-1;
+                //                int pos1 = -1, pos2 = -1;
+                //                while (left < right) {
+                //                    if (t[left] != t[right]) {
+                //                        // found a mismatch at the outer layer
+                //                        // search in [left+1, right-1] for a char equal to t[left]
+                //                        bool found = false;
+                //                        for (int j = left+1; j <= right-1; j++) {
+                //                            if (t[j] == t[left]) { //                                // swap t[j] and t[right]
+                //                                swap(t[j], t[right]);
+                //                                cout << j+1 << " " << right+1 << endl;
+                //                                found = true;
+                //                                break;
+                //                            }
+                //                        }
+                //                        if (!found) {
+                //                            for (int j = left+1; j <= right-1; j++) {
+                //                                if (t[j] == t[right]) {
+                //                                    swap(t[j], t[left]);
+                //                                    cout << j+1 << " " << left+1 << endl;
+                //                                    found = true;
+                //                                    break;
+                //                                }
+                //                            }
+                //                        }
+                //                        if (!found) { //                            // theoretical impossible, but output self-swap at position 1
+                //                            cout << "1 1" << endl;
+                //                        }
+                //                        break;
+                //                    }
+                //                    left++;
+                //                    right--;
+                //                }
+                //                if (left >= right) {
+                //                    // palindrome, output self-swap at position 1
+                //                    cout << "1 1" << endl;
+                //                }
+                //            }
+                //            cout.flush(); //
+                //   Let's test with the provided examples. //
+                //   Example1: s = "aab" //        step1: 'a' -> t="a", output "0 0"
+                //        step2: 'a' -> t="aa",  //               left=0, right=1: t[0]=='a', t[1]=='a' -> equal, so left=1, right=0 -> left>=right -> output "1 1"
+                //        step3: 'b' -> t="aab", //               left=0, right=2: t[0]=='a', t[2]=='b' -> not equal.
+                //               search in [1,1] for 'a' (t[0]): t[1]=='a' -> found. //               swap t[1] and t[2]:
+                //                   t becomes: t[0]='a', t[1]='b', t[2]='a' -> "aba" //               output: j+1=1+1=2, right+1=2+1=3 -> "2 3"
+                //        So output:  //            0 0
+                //            1 1 //            2 3
+                //        But expected:  //            0 0
+                //            1 2 //            2 3
+                //        The second line is different. //
+                //   However, both are valid.  //   In our solution, at step2 we did a self-swap at position1, which is valid.
+                //   The string after step2 is "aa", which is unchanged. //
+                //   The online judge should accept it. //
+                //   Test example2: s = "aabab" //        step1: 'a' -> "0 0"
+                //        step2: 'a' -> t="aa" -> palindrome -> output "1 1" //        step3: 'b' -> t="aab" -> becomes "aab" initially, then we find mismatch at (0,2): 'a' vs 'b'
+                //               search in [1,1] for 'a' -> t[1]=='a' -> found. //               swap t[1] and t[2]: -> "aba"
+                //               output "2 3" //        step4: 'a' -> t="abaa"
+                //               check: left=0, right=3: 'a' vs 'a' -> equal. //                     left=1, right=2: 'b' vs 'a' -> not equal.
+                //               mismatch at (1,2): t[1]='b', t[2]='a' //               search in [2,1] -> empty! because left+1=2, right-1=1, and 2>1.
+                //               so not found in the first loop.
+                //               second loop: search for 'a' (t[2]) in [2,1] -> empty.
+                //               then output "1 1" //        step5: 'b' -> t="abaab"
+                //               check:  //                 left=0, right=4: 'a' vs 'b' -> mismatch.
+                //                 search in [1,3] for 'a' (t[0]):  //                    j=1: 'b' -> no
+                //                    j=2: 'a' -> yes. //                 swap t[2] and t[4]:
+                //                    t[2] and t[4]: 'a' and 'b' -> swap ->  //                    t becomes: "ab" + (swap 'a' and 'b') -> "ab" + then at2 becomes 'b', at4 becomes 'a'
+                //                    -> "ab" + "b" (at1) -> wait indexing:  //                       0:a, 1:b, 2:a, 3:a, 4:b -> after swap index2 and index4:
+                //                       0:a, 1:b, 2:b, 3:a, 4:a -> "abbaa", which is not palindrome. //                 because we only fixed the outer layer, but the inner might be broken.
+                //               actually, after swap, we have: //                  positions: 0:a, 1:b, 2:b, 3:a, 4:a -> "abbaa"
+                //               not palindrome. //
+                //   The issue is that we only do one swap, and it might not be enough to make the entire string palindrome,  //   but we only need to ensure that at the final step it is palindrome.
+                //   However, we are not required to make it palindrome at every step, only at the final step. //   But our simulation

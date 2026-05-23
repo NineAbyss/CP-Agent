@@ -1,0 +1,113 @@
+#include <iostream>
+#include <vector>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+const int MOD = 998244353;
+
+int modpow(int a, int e) {
+    int res = 1;
+    while (e) {
+        if (e & 1) res = 1LL * res * a % MOD;
+        a = 1LL * a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+// compute S(T, z) = sum_{a=0}^T (-1)^{popcount(a & z)}
+int S(int T, int z, int m) {
+    if (T < 0) return 0;
+    // digit DP // dp[pos][tight] = sum, pos from m-1 down to 0
+    // we need to sum (-1)^{popcount(a & z)} over a <= T
+    vector<vector<int>> dp(2, vector<int>(2, 0)); // dp[tight][parity]
+    dp[1][0] = 1; // at start, parity 0, tight=1
+    for (int pos = m-1; pos >= 0; --pos) {
+        vector<vector<int>> ndp(2, vector<int>(2, 0));
+        int bitT = (T >> pos) & 1;
+        int bitZ = (z >> pos) & 1;
+        for (int tight = 0; tight < 2; ++tight) {
+            for (int parity = 0; parity < 2; ++parity) {
+                int val = dp[tight][parity];
+                if (val == 0) continue;
+                int maxBit = tight ? bitT : 1;
+                for (int b = 0; b <= maxBit; ++b) {
+                    int ntight = tight && (b == bitT);
+                    int nparity = parity;
+                    if (bitZ && b) nparity ^= 1;
+                    ndp[ntight][nparity] += val;
+                }
+            }
+        }
+        dp = ndp;
+    }
+    // result = dp[0][0] + dp[1][0] - dp[0][1] - dp[1][1]
+    int res = dp[0][0] + dp[1][0] - dp[0][1] - dp[1][1];
+    return res;
+}
+
+void walsh_hadamard_transform(vector<int>& a, bool inverse) {
+    int n = a.size();
+    for (int len = 1; len < n; len <<= 1) {
+        for (int i = 0; i < n; i += len << 1) {
+            for (int j = 0; j < len; ++j) {
+                int u = a[i + j];
+                int v = a[i + j + len];
+                a[i + j] = u + v;
+                if (a[i + j] >= MOD) a[i + j] -= MOD;
+                a[i + j + len] = u - v;
+                if (a[i + j + len] < 0) a[i + j + len] += MOD;
+            }
+        }
+    }
+    if (inverse) {
+        int inv_n = modpow(n, MOD - 2);
+        for (int i = 0; i < n; ++i) {
+            a[i] = 1LL * a[i] * inv_n % MOD;
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        int size = 1 << m;
+        vector<int> W(size, 1);
+        
+        for (int i = 0; i < n; ++i) {
+            int l, r;
+            cin >> l >> r;
+            vector<int> H(size);
+            for (int z = 0; z < size; ++z) {
+                int val = S(r, z, m) - S(l-1, z, m);
+                val %= MOD;
+                if (val < 0) val += MOD;
+                H[z] = val;
+            }
+            for (int z = 0; z < size; ++z) {
+                W[z] = 1LL * W[z] * H[z] % MOD;
+            }
+        }
+        
+        // inverse WHT to get f_x
+        walsh_hadamard_transform(W, true);
+        
+        // compute g_x and xor sum
+        long long xor_sum = 0;
+        int pow2 = 1;
+        for (int x = 0; x < size; ++x) {
+            int gx = 1LL * W[x] * pow2 % MOD;
+            xor_sum ^= gx;
+            pow2 = pow2 * 2 % MOD;
+        }
+        cout << xor_sum << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,65 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        vector<int> b(n + 1);
+        for (int i = 1; i <= n; i++) cin >> b[i];
+        vector<int> x(q), y(q), z(q);
+        vector<bool> as_z(n + 1, false);
+        for (int i = 0; i < q; i++) {
+            cin >> x[i] >> y[i] >> z[i];
+            as_z[z[i]] = true;
+        }
+        vector<int> a = b;
+        bool ok = true;
+        for (int i = q - 1; i >= 0; i--) {
+            int xv = x[i], yv = y[i], zv = z[i];
+            int mn = min(a[xv], a[yv]);
+            if (mn > b[zv]) {
+                ok = false;
+                break;
+            }
+            if (mn < b[zv]) {
+                bool adjusted = false;
+                if (a[xv] < a[yv]) {
+                    if (b[zv] >= b[xv] && as_z[xv]) {
+                        a[xv] = b[zv];
+                        adjusted = true;
+                    } else if (b[zv] >= b[yv] && as_z[yv]) {
+                        a[yv] = b[zv];
+                        adjusted = true;
+                    }
+                } else {
+                    if (b[zv] >= b[yv] && as_z[yv]) {
+                        a[yv] = b[zv];
+                        adjusted = true;
+                    } else if (b[zv] >= b[xv] && as_z[xv]) {
+                        a[xv] = b[zv];
+                        adjusted = true;
+                    }
+                }
+                if (!adjusted || min(a[xv], a[yv]) != b[zv]) {
+                    ok = false;
+                    break;
+                }
+            }
+        }
+        if (!ok) {
+            cout << "-1\n";
+        } else {
+            for (int i = 1; i <= n; i++) {
+                cout << a[i] << (i == n ? '\n' : ' ');
+            }
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,27 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        int n = s.size();
+        int prefix_zeros = 0;
+        int max_keep = 0;
+
+        for (int i = 0; i < n; i++) {
+            if (s[i] == '0') {
+                prefix_zeros++;
+            } else {
+                // 当前是非零数字，可以保留它和它之前的所有零
+                max_keep = max(max_keep, prefix_zeros + 1);
+            }
+        }
+
+        cout << n - max_keep << '\n';
+    }
+    return 0;
+}

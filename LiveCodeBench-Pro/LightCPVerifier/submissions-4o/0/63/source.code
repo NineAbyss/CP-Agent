@@ -1,0 +1,61 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+
+using namespace std;
+
+// Function to efficiently determine if a number is prime
+bool is_prime(int number) {
+    if (number <= 1) return false;
+    if (number <= 3) return true;
+    if (number % 2 == 0 || number % 3 == 0) return false;
+    for (int i = 5; i * i <= number; i += 6) {
+        if (number % i == 0 || number % (i + 2) == 0)
+            return false;
+    }
+    return true;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        
+        for (int i = 0; i < n; ++i)
+            cin >> a[i];
+        
+        // To store all the unique primes encountered (up to sqrt(max element))
+        vector<int> primes;
+        
+        // Collect primes from the array
+        for (int i = 0; i < n; ++i) {
+            if (is_prime(a[i])) {
+                primes.push_back(a[i]);
+            }
+        }
+        
+        // Remove duplicates from primes
+        sort(primes.begin(), primes.end());
+        primes.erase(unique(primes.begin(), primes.end()), primes.end());
+        
+        int prime_count = primes.size();
+        if (prime_count == 0) {
+            // No primes found, need to check for minimum removal to get GCD 1
+            cout << n - 1 << endl;
+        } else {
+            // If we have primes, we can use them to form an ideal array
+            if (prime_count > 1) {
+                cout << n - prime_count << endl;
+            } else {
+                cout << n - 1 << endl; // GCD(2, prime) will be 1 and we need at least two numbers
+            }
+        }
+    }
+    
+    return 0;
+}

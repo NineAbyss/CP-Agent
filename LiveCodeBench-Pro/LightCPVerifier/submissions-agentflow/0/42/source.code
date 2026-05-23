@@ -1,0 +1,57 @@
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+// Function to calculate the number of matching positions
+int calculate_f(const string& a, const string& b) {
+    int count = 0;
+    for (size_t i = 0; i < a.size(); ++i) {
+        if (a[i] == b[i]) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+// Solve function to process each test case
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        string l, r;
+        cin >> l >> r;
+
+        int n = l.size();
+        int best_result = 2 * n;
+
+        // Iterate and discover divergence for optimization
+        for (int i = 0; i < n; ++i) {
+            if (l[i] != r[i]) {
+                for (char d = l[i]; d <= r[i]; ++d) {
+                    string x = l;
+                    x[i] = d;
+                    for (int j = i + 1; j < n; ++j) {
+                        x[j] = r[j];
+                    }
+                    int result_f = calculate_f(l, x) + calculate_f(x, r);
+                    best_result = min(best_result, result_f);
+                }
+                break;
+            }
+        }
+
+        // If l and r are identical
+        if (best_result == 2 * n) {
+            best_result = 2 * n;
+        }
+
+        cout << best_result << endl;
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    solve();
+}

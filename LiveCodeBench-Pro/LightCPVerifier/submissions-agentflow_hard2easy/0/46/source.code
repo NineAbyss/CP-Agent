@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int gcd(int a, int b) {
+    return b == 0 ? a : gcd(b, a % b);
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    // Check if all elements are equal
+    bool all_equal = true;
+    for (int i = 1; i < n; i++) {
+        if (a[i] != a[0]) {
+            all_equal = false;
+            break;
+        }
+    }
+    if (all_equal) {
+        cout << "No\n";
+        return;
+    }
+    
+    // Try single-element split
+    for (int i = 0; i < n; i++) {
+        int g_others = 0;
+        for (int j = 0; j < n; j++) {
+            if (j != i) {
+                g_others = gcd(g_others, a[j]);
+            }
+        }
+        if (a[i] != g_others) {
+            cout << "Yes\n";
+            for (int j = 0; j < n; j++) {
+                if (j == i) cout << "1";
+                else cout << "2";
+                if (j != n-1) cout << " ";
+            }
+            cout << "\n";
+            return;
+        }
+    }
+    
+    // According to theory, we should never reach here
+    // But if we do, output No
+    cout << "No\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

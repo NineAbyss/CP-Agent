@@ -1,0 +1,76 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, k;
+    cin >> n >> k;
+    string s;
+    cin >> s;
+    
+    const int INF = n;
+    vector<int> nxt((n + 1) * k, INF);
+    vector<int> last(k, INF);
+    for (int i = n - 1; i >= 0; --i) {
+        last[s[i] - 'a'] = i;
+        for (int c = 0; c < k; ++c) {
+            nxt[i * k + c] = last[c];
+        }
+    }
+    
+    vector<int> dist(n + 1);
+    dist[n] = 1;
+    for (int i = n - 1; i >= 0; --i) {
+        int min_next = INF;
+        bool has_missing = false;
+        for (int c = 0; c < k; ++c) {
+            int idx = i * k + c;
+            if (nxt[idx] == INF) {
+                has_missing = true;
+                break;
+            }
+        }
+        if (has_missing) {
+            dist[i] = 1;
+        } else {
+            for (int c = 0; c < k; ++c) {
+                int idx = i * k + c;
+                int npos = nxt[idx] + 1;
+                if (dist[npos] < min_next) {
+                    min_next = dist[npos];
+                }
+            }
+            dist[i] = 1 + min_next;
+        }
+    }
+    
+    int q;
+    cin >> q;
+    while (q--) {
+        string t;
+        cin >> t;
+        int pos = 0;
+        bool is_subseq = true;
+        for (char ch : t) {
+            int c = ch - 'a';
+            int idx = pos * k + c;
+            if (nxt[idx] == INF) {
+                is_subseq = false;
+                break;
+            }
+            pos = nxt[idx] + 1;
+        }
+        if (!is_subseq) {
+            cout << 0 << '\n';
+        } else {
+            cout << dist[pos] << '\n';
+        }
+    }
+    
+    return 0;
+}

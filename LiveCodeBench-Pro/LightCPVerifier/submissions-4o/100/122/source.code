@@ -1,0 +1,40 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+const int MOD = 998244353;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        string s;
+        cin >> s;
+
+        // dp[i][j]: Number of ways to perform j operations ending with the prefix of length i
+        vector<vector<int>> dp(n + 1, vector<int>(k + 1, 0));
+        
+        // Base case: 1 way to perform 0 operations (do nothing)
+        dp[0][0] = 1;
+
+        for (int i = 1; i <= n; ++i) {
+            if (s[i - 1] == '0') {
+                for (int j = k; j > 0; --j) {
+                    dp[i][j] = (dp[i][j] + dp[i-1][j-1]) % MOD;
+                }
+            }
+            for (int j = 0; j <= k; ++j) {
+                dp[i][j] = (dp[i][j] + dp[i-1][j]) % MOD;
+            }
+        }
+        
+        // The answer is the number of ways to perform exactly k operations on the whole string
+        cout << dp[n][k] << "\n";
+    }
+
+    return 0;
+}

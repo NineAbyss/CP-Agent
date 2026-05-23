@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    // check adjacent
+    for (int i = 0; i < n-1; i++) {
+        if (abs(a[i] - a[i+1]) <= 1) {
+            return 0;
+        }
+    }
+    // check intervals of length 2 and 1
+    for (int i = 0; i < n-2; i++) {
+        // interval [i,i+1] and [i+2]
+        int mn1 = min(a[i], a[i+1]);
+        int mx1 = max(a[i], a[i+1]);
+        int mn2 = a[i+2], mx2 = a[i+2];
+        if (max(mn1 - mx2, mn2 - mx1) <= 1) {
+            return 1;
+        }
+        // interval [i] and [i+1,i+2]
+        mn1 = a[i]; mx1 = a[i];
+        mn2 = min(a[i+1], a[i+2]);
+        mx2 = max(a[i+1], a[i+2]);
+        if (max(mn1 - mx2, mn2 - mx1) <= 1) {
+            return 1;
+        }
+    }
+    return -1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << solve() << '\n';
+    }
+    return 0;
+}

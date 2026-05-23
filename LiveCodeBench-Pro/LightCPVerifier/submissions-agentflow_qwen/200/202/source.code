@@ -1,0 +1,108 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct TrieNode {
+    TrieNode* child[2];
+    int max_index;
+    TrieNode() {
+        child[0] = child[1] = nullptr;
+        max_index = -1;
+    }
+};
+
+void insert(TrieNode* root, int val, int idx, int bit_pos = 30) {
+    TrieNode* cur = root;
+    for (int i = bit_pos; i >= 0; i--) {
+        int b = (val >> i) & 1;
+        if (cur->child[b] == nullptr) {
+            cur->child[b] = new TrieNode();
+        }
+        cur = cur->child[b];
+        cur->max_index = max(cur->max_index, idx);
+    }
+}
+
+int query(TrieNode* root, int x, int k, int bit_pos = 30) {
+    if (root == nullptr) return -1;
+    TrieNode* cur = root;
+    int result = -1;
+    for (int i = bit_pos; i >= 0; i--) {
+        if (cur == nullptr) break;
+        int xb = (x >> i) & 1;
+        int kb = (k >> i) & 1;
+        int desired_vb = xb ^ kb;
+        int other_vb = 1 ^ desired_vb;
+
+        if (kb == 0) {
+            // other_vb gives xb ^ other_vb = 1 > 0, so any number in that subtree works
+            if (cur->child[other_vb] != nullptr) {
+                result = max(result, cur->child[other_vb]->max_index);
+            }
+            // for desired_vb, we need to continue
+            if (cur->child[desired_vb] != nullptr) {
+                cur = cur->child[desired_vb];
+            } else {
+                cur = nullptr;
+            }
+        } else { // kb == 1 // only desired_vb gives the required bit, and it's exact, so we must continue
+            if (cur->child[desired_vb] != nullptr) {
+                cur = cur->child[desired_vb];
+            } else {
+                cur = nullptr;
+            }
+        }
+    }
+    if (cur != nullptr) {
+        result = max(result, cur->max_index);
+    }
+    return result;
+}
+
+void deleteTrie(TrieNode* node) {
+    if (node) {
+        deleteTrie(node->child[0]);
+        deleteTrie(node->child[1]);
+        delete node;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        if (k == 0) {
+            cout << 1 << '\n';
+            continue;
+        }
+
+        TrieNode* root = new TrieNode();
+        int ans = INT_MAX;
+
+        for (int i = 0; i < n; i++) {
+            int best_j = query(root, a[i], k);
+            if (best_j != -1) {
+                ans = min(ans, i - best_j + 1);
+            }
+            insert(root, a[i], i);
+        }
+
+        if (ans == INT_MAX) {
+            cout << -1 << '\n';
+        } else {
+            cout << ans << '\n';
+        }
+
+        deleteTrie(root);
+    }
+    return 0;
+}

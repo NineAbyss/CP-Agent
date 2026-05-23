@@ -1,0 +1,100 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+using namespace std;
+
+const double eps = 1e-9;
+const int MAX_ITER = 200;
+
+int solve(double n, double x, double y, long long vx_ll, long long vy_ll) {
+    // Use integers for velocity, doubles for position
+    double vx = vx_ll, vy = vy_ll;
+    int count = 0;
+
+    while (count < MAX_ITER) {
+        // Check if already at a vertex
+        if ((abs(x) < eps && abs(y) < eps) ||
+            (abs(x) < eps && abs(y - n) < eps) ||
+            (abs(x - n) < eps && abs(y) < eps)) {
+            return count;
+        }
+
+        double t1 = 1e18, t2 = 1e18, t3 = 1e18; // times to hit each side
+
+        // Time to hit x=0 (if moving left)
+        if (vx < -eps) {
+            t1 = -x / vx;
+        }
+        // Time to hit y=0 (if moving down)
+        if (vy < -eps) {
+            t2 = -y / vy;
+        }
+        // Time to hit x+y=n (if moving towards the line)
+        double sum_v = vx + vy;
+        double dist_to_line = n - x - y;
+        if (sum_v > eps && dist_to_line > eps) {
+            t3 = dist_to_line / sum_v;
+        } else if (sum_v < -eps && dist_to_line < -eps) {
+            // Moving away from the line
+            t3 = 1e18;
+        } else {
+            t3 = 1e18;
+        }
+
+        double t = min({t1, t2, t3});
+        if (t >= 1e18) {
+            // No valid direction, cannot proceed
+            return -1;
+        }
+
+        double newX = x + vx * t;
+        double newY = y + vy * t;
+
+        // Check if new point is a vertex
+        if ((abs(newX) < eps && abs(newY) < eps) ||
+            (abs(newX) < eps && abs(newY - n) < eps) ||
+            (abs(newX - n) < eps && abs(newY) < eps)) {
+            return count;
+        }
+
+        // Reflect based on which wall was hit
+        if (abs(t - t1) < eps && vx < -eps) {
+            // Hit x=0
+            vx = -vx;
+        } else if (abs(t - t2) < eps && vy < -eps) {
+            // Hit y=0
+            vy = -vy;
+        } else if (abs(t - t3) < eps && abs(dist_to_line) > eps) {
+            // Hit x+y=n // Reflection: (vx, vy) -> (-vy, -vx)
+            double temp = vx;
+            vx = -vy;
+            vy = -temp;
+        } else {
+            // Should not happen
+            return -1;
+        }
+
+        x = newX;
+        y = newY;
+        count++;
+    }
+
+    return -1; // Likely in a loop
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n, x, y, vx, vy;
+        cin >> n >> x >> y >> vx >> vy;
+        int ans = solve(n, x, y, vx, vy);
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

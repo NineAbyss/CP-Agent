@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+const int MAX_N = 100000;
+
+long long pow2_mod[MAX_N + 1];
+
+void precompute() {
+    pow2_mod[0] = 1;
+    for (int i = 1; i <= MAX_N; i++) {
+        pow2_mod[i] = (pow2_mod[i-1] * 2) % MOD;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    precompute();
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> p(n), q(n);
+        for (int i = 0; i < n; i++) {
+            cin >> p[i];
+        }
+        for (int i = 0; i < n; i++) {
+            cin >> q[i];
+        }
+
+        vector<long long> r(n);
+        for (int i = 0; i < n; i++) {
+            pair<int, int> best_key = {-1, -1};
+            int best_j = -1;
+            for (int j = 0; j <= i; j++) {
+                int a = p[j];
+                int b = q[i - j];
+                int mx = max(a, b);
+                int mn = min(a, b);
+                pair<int, int> key = {mx, mn};
+                if (key > best_key) {
+                    best_key = key;
+                    best_j = j;
+                }
+            }
+            r[i] = (pow2_mod[p[best_j]] + pow2_mod[q[i - best_j]]) % MOD;
+        }
+
+        for (int i = 0; i < n; i++) {
+            cout << r[i];
+            if (i < n-1) cout << ' ';
+        }
+        cout << '\n';
+    }
+
+    return 0;
+}

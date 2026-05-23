@@ -1,0 +1,42 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        if (k < n) {
+            cout << "NO\n";
+            continue;
+        }
+
+        long long total = 0;
+        for (long long x : a) {
+            long long cnt = 0;
+            while (x % 2 == 0) {
+                cnt++;
+                x /= 2;
+            }
+            total += (1LL << cnt);
+        }
+
+        if (k <= total) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

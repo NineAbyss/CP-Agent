@@ -1,0 +1,35 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+long long count_portions(long long start, long long req, long long dec) {
+    if (start < req) return 0;
+    return (start - req) / dec + 1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        long long k, a, b, x, y;
+        cin >> k >> a >> b >> x >> y;
+        
+        // 先第一种后第二种
+        long long n1 = count_portions(k, a, x);
+        long long T1 = k - n1 * x;
+        long long n2 = count_portions(T1, b, y);
+        long long ans1 = n1 + n2;
+        
+        // 先第二种后第一种
+        long long m2 = count_portions(k, b, y);
+        long long T2 = k - m2 * y;
+        long long m1 = count_portions(T2, a, x);
+        long long ans2 = m1 + m2;
+        
+        cout << max(ans1, ans2) << '\n';
+    }
+    return 0;
+}

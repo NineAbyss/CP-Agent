@@ -1,0 +1,94 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+bool check_left_right(const vector<int>& a, int k) {
+    int n = a.size();
+    vector<int> pre(n+1, 0);
+    for (int i=0; i<n; ++i) pre[i+1] = pre[i] + (a[i] <= k);
+    // L[i]: prefix [0..i-1] satisfies, i from 1 to n-2 (left subarray non-empty, middle non-empty)
+    vector<bool> L(n+1, false);
+    for (int i=1; i<=n-2; ++i) {
+        if (pre[i] >= (i+1)/2) L[i] = true;
+    }
+    // R[i]: suffix [i..n-1] satisfies, i from 1 to n-1 (right subarray non-empty)
+    vector<bool> R(n+1, false);
+    for (int i=1; i<=n-1; ++i) {
+        int len = n - i;
+        if (pre[n] - pre[i] >= (len+1)/2) R[i] = true;
+    }
+    // suffix_ok[i] = exists j >= i such that R[j] true
+    vector<bool> suffix_ok(n+2, false);
+    for (int i=n; i>=0; --i) {
+        suffix_ok[i] = (i<=n && R[i]) || suffix_ok[i+1];
+    }
+    for (int i=1; i<=n-2; ++i) {
+        if (L[i] && suffix_ok[i+1]) return true;
+    }
+    return false;
+}
+
+bool check_left_mid(const vector<int>& a, int k) {
+    int n = a.size();
+    vector<int> pre(n+1, 0);
+    for (int i=0; i<n; ++i) pre[i+1] = pre[i] + (a[i] <= k);
+    vector<int> g(n+1);
+    for (int i=0; i<=n; ++i) g[i] = 2*pre[i] - i;
+    const int INF = -1e9;
+    // suffix max for positions from i to n-1 (r must be <= n-1)
+    vector<int> suffix_max_even(n+1, INF);
+    vector<int> suffix_max_odd(n+1, INF);
+    for (int i=n-1; i>=0; --i) {
+        if (i%2 == 0) {
+            suffix_max_even[i] = max(g[i], suffix_max_even[i+1]);
+            suffix_max_odd[i] = suffix_max_odd[i+1];
+        } else {
+            suffix_max_odd[i] = max(g[i], suffix_max_odd[i+1]);
+            suffix_max_even[i] = suffix_max_even[i+1];
+        }
+    }
+    for (int l=1; l<=n-2; ++l) {
+        if (pre[l] < (l+1)/2) continue;
+        int need_same = g[l];
+        int need_diff = g[l] + 1;
+        bool ok = false;
+        if (l%2 == 0) {
+            if (suffix_max_even[l+1] >= need_same) ok = true;
+            if (suffix_max_odd[l+1] >= need_diff) ok = true;
+        } else {
+            if (suffix_max_odd[l+1] >= need_same) ok = true;
+            if (suffix_max_even[l+1] >= need_diff) ok = true;
+        }
+        if (ok) return true;
+    }
+    return false;
+}
+
+bool check_mid_right(const vector<int>& a, int k) {
+    vector<int> rev = a;
+    reverse(rev.begin(), rev.end());
+    return check_left_mid(rev, k);
+}
+
+bool solve(const vector<int>& a, int k) {
+    if (check_left_right(a, k)) return true;
+    if (check_left_mid(a, k)) return true;
+    if (check_mid_right(a, k)) return true;
+    return false;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i=0; i<n; ++i) cin >> a[i];
+        cout << (solve(a, k) ? "YES" : "NO") << '\n';
+    }
+    return 0;
+}

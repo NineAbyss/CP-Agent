@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+using namespace std;
+
+int calculate_max_beauty(int n, const vector<int>& a) {
+    unordered_map<int, pair<int, int>> position_map; // Stores first and last positions
+    for (int i = 0; i < n; ++i) {
+        int current = a[i];
+        if (position_map.count(current)) {
+            position_map[current].second = i;
+        } else {
+            position_map[current] = {i, i};
+        }
+    }
+
+    int beauty = 0;
+    for (const auto& [key, positions] : position_map) {
+        beauty += positions.second - positions.first;
+    }
+    return beauty;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        cout << calculate_max_beauty(n, a) << '\n';
+    }
+
+    return 0;
+}

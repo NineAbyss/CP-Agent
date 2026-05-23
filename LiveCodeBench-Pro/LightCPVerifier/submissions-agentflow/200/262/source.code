@@ -1,0 +1,187 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+const int LOG = 17;
+
+class Tree {
+public:
+    int n;
+    vector<vector<int>> adj;
+    vector<int> depth;
+    vector<vector<int>> up;
+    
+    Tree(int n) : n(n), adj(n+1), depth(n+1) {
+        up.assign(n+1, vector<int>(LOG+1, 0));
+    }
+    
+    void add_edge(int u, int v) {
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    void build(int root) {
+        stack<pair<int, int>> st;
+        st.push({root, 0});
+        
+        while (!st.empty()) {
+            auto [u, parent] = st.top();
+            st.pop();
+            
+            up[u][0] = parent;
+            for (int i = 1; i <= LOG; i++) {
+                up[u][i] = up[up[u][i-1]][i-1];
+            }
+            
+            for (int v : adj[u]) {
+                if (v != parent) {
+                    depth[v] = depth[u] + 1;
+                    st.push({v, u});
+                }
+            }
+        }
+    }
+    
+    int lca(int u, int v) {
+        if (depth[u] < depth[v]) swap(u, v);
+        
+        int diff = depth[u] - depth[v];
+        for (int i = LOG; i >= 0; i--) {
+            if (diff & (1 << i)) {
+                u = up[u][i];
+            }
+        }
+        
+        if (u == v) return u;
+        
+        for (int i = LOG; i >= 0; i--) {
+            if (up[u][i] != up[v][i]) {
+                u = up[u][i];
+                v = up[v][i];
+            }
+        }
+        
+        return up[u][0];
+    }
+    
+    int dist(int u, int v) {
+        int w = lca(u, v);
+        return depth[u] + depth[v] - 2 * depth[w];
+    }
+};
+
+void solve() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m, x, y;
+        cin >> n >> m >> x >> y;
+        
+        Tree tree(n);
+        
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            tree.add_edge(u, v);
+        }
+        
+        tree.build(1);
+        
+        vector<pair<int, int>> enemies(m);
+        for (int i = 0; i < m; i++) {
+            cin >> enemies[i].first >> enemies[i].second;
+        }
+        
+        // 计算最大敌人路径长度
+        int max_len = 0;
+        for (auto [a, b] : enemies) {
+            max_len = max(max_len, tree.dist(a, b));
+        }
+        
+        // 预处理禁止时间
+        vector<bitset<200005>> bad(n+1); // 假设最大时间200000
+        for (auto [a, b] : enemies) {
+            int len = tree.dist(a, b);
+            int l = tree.lca(a, b);
+            
+            // 从a到lca
+            int cur = a;
+            int time = 1;
+            while (true) {
+                if (time <= 200000) bad[cur].set(time);
+                if (cur == l) break;
+                cur = tree.up[cur][0];
+                time++;
+            }
+            
+            // 从b到lca（不包括lca）
+            cur = b;
+            time = len;
+            while (cur != l) {
+                if (time <= 200000) bad[cur].set(time);
+                cur = tree.up[cur][0];
+                time--;
+            }
+        }
+        
+        // 计算从x到y的距离
+        int dist_xy = tree.dist(x, y);
+        
+        // 时间上界
+        int T = min(dist_xy + max_len + n + 10, 200000);
+        
+        // BFS搜索
+        vector<bitset<200005>> visited(n+1);
+        queue<pair<int, int>> q;
+        
+        // 检查起始状态
+        if (bad[x].test(1)) {
+            cout << "-1\n";
+            continue;
+        }
+        
+        q.push({x, 1});
+        visited[x].set(1);
+        
+        int ans = -1;
+        
+        while (!q.empty()) {
+            auto [v, time] = q.front();
+            q.pop();
+            
+            if (v == y) {
+                ans = time;
+                break;
+            }
+            
+            if (time >= T) continue;
+            
+            int next_time = time + 1;
+            
+            // 停留
+            if (!bad[v].test(next_time) && !visited[v].test(next_time)) {
+                visited[v].set(next_time);
+                q.push({v, next_time});
+            }
+            
+            // 移动
+            for (int u : tree.adj[v]) {
+                if (!bad[u].test(next_time) && !visited[u].test(next_time)) {
+                    visited[u].set(next_time);
+                    q.push({u, next_time});
+                }
+            }
+        }
+        
+        cout << ans << "\n";
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

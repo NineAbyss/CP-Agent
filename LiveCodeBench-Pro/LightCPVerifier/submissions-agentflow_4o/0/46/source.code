@@ -1,0 +1,65 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Function to check if two arrays are permutations of each other
+bool arePermutations(const vector<int>& a, const vector<int>& b, int m) {
+    vector<int> count_a(m + 1, 0);
+    vector<int> count_b(m + 1, 0);
+
+    for (int i = 0; i < a.size(); i++) {
+        count_a[a[i]]++;
+        count_b[b[i]]++;
+    }
+
+    for (int i = 1; i <= m; i++) {
+        if (count_a[i] != count_b[i]) return false;
+    }
+    return true;
+}
+
+// Function to determine if transformation from `a` to `b` is possible based on given operations
+bool canTransform(vector<int>& a, vector<int>& b, int n, int m) {
+    if (!arePermutations(a, b, m)) return false;
+
+    for (int rotations = 0; rotations < n; rotations++) {
+        vector<int> rotated_a(n);
+        for (int i = 0; i < n; i++) {
+            rotated_a[i] = a[(i + rotations) % n];
+        }
+
+        bool swapped = false;
+        for (int i = 0; i < n - 1; i++) {
+            if (rotated_a[i] != b[i] && abs(rotated_a[i] - rotated_a[i + 1]) >= 2) {
+                swap(rotated_a[i], rotated_a[i + 1]);
+                swapped = true;
+            }
+        }
+
+        if (!swapped) break;
+        if (rotated_a == b) return true;
+    }
+
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<int> a(n), b(n);
+
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+
+        cout << (canTransform(a, b, n, m) ? "YES" : "NO") << '\n';
+    }
+
+    return 0;
+}

@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const ll INF = 1e18;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    
+    vector<ll> b(n);
+    for (int i = 0; i < n; i++) {
+        cin >> b[i];
+    }
+    
+    // Adjacency list: for each node, store (next_node, required_batteries)
+    vector<vector<pair<int, ll>>> adj(n);
+    for (int i = 0; i < m; i++) {
+        int s, t;
+        ll w;
+        cin >> s >> t >> w;
+        s--; t--;
+        adj[s].push_back({t, w});
+    }
+    
+    // dp[i] = minimum number of batteries we can have when arriving at checkpoint i // We want to minimize the final battery count.
+    vector<ll> dp(n, INF);
+    dp[0] = 0; // Start at checkpoint 0 with 0 batteries (before collecting)
+    
+    // After collecting at checkpoint 0, we can have up to b[0] batteries // But we only need to consider states that are achievable and minimal
+    
+    // We'll use a priority queue or just iterate since nodes are in order // Because s_i < t_i, we can process nodes from left to right
+    for (int u = 0; u < n; u++) {
+        if (dp[u] == INF) continue;
+        
+        // Collect batteries at node u: we can choose how many to take // Let x be the number we take (0 <= x <= b[u])
+        // Then total batteries after collecting = dp[u] + x // We want to minimize final state, so we don't necessarily take all
+        ll current_after_collect = dp[u] + b[u]; // maximum we can have
+        
+        // Try to go through each outgoing edge
+        for (auto &[v, w] : adj[u]) {
+            // To traverse edge (u -> v), we need at least w batteries
+            if (current_after_collect < w) {
+                // Even taking all batteries is not enough
+                continue;
+            }
+            
+            // Minimum batteries we must have before traversing: w // So after traversal, we will have at least (dp[u] + x) batteries where x >= max(0, w - dp[u])
+            // But since we want to minimize the final result, we take the minimal valid amount
+            ll min_needed_to_leave = max(w, dp[u]); // We can't go below our current count, but need at least w
+            ll batteries_after_travel = current_after_collect; // We carry all charged batteries
+            
+            // Actually, we can optimize: we only need to carry exactly w batteries to pass, // but since we recharge everything at each node, and we want to minimize end result,
+            // best strategy: take just enough to pass edges, but also remember we may need more later // However, because we can always leave extra batteries behind, the optimal is:
+            // At node u, we should take enough so that total >= w, but as small as possible
+            // So the minimal batteries we can have when leaving u for v is max(dp[u], w)
+            // But wait: we already collected b[u], so we have dp[u] + [0..b[u]] // So minimal usable is max(dp[u], w) but we cannot reduce below dp[u]
+            // Correction: we are allowed to pick any number from 0 to b[u] // So minimal total batteries we can have when leaving u is max(dp[u], w) provided that max(dp[u], w) <= dp[u] + b[u]
+            ll min_leaving = max(dp[u], w);
+            if (min_leaving > dp[u] + b[u]) continue; // impossible
+            
+            // When we arrive at v, we start with 'min_leaving' batteries (we used them to travel, but they are still there — recharged) // But note: the problem says "it always carries all previously collected batteries", and recharges them
+            // So yes, we arrive with min_leaving batteries
+            dp[v] = min(dp[v], min_leaving);
+        }
+    }
+    
+    if (dp[n-1] == INF) {
+        cout << -1 << '\n';
+    } else {
+        // At node n-1, we can choose to take 0 additional batteries // So the final number is dp[n-1] (what we had when arriving) plus what we take now
+        // But we want to minimize, so we take 0
+        // Therefore, answer is dp[n-1]
+        cout << dp[n-1] << '\n';
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

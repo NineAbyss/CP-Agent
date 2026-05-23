@@ -1,0 +1,52 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        
+        // Check if already beautiful
+        bool already_beautiful = false;
+        for (int i = 0; i < n - 1; ++i) {
+            if (abs(a[i] - a[i + 1]) <= 1) {
+                already_beautiful = true;
+                break;
+            }
+        }
+        
+        if (already_beautiful) {
+            cout << 0 << endl;
+        } else {
+            // Check for possible transformation in one operation
+            bool can_transform = false;
+            for (int i = 0; i < n - 2; ++i) {
+                // Consider triplet a[i], a[i+1], a[i+2]
+                if ((abs(a[i] - a[i + 2]) <= 1) || (abs(a[i + 1] - a[i + 2]) <= 1) || 
+                    (a[i] <= a[i + 2] + 1 && a[i] + 1 >= a[i + 2])) {
+                    can_transform = true;
+                    break;
+                }
+            }
+            // Output the result of possibility to transform
+            if (can_transform) {
+                cout << 1 << endl;
+            } else {
+                cout << -1 << endl;
+            }
+        }
+    }
+
+    return 0;
+}

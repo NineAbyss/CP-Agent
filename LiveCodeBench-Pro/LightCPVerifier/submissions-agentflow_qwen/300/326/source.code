@@ -1,0 +1,78 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+long long f(long long x, long long y) {
+    if (x == y) return 0;
+    if (x < y) {
+        return x + (y % x);
+    } else {
+        return (x % y) + y;
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // For the first element, beauty is 0
+        cout << 0;
+        if (n == 1) {
+            cout << "\n";
+            continue;
+        }
+
+        long long current_max = a[0];
+        long long beauty = 0;
+
+        // We'll keep track of all previous elements
+        vector<long long> prev;
+        prev.push_back(a[0]);
+
+        for (int i = 1; i < n; i++) {
+            long long x = a[i];
+            long long max_f_from_new = 0;
+
+            if (x > current_max) {
+                // New maximum
+                // Check if there is any y in prev such that y > x/2
+                bool found = false;
+                for (long long y : prev) {
+                    if (y > x / 2) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    max_f_from_new = x;
+                } else {
+                    // Iterate through all previous to find max f(x,y)
+                    for (long long y : prev) {
+                        max_f_from_new = max(max_f_from_new, f(x, y));
+                    }
+                }
+                beauty = max_f_from_new;
+                current_max = x;
+            } else {
+                // Compute f(current_max, x)
+                max_f_from_new = f(current_max, x);
+                beauty = max(beauty, max_f_from_new);
+            }
+            prev.push_back(x);
+            cout << " " << beauty;
+        }
+        cout << "\n";
+    }
+    return 0;
+}

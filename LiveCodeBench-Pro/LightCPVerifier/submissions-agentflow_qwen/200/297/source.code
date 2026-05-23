@@ -1,0 +1,76 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+typedef long long ll;
+
+ll get_value(int n, ll x, ll y) {
+    if (n == 0) return 1;
+    ll res = 0;
+    for (int level = n; level >= 1; level--) {
+        ll half = 1LL << (level-1);
+        ll block_area = 1LL << (2*(level-1));
+        int quad;
+        if (x < half && y < half) {
+            quad = 0;
+        } else if (x >= half && y >= half) {
+            quad = 1;
+            x -= half; y -= half;
+        } else if (x >= half && y < half) {
+            quad = 2;
+            x -= half;
+        } else {
+            quad = 3;
+            y -= half;
+        }
+        res += quad * block_area;
+    }
+    return res + 1;
+}
+
+pair<ll, ll> get_coord(int n, ll d) {
+    if (n == 0) return {1, 1};
+    ll d0 = d - 1;
+    ll rx = 0, ry = 0;
+    for (int level = n; level >= 1; level--) {
+        ll block_area = 1LL << (2*(level-1));
+        ll quad = d0 / block_area;
+        d0 %= block_area;
+        ll half = 1LL << (level-1);
+        if (quad == 1) {
+            rx += half; ry += half;
+        } else if (quad == 2) {
+            rx += half;
+        } else if (quad == 3) {
+            ry += half;
+        }
+        // quad 0: add nothing
+    }
+    return {rx + 1, ry + 1};
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        string op;
+        while (q--) {
+            cin >> op;
+            if (op == "->") {
+                ll x, y;
+                cin >> x >> y;
+                cout << get_value(n, x-1, y-1) << '\n';
+            } else {
+                ll d;
+                cin >> d;
+                auto p = get_coord(n, d);
+                cout << p.first << ' ' << p.second << '\n';
+            }
+        }
+    }
+    return 0;
+}

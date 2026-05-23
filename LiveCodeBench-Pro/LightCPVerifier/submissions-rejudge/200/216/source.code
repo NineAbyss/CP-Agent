@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> xs(n), ys(n);
+    for (int i = 0; i < n; i++) {
+        cin >> xs[i] >> ys[i];
+    }
+    
+    if (n == 1) {
+        cout << "1\n";
+        return;
+    }
+    
+    vector<int> sx = xs, sy = ys;
+    sort(sx.begin(), sx.end());
+    sort(sy.begin(), sy.end());
+    
+    int min_x = sx[0], max_x = sx.back();
+    int min_y = sy[0], max_y = sy.back();
+    
+    // 判断唯一性
+    bool min_x_unique = (sx[0] != sx[1]);
+    bool max_x_unique = (sx[n-1] != sx[n-2]);
+    bool min_y_unique = (sy[0] != sy[1]);
+    bool max_y_unique = (sy[n-1] != sy[n-2]);
+    
+    // 次值
+    int sec_min_x = sx[1];
+    int sec_max_x = sx[n-2];
+    int sec_min_y = sy[1];
+    int sec_max_y = sy[n-2];
+    
+    ll best = (ll)(max_x - min_x + 1) * (ll)(max_y - min_y + 1);
+    
+    // 辅助函数
+    auto consider = [&](ll w, ll h) {
+        ll cells = w * h;
+        ll rem = n - 1;
+        if (cells > rem) {
+            best = min(best, cells);
+        } else {
+            best = min(best, (w + 1) * h);
+            best = min(best, w * (h + 1));
+            best = min(best, (w + 1) * (h + 1));
+        }
+    };
+    
+    if (min_x_unique) {
+        consider(max_x - sec_min_x + 1, max_y - min_y + 1);
+    }
+    if (max_x_unique) {
+        consider(sec_max_x - min_x + 1, max_y - min_y + 1);
+    }
+    if (min_y_unique) {
+        consider(max_x - min_x + 1, max_y - sec_min_y + 1);
+    }
+    if (max_y_unique) {
+        consider(max_x - min_x + 1, sec_max_y - min_y + 1);
+    }
+    
+    cout << best << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

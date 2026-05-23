@@ -1,0 +1,44 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        // 计算每个余数类的位置数
+        vector<int> cnt(k, 0);
+        for (int r = 0; r < k; r++) {
+            cnt[r] = (n - r - 1) / k + 1;  // 位置从1开始，余数r
+        }
+        // 计算 X = 满足 cnt[r] >= m+1 的 r 的个数
+        int X = 0;
+        for (int r = 0; r < k; r++) {
+            if (cnt[r] >= m+1) X++;
+        }
+        // 构造序列
+        vector<int> a(n, X);  // 初始化为 X
+        int v = 0;
+        for (int r = 0; r < k && v < X; r++) {
+            if (cnt[r] >= m+1) {
+                int placed = 0;
+                for (int pos = r+1; pos <= n && placed < m+1; pos += k) {
+                    a[pos-1] = v;
+                    placed++;
+                }
+                v++;
+            }
+        }
+        // 输出
+        for (int i = 0; i < n; i++) {
+            cout << a[i];
+            if (i < n-1) cout << " ";
+        }
+        cout << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        int m = 2 * n;
+        vector<int> p(m + 1, 0);
+        vector<bool> used(m + 1, false);
+        vector<bool> visited(m + 1, false);
+        for (int i = 1; i <= n; ++i) {
+            for (int j = 1; j <= n; ++j) {
+                int val;
+                cin >> val;
+                int k = i + j;
+                if (!visited[k]) {
+                    p[k] = val;
+                    used[val] = true;
+                    visited[k] = true;
+                }
+            }
+        }
+        for (int x = 1; x <= m; ++x) {
+            if (!used[x]) {
+                p[1] = x;
+                break;
+            }
+        }
+        for (int i = 1; i <= m; ++i) {
+            cout << p[i] << (i == m ? '\n' : ' ');
+        }
+    }
+    return 0;
+}

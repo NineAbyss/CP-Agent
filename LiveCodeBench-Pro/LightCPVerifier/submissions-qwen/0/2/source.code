@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // Sort the array (though it's already sorted per input)
+        sort(a.begin(), a.end());
+
+        long long ans = 0;
+
+        // Try all possible triplets for Alice
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                for (int k = j + 1; k < n; k++) {
+                    int sum_red = a[i] + a[j] + a[k];
+
+                    // Bob will choose the maximum possible value to minimize Alice's chance // He can either pick one of the red elements (then blue = that value, and red sum becomes sum_red - blue)
+                    // Or pick an uncolored element (blue = that value, red sum remains sum_red)
+
+                    bool alice_wins = true;
+
+                    // Check if Bob can pick any element such that Alice doesn't win
+
+                    // Case 1: Bob picks an uncolored element x -> needs sum_red <= x
+                    for (int idx = 0; idx < n; idx++) {
+                        if (idx != i && idx != j && idx != k) {
+                            if (sum_red <= a[idx]) {
+                                alice_wins = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!alice_wins) continue;
+
+                    // Case 2: Bob picks one of the red elements (recolors it blue) // Then red sum becomes sum_red - x, and blue is x -> need sum_red - x <= x => sum_red <= 2*x
+                    if (sum_red <= 2 * a[i] || sum_red <= 2 * a[j] || sum_red <= 2 * a[k]) {
+                        alice_wins = false;
+                    }
+
+                    if (alice_wins) {
+                        ans++;
+                    }
+                }
+            }
+        }
+
+        cout << ans << '\n';
+    }
+
+    return 0;
+}

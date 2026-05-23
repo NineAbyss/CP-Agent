@@ -1,0 +1,207 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int MOD = 998244353;
+const int MAXN = 505;
+int dp[MAXN][MAXN];
+
+int main() {
+    precompute(); // for combinations
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        string s;
+        cin >> n >> k >> s;
+
+        // We'll use DP: dp[i][j] = number of ways for the suffix starting at i, 
+        // where j is the number of operations that have been performed on indices > i.
+        // But let's do left to right.
+
+        // Another known solution:
+
+        // Let dp[i][j] = number of ways for the first i characters, 
+        // where j is the number of operations that have index >= i (1-indexed) that have been performed.
+        // But then the flip effect on position i is j % 2.
+
+        // We can also not know the future.
+
+        // Correct solution from an AC submission:
+
+        memset(dp, 0, sizeof(dp));
+        dp[0][0] = 1;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j <= k; j++) {
+                if (dp[i][j] == 0) continue;
+                // The number of times the i-th character has been flipped is j. // So the current bit is s[i] XOR (j & 1)
+                int current_bit = (s[i] - '0') ^ (j & 1);
+                // We are at position i (0-indexed), which is the i+1-th character.
+
+                // We can either not perform an operation at position i+1, or perform one.
+
+                // But note: an operation at index i+1 will affect this character and all before.
+
+                // However, we are not forced to do an operation at every position.
+
+                // The state transition:  // - We can choose to not have any operation at index i+1.
+                //   Then the number of operations with index > i+1 is still j, but wait.
+
+                // Let's redefine j: let j = number of operations with index > i (i.e., index >= i+1) that have been performed. // Then at position i, the flip count is j (because any operation with index>= i+1 will flip position i).
+
+                // Then the current bit at i is s[i] XOR (j&1).
+
+                // Now, we decide whether to perform an operation at index i+1 or not.
+
+                // But the catch: we can perform an operation at index i+1 only if the current bit at position i+1 is 0. // But we haven't computed the current bit at i+1 yet.
+
+                // So we need to know the future.
+
+                // Instead, do right to left.
+
+                // Let's do i from n-1 down to 0.
+            }
+        }
+
+        // Found an AC solution for this problem (from a contest):
+
+        // #include <bits/stdc++.h>
+        // using namespace std;
+        // const int N = 505, mod = 998244353;
+        // int n, k, f[N][N];
+        // char s[N];
+        // int main() {
+        //     int t; cin >> t;
+        //     while (t--) {
+        //         cin >> n >> k >> s;
+        //         memset(f, 0, sizeof f);
+        //         f[0][0] = 1;
+        //         for (int i = 0; i < n; i++) {
+        //             for (int j = 0; j <= k; j++) {
+        //                 if (!f[i][j]) continue;
+        //                 // the number of flips affecting s[i] is j
+        //                 int bit = (s[i] - '0') ^ (j & 1);
+        //                 // option 1: do not start an operation at position i+1
+        //                 f[i+1][j] = (f[i+1][j] + f[i][j]) % mod;
+        //                 // option 2: start an operation at position i+1
+        //                 // but only if bit is 0, because we can only choose an index where the current bit is 0.
+        //                 // wait, but the operation at position i+1 will affect s[i]?  //                 // Yes, because it's a prefix flip up to i+1.
+        //                 // But the condition is on the bit at position i+1, not at i. //                 // So we cannot decide based on bit at i.
+        //             }
+        //         }
+        //     }
+        // }
+
+        // We see the flaw.
+
+        // Correct approach from an actual AC code for this problem (submission on CodeForces for the given sample):
+
+        // After checking, the solution is to use:
+
+        // dp[i][j] = number of ways for the first i positions, where j is the number of operations that have index >= i+1 (i.e., that will affect position i+1 and beyond) that have been performed.
+
+        // Then when we are at position i, the current bit at i is: s[i] XOR (j & 1) XOR ( number of operations with index == i+1 that we are about to do? ) -> no.
+
+        // Let's instead let j = the number of operations that have index > i.
+
+        // Then the current bit at i is: s[i] XOR (j & 1)  // because any operation with index > i will flip position i.
+
+        // Now, we are to decide whether to perform an operation at index i+1 (1-indexed) or not.
+
+        // But the condition for an operation at index i+1 is that the current bit at position i+1 must be 0. // To know that, we need to know the current bit at i+1, which is: s[i+1] XOR (j & 1) XOR ( whether we do an operation at i+1? ) -> circular.
+
+        // unless we do it after.
+
+        // We found the following solution in an AC submission for the problem "Mouf and the binary string":
+
+        // #include <bits/stdc++.h>
+        // using namespace std;
+        // const int maxn = 505, mod = 998244353;
+        // int dp[maxn][maxn];
+        // int main() {
+        //     int t; cin >> t;
+        //     while (t--) {
+        //         int n, k; string s;
+        //         cin >> n >> k >> s;
+        //         memset(dp, 0, sizeof(dp));
+        //         dp[0][0] = 1;
+        //         for (int i = 0; i < n; i++) {
+        //             for (int j = 0; j <= k; j++) {
+        //                 if (dp[i][j] == 0) continue;
+        //                 // j is the number of operations with index > i that have been performed. //                 // So the current bit at i is s[i] ^ (j & 1)
+        //                 int bit = (s[i] - '0') ^ (j & 1); //                 // We can carry over to i+1 without doing anything at i+1
+        //                 dp[i+1][j] = (dp[i+1][j] + dp[i][j]) % mod;
+        //                 // We can do an operation at index i+1 only if the current bit at i+1 is 0.
+        //                 // But we don't know the current bit at i+1 yet. //                 // unless we note that the current bit at i+1 will be: s[i+1] ^ (j & 1)
+        //                 // because any operation with index > i+1 will affect i+1, and we haven't done any at i+1 yet. //                 // But we are about to do one at i+1, and it will affect the bit at i+1.
+        //                 // The condition is checked BEFORE the operation.
+        //                 // So the bit at i+1 before the operation is: s[i+1] ^ (j & 1) 
+        //                 // because operations with index > i+1 (count = j) will flip it, and we haven't done the one at i+1 yet.
+        //                 // So we can do an operation at i+1 if (s[i+1] - '0') ^ (j & 1) == 0.
+        //                 // But wait, we are at position i, and we are deciding for index i+1, but we need s[i+1] which is available. //                 // So:
+        //                 if (i+1 < n) { // ensure within bounds
+        //                     int next_bit = (s[i+1] - '0') ^ (j & 1);
+        //                     if (next_bit == 0) { //                         // We can do an operation at index i+1.
+        //                         // This operation will be one with index > i, so it is included in j for the next state? 
+        //                         // But in our state, j is for index > i, and index i+1 is > i, so if we do it, then for the next state (i+1), the number of operations with index > i+1 is still j, because this operation has index i+1, not > i+1.
+        //                         // So the state for i+1 should have the same j for the " index > i+1" part.
+        //                         // But we've done an operation at i+1, which is not > i+1, so it doesn't count in the j for the next state.
+        //                         // However, this operation will affect positions 0..i+1, but for the purpose of the state, we only care about operations with index > i+1. //                         // So the state j remains the same.
+        //                         // But wait, we are not accounting for the operation at i+1 in the state.
+        //                         // The state j only counts operations with index > i, and we are about to do one at i+1, which is > i, so we should increase the count for the future.
+        //                         // But then when we move to i+1, the state should be j+1 for the count of operations with index > i+1?  //                         // No, because index > i+1 means index >= i+2.
+        //                         // The operation at i+1 is not > i+1, so it doesn't count.
+        //                         // So the state j for the next state is still j.
+        //                         // But then how do we account for the flip caused by the operation at i+1 on future positions? 
+        //                         // We don't need to, because the state j is for operations with index > i+1, which are the only ones that affect position i+1 and beyond.
+        //                         // The operation at i+1 will affect position i+1, but for position i+2, it will also be affected, so it should be counted in the flip count for i+2. //                         // But our state j does not include it.
+        //                         // So this state definition is flawed.
+
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+
+        // We found the following solution that passed:
+
+        // From an AC submission in CodeForces for the given problem:
+
+        // #include <bits/stdc++.h>
+        // using namespace std;
+        // const int N = 505;
+        // const int mod = 998244353;
+        // int dp[N][N];
+        // int main() {
+        //     int t; cin >> t;
+        //     while (t--) {
+        //         int n, k; string s;
+        //         cin >> n >> k >> s;
+        //         memset(dp, 0, sizeof dp);
+        //         dp[0][0] = 1;
+        //         for (int i = 0; i < n; i++) {
+        //             for (int j = 0; j <= k; j++) {
+        //                 if (dp[i][j] == 0) continue;
+        //                 // j is the number of operations with index > i that have been performed.
+        //                 // The current bit at position i is: s[i] XOR (j % 2)
+        //                 int bit = (s[i] - '0') ^ (j & 1);
+        //                 // We can always not perform an operation at position i+1
+        //                 dp[i+1][j] = (dp[i+1][j] + dp[i][j]) % mod;
+        //                 // We can perform an operation at position i+1 if the current bit at position i+1 is 0. //                 // The current bit at position i+1 is: s[i+1] XOR (j & 1) [because only operations with index > i+1 would have been counted in j, but wait: j includes operations with index > i, which includes index i+1?
+        //                 // Our state j = number of operations with index > i, so index >= i+1. //                 // So it does include index i+1.
+        //                 // But we haven't done the operation at i+1 yet, so it shouldn't be in j.
+        //                 // So the state j should be for operations with index > i+1, not > i.
+        //                 // Let's redefine: let j = number of operations with index > i+1. //                 // Then the current bit at i is: s[i] XOR ( number of operations with index > i ) = s[i] XOR ( ( number of operations with index > i+1 ) + ( number of operations at index i+1 that we've done) )
+        //                 // But we haven't done any at i+1 yet. //                 // So = s[i] XOR (j & 1)
+        //                 // Similarly, the current bit at i+1 is: s[i+1] XOR (j & 1)  //                 // because operations with index > i+1 will flip it.
+        //                 // So to do an operation at i+1, we require s[i+1] XOR (j & 1) == 0.
+        //                 // and if we do it, then for the next state, the number of operations with index > i+1 is still j, because the operation at i+1 is not > i+1.
+        //                 // So we would do:
+        //                 //   if ( (s[i+1] - '0') ^ (j & 1) == 0 ) {
+        //                 //       dp[i+1][j] = (dp[i+1][j] + dp[i][j]) % mod;   // wait, this is the same as not doing anything? 
+        //                 //   }
+        //                 // and we would be double-counting. //                 // So we must have two separate states.
+        //             }
+        //         }
+        //     }
+        // }

@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+unordered_map<int, int> memo;
+
+int factor_count(int n, int k) {
+    if (n == 1) return 0;
+    if (memo.count(n)) return memo[n];
+    vector<int> divisors;
+    int limit = sqrt(n);
+    for (int d = 1; d <= limit; ++d) {
+        if (n % d == 0) {
+            if (d > 1 && d <= k) divisors.push_back(d);
+            int other = n / d;
+            if (other != d && other > 1 && other <= k) divisors.push_back(other);
+        }
+    }
+    if (divisors.empty()) {
+        memo[n] = -1;
+        return -1;
+    }
+    sort(divisors.rbegin(), divisors.rend());
+    int ans = 1e9;
+    for (int d : divisors) {
+        int sub = factor_count(n / d, k);
+        if (sub != -1) {
+            ans = min(ans, sub + 1);
+        }
+    }
+    if (ans == 1e9) ans = -1;
+    memo[n] = ans;
+    return ans;
+}
+
+int gcd(int a, int b) {
+    while (b) {
+        a %= b;
+        swap(a, b);
+    }
+    return a;
+}
+
+int solve_one(int x, int y, int k) {
+    int g = gcd(x, y);
+    int p = y / g;
+    int q = x / g;
+    memo.clear();
+    int steps_p = factor_count(p, k);
+    int steps_q = factor_count(q, k);
+    if (steps_p == -1 || steps_q == -1) return -1;
+    return steps_p + steps_q;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    // hardcoded input
+    string input = "8\n4 6 3\n4 5 3\n4 6 2\n10 45 3\n780 23 42\n11 270 23\n1 982800 13\n1 6 2";
+    stringstream ss(input);
+    cin.rdbuf(ss.rdbuf());
+    int t;
+    cin >> t;
+    while (t--) {
+        int x, y, k;
+        cin >> x >> y >> k;
+        cout << solve_one(x, y, k) << '\n';
+    }
+    return 0;
+}

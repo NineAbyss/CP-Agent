@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long compute_beauty(const vector<int>& p) {
+    int n = p.size();
+    long long total = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = i; j < n; j++) {
+            int len = j - i + 1;
+            if (len % 2 == 1) total += max(p[i], p[j]);
+            else total += min(p[i], p[j]);
+        }
+    }
+    return total;
+}
+
+long long solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    
+    vector<bool> used(n+1, false);
+    for (int x : a) if (x != 0) used[x] = true;
+    vector<int> avail;
+    for (int i = 1; i <= n; i++) if (!used[i]) avail.push_back(i);
+    
+    vector<int> empty_pos;
+    for (int i = 0; i < n; i++) if (a[i] == 0) empty_pos.push_back(i);
+    int m = empty_pos.size();
+    
+    if (m <= 10) {
+        // 枚举所有排列
+        sort(avail.begin(), avail.end());
+        long long max_beauty = 0;
+        do {
+            vector<int> b = a;
+            for (int i = 0; i < m; i++) {
+                b[empty_pos[i]] = avail[i];
+            }
+            long long beauty = compute_beauty(b);
+            if (beauty > max_beauty) max_beauty = beauty;
+        } while (next_permutation(avail.begin(), avail.end()));
+        return max_beauty;
+    } else {
+        // 降序填充
+        sort(avail.rbegin(), avail.rend());
+        vector<int> b = a;
+        int idx = 0;
+        for (int i = 0; i < n; i++) if (b[i] == 0) b[i] = avail[idx++];
+        return compute_beauty(b);
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << solve() << '\n';
+    }
+    return 0;
+}

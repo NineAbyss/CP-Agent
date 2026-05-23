@@ -1,0 +1,25 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        bool found = false;
+
+        // Check for the condition where b is a non-empty part and a substring of a+c
+        for (int i = 1; i < n; ++i) {
+            if (s.substr(0, i).find(s.substr(i)) != string::npos || s.substr(i).find(s.substr(0, i)) != string::npos) {
+                found = true;
+                break;
+            }
+        }
+
+        cout << (found ? "Yes\n" : "No\n");
+    }
+    return 0;
+}

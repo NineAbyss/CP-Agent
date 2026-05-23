@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+void solve(int n, int m, vector<int>& classrooms) {
+    vector<pair<int, int>> floor_classrooms;
+    for (int x : classrooms) {
+        floor_classrooms.push_back({x / 100, x});
+    }
+    
+    sort(floor_classrooms.begin(), floor_classrooms.end());
+    
+    vector<vector<int>> schedule(n, vector<int>(6));
+    
+    for (int g = 0; g < n; ++g) {
+        int low = 0;
+        int high = m - 1;
+        for (int c = 0; c < 6; ++c) {
+            if (c % 2 == 0) {
+                schedule[g][c] = floor_classrooms[low++].second;
+            } else {
+                schedule[g][c] = floor_classrooms[high--].second;
+            }
+        }
+    }
+    
+    for (int g = 0; g < n; ++g) {
+        for (int c = 0; c < 6; ++c) {
+            cout << schedule[g][c] << " ";
+        }
+        cout << "\n";
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<int> classrooms(m);
+        for (int i = 0; i < m; ++i) {
+            cin >> classrooms[i];
+        }
+
+        solve(n, m, classrooms);
+    }
+    return 0;
+}

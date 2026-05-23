@@ -1,0 +1,67 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+// Function to check if m flowers can be collected with optional flower of beauty k
+bool canCollectWithK(const vector<int>& a, const vector<int>& b, int k) {
+    vector<int> a_modified = a;
+    if (k != -1) {  // Add the magic flower if necessary
+        a_modified.push_back(k);
+    }
+    sort(a_modified.begin(), a_modified.end());  // Sort modified flowers
+
+    int j = 0;
+    for (int i = 0; i < b.size(); ++i) {
+        while (j < a_modified.size() && a_modified[j] < b[i]) {
+            ++j;  // Find next flower that meets the beauty requirement
+        }
+        if (j == a_modified.size()) return false;  // Not enough flowers
+        ++j;
+    }
+    return true;  // Successfully met the requirements
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        
+        vector<int> b(m);
+        for (int i = 0; i < m; ++i) {
+            cin >> b[i];
+        }
+        
+        sort(a.begin(), a.end());
+        sort(b.begin(), b.end());
+
+        if (canCollectWithK(a, b, -1)) {  // Check without magic flower
+            cout << "0\n";
+            continue;
+        }
+
+        int low = b[m-1], high = 1e9, answer = -1;  // Setup bounds for binary search
+        while (low <= high) {
+            int mid = low + (high - low) / 2;
+            if (canCollectWithK(a, b, mid)) {  // Test if mid suffices
+                answer = mid;
+                high = mid - 1;  // Look for smaller k
+            } else {
+                low = mid + 1;  // Increase k
+            }
+        }
+        
+        cout << answer << "\n";  // Output the minimum k found
+    }
+    
+    return 0;
+}

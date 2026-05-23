@@ -1,0 +1,38 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t; // 读取测试用例数量
+    while (t--) {
+        int n, x;
+        cin >> n >> x; // 门的数量和按钮的持续时间
+        vector<int> doors(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> doors[i]; // 读取每个门的状态
+        }
+
+        int maxClosedSegment = 0;
+        int currentClosedSegment = 0;
+
+        // 遍历门以确定最大连续闭锁段
+        for (int i = 0; i < n; ++i) {
+            if (doors[i] == 1) { // 如果门是关闭的
+                currentClosedSegment++;
+            } else { // 门是开的
+                maxClosedSegment = max(maxClosedSegment, currentClosedSegment);
+                currentClosedSegment = 0;
+            }
+        }
+        maxClosedSegment = max(maxClosedSegment, currentClosedSegment); // 检查最后一个段
+
+        // 判断是否可以在x秒内通过最长的闭锁段
+        if (maxClosedSegment <= x) {
+            cout << "YES" << endl;
+        } else {
+            cout << "NO" << endl;
+        }
+    }
+    return 0;
+}

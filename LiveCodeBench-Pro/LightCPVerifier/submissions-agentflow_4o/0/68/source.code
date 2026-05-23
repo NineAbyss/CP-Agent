@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+bool canExplodeArray(const vector<int>& a) {
+    int n = a.size();
+    long long totalSum = 0;
+    
+    // Calculate total sum of the array
+    for (const auto& value : a) {
+        totalSum += value;
+    }
+
+    // Calculate required sum of indices
+    long long sumIndices = n * (n + 1) / 2;
+
+    // Check if the total sum can be divided evenly among indices sum
+    if (totalSum % sumIndices != 0) {
+        return false; // Impossible to distribute evenly
+    }
+
+    long long k = totalSum / sumIndices;
+
+    for (int i = 0; i < n; ++i) {
+        int prev = (i == 0 ? n - 1 : i - 1);
+        long long decrement = a[i] - a[prev] - k;
+        if (decrement < 0 || decrement % n != 0) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        cout << (canExplodeArray(a) ? "YES" : "NO") << endl;
+    }
+    return 0;
+}

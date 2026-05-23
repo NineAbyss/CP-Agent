@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<long long> a(n); // use long long to avoid overflow
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        int k = (n + 1) / 2;
+        bool found = false;
+
+        for (long long cand : {a[0], -a[0]}) {
+            int less_count = 0;     // must be < cand
+            int leq_count = 0;      // can be <= cand
+
+            for (int i = 1; i < n; i++) {
+                long long u = abs(a[i]);
+                if (u < cand) {
+                    less_count++;
+                }
+                if (cand >= -u) {
+                    leq_count++;
+                }
+            }
+
+            if (less_count <= k - 1 && (1 + leq_count) >= k) {
+                found = true;
+                break;
+            }
+        }
+
+        cout << (found ? "YES" : "NO") << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,113 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to convert number to string (without leading zeros)
+string to_str(long long x) {
+    return to_string(x);
+}
+
+// Function to compute f(a, b): number of positions where digits are the same
+int f(const string& a, const string& b) {
+    int cnt = 0;
+    for (int i = 0; i < (int)a.size(); i++) {
+        if (a[i] == b[i]) {
+            cnt++;
+        }
+    }
+    return cnt;
+}
+
+// We want to minimize f(l, x) + f(x, r) over l <= x <= r.
+// Idea: Try different strategies:
+// 1. Use digit DP or greedy? But note constraints: t up to 10^4, numbers up to 10^9 -> at most 10 digits. // However, iterating from l to r is too slow.
+
+// Alternate idea: // Let L = to_string(l), R = to_string(r). All numbers have same length.
+// We can try to construct x digit by digit.
+
+// Observation:
+// f(l,x) + f(x,r) = sum_{i} [x_i == l_i] + sum_{i} [x_i == r_i]
+// So for each position i, if we pick x_i, the contribution is:
+//   1 if x_i == l_i and x_i != r_i
+//   1 if x_i != l_i and x_i == r_i
+//   2 if x_i == l_i and x_i == r_i
+//   0 otherwise
+
+// But we also have the constraint that l <= x <= r.
+
+// Since the numbers are small in digit-length (<= 10), we can try to use digit DP with state: // (pos, tight_low, tight_high) -> minimum cost so far.
+
+// However, note that t can be up to 10^4, so we need an efficient solution.
+
+// Alternate Insight: // The function f(l,x)+f(x,r) is not convex, but we can consider candidate values of x:
+// - x = l // - x = r
+// - x that minimizes the sum — likely one that breaks ties early?
+
+// But note: sometimes optimal x is in the middle (like 200 in 199..201).
+
+// Another idea: try all positions where x can "diverge" from l and r.
+
+// Actually, since the numbers have at most 10 digits, we can try to simulate digit DP with memo.
+
+// Let's do digit DP:
+
+// State: pos, low_bound (whether we are still matching l[0:pos]), high_bound (whether we are still matching r[0:pos]) // At each state, try digits from low_digit to high_digit.
+
+// dp[pos][tight_low][tight_high] = minimum additional cost from pos onward.
+
+// But t up to 10^4, and each DP has at most 10*2*2 = 40 states, and each state tries at most 10 digits -> 400 per test case -> 4e6 total worst-case -> acceptable.
+
+// Let's implement digit DP.
+
+int dp[12][2][2];
+string L, R;
+
+int solve(int pos, bool tight_low, bool tight_high) {
+    if (pos == (int)L.size()) {
+        return 0;
+    }
+    
+    if (dp[pos][tight_low][tight_high] != -1) {
+        return dp[pos][tight_low][tight_high];
+    }
+    
+    int low_digit = tight_low ? (L[pos] - '0') : 0;
+    int high_digit = tight_high ? (R[pos] - '0') : 9;
+    
+    int res = 1e9;
+    for (int d = low_digit; d <= high_digit; d++) {
+        bool new_tight_low = tight_low && (d == low_digit);
+        bool new_tight_high = tight_high && (d == high_digit);
+        
+        char c = '0' + d;
+        int add = 0;
+        if (c == L[pos]) add++;
+        if (c == R[pos]) add++;
+        
+        res = min(res, add + solve(pos+1, new_tight_low, new_tight_high));
+    }
+    
+    return dp[pos][tight_low][tight_high] = res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        long long l, r;
+        cin >> l >> r;
+        L = to_str(l);
+        R = to_str(r);
+        
+        // Initialize dp table
+        memset(dp, -1, sizeof(dp));
+        
+        int ans = solve(0, true, true);
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

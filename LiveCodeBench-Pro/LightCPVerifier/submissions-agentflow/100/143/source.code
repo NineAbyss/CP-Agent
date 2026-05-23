@@ -1,0 +1,84 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <unordered_set>
+#include <algorithm>
+
+using namespace std;
+
+// BFS function to calculate shortest paths from vertex 1
+vector<int> bfs_distance(int n, const vector<vector<int>>& adj) {
+    vector<int> dist(n + 1, -1);
+    queue<int> q;
+    q.push(1);
+    dist[1] = 0;
+
+    while (!q.empty()) {
+        int cur = q.front();
+        q.pop();
+
+        for (int neighbor : adj[cur]) {
+            if (dist[neighbor] == -1) {
+                dist[neighbor] = dist[cur] + 1;
+                q.push(neighbor);
+            }
+        }
+    }
+    return dist;
+}
+
+// Determine reachability using subset-sum logic
+string can_reachable(int n, const vector<int>& dist, const vector<int>& A) {
+    vector<bool> dp(10001, false);
+    dp[0] = true;
+
+    // Dynamic Programming to check subset sums possible with elements in A
+    for (int weight : A) {
+        for (int j = 10000; j >= weight; --j) {
+            if (dp[j - weight]) {
+                dp[j] = true;
+            }
+        }
+    }
+
+    string result(n, '0');
+    for (int i = 1; i <= n; ++i) {
+        if (dist[i] <= 10000 && dp[dist[i]]) {
+            result[i - 1] = '1';
+        }
+    }
+
+    return result;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, m, l;
+        cin >> n >> m >> l;
+
+        vector<int> A(l);
+        for (int i = 0; i < l; ++i) {
+            cin >> A[i];
+        }
+
+        vector<vector<int>> adj(n + 1);
+        for (int i = 0; i < m; ++i) {
+            int u, v;
+            cin >> u >> v;
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+
+        vector<int> dist = bfs_distance(n, adj);
+        string reachable = can_reachable(n, dist, A);
+        cout << reachable << '\n';
+    }
+
+    return 0;
+}

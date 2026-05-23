@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        
+        vector<pair<int, int>> ops;
+        
+        // Step 1: ensure a_i < b_i
+        for (int i = 0; i < n; i++) {
+            if (a[i] > b[i]) {
+                swap(a[i], b[i]);
+                ops.push_back({3, i+1});
+            }
+        }
+        
+        // Step 2: bubble sort a, ensuring condition before swap
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
+                if (a[j] > a[j+1]) {
+                    // ensure a_j < b_j
+                    if (a[j] > b[j]) {
+                        swap(a[j], b[j]);
+                        ops.push_back({3, j+1});
+                    }
+                    // ensure a_{j+1} < b_{j+1}
+                    if (a[j+1] > b[j+1]) {
+                        swap(a[j+1], b[j+1]);
+                        ops.push_back({3, j+2});
+                    }
+                    // now swap a_j and a_{j+1}
+                    swap(a[j], a[j+1]);
+                    ops.push_back({1, j+1});
+                }
+            }
+        }
+        
+        // Step 3: bubble sort b
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
+                if (b[j] > b[j+1]) {
+                    swap(b[j], b[j+1]);
+                    ops.push_back({2, j+1});
+                }
+            }
+        }
+        
+        // Output
+        cout << ops.size() << '\n';
+        for (auto &op : ops) {
+            cout << op.first << ' ' << op.second << '\n';
+        }
+    }
+    return 0;
+}

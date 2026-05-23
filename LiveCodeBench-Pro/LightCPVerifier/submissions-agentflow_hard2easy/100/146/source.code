@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool checkAdjacentPairs(const vector<int>& a, const vector<int>& b, int m) {
+    int n = a.size();
+    
+    for (int x = 1; x < m; x++) {
+        vector<int> seq_a, seq_b;
+        for (int i = 0; i < n; i++) {
+            if (a[i] == x) seq_a.push_back(0);
+            else if (a[i] == x+1) seq_a.push_back(1);
+        }
+        for (int i = 0; i < n; i++) {
+            if (b[i] == x) seq_b.push_back(0);
+            else if (b[i] == x+1) seq_b.push_back(1);
+        }
+        
+        if (seq_a.size() != seq_b.size()) return false;
+        
+        int k = seq_a.size();
+        if (k == 0) continue;
+        
+        // Check cyclic isomorphism using KMP
+        vector<int> seq = seq_a;
+        seq.insert(seq.end(), seq_a.begin(), seq_a.end());
+        
+        // Check if seq_b is a substring of seq
+        bool found = false;
+        for (int i = 0; i <= k; i++) {
+            bool match = true;
+            for (int j = 0; j < k; j++) {
+                if (seq[i+j] != seq_b[j]) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) return false;
+    }
+    
+    return true;
+}
+
+bool checkCounts(const vector<int>& a, const vector<int>& b, int m) {
+    vector<int> cnt_a(m+1, 0), cnt_b(m+1, 0);
+    for (int x : a) cnt_a[x]++;
+    for (int x : b) cnt_b[x]++;
+    
+    for (int x = 1; x <= m; x++) {
+        if (cnt_a[x] != cnt_b[x]) return false;
+    }
+    return true;
+}
+
+bool solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<int> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int i = 0; i < n; i++) cin >> b[i];
+    
+    if (!checkCounts(a, b, m)) return false;
+    return checkAdjacentPairs(a, b, m);
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        cout << (solve() ? "YES" : "NO") << '\n';
+    }
+    
+    return 0;
+}

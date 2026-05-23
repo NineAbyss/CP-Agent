@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to perform operations to make the array non-decreasing
+vector<tuple<int, int, int>> make_non_decreasing(vector<int>& a, int k) {
+    int n = a.size();
+    vector<tuple<int, int, int>> operations;
+
+    // Map of elements positions
+    unordered_map<int, vector<int>> positions;
+    for (int i = 0; i < n; ++i) {
+        positions[a[i]].push_back(i);
+    }
+
+    // Process from the last element to the first
+    for (int i = n - 1; i > 0; --i) {
+        while (a[i] < a[i - 1]) {
+            int desired = k - a[i];
+            if (!positions[desired].empty()) {
+                int j = positions[desired].back();
+                if (j < i) {
+                    int x = min(a[i - 1] - a[i], k - a[i]);
+                    operations.emplace_back(i, j, x);
+                    a[i] += x;
+                    a[j] -= x;
+                }
+                positions[desired].pop_back();
+            } else {
+                return {};
+            }
+        }
+    }
+
+    return operations;
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        
+        for (int &x : a) cin >> x;
+
+        auto ops = make_non_decreasing(a, k);
+        if (ops.empty()) {
+            cout << -1 << "\n";
+        } else {
+            cout << ops.size() << "\n";
+            for (const auto& op : ops) {
+                int i, j, x;
+                tie(i, j, x) = op;
+                cout << i+1 << " " << j+1 << " " << x << "\n";
+            }
+        }
+    }
+
+    return 0;
+}

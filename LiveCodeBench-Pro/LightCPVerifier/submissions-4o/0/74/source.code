@@ -1,0 +1,54 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        
+        vector<int> left(n), right(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> left[i];
+        }
+        for (int i = 0; i < n; ++i) {
+            cin >> right[i];
+        }
+
+        vector<pair<int, int>> min_pairs(n);
+        for (int i = 0; i < n; ++i) {
+            min_pairs[i] = {min(left[i], right[i]), left[i] + right[i]};
+        }
+
+        // Sort by possible pairs in descending order
+        sort(min_pairs.rbegin(), min_pairs.rend());
+
+        int total_pairs = 0;
+        long long min_gloves_needed = 0;
+        
+        for (int i = 0; i < n; ++i) {
+            if (total_pairs < k) {
+                int pairs_to_add = min(k - total_pairs, min_pairs[i].first);
+                total_pairs += pairs_to_add;
+                min_gloves_needed += pairs_to_add * 2;
+                
+                // If all pairs from a color are used, then we need to account for the both sides of left and right gloves
+                if (pairs_to_add == min_pairs[i].first) {
+                    min_gloves_needed += min_pairs[i].second - 2 * pairs_to_add;
+                }
+            }
+        }
+
+        cout << min_gloves_needed << '\n';
+    }
+
+    return 0;
+}

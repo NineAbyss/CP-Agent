@@ -1,0 +1,112 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+
+int modAdd(int a, int b) { return (a + b) % MOD; }
+int modMul(int a, int b) { return (1LL * a * b) % MOD; }
+
+int n;
+vector<vector<int>> g;
+int D;
+// dp[u][a][b] where a,b in [0, D-1] or -1 (no color) // we store as vector<vector<int>> with offset +1
+vector<vector<int>> dp[3005];
+int sz[3005];
+
+void dfsSize(int u, int p) {
+    sz[u] = 1;
+    for (int v : g[u]) if (v != p) {
+        dfsSize(v, u);
+        sz[u] += sz[v];
+    }
+}
+
+void dfs(int u, int p) {
+    // initialize dp[u] with size (D+1) x (D+1), index 0 for -1
+    dp[u].assign(D+1, vector<int>(D+1, 0));
+    dp[u][0][0] = 1; // white
+    dp[u][1][0] = 1; // red (depth 0)
+    dp[u][0][1] = 1; // blue (depth 0)
+    
+    for (int v : g[u]) {
+        if (v == p) continue;
+        dfs(v, u);
+        // merge dp[u] and dp[v]
+        vector<vector<int>> new_dp(D+1, vector<int>(D+1, 0));
+        // precompute prefix sums for dp[v] to speed up
+        // but for simplicity, we do nested loops with pruning
+        for (int a1 = 0; a1 <= D; a1++) {
+            int depth_a1 = a1 - 1; // -1 if a1==0
+            for (int b1 = 0; b1 <= D; b1++) {
+                int val1 = dp[u][a1][b1];
+                if (!val1) continue;
+                int depth_b1 = b1 - 1;
+                // iterate over a2,b2 in dp[v]
+                for (int a2 = 0; a2 <= D; a2++) {
+                    int depth_a2 = a2 - 1;
+                    // constraint: depth_a1 + 1 + depth_b2 < D // => depth_b2 < D - 1 - depth_a1
+                    int max_b2 = D - 1 - (depth_a1 + 1);
+                    if (max_b2 < -1) continue;
+                    for (int b2 = 0; b2 <= D; b2++) {
+                        int depth_b2 = b2 - 1;
+                        if (depth_b2 > max_b2) continue;
+                        int val2 = dp[v][a2][b2];
+                        if (!val2) continue;
+                        // second constraint: depth_b1 + 1 + depth_a2 < D
+                        if (depth_b1 >= 0 && depth_a2 >= 0 && depth_b1 + 1 + depth_a2 >= D) continue;
+                        // compute new depths
+                        int na = max(depth_a1, (depth_a2 >= 0 ? depth_a2 + 1 : -1));
+                        int nb = max(depth_b1, (depth_b2 >= 0 ? depth_b2 + 1 : -1));
+                        if (na >= D || nb >= D) continue; // should not happen
+                        new_dp[na+1][nb+1] = modAdd(new_dp[na+1][nb+1], modMul(val1, val2));
+                    }
+                }
+            }
+        }
+        dp[u] = move(new_dp);
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        cin >> n;
+        g.assign(n, {});
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            g[u].push_back(v);
+            g[v].push_back(u);
+        }
+        // compute diameter Dmax
+        vector<int> dist(n);
+        function<void(int,int,int)> dfsDist = [&](int u, int p, int d) {
+            dist[u] = d;
+            for (int v : g[u]) if (v != p) dfsDist(v, u, d+1);
+        };
+        dfsDist(0, -1, 0);
+        int far = max_element(dist.begin(), dist.end()) - dist.begin();
+        dfsDist(far, -1, 0);
+        int Dmax = *max_element(dist.begin(), dist.end());
+        
+        int total = 1;
+        for (int i = 0; i < n; i++) total = modMul(total, 3);
+        
+        int ans = 0;
+        // iterate over D from 1 to Dmax
+        for (D = 1; D <= Dmax; D++) {
+            // compute A(D) using DP
+            dfs(0, -1);
+            int cnt = 0;
+            for (int a = 0; a <= D; a++) for (int b = 0; b <= D; b++) cnt = modAdd(cnt, dp[0][a][b]);
+            ans = modAdd(ans, (total - cnt + MOD) % MOD);
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

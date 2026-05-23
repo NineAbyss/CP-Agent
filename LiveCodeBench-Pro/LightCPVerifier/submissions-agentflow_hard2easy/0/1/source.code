@@ -1,0 +1,124 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        
+        // 找到每个值在环上的所有位置
+        vector<vector<int>> pos_a(m + 1), pos_b(m + 1);
+        for (int i = 0; i < n; i++) {
+            pos_a[a[i]].push_back(i);
+            pos_b[b[i]].push_back(i);
+        }
+        
+        bool ok = true;
+        for (int x = 1; x < m; x++) {
+            // 如果数量不同，直接 NO
+            if (pos_a[x].size() != pos_b[x].size() || pos_a[x + 1].size() != pos_b[x + 1].size()) {
+                ok = false;
+                break;
+            }
+            
+            // 合并 x 和 x+1 的位置，按环顺序
+            vector<pair<int, int>> merged_a, merged_b;
+            int i = 0, j = 0;
+            while (i < pos_a[x].size() || j < pos_a[x + 1].size()) {
+                if (j == pos_a[x + 1].size() || (i < pos_a[x].size() && pos_a[x][i] < pos_a[x + 1][j])) {
+                    merged_a.emplace_back(pos_a[x][i], 0);
+                    i++;
+                } else {
+                    merged_a.emplace_back(pos_a[x + 1][j], 1);
+                    j++;
+                }
+            }
+            i = 0, j = 0;
+            while (i < pos_b[x].size() || j < pos_b[x + 1].size()) {
+                if (j == pos_b[x + 1].size() || (i < pos_b[x].size() && pos_b[x][i] < pos_b[x + 1][j])) {
+                    merged_b.emplace_back(pos_b[x][i], 0);
+                    i++;
+                } else {
+                    merged_b.emplace_back(pos_b[x + 1][j], 1);
+                    j++;
+                }
+            }
+            
+            // 检查二进制序列是否循环同构
+            vector<int> seq_a, seq_b;
+            for (auto& p : merged_a) seq_a.push_back(p.second);
+            for (auto& p : merged_b) seq_b.push_back(p.second);
+            
+            int len = seq_a.size();
+            if (len != seq_b.size()) {
+                ok = false;
+                break;
+            }
+            
+            bool match = false;
+            for (int rot = 0; rot < len; rot++) {
+                bool good = true;
+                for (int i = 0; i < len; i++) {
+                    if (seq_a[i] != seq_b[(i + rot) % len]) {
+                        good = false;
+                        break;
+                    }
+                }
+                if (good) {
+                    match = true;
+                    break;
+                }
+            }
+            if (!match) {
+                ok = false;
+                break;
+            }
+            
+            // 检查每对相邻 x 和 x+1 之间的元素集合是否相同 // 这里使用哈希来快速比较
+            const long long MOD = 1e9 + 7;
+            const long long BASE = 131;
+            vector<long long> ha, hb;
+            int cnt = pos_a[x].size();
+            for (int i = 0; i < cnt; i++) {
+                int start = merged_a[i].first;
+                int end = merged_a[(i + 1) % len].first;
+                long long h = 0;
+                int cur = (start + 1) % n;
+                while (cur != end) {
+                    h = (h * BASE + a[cur]) % MOD;
+                    cur = (cur + 1) % n;
+                }
+                ha.push_back(h);
+            }
+            for (int i = 0; i < cnt; i++) {
+                int start = merged_b[i].first;
+                int end = merged_b[(i + 1) % len].first;
+                long long h = 0;
+                int cur = (start + 1) % n;
+                while (cur != end) {
+                    h = (h * BASE + b[cur]) % MOD;
+                    cur = (cur + 1) % n;
+                }
+                hb.push_back(h);
+            }
+            
+            sort(ha.begin(), ha.end());
+            sort(hb.begin(), hb.end());
+            if (ha != hb) {
+                ok = false;
+                break;
+            }
+        }
+        
+        cout << (ok ? "YES" : "NO") << '\n';
+    }
+    return 0;
+}

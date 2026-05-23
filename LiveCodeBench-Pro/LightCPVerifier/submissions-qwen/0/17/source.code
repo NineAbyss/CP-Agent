@@ -1,0 +1,41 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, x;
+        cin >> n >> x;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        
+        // We need to find the longest contiguous segment of closed doors (1s)
+        int max_closed_streak = 0;
+        int current_streak = 0;
+        
+        for (int i = 0; i < n; ++i) {
+            if (a[i] == 1) {
+                current_streak++;
+            } else {
+                max_closed_streak = max(max_closed_streak, current_streak);
+                current_streak = 0;
+            }
+        }
+        max_closed_streak = max(max_closed_streak, current_streak); // in case the last segment is the longest
+        
+        // Yousef can pass all doors if the button duration x is at least as long as the longest streak of closed doors
+        if (x >= max_closed_streak) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    
+    return 0;
+}

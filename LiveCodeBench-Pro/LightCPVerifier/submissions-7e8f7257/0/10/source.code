@@ -1,0 +1,38 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const long long MOD = 1000000007;
+const long long PHI = MOD - 1;
+
+long long pow_mod(long long base, long long exp, long long mod) {
+    long long result = 1;
+    base %= mod;
+    while (exp > 0) {
+        if (exp & 1) result = (result * base) % mod;
+        base = (base * base) % mod;
+        exp >>= 1;
+    }
+    return result;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        long long a, b, k;
+        cin >> a >> b >> k;
+        long long n = ((a-1) % MOD * k + 1) % MOD;
+        long long m;
+        if (a == 1 || b == 1) {
+            m = 1 % MOD;
+        } else {
+            long long exp_a = a % PHI;
+            long long ka = pow_mod(k, exp_a, MOD);
+            m = ((b-1) % MOD * ka + (a-1) % MOD * k + 1) % MOD;
+        }
+        cout << n << " " << m << '\n';
+    }
+    return 0;
+}

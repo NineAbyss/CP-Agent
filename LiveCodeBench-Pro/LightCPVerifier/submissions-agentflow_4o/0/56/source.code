@@ -1,0 +1,34 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+
+        int count = 0;
+        for (int k = n - 1; k >= 2; --k) {  // start from the greatest potential blue element
+            int i = 0, j = k - 1;
+            while (i < j) {
+                if (a[i] + a[j] + a[k] > a[k]) {  // if the sum is greater than a[k], this is a valid triplet
+                    count += j - i;
+                    j--;  // attempt more pairs by moving the end pointer left
+                } else {
+                    i++;  // move the start pointer right
+                }
+            }
+        }
+
+        cout << count << "\n";
+    }
+
+    return 0;
+}

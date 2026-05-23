@@ -1,0 +1,159 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to check if array is non-decreasing
+bool is_sorted(const vector<long long>& a) {
+    for (int i = 0; i < (int)a.size()-1; i++) {
+        if (a[i] > a[i+1]) return false;
+    }
+    return true;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        vector<long long> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        // If already non-decreasing
+        if (is_sorted(a)) {
+            cout << 0 << "\n";
+            continue;
+        }
+
+        // Find all pairs (i,j) with i<j and a[i]+a[j]==k
+        vector<pair<int,int>> candidates;
+        for (int i = 0; i < n; i++) {
+            for (int j = i+1; j < n; j++) {
+                if (a[i] + a[j] == k) {
+                    candidates.push_back({i, j});
+                }
+            }
+        }
+
+        if (candidates.empty()) {
+            cout << -1 << "\n";
+            continue;
+        }
+
+        vector<long long> target = a;
+        sort(target.begin(), target.end());
+
+        // Look for a candidate hub (i,j) such that target[i] + target[j] == k
+        pair<int,int> hub = {-1, -1};
+        for (auto &p : candidates) {
+            int i = p.first, j = p.second;
+            if (target[i] + target[j] == k) {
+                hub = p;
+                break;
+            }
+        }
+
+        // If not found, use the first candidate and hope for the best
+        if (hub.first == -1) {
+            hub = candidates[0];
+        }
+
+        int h = hub.first, t_idx = hub.second;
+        vector<tuple<int, int, long long>> operations;
+
+        // Work on all indices except h and t_idx
+        for (int i = 0; i < n; i++) {
+            if (i == h || i == t_idx) continue;
+
+            while (a[i] < target[i]) {
+                long long deficit = target[i] - a[i];
+
+                // Ensure a[h] + a[i] == k
+                if (a[h] + a[i] != k) {
+                    long long desired_h = k - a[i];
+                    long long transfer_needed = desired_h - a[h];
+                    if (transfer_needed > 0) {
+                        // Need to increase a[h] by transfer_needed, so transfer from t_idx to h
+                        long long x = min(transfer_needed, a[t_idx]);
+                        if (x <= 0) break; // safety
+                        operations.push_back({t_idx, h, x});
+                        a[t_idx] -= x;
+                        a[h] += x;
+                    } else if (transfer_needed < 0) {
+                        // Decrease a[h] by |transfer_needed|
+                        long long x = min(-transfer_needed, a[h]);
+                        if (x <= 0) break;
+                        operations.push_back({h, t_idx, x});
+                        a[h] -= x;
+                        a[t_idx] += x;
+                    }
+                }
+
+                // Now a[h] + a[i] == k // Transfer from h to i
+                long long x = min(deficit, a[h]);
+                if (x <= 0) break;
+                operations.push_back({h, i, x});
+                a[h] -= x;
+                a[i] += x;
+            }
+
+            while (a[i] > target[i]) {
+                long long surplus = a[i] - target[i];
+
+                if (a[h] + a[i] != k) {
+                    long long desired_h = k - a[i];
+                    long long transfer_needed = desired_h - a[h];
+                    if (transfer_needed > 0) {
+                        long long x = min(transfer_needed, a[t_idx]);
+                        if (x <= 0) break;
+                        operations.push_back({t_idx, h, x});
+                        a[t_idx] -= x;
+                        a[h] += x;
+                    } else if (transfer_needed < 0) {
+                        long long x = min(-transfer_needed, a[h]);
+                        if (x <= 0) break;
+                        operations.push_back({h, t_idx, x});
+                        a[h] -= x;
+                        a[t_idx] += x;
+                    }
+                }
+
+                // Transfer from i to h
+                long long x = min(surplus, a[i]);
+                if (x <= 0) break;
+                operations.push_back({i, h, x});
+                a[i] -= x;
+                a[h] += x;
+            }
+        }
+
+        // Finally, adjust h and t_idx to their targets // They should sum to k
+        while (a[h] < target[h]) {
+            long long deficit = target[h] - a[h];
+            long long x = min(deficit, a[t_idx]);
+            if (x <= 0) break;
+            operations.push_back({t_idx, h, x});
+            a[t_idx] -= x;
+            a[h] += x;
+        }
+        while (a[h] > target[h]) {
+            long long surplus = a[h] - target[h];
+            long long x = min(surplus, a[h]);
+            if (x <= 0) break;
+            operations.push_back({h, t_idx, x});
+            a[h] -= x;
+            a[t_idx] += x;
+        }
+
+        // Output number of operations
+        cout << operations.size() << "\n";
+        for (auto &op : operations) {
+            int i = get<0>(op), j = get<1>(op);
+            long long x = get<2>(op);
+            cout << i+1 << " " << j+1 << " " << x << "\n";
+        }
+    }
+    return 0;
+}

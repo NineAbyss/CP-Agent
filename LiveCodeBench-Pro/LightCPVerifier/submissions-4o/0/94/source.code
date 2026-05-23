@@ -1,0 +1,91 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+using namespace std;
+
+// Function to find the number at position (x, y)
+int findNumberAtPosition(int n, int x, int y) {
+    if (n == 1) {
+        if (x == 1 && y == 1) return 1;
+        if (x == 2 && y == 2) return 2;
+        if (x == 2 && y == 1) return 3;
+        if (x == 1 && y == 2) return 4;
+    }
+
+    int half = 1 << (n - 1);
+    
+    if (x <= half && y <= half) {
+        // Top-left quadrant
+        return findNumberAtPosition(n - 1, x, y);
+    } else if (x > half && y > half) {
+        // Bottom-right quadrant
+        int offset = (half * half) * 1;
+        return offset + findNumberAtPosition(n - 1, x - half, y - half);
+    } else if (x > half && y <= half) {
+        // Bottom-left quadrant
+        int offset = (half * half) * 2;
+        return offset + findNumberAtPosition(n - 1, x - half, y);
+    } else {
+        // Top-right quadrant
+        int offset = (half * half) * 3;
+        return offset + findNumberAtPosition(n - 1, x, y - half);
+    }
+}
+
+// Function to find the position of number d
+pair<int, int> findPositionOfNumber(int n, int d) {
+    if (n == 1) {
+        if (d == 1) return {1, 1};
+        if (d == 2) return {2, 2};
+        if (d == 3) return {2, 1};
+        if (d == 4) return {1, 2};
+    }
+
+    int quadrantSize = (1 << (n - 1)) * (1 << (n - 1));
+
+    if (d <= quadrantSize) {
+        // Top-left quadrant
+        return findPositionOfNumber(n - 1, d);
+    } else if (d <= 2 * quadrantSize) {
+        // Bottom-right quadrant
+        auto pos = findPositionOfNumber(n - 1, d - quadrantSize);
+        return {pos.first + (1 << (n - 1)), pos.second + (1 << (n - 1))};
+    } else if (d <= 3 * quadrantSize) {
+        // Bottom-left quadrant
+        auto pos = findPositionOfNumber(n - 1, d - 2 * quadrantSize);
+        return {pos.first + (1 << (n - 1)), pos.second};
+    } else {
+        // Top-right quadrant
+        auto pos = findPositionOfNumber(n - 1, d - 3 * quadrantSize);
+        return {pos.first, pos.second + (1 << (n - 1))};
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        
+        while (q--) {
+            string type;
+            cin >> type;
+            
+            if (type == "->") {
+                int x, y;
+                cin >> x >> y;
+                cout << findNumberAtPosition(n, x, y) << '\n';
+            } else if (type == "<-") {
+                int d;
+                cin >> d;
+                auto pos = findPositionOfNumber(n, d);
+                cout << pos.first << ' ' << pos.second << '\n';
+            }
+        }
+    }
+    
+    return 0;
+}

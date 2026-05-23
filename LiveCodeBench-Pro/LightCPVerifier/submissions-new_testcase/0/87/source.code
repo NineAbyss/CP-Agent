@@ -1,0 +1,39 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        // command 1: mul 9
+        cout << "mul 9" << endl;
+        cout.flush();
+        int resp;
+        cin >> resp;
+        if (resp == -1) break;
+        // command 2: digit
+        cout << "digit" << endl;
+        cout.flush();
+        cin >> resp;
+        if (resp == -1) break;
+        // command 3: digit
+        cout << "digit" << endl;
+        cout.flush();
+        cin >> resp;
+        if (resp == -1) break;
+        // command 4: add (n-9)
+        cout << "add " << (n-9) << endl;
+        cout.flush();
+        cin >> resp;
+        if (resp == -1) break;
+        // answer
+        cout << "!" << endl;
+        cout.flush();
+        cin >> resp;
+        if (resp == -1) break;
+    }
+    return 0;
+}

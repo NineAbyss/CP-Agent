@@ -1,0 +1,31 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int a, x, y;
+        cin >> a >> x >> y;
+
+        // Calculate distances |a-x| and |a-y|
+        int dist_ax = abs(a - x);
+        int dist_ay = abs(a - y);
+
+        bool can_win = false;
+
+        for (int b = 1; b <= 100; ++b) {
+            if (b != a) {
+                // Check potential b position conditions
+                if (abs(b - x) < dist_ax && abs(b - y) < dist_ay) {
+                    can_win = true;
+                    break;
+                }
+            }
+        }
+
+        cout << (can_win ? "YES" : "NO") << endl;
+    }
+    return 0;
+}

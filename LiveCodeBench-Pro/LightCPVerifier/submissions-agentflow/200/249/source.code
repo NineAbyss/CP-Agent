@@ -1,0 +1,52 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    scanf("%d", &n);
+    vector<int> p(n+1);
+    for (int i = 1; i <= n; i++) {
+        scanf("%d", &p[i]);
+    }
+    vector<int> d(n+1);
+    for (int i = 1; i <= n; i++) {
+        scanf("%d", &d[i]);
+    }
+    
+    vector<int> cycle_id(n+1, -1);
+    vector<int> cycle_size;
+    int cycle_cnt = 0;
+    for (int i = 1; i <= n; i++) {
+        if (cycle_id[i] != -1) continue;
+        int cur = i;
+        int sz = 0;
+        while (cycle_id[cur] == -1) {
+            cycle_id[cur] = cycle_cnt;
+            sz++;
+            cur = p[cur];
+        }
+        cycle_size.push_back(sz);
+        cycle_cnt++;
+    }
+    
+    vector<char> activated(cycle_cnt, 0);
+    long long ans = 0;
+    for (int i = 1; i <= n; i++) {
+        int idx = d[i];
+        int cid = cycle_id[idx];
+        if (!activated[cid]) {
+            activated[cid] = 1;
+            ans += cycle_size[cid];
+        }
+        printf("%lld%c", ans, " \n"[i==n]);
+    }
+}
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool canFormSquare(int l1, int b1, int l2, int b2, int l3, int b3, int a) {
+    int l[3] = {l1, l2, l3};
+    int b[3] = {b1, b2, b3};
+    int perm[3] = {0,1,2};
+    do {
+        int L[3], B[3];
+        for (int i=0; i<3; i++) {
+            L[i] = l[perm[i]];
+            B[i] = b[perm[i]];
+        }
+        // 三行
+        if (L[0]==a && L[1]==a && L[2]==a && B[0]+B[1]+B[2]==a) return true;
+        // 三列
+        if (B[0]==a && B[1]==a && B[2]==a && L[0]+L[1]+L[2]==a) return true;
+        // 水平切割后垂直切割
+        int h = B[0];
+        if (h < a && L[0]==a && B[1]==a-h && B[2]==a-h && L[1]+L[2]==a) return true;
+        // 垂直切割后水平切割
+        int w = L[0];
+        if (w < a && B[0]==a && L[1]==a-w && L[2]==a-w && B[1]+B[2]==a) return true;
+    } while (next_permutation(perm, perm+3));
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int l1,b1,l2,b2,l3,b3;
+        cin >> l1 >> b1 >> l2 >> b2 >> l3 >> b3;
+        int S = l1*b1 + l2*b2 + l3*b3;
+        int a = sqrt(S);
+        if (a*a != S) {
+            cout << "NO\n";
+            continue;
+        }
+        if (canFormSquare(l1,b1,l2,b2,l3,b3,a))
+            cout << "YES\n";
+        else
+            cout << "NO\n";
+    }
+    return 0;
+}

@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<string> grid(n);
+        for (int i = 0; i < n; i++) {
+            cin >> grid[i];
+        }
+        vector<vector<bool>> is_dot(n, vector<bool>(m, false));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (grid[i][j] == '.') is_dot[i][j] = true;
+            }
+        }
+        int ans = 0;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (grid[i][j] != 'g') continue;
+                bool ok = false;
+                // 检查上边 (i-k, j+dy)
+                if (i - k >= 0) {
+                    int y1 = max(j - k, 0);
+                    int y2 = min(j + k, m - 1);
+                    for (int y = y1; y <= y2; y++) {
+                        if (is_dot[i - k][y]) { ok = true; break; }
+                    }
+                }
+                if (!ok && i + k < n) {
+                    int y1 = max(j - k, 0);
+                    int y2 = min(j + k, m - 1);
+                    for (int y = y1; y <= y2; y++) {
+                        if (is_dot[i + k][y]) { ok = true; break; }
+                    }
+                }
+                if (!ok && j - k >= 0) {
+                    int x1 = max(i - k, 0);
+                    int x2 = min(i + k, n - 1);
+                    for (int x = x1; x <= x2; x++) {
+                        if (is_dot[x][j - k]) { ok = true; break; }
+                    }
+                }
+                if (!ok && j + k < m) {
+                    int x1 = max(i - k, 0);
+                    int x2 = min(i + k, n - 1);
+                    for (int x = x1; x <= x2; x++) {
+                        if (is_dot[x][j + k]) { ok = true; break; }
+                    }
+                }
+                if (ok) ans++;
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

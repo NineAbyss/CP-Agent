@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX_PRIME_COUNT = 400010; // at least max n
+vector<long long> prime_prefix_sum;
+
+void precompute() {
+    prime_prefix_sum.clear();
+    prime_prefix_sum.push_back(0); // m=0
+    vector<int> primes;
+    // estimate the MAX_PRIME_COUNT-th prime: n ln n ≈ 400000*13 ≈ 5.2e6, take 6e6
+    const int SIEVE_LIMIT = 6000000;
+    vector<bool> is_prime(SIEVE_LIMIT, true);
+    is_prime[0] = is_prime[1] = false;
+    for (int i = 2; i < SIEVE_LIMIT && primes.size() < MAX_PRIME_COUNT; i++) {
+        if (is_prime[i]) {
+            primes.push_back(i);
+            prime_prefix_sum.push_back(prime_prefix_sum.back() + i);
+        }
+        for (int p : primes) {
+            if (i * p >= SIEVE_LIMIT) break;
+            is_prime[i * p] = false;
+            if (i % p == 0) break;
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    precompute();
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        sort(a.begin(), a.end(), greater<int>());
+        vector<long long> prefix(n+1, 0);
+        for (int i = 0; i < n; i++) {
+            prefix[i+1] = prefix[i] + a[i];
+        }
+        int m_max = 0;
+        for (int m = 0; m <= n; m++) {
+            if (m >= (int)prime_prefix_sum.size()) break;
+            if (prefix[m] >= prime_prefix_sum[m]) {
+                m_max = m;
+            } else {
+                break;
+            }
+        }
+        cout << n - m_max << '\n';
+    }
+    return 0;
+}

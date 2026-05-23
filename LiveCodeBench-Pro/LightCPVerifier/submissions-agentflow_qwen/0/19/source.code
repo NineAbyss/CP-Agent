@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        ll k;
+        cin >> n >> k;
+        vector<ll> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        ll ans = 0;
+        for (ll x : a) {
+            ans += __builtin_popcountll(x);
+        }
+        priority_queue<pair<ll, int>> pq;
+        vector<int> bit(n);
+        for (int i = 0; i < n; i++) {
+            while ((1LL << bit[i]) - 1 < a[i]) {
+                bit[i]++;
+            }
+            ll cost = ((1LL << bit[i]) - 1) - a[i];
+            if (cost <= k) {
+                pq.push({-cost, i});
+            }
+        }
+        while (!pq.empty()) {
+            auto [neg_cost, i] = pq.top();
+            pq.pop();
+            ll cost = -neg_cost;
+            if (cost > k) continue;
+            k -= cost;
+            ans++;
+            bit[i]++;
+            ll next_cost = (1LL << (bit[i] - 1));
+            if (next_cost <= k) {
+                pq.push({-next_cost, i});
+            }
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

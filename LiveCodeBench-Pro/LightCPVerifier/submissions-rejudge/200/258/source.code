@@ -1,0 +1,41 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool canMatch(const string &p, const string &s) {
+    int n = p.size(), m = s.size();
+    if (m < n || m > 2 * n) return false;
+    vector<pair<char, int>> segP, segS;
+    for (int i = 0; i < n; ) {
+        int j = i;
+        while (j < n && p[j] == p[i]) j++;
+        segP.push_back({p[i], j - i});
+        i = j;
+    }
+    for (int i = 0; i < m; ) {
+        int j = i;
+        while (j < m && s[j] == s[i]) j++;
+        segS.push_back({s[i], j - i});
+        i = j;
+    }
+    if (segP.size() != segS.size()) return false;
+    for (int i = 0; i < (int)segP.size(); i++) {
+        if (segP[i].first != segS[i].first) return false;
+        int a = segP[i].second;
+        int b = segS[i].second;
+        if (b < a || b > 2 * a) return false;
+    }
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        string p, s;
+        cin >> p >> s;
+        cout << (canMatch(p, s) ? "YES" : "NO") << '\n';
+    }
+    return 0;
+}

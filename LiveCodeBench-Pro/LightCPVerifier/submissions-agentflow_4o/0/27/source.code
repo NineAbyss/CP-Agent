@@ -1,0 +1,87 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Calculate tree weight based on parent assignment
+long long calculate_weight(int n, const vector<int>& parent) {
+    vector<int> depth(n + 1, -1);
+    depth[1] = 0;
+    for (int i = 2; i <= n; ++i) {
+        depth[i] = depth[parent[i]] + 1;
+    }
+
+    long long total_weight = 0;
+    for (int i = 1; i <= n; ++i) {
+        for (int j = i + 1; j <= n; ++j) {
+            total_weight += min(depth[i], depth[j]);
+        }
+    }
+    return total_weight;
+}
+
+// Print tree configuration
+void print_tree(const vector<int>& parent) {
+    for (int i = 2; i < parent.size(); ++i) {
+        cout << parent[i] << " " << i << "\n";
+    }
+}
+
+// Construct tree to target weight within -±1 of k
+void construct_tree(int n, long long k) {
+    long long min_weight = n - 1;
+    long long max_weight = (n * (n - 1)) / 2;
+
+    if (k < min_weight || k > max_weight) {
+        cout << "No\n";
+        return;
+    }
+
+    vector<int> parent(n + 1, 1); // Star configuration
+    if (k >= min_weight && k <= min_weight + 1) {
+        cout << "Yes\n";
+        print_tree(parent);
+        return;
+    }
+
+    // Start with chain configuration for maximum weight
+    for (int i = 2; i <= n; ++i) {
+        parent[i] = i - 1;
+    }
+
+    long long current_weight = calculate_weight(n, parent);
+    if (current_weight == k || current_weight + 1 == k || current_weight - 1 == k) {
+        cout << "Yes\n";
+        print_tree(parent);
+        return;
+    }
+
+    // Adjust tree configuration progressively
+    for (int i = n; i >= 2 && current_weight > k; --i) {
+        for (int j = 1; j < i && current_weight > k; ++j) {
+            if (current_weight - (i - j) >= k) {
+                parent[i] = j;
+                current_weight -= (i - j);
+                break;
+            }
+        }
+    }
+
+    if (current_weight == k || current_weight + 1 == k || current_weight - 1 == k) {
+        cout << "Yes\n";
+        print_tree(parent);
+    } else {
+        cout << "No\n";
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        construct_tree(n, k);
+    }
+    return 0;
+}

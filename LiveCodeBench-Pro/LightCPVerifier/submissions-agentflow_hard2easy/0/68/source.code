@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+const ll INF = 1e18;
+
+ll solveColumns(int n, const vector<vector<int>>& h, const vector<ll>& b) {
+    vector<vector<ll>> dp(n, vector<ll>(2, INF));
+    dp[0][0] = 0;
+    dp[0][1] = b[0];
+    
+    for (int j = 0; j < n-1; j++) {
+        bool has_minus1 = false, has_zero = false, has_plus1 = false;
+        
+        for (int i = 0; i < n; i++) {
+            int d = h[i][j] - h[i][j+1];
+            if (d == -1) has_minus1 = true;
+            else if (d == 0) has_zero = true;
+            else if (d == 1) has_plus1 = true;
+            
+            if (has_minus1 && has_zero && has_plus1) break;
+        }
+        
+        for (int s = 0; s < 2; s++) {
+            if (dp[j][s] >= INF) continue;
+            for (int t = 0; t < 2; t++) {
+                int diff = t - s;
+                bool forbidden = false;
+                if (diff == -1) forbidden = has_minus1;
+                else if (diff == 0) forbidden = has_zero;
+                else if (diff == 1) forbidden = has_plus1;
+                
+                if (!forbidden) {
+                    ll new_cost = dp[j][s] + (t ? b[j+1] : 0);
+                    if (new_cost < dp[j+1][t]) {
+                        dp[j+1][t] = new_cost;
+                    }
+                }
+            }
+        }
+    }
+    
+    return min(dp[n-1][0], dp[n-1][1]);
+}
+
+ll solveRows(int n, const vector<vector<int>>& h, const vector<ll>& a) {
+    vector<vector<ll>> dp(n, vector<ll>(2, INF));
+    dp[0][0] = 0;
+    dp[0][1] = a[0];
+    
+    for (int i = 0; i < n-1; i++) {
+        bool has_minus1 = false, has_zero = false, has_plus1 = false;
+        
+        for (int j = 0; j < n; j++) {
+            int d = h[i][j] - h[i+1][j];
+            if (d == -1) has_minus1 = true;
+            else if (d == 0) has_zero = true;
+            else if (d == 1) has_plus1 = true;
+            
+            if (has_minus1 && has_zero && has_plus1) break;
+        }
+        
+        for (int s = 0; s < 2; s++) {
+            if (dp[i][s] >= INF) continue;
+            for (int t = 0; t < 2; t++) {
+                int diff = t - s;
+                bool forbidden = false;
+                if (diff == -1) forbidden = has_minus1;
+                else if (diff == 0) forbidden = has_zero;
+                else if (diff == 1) forbidden = has_plus1;
+                
+                if (!forbidden) {
+                    ll new_cost = dp[i][s] + (t ? a[i+1] : 0);
+                    if (new_cost < dp[i+1][t]) {
+                        dp[i+1][t] = new_cost;
+                    }
+                }
+            }
+        }
+    }
+    
+    return min(dp[n-1][0], dp[n-1][1]);
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    
+    vector<vector<int>> h(n, vector<int>(n));
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            cin >> h[i][j];
+        }
+    }
+    
+    vector<ll> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int j = 0; j < n; j++) cin >> b[j];
+    
+    ll col_cost = solveColumns(n, h, b);
+    ll row_cost = solveRows(n, h, a);
+    
+    if (col_cost >= INF/2 || row_cost >= INF/2) {
+        cout << -1 << "\n";
+    } else {
+        cout << col_cost + row_cost << "\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

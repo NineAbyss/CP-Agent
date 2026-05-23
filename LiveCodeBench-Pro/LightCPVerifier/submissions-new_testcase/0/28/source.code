@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        vector<int> max_len(n+1, 0);
+        int cur_val = -1, cur_len = 0;
+        for (int i = 0; i < n; ++i) {
+            if (a[i] == cur_val) {
+                cur_len++;
+            } else {
+                if (cur_val != -1) {
+                    max_len[cur_val] = max(max_len[cur_val], cur_len);
+                }
+                cur_val = a[i];
+                cur_len = 1;
+            }
+        }
+        if (cur_val != -1) {
+            max_len[cur_val] = max(max_len[cur_val], cur_len);
+        }
+        ll ans = LLONG_MAX;
+        for (int x = 1; x <= n; ++x) {
+            if (max_len[x] == 0) continue;
+            ll cost = 1LL * x * (n - max_len[x]);
+            if (cost < ans) ans = cost;
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

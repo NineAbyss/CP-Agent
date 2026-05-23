@@ -1,0 +1,122 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+void solve() {
+    long long n, m;
+    cin >> n >> m;
+
+    // Special case: n=1
+    if (n == 1) {
+        if (m == 1) {
+            cout << "1\n";
+            // no edges
+        } else {
+            cout << "-1\n";
+        }
+        return;
+    }
+
+    // Check if m < n -> impossible, because minimum sum is n (when root=1, then every node has divineness at least 1, and there are n nodes)
+    // But wait: if root=1, then d(1)=1, and for any other node, the path includes 1, so d(v)>=1, but could it be more? No, because 1 is the smallest.
+    // So d(v)=1 for all v -> sum = n. // So minimum sum is n.
+    if (m < n) {
+        cout << "-1\n";
+        return;
+    }
+
+    int root = -1;
+    long long min_sum_r, max_sum_r;
+
+    // Iterate r from 1 to n to find a valid root
+    for (int r = 1; r <= n; r++) {
+        // Minimum sum achievable with root r:  //   d(r) = r
+        //   for other nodes: we can make their divineness = 1 (by routing through 1)  //   so sum = r + 1*(n-1) = n - 1 + r
+        min_sum_r = n - 1 + r;
+
+        // Maximum sum achievable with root r: //   Chain: r, r-1, r-2, ..., 1, and attach all other nodes (r+1, ..., n) directly to r.
+        //   Sum = (r + r-1 + ... + 1) + (n - r) * r = r*(r+1)/2 + (n-r)*r = n*r - r*(r-1)/2
+        max_sum_r = 1LL * n * r - (1LL * r * (r - 1)) / 2;
+
+        if (m >= min_sum_r && m <= max_sum_r) {
+            root = r;
+            break;
+        }
+    }
+
+    if (root == -1) {
+        cout << "-1\n";
+        return;
+    }
+
+    // We will build the tree
+    vector<pair<int, int>> edges;
+    long long needed_extra = m - (n - 1 + root); // we start from minimum sum
+
+    // Always have the edge: root <-> 1
+    edges.push_back({root, 1});
+
+    // Classify other nodes: from 2 to n, excluding root
+    vector<int> small_nodes; // nodes v where 2<=v<root
+    vector<int> large_nodes; // nodes v where v>root
+
+    for (int v = 2; v < root; v++) {
+        small_nodes.push_back(v);
+    }
+    for (int v = root + 1; v <= n; v++) {
+        large_nodes.push_back(v);
+    }
+
+    // Sort small_nodes in increasing order (so gain = v-1 is increasing)
+    sort(small_nodes.begin(), small_nodes.end());
+
+    long long rem = needed_extra;
+
+    // Process small nodes first (they give gain = v-1)
+    for (int v : small_nodes) {
+        long long gain = v - 1;
+        if (rem >= gain) {
+            rem -= gain;
+            edges.push_back({root, v}); // attach directly to root -> divineness becomes v (since v<root) -> gain = v-1
+        } else {
+            edges.push_back({1, v}); // keep under 1 -> divineness=1
+        }
+    }
+
+    // Process large nodes (they give gain = root-1 each)
+    for (int v : large_nodes) {
+        if (rem >= root - 1) {
+            rem -= (root - 1);
+            edges.push_back({root, v}); // attach to root -> divineness = min(root, v)=root (since v>root) -> gain = root-1
+        } else {
+            edges.push_back({1, v}); // under 1 -> divineness=1
+        }
+    }
+
+    // If we still have remainder, it means we couldn't achieve the desired sum
+    if (rem != 0) {
+        // This should not happen given our root selection
+        cout << "-1\n";
+        return;
+    }
+
+    // Output the answer
+    cout << root << "\n";
+    for (auto &e : edges) {
+        cout << e.first << " " << e.second << "\n";
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

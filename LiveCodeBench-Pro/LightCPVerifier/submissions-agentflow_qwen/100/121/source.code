@@ -1,0 +1,151 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+const int MAXN = 150005;
+vector<int> g[MAXN];
+bool alive[MAXN];
+int n;
+
+// BFS returns {farthest_node, distance, parent_array}
+pair<int, vector<int>> bfs(int start) {
+    vector<int> dist(n+1, -1);
+    vector<int> parent(n+1, -1);
+    queue<int> q;
+    q.push(start);
+    dist[start] = 0;
+    parent[start] = -1;
+    int farthest = start;
+
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        if (dist[u] > dist[farthest]) farthest = u;
+        for (int v : g[u]) {
+            if (alive[v] && dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                parent[v] = u;
+                q.push(v);
+            }
+        }
+    }
+    return {farthest, dist};
+}
+
+vector<int> getPath(int u, int v, const vector<int>& parent) {
+    vector<int> path;
+    for (int x = v; x != -1; x = parent[x]) {
+        path.push_back(x);
+        if (x == u) break;
+    }
+    reverse(path.begin(), path.end());
+    return path;
+}
+
+void solve() {
+    // Initialize all alive
+    for (int i = 1; i <= n; ++i) alive[i] = true;
+
+    vector<int> result;
+
+    while (true) {
+        int start = -1;
+        for (int i = 1; i <= n; ++i) {
+            if (alive[i]) {
+                start = i;
+                break;
+            }
+        }
+        if (start == -1) break;
+
+        auto [A, distA] = bfs(start);
+        auto [B, distB] = bfs(A);
+        int L = distB[B]; // length of the path in terms of edges? but we want number of nodes
+        int num_nodes = L + 1;
+
+        // Now find lexicographically largest (u,v) with distance L between them
+        int best_u = -1, best_v = -1;
+
+        // We'll try all possible starting points that could be an endpoint of a longest path
+        for (int u = 1; u <= n; ++u) {
+            if (!alive[u]) continue;
+            auto [farthest, dist] = bfs(u);
+            if (dist[farthest] == L) {
+                // then there exists a path from u of length L
+                for (int v = 1; v <= n; ++v) {
+                    if (alive[v] && dist[v] == L) {
+                        // (u,v) is a diameter
+                        if (best_u == -1 || make_pair(u, v) > make_pair(best_u, best_v)) {
+                            best_u = u;
+                            best_v = v;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Reconstruct path from best_u to best_v
+        auto [tmp, dist_tmp] = bfs(best_u);
+        vector<int> parent(n+1, -1);
+        queue<int> q;
+        vector<int> dist(n+1, -1);
+        q.push(best_u);
+        dist[best_u] = 0;
+        parent[best_u] = -1;
+        while (!q.empty()) {
+            int u = q.front(); q.pop();
+            for (int v : g[u]) {
+                if (alive[v] && dist[v] == -1) {
+                    dist[v] = dist[u] + 1;
+                    parent[v] = u;
+                    q.push(v);
+                }
+            }
+        }
+        vector<int> path;
+        for (int x = best_v; x != -1; x = parent[x]) {
+            path.push_back(x);
+            if (x == best_u) break;
+        }
+        reverse(path.begin(), path.end());
+
+        // Output this operation
+        result.push_back(num_nodes);
+        result.push_back(best_u);
+        result.push_back(best_v);
+
+        // Remove all nodes on the path
+        for (int node : path) {
+            alive[node] = false;
+        }
+    }
+
+    // Output result
+    for (int i = 0; i < result.size(); ++i) {
+        if (i > 0) cout << " ";
+        cout << result[i];
+    }
+    cout << "\n";
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        cin >> n;
+        for (int i = 1; i <= n; ++i) {
+            g[i].clear();
+            alive[i] = true;
+        }
+        for (int i = 0; i < n-1; ++i) {
+            int u, v;
+            cin >> u >> v;
+            g[u].push_back(v);
+            g[v].push_back(u);
+        }
+        solve();
+    }
+    return 0;
+}

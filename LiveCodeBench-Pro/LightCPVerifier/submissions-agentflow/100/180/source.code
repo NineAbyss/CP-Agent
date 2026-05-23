@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int i = 0; i < n; i++) cin >> b[i];
+
+    vector<vector<int>> pos_a(n + 1), pos_b(n + 1);
+    for (int i = 0; i < n; i++) {
+        pos_a[a[i]].push_back(i);
+        pos_b[b[i]].push_back(i);
+    }
+
+    vector<int> next_eq(n, n);
+    int cur_eq = n;
+    for (int i = n - 1; i >= 0; i--) {
+        if (a[i] == b[i]) cur_eq = i;
+        next_eq[i] = cur_eq;
+    }
+
+    auto get_next = [&](const vector<vector<int>>& pos, int val, int idx) -> int {
+        const vector<int>& v = pos[val];
+        auto it = upper_bound(v.begin(), v.end(), idx);
+        return (it == v.end()) ? n : *it;
+    };
+
+    vector<int> next_ab(n, n), next_ba(n, n);
+    for (int i = 0; i < n; i++) {
+        next_ab[i] = get_next(pos_a, b[i], i);
+        next_ba[i] = get_next(pos_b, a[i], i);
+    }
+
+    vector<int> dep(n, n);
+    vector<bool> can(n, false);
+    int total = 0;
+    for (int i = 0; i < n; i++) {
+        int best = min({next_eq[i], next_ab[i], next_ba[i]});
+        if (best < n) {
+            can[i] = true;
+            total++;
+            dep[i] = best;
+        }
+    }
+
+    vector<vector<int>> rev_dep(n);
+    for (int i = 0; i < n; i++) {
+        if (dep[i] < n) rev_dep[dep[i]].push_back(i);
+    }
+
+    vector<int> eq_next(n, n);
+    cur_eq = n;
+    for (int i = n - 1; i >= 0; i--) {
+        eq_next[i] = cur_eq;
+        if (a[i] == b[i]) cur_eq = i;
+    }
+
+    int ans = total;
+    for (int d = 0; d < n; d++) {
+        int cur = total;
+        if (can[d]) cur--;
+
+        for (int i : rev_dep[d]) {
+            cur--;
+            int t1 = (next_eq[i] == d) ? eq_next[d] : next_eq[i];
+            int t2 = (next_ab[i] == d) ? get_next(pos_a, b[i], max(i, d)) : next_ab[i];
+            int t3 = (next_ba[i] == d) ? get_next(pos_b, a[i], max(i, d)) : next_ba[i];
+            if (min({t1, t2, t3}) < n) cur++;
+        }
+        ans = max(ans, cur);
+    }
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

@@ -1,0 +1,27 @@
+#include <iostream>
+#include <algorithm>
+
+int main() {
+    int t;
+    std::cin >> t;
+    while (t--) {
+        long long k, a, b, x, y;
+        std::cin >> k >> a >> b >> x >> y;
+
+        int count = 0;
+
+        while (k >= std::min(a, b)) {
+            if (k >= b && (k < a || y < x)) {
+                k -= y;
+                count++;
+            } else if (k >= a) {
+                k -= x;
+                count++;
+            } else {
+                break;
+            }
+        }
+        std::cout << count << '\n';
+    }
+    return 0;
+}

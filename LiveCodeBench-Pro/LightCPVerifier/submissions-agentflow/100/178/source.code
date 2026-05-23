@@ -1,0 +1,92 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    // 预处理每个元素的最后出现位置
+    vector<int> last_pos(n + 1, -1);
+    for (int i = 0; i < n; i++) {
+        last_pos[a[i]] = i;
+    }
+    
+    // 从左到右扫描
+    int segments = 0;
+    int i = 0;
+    vector<int> last_seen(n + 1, -1); // 元素最后一次被包含在当前段中的时间戳
+    int current_time = 0;
+    vector<bool> is_required(n + 1, false);
+    int required_count = 0;
+    
+    while (i < n) {
+        segments++;
+        current_time++;
+        
+        if (i == n - 1) break;
+        
+        int min_last_in_current = n;
+        int remaining_required = required_count;
+        
+        int j = i;
+        while (j < n) {
+            int val = a[j];
+            
+            // 如果这个元素在当前段中还没出现过
+            if (last_seen[val] < current_time) {
+                last_seen[val] = current_time;
+                min_last_in_current = min(min_last_in_current, last_pos[val]);
+                
+                // 如果这个值是 required 的
+                if (is_required[val]) {
+                    remaining_required--;
+                }
+            }
+            
+            // 如果所有 required 元素都在当前段中，并且当前段的所有元素都在 j+1 之后出现
+            if (remaining_required == 0 && min_last_in_current >= j + 1) {
+                // 可以在这里划分 // 更新 required 集合为当前段中的元素
+                // 首先重置 is_required
+                fill(is_required.begin(), is_required.end(), false);
+                required_count = 0;
+                
+                // 标记当前段中的所有不同元素为 required
+                for (int k = i; k <= j; k++) {
+                    int v = a[k];
+                    if (last_seen[v] == current_time && !is_required[v]) {
+                        is_required[v] = true;
+                        required_count++;
+                    }
+                }
+                
+                i = j + 1;
+                break;
+            }
+            
+            j++;
+            if (j == n) {
+                i = n;
+                break;
+            }
+        }
+    }
+    
+    cout << segments << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

@@ -1,0 +1,149 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <cstring>
+#include <unordered_set>
+#include <functional>
+using namespace std;
+
+struct Edge {
+    int u, v;
+    Edge(int u, int v) : u(u), v(v) {}
+};
+
+// Function to find one endpoint of the diameter in the current active subgraph
+pair<int, int> find_farthest(const vector<unordered_set<int>>& new_adj, const unordered_set<int>& active, int start, int n) {
+    if (active.empty()) return {-1, -1};
+    queue<int> q;
+    vector<int> dist(n + 1, -1); // fix: use n+1
+    q.push(start);
+    dist[start] = 0;
+    int farthest = start;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        if (dist[u] > dist[farthest]) farthest = u;
+        for (int v : new_adj[u]) {
+            if (active.count(v) && dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+    return {farthest, dist[farthest]};
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<Edge> edges;
+        vector<vector<int>> orig_adj(n + 1);
+
+        for (int i = 0; i < n - 1; i++) {
+            int u, v;
+            cin >> u >> v;
+            edges.emplace_back(u, v);
+            orig_adj[u].push_back(v);
+            orig_adj[v].push_back(u);
+        }
+
+        long long best_score = -1; // use long to avoid overflow
+        vector<int> best_colors(n + 1, 0);
+        pair<int, int> best_edge_choice = {edges[0].u, edges[0].v};
+
+        // Iterate over each edge to delete
+        for (const Edge& e : edges) {
+            int a = min(e.u, e.v);
+            int b = max(e.u, e.v); // remove b
+
+            // Build new graph: nodes except b
+            vector<unordered_set<int>> new_adj(n + 1);
+            unordered_set<int> nodes;
+            for (int i = 1; i <= n; i++) {
+                if (i == b) continue;
+                nodes.insert(i);
+                for (int neighbor : orig_adj[i]) {
+                    if (neighbor == b) continue;
+                    new_adj[i].insert(neighbor);
+                    new_adj[neighbor].insert(i);
+                }
+            }
+
+            // Attach all neighbors of b (except a) to a
+            for (int w : orig_adj[b]) {
+                if (w == a) continue;
+                new_adj[a].insert(w);
+                new_adj[w].insert(a);
+            }
+
+            // Now compute the edge contribution sum
+            int total_nodes = n - 1;
+            long long score = 0;
+
+            // DFS to compute subtree sizes and accumulate score
+            vector<int> sz_vec(n + 1, 0);
+            vector<bool> visited(n + 1, false);
+            function<void(int, int)> dfs2 = [&](int u, int parent) {
+                visited[u] = true;
+                sz_vec[u] = 1;
+                for (int v : new_adj[u]) {
+                    if (v == parent) continue;
+                    if (!visited[v]) {
+                        dfs2(v, u);
+                        sz_vec[u] += sz_vec[v];
+                        int child_sz = sz_vec[v];
+                        score += min(child_sz, total_nodes - child_sz);
+                    }
+                }
+            };
+
+            for (int node : nodes) {
+                if (!visited[node]) {
+                    dfs2(node, -1);
+                    break;
+                }
+            }
+
+            // Update best
+            if (score > best_score) {
+                best_score = score;
+                best_edge_choice = {e.u, e.v};
+
+                // Create coloring via greedy diameter matching
+                unordered_set<int> active = nodes;
+                vector<int> color_of(n + 1, 0);
+                int color_id = 1;
+
+                while (active.size() >= 2) {
+                    int start = *active.begin();
+                    auto [u1, d1] = find_farthest(new_adj, active, start, n);
+                    auto [u2, d2] = find_farthest(new_adj, active, u1, n);
+
+                    // Pair u1 and u2
+                    color_of[u1] = color_id;
+                    color_of[u2] = color_id;
+                    active.erase(u1);
+                    active.erase(u2);
+                    color_id++;
+                }
+
+                best_colors = color_of;
+            }
+        }
+
+        // Output best edge
+        cout << best_edge_choice.first << " " << best_edge_choice.second << "\n";
+        for (int i = 1; i <= n; i++) {
+            cout << best_colors[i] << " ";
+        }
+        cout << "\n";
+    }
+
+    return 0;
+}

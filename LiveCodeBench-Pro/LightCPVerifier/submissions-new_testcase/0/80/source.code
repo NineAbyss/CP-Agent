@@ -1,0 +1,35 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        string s;
+        cin >> s;
+        
+        int cnt0 = 0, cnt1 = 0;
+        for (char c : s) {
+            if (c == '0') cnt0++;
+            else cnt1++;
+        }
+        
+        int m = n / 2;
+        int g_min = max(0, max(m - cnt0, m - cnt1));
+        int g_max = cnt0 / 2 + cnt1 / 2;
+        
+        if (k >= g_min && k <= g_max && (k - g_min) % 2 == 0) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    return 0;
+}

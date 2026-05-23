@@ -1,0 +1,76 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+bool canTransform(const vector<int>& a, const vector<int>& b, int n, int m) {
+    // Since both arrays contain all integers from 1 to m, they must be permutations of each other
+    // Initialize counters for both arrays
+    vector<int> countA(m+1, 0), countB(m+1, 0);
+    
+    for (int i = 0; i < n; ++i) {
+        countA[a[i]]++;
+        countB[b[i]]++;
+    }
+    
+    // Check if both counts are identical
+    for (int i = 1; i <= m; ++i) {
+        if (countA[i] != countB[i]) {
+            return false;
+        }
+    }
+    
+    // Since both arrays contain the same set of elements with the same frequency
+    // We just need to prove that we can rearrange `a` to become `b` by cyclic shifts and swaps when necessary
+    // Try to find a matching subsequence using allowed transformations
+    vector<int> pos(m+1, -1);
+    
+    // Store the first position of each number in array a
+    for (int i = 0; i < n; ++i) {
+        if (pos[a[i]] == -1) {
+            pos[a[i]] = i;
+        }
+    }
+    
+    // Check if we can rotate and swap to match the target `b`
+    int lastMatched = pos[b[0]];
+    // Using a greedy check with cyclic shift validation
+    for (int i = 1; i < n; ++i) {
+        int targetIndex = (pos[b[i]] - lastMatched + n) % n;
+        if (abs(b[i] - a[(lastMatched + targetIndex) % n]) < 2) {
+            return false;
+        }
+        lastMatched = pos[b[i]];
+    }
+    
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<int> a(n), b(n);
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        
+        for (int i = 0; i < n; ++i) {
+            cin >> b[i];
+        }
+        
+        if (canTransform(a, b, n, m)) {
+            cout << "YES\n";
+        } else {
+            cout << "NO\n";
+        }
+    }
+    
+    return 0;
+}

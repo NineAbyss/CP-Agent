@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 150005;
+
+vector<int> tree[MAXN];
+bool has_apple[MAXN];
+int n;
+
+struct Path {
+    int length; // Path length
+    int start;  // Path start node
+    int end;    // Path end node
+
+    // Operator to maintain path ordering
+    bool operator<(const Path& other) const {
+        if (length != other.length) return length > other.length;
+        if (start != other.start) return start > other.start;
+        return end > other.end;
+    }
+};
+
+// Explore paths via DFS starting from higher node indices
+void dfs(int node, int parent, vector<int>& curr_path, vector<Path>& paths) {
+    curr_path.push_back(node);
+
+    for (int neighbor : tree[node]) {
+        if (neighbor != parent && has_apple[neighbor]) {
+            dfs(neighbor, node, curr_path, paths);
+        }
+    }
+
+    // If path is valid, store in paths vector for processing
+    if (curr_path.size() > 1) {
+        paths.emplace_back(Path{static_cast<int>(curr_path.size()), curr_path.front(), curr_path.back()});
+    }
+
+    // Mark path as processed, clear apples
+    for (int x : curr_path) {
+        has_apple[x] = false;
+    }
+}
+
+// Solve function to manage sequence arrangement and generate output
+void solve() {
+    vector<Path> paths;
+    fill(has_apple, has_apple + n + 1, true);
+
+    // DFS traversal for path building dynamically
+    for (int i = n; i >= 1; --i) {
+        if (has_apple[i]) {
+            vector<int> path;
+            dfs(i, -1, path, paths);
+        }
+    }
+
+    // Sort paths to ensure lexicographical order
+    sort(paths.begin(), paths.end());
+
+    // Output each path in sequence
+    for (const Path& path : paths) {
+        cout << path.length << " " << path.start << " " << path.end << " ";
+    }
+    cout << '\n';
+}
+
+// Main function accepting input and dispatching execution protocols
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int t;
+    cin >> t;  // Total number of test cases
+
+    while (t--) {
+        cin >> n;  // Number of nodes in the current test case
+        for (int i = 1; i <= n; ++i) {
+            tree[i].clear(); // Clear previous data
+        }
+        for (int i = 0; i < n - 1; ++i) {
+            int u, v;
+            cin >> u >> v;
+            tree[u].push_back(v);
+            tree[v].push_back(u);
+        }
+        solve();  // Execute solution handling per defined structure
+    }
+    return 0;
+}

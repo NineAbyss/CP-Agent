@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve(int l, int r) {
+    string L = to_string(l);
+    string R = to_string(r);
+    int n = L.size();
+    // dp[pos][tight_l][tight_r] = min cost from pos onward
+    vector<vector<vector<int>>> dp(n+1, vector<vector<int>>(2, vector<int>(2, -1)));
+
+    function<int(int, int, int)> dfs = [&](int pos, int tl, int tr) {
+        if (pos == n) return 0;
+        if (dp[pos][tl][tr] != -1) return dp[pos][tl][tr];
+        int lo = tl ? (L[pos] - '0') : 0;
+        int hi = tr ? (R[pos] - '0') : 9;
+        int res = INT_MAX;
+        for (int d = lo; d <= hi; d++) {
+            int cost = 0;
+            if (d == (L[pos]-'0')) cost++;
+            if (d == (R[pos]-'0')) cost++;
+            int ntl = tl && (d == lo);
+            int ntr = tr && (d == hi);
+            int rest = dfs(pos+1, ntl, ntr);
+            if (rest != INT_MAX) {
+                res = min(res, cost + rest);
+            }
+        }
+        return dp[pos][tl][tr] = res;
+    };
+
+    return dfs(0, 1, 1);
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int l, r;
+        cin >> l >> r;
+        cout << solve(l, r) << '\n';
+    }
+    return 0;
+}

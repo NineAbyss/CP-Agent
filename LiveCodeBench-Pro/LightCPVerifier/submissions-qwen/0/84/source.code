@@ -1,0 +1,122 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+void solve() {
+    ll n, k, x;
+    cin >> n >> k >> x;
+    vector<ll> a(n);
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+    }
+
+    ll total_sum = accumulate(a.begin(), a.end(), 0LL);
+    ll full_cycles = k;
+    ll remaining_elements = 0;
+
+    // If x is larger than the sum of the entire array b, then no segment can achieve it.
+    if (x > total_sum * k) {
+        cout << 0 << '\n';
+        return;
+    }
+
+    // Precompute prefix sums for one cycle
+    vector<ll> prefix(n + 1);
+    for (int i = 0; i < n; ++i) {
+        prefix[i + 1] = prefix[i] + a[i];
+    }
+
+    // We want to count how many starting positions l (1-indexed in b) have some r >= l such that sum >= x. // Since b is periodic with period n, we can analyze each starting offset within one cycle.
+
+    ll ans = 0;
+
+    // For each starting position within the first cycle (i.e., l mod n), we determine the minimal number of elements // needed from that start to reach at least x.
+    for (int start = 0; start < n; ++start) {
+        // Consider all segments starting at positions: start, start + n, start + 2n, ..., up to k-1 times
+        // We want to know: for how many starting positions l = start + i*n (0 <= i < k) does there exist an r >= l such that sum >= x?
+
+        // We'll compute the minimum length (in terms of number of elements) needed from this start to get sum >= x. // But note: we can wrap around multiple cycles.
+
+        // First, check if even the full remaining array (from this start to end of b) has sum < x -> then no such r exists. // However, since total_sum * k >= x (checked above), and we are only considering starts where total_sum * k >= x,
+        // but depending on start, the available sum might be less? Actually no: because the array is cyclic and full sum is large enough, // but we must consider partial availability.
+
+        // Instead, we can do: for a fixed start (within one cycle), what is the minimal number of complete cycles plus extra elements // needed to reach x?
+
+        // Let's define: // We are starting at index 'start' in the base array. The segment can go through several full cycles and then some suffix.
+
+        // Case 1: if the sum from 'start' to end of cycle + some full cycles + prefix of next cycles >= x
+
+        // We can simulate: try 0, 1, ..., up to k - (start_cycle_index) cycles? But better to use math.
+
+        // Let’s define required = x // First, take the suffix from `start` to end of first occurrence: sum1 = prefix[n] - prefix[start]
+        // Then, each full cycle adds total_sum. // Then, we may need a prefix of the next cycle.
+
+        // How many full cycles after the initial suffix do we need?
+        ll rem = x;
+        ll cycles_used = 0;
+        ll current_sum = 0;
+
+        // First, use the tail of the first block
+        ll tail_sum = prefix[n] - prefix[start];
+        if (tail_sum >= rem) {
+            // Then within the first block (starting at `start`) we can find a segment // Now, we need to find the minimal extension from `start` such that sum >= x
+            // Binary search on the length in the first block
+            int lo = 1, hi = n - start;
+            while (lo < hi) {
+                int mid = (lo + hi) / 2;
+                ll s = prefix[start + mid] - prefix[start];
+                if (s >= x) {
+                    hi = mid;
+                } else {
+                    lo = mid + 1;
+                }
+            }
+            // So any starting block index: start + i*n for i from 0 to k-1 will work, because even in the last block, // we have at least (n - start) elements, which is >= lo, so the segment exists.
+            ans += k; // all k copies of this start work
+            continue;
+        }
+
+        rem -= tail_sum;
+        cycles_used += 1; // used the tail
+
+        // Now use full cycles
+        if (rem > 0) {
+            ll full_cycles_needed = (rem + total_sum - 1) / total_sum;
+            cycles_used += full_cycles_needed;
+            rem -= full_cycles_needed * total_sum;
+
+            // If after full cycles, rem <= 0, then we don't need extra prefix // Otherwise, we need a prefix of length such that prefix[len] >= rem
+            if (rem > 0) {
+                // Find minimal len such that prefix[len] >= rem
+                int len = lower_bound(prefix.begin(), prefix.end(), rem) - prefix.begin();
+                cycles_used += 1; // one more cycle for the prefix
+            }
+        }
+
+        // Now, cycles_used is the total number of cycles (blocks of size n) needed from the starting block
+        // So the starting block must be early enough: if we start at block i (0-indexed), then we need i + cycles_used <= k
+        // => i <= k - cycles_used // Number of valid i: max(0, k - cycles_used + 1)? Wait: i from 0 to k-1, so i <= k - cycles_used => count = max(0, k - cycles_used + 1) ???
+
+        // Example: k=3, cycles_used=2 -> i can be 0 or 1 -> count = 2 = 3 - 2 + 1? -> 2, yes.
+        // But wait: if cycles_used = 4, then no i satisfies i+4 <= k=3 -> count = 0.
+
+        ll valid_starts = max(0LL, k - cycles_used + 1);
+        ans += valid_starts;
+    }
+
+    cout << ans << '\n';
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+
+    return 0;
+}

@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, m, k;
+        cin >> n >> m >> k;
+        vector<string> grid(n);
+        for (int i = 0; i < n; i++) {
+            cin >> grid[i];
+        }
+
+        // Precompute prefix sums for gold ore positions
+        vector<vector<int>> gold(n, vector<int>(m, 0));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                gold[i][j] = (grid[i][j] == 'g') ? 1 : 0;
+            }
+        }
+
+        // Build 2D prefix sum array
+        vector<vector<int>> pref(n + 1, vector<int>(m + 1, 0));
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                pref[i+1][j+1] = pref[i][j+1] + pref[i+1][j] - pref[i][j] + gold[i][j];
+            }
+        }
+
+        auto getSum = [&](int r1, int c1, int r2, int c2) {
+            if (r1 > r2 || c1 > c2) return 0;
+            r1 = max(r1, 0); c1 = max(c1, 0);
+            r2 = min(r2, n-1); c2 = min(c2, m-1);
+            return pref[r2+1][c2+1] - pref[r1][c2+1] - pref[r2+1][c1] + pref[r1][c1];
+        };
+
+        int best = 0;
+
+        // Try placing dynamite in every empty cell
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                if (grid[i][j] != '.') continue;
+
+                // The explosion affects a square of side (2k+1), centered at (i, j)
+                int half = k;
+                int r1 = i - half, c1 = j - half;
+                int r2 = i + half, c2 = j + half;
+
+                // Count total gold in the full square
+                int totalGold = getSum(r1, c1, r2, c2);
+
+                // Subtract gold strictly inside (not on boundary) // Inner rectangle: from (r1+1, c1+1) to (r2-1, c2-1)
+                int innerGold = getSum(r1+1, c1+1, r2-1, c2-1);
+                int boundaryGold = totalGold - innerGold;
+
+                best = max(best, boundaryGold);
+            }
+        }
+
+        cout << best << '\n';
+    }
+
+    return 0;
+}

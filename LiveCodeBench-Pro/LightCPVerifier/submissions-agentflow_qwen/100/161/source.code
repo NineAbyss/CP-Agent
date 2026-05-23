@@ -1,0 +1,101 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n; ll k;
+        cin >> n >> k;
+
+        vector<ll> p(n), d(n);
+        for (int i = 0; i < n; i++) cin >> p[i];
+        for (int i = 0; i < n; i++) cin >> d[i];
+
+        int q;
+        cin >> q;
+        vector<ll> a(q);
+        for (int i = 0; i < q; i++) cin >> a[i];
+
+        map<ll, int> pos_to_index;
+        for (int i = 0; i < n; i++) {
+            pos_to_index[p[i]] = i;
+        }
+
+        for (ll start : a) {
+            ll cur = start;
+            ll tm = 0;
+            int dir = 1;
+
+            auto it = lower_bound(p.begin(), p.end(), cur);
+            if (dir == 1) {
+                if (it != p.end()) {
+                    ll next_pos = *it;
+                    ll dt = next_pos - cur;
+                    tm += dt;
+                    cur = next_pos;
+                } else {
+                    cout << "YES\n";
+                    continue;
+                }
+            } else {
+                if (it != p.begin()) {
+                    --it;
+                    ll next_pos = *it;
+                    ll dt = cur - next_pos;
+                    tm += dt;
+                    cur = next_pos;
+                } else {
+                    cout << "YES\n";
+                    continue;
+                }
+            }
+
+            set<tuple<int, ll, int>> seen;
+            int idx = pos_to_index[cur];
+
+            while (true) {
+                ll r = tm % k;
+                bool is_red = (r == d[idx]);
+                if (is_red) dir = -dir;
+
+                auto state = make_tuple(idx, r, dir);
+                if (seen.count(state)) {
+                    cout << "NO\n";
+                    break;
+                }
+                seen.insert(state);
+
+                if (dir == 1) {
+                    if (idx == n-1) {
+                        cout << "YES\n";
+                        break;
+                    }
+                    int nxt_idx = idx + 1;
+                    ll dist = p[nxt_idx] - cur;
+                    tm += dist;
+                    cur = p[nxt_idx];
+                    idx = nxt_idx;
+                } else {
+                    if (idx == 0) {
+                        cout << "YES\n";
+                        break;
+                    }
+                    int nxt_idx = idx - 1;
+                    ll dist = cur - p[nxt_idx];
+                    tm += dist;
+                    cur = p[nxt_idx];
+                    idx = nxt_idx;
+                }
+            }
+        }
+    }
+
+    return 0;
+}

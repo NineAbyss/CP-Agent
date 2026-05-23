@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <unordered_set>
+#include <algorithm>
+using namespace std;
+
+// Function checks if it is possible to make k subarrays where the minimum MEX is at least `x`
+bool can_form_k_subarrays_with_mex(vector<int>& a, int n, int k, int x) {
+    int subarrays_formed = 0, current_unique = 0;
+    unordered_set<int> elements_in_segment;
+    
+    for (int i = 0; i < n; ++i) {
+        if (a[i] < x && elements_in_segment.find(a[i]) == elements_in_segment.end()) {
+            elements_in_segment.insert(a[i]);
+            current_unique++;
+        }
+        
+        // If we have all required unique numbers up to x-1
+        if (current_unique == x) {
+            subarrays_formed++;
+            elements_in_segment.clear();
+            current_unique = 0;
+        }
+    }
+    
+    return subarrays_formed >= k;
+}
+
+int find_max_min_mex(vector<int>& a, int n, int k) {
+    // Binary search for the maximum value of minimum MEX possible
+    int left = 0, right = n + 1;  // Possible MEX ranges
+    while (left < right) {
+        int mid = (left + right + 1) / 2;
+        if (can_form_k_subarrays_with_mex(a, n, k, mid)) {
+            left = mid;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return left;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> a[i];
+        }
+        
+        cout << find_max_min_mex(a, n, k) << endl;
+    }
+    
+    return 0;
+}

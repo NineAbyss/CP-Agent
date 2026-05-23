@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+const int MAX_TOTAL = 500005; // 根据题目约束，所有测试的 c_i 总和不超过 5e5
+
+vector<long long> fact, invfact;
+
+long long modpow(long long a, long long e) {
+    long long res = 1;
+    while (e) {
+        if (e & 1) res = res * a % MOD;
+        a = a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+void precompute(int n) {
+    fact.resize(n + 1);
+    invfact.resize(n + 1);
+    fact[0] = 1;
+    for (int i = 1; i <= n; i++) fact[i] = fact[i-1] * i % MOD;
+    invfact[n] = modpow(fact[n], MOD-2);
+    for (int i = n-1; i >= 0; i--) invfact[i] = invfact[i+1] * (i+1) % MOD;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int t;
+    cin >> t;
+    vector<vector<int>> tests(t, vector<int>(26));
+    vector<int> ns(t);
+    int max_n = 0;
+    for (int tc = 0; tc < t; tc++) {
+        int n = 0;
+        for (int i = 0; i < 26; i++) {
+            cin >> tests[tc][i];
+            n += tests[tc][i];
+        }
+        ns[tc] = n;
+        if (n > max_n) max_n = n;
+    }
+    
+    precompute(max_n);
+    
+    for (int tc = 0; tc < t; tc++) {
+        auto& c = tests[tc];
+        int n = ns[tc];
+        int odd = (n + 1) / 2;
+        int even = n / 2;
+        
+        vector<long long> dp(odd + 1, 0);
+        dp[0] = 1;
+        
+        for (int i = 0; i < 26; i++) {
+            if (c[i] == 0) continue;
+            long long inv = invfact[c[i]];
+            // 放偶数：dp[o] 变为 dp[o] * inv
+            for (int o = 0; o <= odd; o++) {
+                dp[o] = dp[o] * inv % MOD;
+            }
+            // 放奇数：从后往前加
+            if (c[i] <= odd) {
+                for (int o = odd - c[i]; o >= 0; o--) {
+                    dp[o + c[i]] = (dp[o + c[i]] + dp[o]) % MOD;
+                }
+            }
+        }
+        
+        long long ans = dp[odd] * fact[odd] % MOD * fact[even] % MOD;
+        cout << ans << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int ask(int pos) {
+    cout << "? " << pos << endl;
+    int x;
+    cin >> x;
+    return x;
+}
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    
+    if (k == 1) {
+        cout << "! -1" << endl;
+        return;
+    }
+    
+    vector<int> known(n + 1, -1);
+    // 查询前k个位置
+    for (int i = 1; i <= k; i++) {
+        known[i] = ask(i);
+    }
+    // 查询后k个位置
+    for (int i = n - k + 1; i <= n; i++) {
+        if (known[i] == -1) {
+            known[i] = ask(i);
+        }
+    }
+    
+    // 检查是否有值在前后都出现且距离 < k
+    map<int, vector<int>> mp;
+    for (int i = 1; i <= n; i++) {
+        if (known[i] != -1) {
+            mp[known[i]].push_back(i);
+        }
+    }
+    
+    int p = -1;
+    for (auto& [val, pos] : mp) {
+        sort(pos.begin(), pos.end());
+        // 检查是否有两个位置一个在前k个，一个在后k个，且距离 < k
+        bool has_front = false, has_back = false;
+        for (int x : pos) {
+            if (x <= k) has_front = true;
+            if (x >= n - k + 1) has_back = true;
+        }
+        if (has_front && has_back) {
+            // 找距离<k的对
+            for (int a = 0; a < pos.size(); a++) {
+                for (int b = a + 1; b < pos.size(); b++) {
+                    if (pos[b] - pos[a] < k) {
+                        p = min(pos[a], pos[b]);
+                        break;
+                    }
+                }
+                if (p != -1) break;
+            }
+        }
+        if (p != -1) break;
+    }
+    
+    if (p == -1) {
+        cout << "! -1" << endl;
+    } else {
+        cout << "! " << p << " " << n - p << endl;
+    }
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

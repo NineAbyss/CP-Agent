@@ -1,0 +1,68 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        
+        vector<long long> a(m);
+        for (int i = 0; i < m; i++) {
+            cin >> a[i];
+        }
+        
+        // Extract floor numbers
+        vector<int> floor(m);
+        for (int i = 0; i < m; i++) {
+            floor[i] = a[i] / 100;
+        }
+        
+        int min_floor = *min_element(floor.begin(), floor.end());
+        int max_floor = *max_element(floor.begin(), floor.end());
+        
+        if (min_floor == max_floor) {
+            // All same floor - just assign first n classrooms
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < 6; j++) {
+                    cout << a[i];
+                    if (j < 5) cout << " ";
+                }
+                cout << "\n";
+            }
+        } else {
+            // Separate into min and max floor classrooms
+            vector<long long> low, high;
+            for (int i = 0; i < m; i++) {
+                if (floor[i] == min_floor) {
+                    low.push_back(a[i]);
+                } else if (floor[i] == max_floor) {
+                    high.push_back(a[i]);
+                }
+            }
+            
+            sort(low.begin(), low.end());
+            sort(high.begin(), high.end());
+            
+            // Create schedule for each group
+            for (int i = 0; i < n; i++) {
+                // Use cycling through available classrooms
+                long long low1 = low[i % low.size()];
+                long long low2 = low[(i+1) % low.size()];
+                long long high1 = high[i % high.size()];
+                long long high2 = high[(i+1) % high.size()];
+                
+                // Start with low-high-low-high pattern, then repeat last two
+                cout << low1 << " " << high1 << " " << low2 << " " << high2 << " " << low2 << " " << high2;
+                cout << "\n";
+            }
+        }
+    }
+    
+    return 0;
+}

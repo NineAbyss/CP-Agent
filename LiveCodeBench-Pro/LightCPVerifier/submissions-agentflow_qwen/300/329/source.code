@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int INF = 1e9;
+
+int min_ops(int n, int k, unordered_map<int, int>& cache) {
+    if (cache.find(n) != cache.end()) {
+        return cache[n];
+    }
+    if (n == 1) {
+        return cache[n] = 0;
+    }
+    if (n <= k) {
+        return cache[n] = 1;
+    }
+    int res = INF;
+    int sqrt_n = sqrt(n);
+    for (int i = 1; i <= sqrt_n; ++i) {
+        if (n % i == 0) {
+            int d1 = i;
+            int d2 = n / i;
+            // Use d1 as a factor
+            if (d1 >= 2 && d1 <= k) {
+                int rest = n / d1; // d2
+                int ops_rest = min_ops(rest, k, cache);
+                if (ops_rest < INF) {
+                    res = min(res, 1 + ops_rest);
+                }
+            }
+            // Use d2 as a factor, if d2 != d1
+            if (d2 >= 2 && d2 <= k) {
+                int rest = n / d2; // d1
+                int ops_rest = min_ops(rest, k, cache);
+                if (ops_rest < INF) {
+                    res = min(res, 1 + ops_rest);
+                }
+            }
+        }
+    }
+    return cache[n] = res;
+}
+
+int gcd(int a, int b) {
+    if (b == 0) return a;
+    return gcd(b, a % b);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int x, y, k;
+        cin >> x >> y >> k;
+
+        if (x == y) {
+            cout << 0 << '\n';
+            continue;
+        }
+
+        int g = gcd(x, y);
+        int P = y / g;
+        int Q = x / g;
+
+        unordered_map<int, int> cache;
+        int ops_P = min_ops(P, k, cache);
+        int ops_Q = min_ops(Q, k, cache);
+
+        if (ops_P >= INF || ops_Q >= INF) {
+            cout << -1 << '\n';
+        } else {
+            cout << ops_P + ops_Q << '\n';
+        }
+    }
+    return 0;
+}

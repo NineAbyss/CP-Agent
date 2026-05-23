@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9+7;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        vector<int> segs;
+        char cur = s[0];
+        int len = 1;
+        for (int i = 1; i < n; i++) {
+            if (s[i] == cur) len++;
+            else {
+                segs.push_back(len);
+                cur = s[i];
+                len = 1;
+            }
+        }
+        segs.push_back(len);
+        int k = segs.size();
+        if (k == 1) {
+            cout << (n - 1) % MOD << '\n';
+            continue;
+        }
+        vector<long long> f(k+1, 0);
+        f[0] = 1;
+        f[1] = segs[0] - 1;
+        for (int i = 2; i <= k; i++) {
+            long long val = f[i-1] * segs[i-1] % MOD;
+            val = (val + f[i-2] * ((segs[i-2]-1) * (segs[i-1]-1) % MOD)) % MOD;
+            if (i >= 3) {
+                val = (val + 1LL * (segs[i-3]-1) * (segs[i-2]-1) % MOD * (segs[i-1]-1)) % MOD;
+            }
+            // special adjustment
+            if (segs[i-1] == 1) {
+                val = (val + 1) % MOD;
+            }
+            f[i] = val;
+        }
+        cout << f[k] % MOD << '\n';
+    }
+    return 0;
+}

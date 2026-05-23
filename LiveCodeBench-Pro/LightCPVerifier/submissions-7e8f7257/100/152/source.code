@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long beauty(const vector<int>& b) {
+    int n = b.size();
+    long long ans = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = i; j < n; j++) {
+            int len = j - i + 1;
+            if (len % 2 == 1) {
+                ans += max(b[i], b[j]);
+            } else {
+                ans += min(b[i], b[j]);
+            }
+        }
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        vector<bool> used(n+1, false);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+            if (a[i] != 0) used[a[i]] = true;
+        }
+        vector<int> rem;
+        for (int v = 1; v <= n; v++) {
+            if (!used[v]) rem.push_back(v);
+        }
+        // 尝试两种填充方式：递增和递减
+        vector<int> b1 = a, b2 = a;
+        int idx = 0;
+        for (int i = 0; i < n; i++) {
+            if (b1[i] == 0) {
+                b1[i] = rem[idx++];
+            }
+        }
+        idx = rem.size() - 1;
+        for (int i = 0; i < n; i++) {
+            if (b2[i] == 0) {
+                b2[i] = rem[idx--];
+            }
+        }
+        long long ans = max(beauty(b1), beauty(b2));
+        cout << ans << '\n';
+    }
+    return 0;
+}

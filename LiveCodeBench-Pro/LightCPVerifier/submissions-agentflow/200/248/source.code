@@ -1,0 +1,131 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n+1), b(n+1);
+    for (int i=1; i<=n; i++) cin >> a[i];
+    for (int i=1; i<=n; i++) cin >> b[i];
+    
+    // 计算映射 f: f[a[i]] = b[i]
+    vector<int> pos_a(n+1);
+    for (int i=1; i<=n; i++) pos_a[a[i]] = i;
+    vector<int> f(n+1);
+    for (int x=1; x<=n; x++) f[x] = b[pos_a[x]];
+    
+    // 检查 f 是否是对合
+    bool involution = true;
+    for (int i=1; i<=n; i++) {
+        if (f[f[i]] != i) {
+            involution = false;
+            break;
+        }
+    }
+    if (!involution) {
+        cout << -1 << '\n';
+        return;
+    }
+    
+    // 检查不动点条件
+    int fixed = 0;
+    for (int i=1; i<=n; i++) if (f[i] == i) fixed++;
+    if (n % 2 == 0) {
+        if (fixed != 0) {
+            cout << -1 << '\n';
+            return;
+        }
+    } else {
+        if (fixed != 1) {
+            cout << -1 << '\n';
+            return;
+        }
+    }
+    
+    // 如果已经满足条件，输出0
+    bool already = true;
+    for (int i=1; i<=n; i++) {
+        if (a[i] != b[n+1-i]) {
+            already = false;
+            break;
+        }
+    }
+    if (already) {
+        cout << 0 << '\n';
+        return;
+    }
+    
+    // 构建目标配对
+    vector<int> target_a(n+1), target_b(n+1);
+    vector<bool> used(n+1, false);
+    // 处理不动点
+    if (n % 2 == 1) {
+        int mid = (n+1)/2;
+        int u = -1;
+        for (int x=1; x<=n; x++) if (f[x] == x) { u = x; break; }
+        target_a[mid] = u;
+        target_b[mid] = u;
+        used[u] = true;
+    }
+    // 处理2-环
+    int idx = 1;
+    for (int u=1; u<=n; u++) {
+        if (used[u]) continue;
+        int v = f[u];
+        if (u == v) continue;
+        used[u] = used[v] = true;
+        // 找到一对对称位置
+        while (idx <= n && target_a[idx] != 0) idx++;
+        int i = idx;
+        int j = n+1-i;
+        target_a[i] = u;
+        target_b[i] = v;
+        target_a[j] = v;
+        target_b[j] = u;
+    }
+    
+    // 将当前配对转换为目标配对
+    vector<pair<int,int>> ops;
+    vector<int> cur_a = a, cur_b = b;
+    // 创建映射从配对到位置
+    map<pair<int,int>, int> mp;
+    for (int k=1; k<=n; k++) {
+        mp[{cur_a[k], cur_b[k]}] = k;
+    }
+    
+    for (int i=1; i<=n; i++) {
+        if (cur_a[i] == target_a[i] && cur_b[i] == target_b[i]) continue;
+        pair<int,int> need = {target_a[i], target_b[i]};
+        auto it = mp.find(need);
+        if (it == mp.end()) {
+            // 不应该发生
+            cout << -1 << '\n';
+            return;
+        }
+        int j = it->second;
+        if (i == j) continue;
+        ops.push_back({min(i,j), max(i,j)});
+        // 更新映射
+        mp[{cur_a[i], cur_b[i]}] = j;
+        mp[{cur_a[j], cur_b[j]}] = i;
+        swap(cur_a[i], cur_a[j]);
+        swap(cur_b[i], cur_b[j]);
+    }
+    
+    // 输出操作
+    cout << ops.size() << '\n';
+    for (auto& op : ops) {
+        cout << op.first << ' ' << op.second << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

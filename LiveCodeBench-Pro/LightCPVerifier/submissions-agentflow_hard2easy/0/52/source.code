@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<long long> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    
+    // 计算前缀最大值
+    vector<long long> pref_max(n);
+    pref_max[0] = a[0];
+    for (int i = 1; i < n; i++) {
+        pref_max[i] = max(pref_max[i-1], a[i]);
+    }
+    
+    // 计算后缀和并输出答案
+    long long suffix_sum = 0;
+    for (int i = n-1; i >= 0; i--) {
+        suffix_sum += a[i];
+        long long ans = suffix_sum;
+        if (i > 0) {
+            long long diff = pref_max[i-1] - a[i];
+            if (diff > 0) {
+                ans += diff;
+            }
+        }
+        
+        cout << ans;
+        if (i > 0) cout << " ";
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}

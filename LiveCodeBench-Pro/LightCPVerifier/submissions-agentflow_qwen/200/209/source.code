@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, d;
+        cin >> n >> d;
+        vector<ll> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        if (d == 1) {
+            cout << accumulate(a.begin(), a.end(), 0LL) << '\n';
+            continue;
+        }
+        if (d >= n) {
+            cout << *max_element(a.begin(), a.end()) << '\n';
+            continue;
+        }
+
+        vector<pair<ll, int>> ord;
+        for (int i = 0; i < n; i++) {
+            ord.push_back({a[i], i});
+        }
+        sort(ord.begin(), ord.end(), greater<pair<ll, int>>());
+
+        set<int> active;
+        active.insert(-1); 
+        active.insert(n);
+
+        ll ans = 0;
+        int i = 0;
+        while (i < n) {
+            ll h = ord[i].first;
+            int j = i;
+            while (j < n && ord[j].first == h) {
+                active.insert(ord[j].second);
+                j++;
+            }
+
+            // Greedy covering using iterator skip
+            int ops = 0;
+            auto it = active.begin();
+            while (it != active.end()) {
+                int pos = *it;
+                if (pos < 0) { it++; continue; }
+                if (pos >= n) break;
+                ops++;
+                int R = pos + d - 1;
+                while (it != active.end() && *it <= R) {
+                    it++;
+                }
+            }
+
+            ll next_val = (j < n) ? ord[j].first : 0;
+            ans += 1LL * ops * (h - next_val);
+
+            i = j;
+        }
+        cout << ans << '\n';
+    }
+    return 0;
+}

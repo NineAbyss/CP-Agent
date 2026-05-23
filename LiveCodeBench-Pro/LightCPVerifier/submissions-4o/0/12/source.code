@@ -1,0 +1,51 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        for (int i = 0; i < n; ++i) cin >> b[i];
+
+        vector<pair<int, int>> operations;
+
+        // Sort each array `a` and `b`
+        for (int i = 0; i < n - 1; ++i) {
+            for (int j = 0; j < n - 1; ++j) {
+                if (a[j] > a[j + 1]) {
+                    swap(a[j], a[j + 1]);
+                    operations.emplace_back(1, j + 1);
+                }
+                if (b[j] > b[j + 1]) {
+                    swap(b[j], b[j + 1]);
+                    operations.emplace_back(2, j + 1);
+                }
+            }
+        }
+
+        // Ensure a[i] < b[i] for each i
+        for (int i = 0; i < n; ++i) {
+            if (a[i] > b[i]) {
+                swap(a[i], b[i]);
+                operations.emplace_back(3, i + 1);
+            }
+        }
+
+        // Output the operations
+        cout << operations.size() << "\n";
+        for (auto& op : operations) {
+            cout << op.first << " " << op.second << "\n";
+        }
+    }
+}
+
+int main() {
+    solve();
+    return 0;
+}

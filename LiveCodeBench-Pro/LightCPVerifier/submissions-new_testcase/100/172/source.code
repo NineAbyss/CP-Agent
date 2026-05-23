@@ -1,0 +1,129 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 150005;
+vector<int> adj[N];
+bool removed[N];
+int n;
+
+pair<int,int> farthest(int start) {
+    vector<int> dist(n+1, -1);
+    queue<int> q;
+    dist[start] = 0;
+    q.push(start);
+    int far = start, far_dist = 0;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        if (dist[u] > far_dist || (dist[u] == far_dist && u > far)) {
+            far = u;
+            far_dist = dist[u];
+        }
+        for (int v : adj[u]) {
+            if (!removed[v] && dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+    return {far, far_dist};
+}
+
+vector<int> find_diameter_path() {
+    int start = -1;
+    for (int i = n; i >= 1; i--) {
+        if (!removed[i]) {
+            start = i;
+            break;
+        }
+    }
+    if (start == -1) return {};
+    auto [A, _] = farthest(start);
+    auto [B, dist] = farthest(A);
+    vector<int> parent(n+1, -1);
+    queue<int> q;
+    parent[A] = 0;
+    q.push(A);
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        if (u == B) break;
+        for (int v : adj[u]) {
+            if (!removed[v] && parent[v] == -1) {
+                parent[v] = u;
+                q.push(v);
+            }
+        }
+    }
+    vector<int> path;
+    int cur = B;
+    while (cur != 0) {
+        path.push_back(cur);
+        cur = parent[cur];
+    }
+    reverse(path.begin(), path.end());
+    return path;
+}
+
+void solve() {
+    cin >> n;
+    for (int i = 1; i <= n; i++) {
+        adj[i].clear();
+        removed[i] = false;
+    }
+    for (int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    vector<tuple<int,int,int>> triples;
+    while (true) {
+        bool any = false;
+        for (int i = 1; i <= n; i++) {
+            if (!removed[i]) {
+                any = true;
+                break;
+            }
+        }
+        if (!any) break;
+        
+        vector<int> path = find_diameter_path();
+        if (path.empty()) break;
+        int d = path.size();
+        int u = path[0], v = path.back();
+        if (u < v) swap(u, v);
+        triples.push_back({d, u, v});
+        for (int x : path) removed[x] = true;
+    }
+    
+    sort(triples.begin(), triples.end(), [](const tuple<int,int,int>& a, const tuple<int,int,int>& b) {
+        int da = get<0>(a), ua = get<1>(a), va = get<2>(a);
+        int db = get<0>(b), ub = get<1>(b), vb = get<2>(b);
+        if (da != db) return da > db;
+        if (ua != ub) return ua > ub;
+        return va > vb;
+    });
+    
+    vector<int> output;
+    for (auto [d, u, v] : triples) {
+        output.push_back(d);
+        output.push_back(u);
+        output.push_back(v);
+    }
+    for (int i = 0; i < (int)output.size(); i++) {
+        if (i > 0) cout << " ";
+        cout << output[i];
+    }
+    cout << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

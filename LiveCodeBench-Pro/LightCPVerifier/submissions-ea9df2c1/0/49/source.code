@@ -1,0 +1,33 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    int b1 = abs(a[0]);
+    int L = 0;
+    for (int i = 1; i < n; i++) {
+        if (abs(a[i]) < b1) L++;
+    }
+    int k = (n + 1) / 2; // ceil(n/2)
+    if (L <= k - 1 || L <= n - k) {
+        cout << "YES\n";
+    } else {
+        cout << "NO\n";
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

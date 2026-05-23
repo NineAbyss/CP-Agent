@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+using ll = long long;
+
+ll maxPortions(ll k, ll a, ll b, ll x, ll y) {
+    // 只做第一种
+    ll p1 = (k >= a) ? (k - a) / x + 1 : 0;
+    // 只做第二种
+    ll p2 = (k >= b) ? (k - b) / y + 1 : 0;
+    ll ans = max(p1, p2);
+    
+    // 先做第一种再做第二种
+    ll pmax1 = (k >= a) ? (k - a) / x + 1 : 0;
+    // 候选 p: 0, min(pmax1, (k-b)/x), pmax1
+    vector<ll> pcand = {0};
+    if (k >= b) {
+        ll p_limit = (k - b) / x;  // 保证做完第一种后温度 >= b
+        if (p_limit >= 0) {
+            pcand.push_back(min(pmax1, p_limit));
+        }
+    }
+    pcand.push_back(pmax1);
+    for (ll p : pcand) {
+        if (p < 0 || p > pmax1) continue;
+        ll temp = k - p * x;
+        ll q = 0;
+        if (temp >= b) {
+            q = (temp - b) / y + 1;
+        }
+        ans = max(ans, p + q);
+    }
+    
+    // 先做第二种再做第一种
+    ll qmax2 = (k >= b) ? (k - b) / y + 1 : 0;
+    vector<ll> qcand = {0};
+    if (k >= a) {
+        ll q_limit = (k - a) / y;
+        if (q_limit >= 0) {
+            qcand.push_back(min(qmax2, q_limit));
+        }
+    }
+    qcand.push_back(qmax2);
+    for (ll q : qcand) {
+        if (q < 0 || q > qmax2) continue;
+        ll temp = k - q * y;
+        ll p = 0;
+        if (temp >= a) {
+            p = (temp - a) / x + 1;
+        }
+        ans = max(ans, p + q);
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        ll k, a, b, x, y;
+        cin >> k >> a >> b >> x >> y;
+        cout << maxPortions(k, a, b, x, y) << '\n';
+    }
+    return 0;
+}

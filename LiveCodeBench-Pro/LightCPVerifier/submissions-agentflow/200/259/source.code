@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        for (int i = 0; i < n; ++i) cin >> b[i];
+        
+        // 计算度数
+        map<int, int> deg;
+        for (int i = 0; i < n; ++i) {
+            deg[a[i]]++;
+            deg[b[i]]++;
+            if (a[i] == b[i]) deg[a[i]]--;
+        }
+        
+        // 贪心算法
+        vector<bool> in_a(2 * n + 1, false), in_b(2 * n + 1, false);
+        vector<int> ans_a = a, ans_b = b;
+        for (int i = 0; i < n; ++i) {
+            int x = a[i], y = b[i];
+            if (x == y) {
+                in_a[x] = in_b[x] = true;
+                continue;
+            }
+            int gain_no = 0;
+            if (!in_a[x]) gain_no++;
+            if (!in_b[y]) gain_no++;
+            int gain_swap = 0;
+            if (!in_a[y]) gain_swap++;
+            if (!in_b[x]) gain_swap++;
+            if (gain_swap > gain_no) {
+                swap(ans_a[i], ans_b[i]);
+                in_a[y] = in_b[x] = true;
+            } else {
+                in_a[x] = in_b[y] = true;
+            }
+        }
+        
+        // 计算最大值
+        set<int> sa(ans_a.begin(), ans_a.end());
+        set<int> sb(ans_b.begin(), ans_b.end());
+        int total = sa.size() + sb.size();
+        cout << total << '\n';
+        for (int i = 0; i < n; ++i) cout << ans_a[i] << " \n"[i == n - 1];
+        for (int i = 0; i < n; ++i) cout << ans_b[i] << " \n"[i == n - 1];
+    }
+    return 0;
+}

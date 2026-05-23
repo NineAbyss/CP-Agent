@@ -1,0 +1,73 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+using ll = long long;
+
+ll gcd(ll a, ll b) {
+    while (b) {
+        a %= b;
+        swap(a, b);
+    }
+    return a;
+}
+
+bool solve_case(const vector<ll>& a) {
+    int n = a.size();
+    ll min_val = *min_element(a.begin(), a.end());
+    int cnt_min = 0;
+    for (ll x : a) {
+        if (x == min_val) cnt_min++;
+    }
+    
+    // Collect all multiples of min_val and compute their gcd
+    ll g = 0;
+    for (ll x : a) {
+        if (x % min_val == 0) {
+            g = gcd(g, x);
+        }
+    }
+    
+    if (g != min_val) {
+        return false;
+    }
+    
+    if (cnt_min >= 2) {
+        return true;
+    }
+    
+    // cnt_min == 1 // Compute gcd of multiples without min_val
+    ll g2 = 0;
+    bool found_other = false;
+    for (ll x : a) {
+        if (x == min_val) continue;
+        if (x % min_val == 0) {
+            g2 = gcd(g2, x);
+            found_other = true;
+        }
+    }
+    if (!found_other) {
+        return false;
+    }
+    return g2 == min_val;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<ll> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        cout << (solve_case(a) ? "Yes" : "No") << '\n';
+    }
+    
+    return 0;
+}

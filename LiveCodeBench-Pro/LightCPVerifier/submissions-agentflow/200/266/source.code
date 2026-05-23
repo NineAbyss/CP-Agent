@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct DSU {
+    vector<int> parent, size;
+    DSU(int n) : parent(n), size(n, 1) {
+        iota(parent.begin(), parent.end(), 0);
+    }
+    int find(int x) {
+        while (parent[x] != x) {
+            parent[x] = parent[parent[x]];
+            x = parent[x];
+        }
+        return x;
+    }
+    bool unite(int a, int b) {
+        a = find(a), b = find(b);
+        if (a == b) return false;
+        if (size[a] < size[b]) swap(a, b);
+        parent[b] = a;
+        size[a] += size[b];
+        return true;
+    }
+};
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<tuple<int, int, int>> edges(m);
+    for (int i = 0; i < m; i++) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        u--; v--;
+        edges[i] = {w, u, v};
+    }
+    sort(edges.begin(), edges.end());
+    
+    long long ans = LLONG_MAX;
+    // 对于每个i作为最小值
+    for (int i = 0; i < m; i++) {
+        DSU dsu(n);
+        int j = i;
+        while (j < m && (dsu.find(0) != dsu.find(n-1) || dsu.find(get<1>(edges[i])) != dsu.find(get<1>(edges[j])))) {
+            auto [w, u, v] = edges[j];
+            dsu.unite(u, v);
+            j++;
+        }
+        if (dsu.find(0) == dsu.find(n-1) && dsu.find(get<1>(edges[i])) == dsu.find(get<1>(edges[j-1]))) {
+            auto [wi, ui, vi] = edges[i];
+            auto [wj, uj, vj] = edges[j-1];
+            ans = min(ans, (long long)wi + wj);
+        }
+        // 提前退出：如果 ans <= 2*get<0>(edges[i])，因为后续i的权重更大，答案不会更小
+        if (ans <= 2LL * get<0>(edges[i])) break;
+    }
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

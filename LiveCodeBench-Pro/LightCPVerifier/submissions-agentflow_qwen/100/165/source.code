@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 200000;
+const int LOG = 18;
+
+int n, q;
+int p[MAXN + 5];
+int st_min[MAXN + 5][LOG + 1], st_max[MAXN + 5][LOG + 1];
+int lg[MAXN + 5];
+
+int query_min(int l, int r) {
+    int k = lg[r - l + 1];
+    int a = st_min[l][k];
+    int b = st_min[r - (1 << k) + 1][k];
+    return p[a] <= p[b] ? a : b;
+}
+
+int query_max(int l, int r) {
+    int k = lg[r - l + 1];
+    int a = st_max[l][k];
+    int b = st_max[r - (1 << k) + 1][k];
+    return p[a] >= p[b] ? a : b;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    lg[1] = 0;
+    for (int i = 2; i <= MAXN; i++) {
+        lg[i] = lg[i >> 1] + 1;
+    }
+
+    cin >> n;
+    for (int i = 1; i <= n; i++) {
+        cin >> p[i];
+    }
+
+    for (int i = 1; i <= n; i++) {
+        st_min[i][0] = i;
+        st_max[i][0] = i;
+    }
+
+    for (int j = 1; j <= LOG; j++) {
+        for (int i = 1; i + (1 << j) - 1 <= n; i++) {
+            int left_part = st_min[i][j-1];
+            int right_part = st_min[i + (1 << (j-1))][j-1];
+            st_min[i][j] = p[left_part] <= p[right_part] ? left_part : right_part;
+
+            left_part = st_max[i][j-1];
+            right_part = st_max[i + (1 << (j-1))][j-1];
+            st_max[i][j] = p[left_part] >= p[right_part] ? left_part : right_part;
+        }
+    }
+
+    cin >> q;
+    vector<string> answers;
+    for (int idx = 0; idx < q; idx++) {
+        int l, r;
+        cin >> l >> r;
+        int min_pos = query_min(l, r);
+        int max_pos = query_max(l, r);
+        if (min_pos == l || min_pos == r || max_pos == l || max_pos == r) {
+            answers.push_back("YES");
+        } else {
+            answers.push_back("NO");
+        }
+        if ((idx + 1) % 10 == 0) {
+            for (const string& ans : answers) {
+                cout << ans << '\n';
+            }
+            cout.flush();
+            answers.clear();
+        }
+    }
+    if (!answers.empty()) {
+        for (const string& ans : answers) {
+            cout << ans << '\n';
+        }
+        cout.flush();
+    }
+    return 0;
+}

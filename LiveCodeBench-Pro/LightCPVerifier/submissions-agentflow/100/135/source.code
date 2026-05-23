@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+#include <tuple>
+#include <algorithm>
+
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;  // Number of test cases
+    while (t--) {
+        int n, q;
+        cin >> n >> q;  // Dimensions: size of array and number of operations
+
+        vector<int> b(n);
+        for (int i = 0; i < n; ++i) {
+            cin >> b[i];
+        }
+
+        vector<tuple<int, int, int>> operations(q);
+        for (int i = 0; i < q; ++i) {
+            int x, y, z;
+            cin >> x >> y >> z;
+            --x; --y; --z; // Convert to 0-based index for simplicity
+            operations[i] = {x, y, z};
+        }
+
+        vector<int> a = b;  // Assume a = b initially for potential solutions
+        bool possible = true;
+
+        // Work operations in reverse order for validity backwardly
+        for (int i = q - 1; i >= 0; --i) {
+            auto [x, y, z] = operations[i];
+
+            // If operation incorrectly matches expectation, mark impossible and exit
+            if (b[z] != min(b[x], b[y])) {
+                possible = false;
+                break;
+            }
+
+            // Apply retroactive transformation upon constraints in `a`
+            a[z] = min(a[x], a[y]);
+        }
+
+        if (!possible) {
+            cout << "-1\n";
+        } else {
+            for (const auto& val : a) {
+                cout << val << ' ';
+            }
+            cout << '\n';
+        }
+    }
+
+    return 0;
+}

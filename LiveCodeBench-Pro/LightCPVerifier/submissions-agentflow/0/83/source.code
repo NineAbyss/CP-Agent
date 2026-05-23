@@ -1,0 +1,48 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+// Determine the winner of the card game
+string determine_winner(int n, const string& s) {
+    vector<int> alice_cards, bob_cards;
+    
+    // Fill Alice's and Bob's cards, and check for card 1 and card n
+    bool alice_has_card_1 = false, bob_has_card_n = false;
+    for (int i = 0; i < n; ++i) {
+        if (s[i] == 'A') {
+            alice_cards.push_back(i + 1);
+            if (i + 1 == 1) alice_has_card_1 = true;
+        } else {
+            bob_cards.push_back(i + 1);
+            if (i + 1 == n) bob_has_card_n = true;
+        }
+    }
+
+    // Alice wins if she has card 1
+    if (alice_has_card_1) return "Alice";
+
+    // Sort the cards to compare from largest to smallest
+    sort(alice_cards.begin(), alice_cards.end(), greater<int>());
+    sort(bob_cards.begin(), bob_cards.end(), greater<int>());
+
+    // Simple comparison based on available cards, assuming optimal play
+    for (size_t i = 0; i < min(alice_cards.size(), bob_cards.size()); ++i) {
+        if (alice_cards[i] > bob_cards[i]) return "Alice";
+        else if (bob_cards[i] > alice_cards[i]) return "Bob";
+    }
+
+    // If Bob has an extra card, he wins; otherwise, Alice wins
+    return bob_cards.size() > alice_cards.size() ? "Bob" : "Alice";
+}
+
+int main() {
+    int t; 
+    cin >> t;
+    while (t--) {
+        int n; 
+        string s;
+        cin >> n >> s;
+        cout << determine_winner(n, s) << "\n";
+    }
+    return 0;
+}

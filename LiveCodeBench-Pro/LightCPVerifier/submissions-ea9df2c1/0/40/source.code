@@ -1,0 +1,92 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MOD = 998244353;
+const int MAXN = 100000;
+
+vector<long long> pow2;
+
+void precompute_pow2() {
+    pow2.resize(MAXN + 1);
+    pow2[0] = 1;
+    for (int i = 1; i <= MAXN; ++i) {
+        pow2[i] = (pow2[i-1] * 2) % MOD;
+    }
+}
+
+// compare two pairs (a,b) and (c,d) for 2^a+2^b vs 2^c+2^d
+bool better(int a, int b, int c, int d) {
+    int ma = max(a, b), mb = min(a, b);
+    int mc = max(c, d), md = min(c, d);
+    if (ma != mc) return ma > mc;
+    return mb > md;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    precompute_pow2();
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> p(n), q(n);
+        for (int i = 0; i < n; ++i) cin >> p[i];
+        for (int i = 0; i < n; ++i) cin >> q[i];
+        vector<int> maxA_prefix(n), maxB_prefix(n);
+        maxA_prefix[0] = 0;
+        for (int i = 1; i < n; ++i) {
+            if (p[i] > p[maxA_prefix[i-1]]) maxA_prefix[i] = i;
+            else maxA_prefix[i] = maxA_prefix[i-1];
+        }
+        maxB_prefix[0] = 0;
+        for (int i = 1; i < n; ++i) {
+            if (q[i] > q[maxB_prefix[i-1]]) maxB_prefix[i] = i;
+            else maxB_prefix[i] = maxB_prefix[i-1];
+        }
+        vector<long long> r(n);
+        for (int s = 0; s < n; ++s) {
+            int best_a = -1, best_b = -1;
+            // candidate 1: prefix max of A
+            int j1 = maxA_prefix[s];
+            int k1 = s - j1;
+            if (k1 >= 0 && k1 < n) {
+                int a1 = p[j1], b1 = q[k1];
+                if (best_a == -1 || better(a1, b1, best_a, best_b)) {
+                    best_a = a1; best_b = b1;
+                }
+            }
+            // candidate 2: prefix max of B
+            int k2 = maxB_prefix[s];
+            int j2 = s - k2;
+            if (j2 >= 0 && j2 < n) {
+                int a2 = p[j2], b2 = q[k2];
+                if (best_a == -1 || better(a2, b2, best_a, best_b)) {
+                    best_a = a2; best_b = b2;
+                }
+            }
+            // candidate 3: j = s, k = 0
+            {
+                int a3 = p[s], b3 = q[0];
+                if (best_a == -1 || better(a3, b3, best_a, best_b)) {
+                    best_a = a3; best_b = b3;
+                }
+            }
+            // candidate 4: j = 0, k = s
+            {
+                int a4 = p[0], b4 = q[s];
+                if (best_a == -1 || better(a4, b4, best_a, best_b)) {
+                    best_a = a4; best_b = b4;
+                }
+            }
+            r[s] = (pow2[best_a] + pow2[best_b]) % MOD;
+        }
+        for (int i = 0; i < n; ++i) {
+            cout << r[i] << " \n"[i == n-1];
+        }
+    }
+    return 0;
+}

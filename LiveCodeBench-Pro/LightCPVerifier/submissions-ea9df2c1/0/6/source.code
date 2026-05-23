@@ -1,0 +1,31 @@
+#include <iostream>
+using namespace std;
+const long long MOD = 1000000007;
+
+long long powmod(long long a, long long e) {
+    long long res = 1;
+    a %= MOD;
+    while (e) {
+        if (e & 1) res = res * a % MOD;
+        a = a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        long long a, b, k;
+        cin >> a >> b >> k;
+        long long n = ((a-1) % MOD * (k % MOD) + 1) % MOD;
+        long long term1 = ((b-1) % MOD) * powmod(k, a) % MOD;
+        long long term2 = ((a-1) % MOD) * (k % MOD) % MOD;
+        long long m = (term1 + term2 + 1) % MOD;
+        cout << n << " " << m << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,95 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+string solve_one_case(int n, int q, string s, vector<pair<char, char>> ops) {
+    vector<set<int>> avail(9);
+    for (int i = 0; i < q; i++) {
+        int x = ops[i].first - 'a';
+        int y = ops[i].second - 'a';
+        avail[x*3 + y].insert(i);
+    }
+    
+    string result = s;
+    
+    for (int pos = 0; pos < n; pos++) {
+        char cur = result[pos];
+        for (char target = 'a'; target <= 'c'; target++) {
+            if (cur == target) break;
+            int c = cur - 'a';
+            int t = target - 'a';
+            
+            // 直接路径
+            int direct_type = c*3 + t;
+            if (!avail[direct_type].empty()) {
+                int op_index = *avail[direct_type].begin();
+                avail[direct_type].erase(op_index);
+                result[pos] = target;
+                break;
+            }
+            
+            // 两步路径
+            for (int mid = 0; mid < 3; mid++) {
+                if (mid == c || mid == t) continue;
+                int type1 = c*3 + mid;
+                int type2 = mid*3 + t;
+                if (avail[type1].empty() || avail[type2].empty()) continue;
+                
+                // 尝试两种顺序 // 顺序1: 取 type2 的最大索引 j，在 type1 中找小于 j 的最大索引 i
+                {
+                    auto it2 = avail[type2].end();
+                    --it2;
+                    int j = *it2;
+                    auto it1 = avail[type1].lower_bound(j);
+                    if (it1 != avail[type1].begin()) {
+                        --it1;
+                        int i = *it1;
+                        if (i < j) {
+                            avail[type1].erase(it1);
+                            avail[type2].erase(it2);
+                            result[pos] = target;
+                            goto next_position;
+                        }
+                    }
+                }
+                // 顺序2: 取 type1 的最小索引 i，在 type2 中找大于 i 的最小索引 j
+                {
+                    auto it1 = avail[type1].begin();
+                    int i = *it1;
+                    auto it2 = avail[type2].upper_bound(i);
+                    if (it2 != avail[type2].end()) {
+                        int j = *it2;
+                        avail[type1].erase(it1);
+                        avail[type2].erase(it2);
+                        result[pos] = target;
+                        goto next_position;
+                    }
+                }
+            }
+        }
+        next_position:;
+    }
+    
+    return result;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        string s;
+        cin >> s;
+        vector<pair<char, char>> ops(q);
+        for (int i = 0; i < q; i++) {
+            cin >> ops[i].first >> ops[i].second;
+        }
+        string ans = solve_one_case(n, q, s, ops);
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

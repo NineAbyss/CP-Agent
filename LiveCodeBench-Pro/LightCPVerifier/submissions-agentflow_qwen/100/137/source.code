@@ -1,0 +1,39 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        int full_mask = (1 << k) - 1;
+        vector<int> ans(n, 0);
+
+        for (int l = 0; l < n; l++) {
+            int cur = a[l];
+            ans[l] = max(ans[l], cur);
+            for (int r = l + 1; r < n; r++) {
+                cur = full_mask ^ (cur | a[r]);
+                for (int j = l; j <= r; j++) {
+                    ans[j] = max(ans[j], cur);
+                }
+            }
+        }
+
+        for (int i = 0; i < n; i++) {
+            cout << ans[i];
+            if (i < n - 1) cout << ' ';
+        }
+        cout << '\n';
+    }
+    return 0;
+}

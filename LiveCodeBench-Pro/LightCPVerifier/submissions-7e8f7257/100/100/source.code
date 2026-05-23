@@ -1,0 +1,29 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        vector<ll> pref(n+1, 0);
+        for (int i = 0; i < n; i++) {
+            pref[i+1] = pref[i] + (s[i] == '0' ? 1 : -1);
+        }
+        sort(pref.begin(), pref.end());
+        ll sum_abs = 0;
+        for (int i = 0; i <= n; i++) {
+            sum_abs += pref[i] * (2*i - n);
+        }
+        ll sum_len = (ll)n * (n+1) * (n+2) / 6;
+        ll ans = (sum_len + sum_abs) / 2;
+        cout << ans << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool beats(int a, int b, int n) {
+    if (a == 1 && b == n) return true;
+    if (a == n && b == 1) return false;
+    return a > b;
+}
+
+bool dfs(unsigned long long mask, int n, unordered_map<unsigned long long, bool>& memo) {
+    auto it = memo.find(mask);
+    if (it != memo.end()) return it->second;
+    
+    if (mask == 0ULL) {
+        return memo[mask] = false;
+    }
+    if (mask == (1ULL << n) - 1ULL) {
+        return memo[mask] = true;
+    }
+    
+    vector<int> alice, bob;
+    for (int i = 0; i < n; ++i) {
+        if (mask >> i & 1ULL) {
+            alice.push_back(i + 1);
+        } else {
+            bob.push_back(i + 1);
+        }
+    }
+    
+    for (int a : alice) {
+        bool win_all = true;
+        for (int b : bob) {
+            bool alice_wins = beats(a, b, n);
+            unsigned long long next_mask = mask;
+            if (alice_wins) {
+                next_mask |= (1ULL << (b - 1));
+            } else {
+                next_mask &= ~(1ULL << (a - 1));
+            }
+            if (!dfs(next_mask, n, memo)) {
+                win_all = false;
+                break;
+            }
+        }
+        if (win_all) {
+            return memo[mask] = true;
+        }
+    }
+    
+    return memo[mask] = false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+        unsigned long long mask = 0;
+        for (int i = 0; i < n; ++i) {
+            if (s[i] == 'A') {
+                mask |= (1ULL << i);
+            }
+        }
+        unordered_map<unsigned long long, bool> memo;
+        cout << (dfs(mask, n, memo) ? "Alice" : "Bob") << '\n';
+    }
+    return 0;
+}

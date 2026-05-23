@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool feasible(int cnt[10], int i) {
+    if (i == 10) return true;
+    vector<int> rem;
+    for (int d = 0; d <= 9; d++)
+        for (int k = 0; k < cnt[d]; k++)
+            rem.push_back(d);
+    sort(rem.begin(), rem.end());
+    int m = rem.size(); // m = 10 - i
+    for (int k = 0; k < m; k++) {
+        if (rem[k] < k) return false;
+    }
+    return true;
+}
+
+string solve(string s) {
+    int cnt[10] = {0};
+    for (char ch : s) cnt[ch - '0']++;
+    string ans;
+    for (int i = 1; i <= 10; i++) {
+        int lower = 10 - i;
+        for (int d = lower; d <= 9; d++) {
+            if (cnt[d] == 0) continue;
+            cnt[d]--;
+            if (feasible(cnt, i)) {
+                ans += char('0' + d);
+                break;
+            }
+            cnt[d]++;
+        }
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        string s;
+        cin >> s;
+        cout << solve(s) << '\n';
+    }
+    return 0;
+}

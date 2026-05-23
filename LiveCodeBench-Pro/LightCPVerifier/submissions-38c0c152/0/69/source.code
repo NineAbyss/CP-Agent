@@ -1,0 +1,97 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, q;
+        cin >> n >> q;
+        vector<int> p(n+1);
+        vector<int> pos(n+1);
+        for (int i = 1; i <= n; i++) {
+            cin >> p[i];
+            pos[p[i]] = i;
+        }
+        
+        for (int qi = 0; qi < q; qi++) {
+            int l, r, k;
+            cin >> l >> r >> k;
+            int kpos = pos[k];
+            if (kpos < l || kpos > r) {
+                cout << "-1";
+            } else {
+                int total_less = k - 1;
+                int total_greater = n - k;
+                
+                int L = l, R = r;
+                int x = 0;
+                int need_less = 0, need_greater = 0;
+                int less_in_path = 0, greater_in_path = 0;
+                bool found = false;
+                
+                while (L <= R) {
+                    int m = (L + R) / 2;
+                    if (m == kpos) {
+                        found = true;
+                        break;
+                    }
+                    if (kpos > m) {
+                        // 需要 p[m] < k
+                        if (p[m] > k) {
+                            x++;
+                            need_less++;
+                        } else if (p[m] < k) {
+                            less_in_path++;
+                        }
+                        L = m + 1;
+                    } else { // kpos < m // 需要 p[m] > k
+                        if (p[m] < k) {
+                            x++;
+                            need_greater++;
+                        } else if (p[m] > k) {
+                            greater_in_path++;
+                        }
+                        R = m - 1;
+                    }
+                }
+                
+                if (!found) {
+                    cout << "-1";
+                } else {
+                    int extra_less_available = total_less - less_in_path - need_greater;
+                    int extra_greater_available = total_greater - greater_in_path - need_less;
+                    
+                    if (need_less > need_greater) {
+                        int diff = need_less - need_greater;
+                        if (diff > extra_less_available) {
+                            cout << "-1";
+                        } else {
+                            int d = x + diff;
+                            cout << d;
+                        }
+                    } else if (need_greater > need_less) {
+                        int diff = need_greater - need_less;
+                        if (diff > extra_greater_available) {
+                            cout << "-1";
+                        } else {
+                            int d = x + diff;
+                            cout << d;
+                        }
+                    } else {
+                        cout << x;
+                    }
+                }
+            }
+            if (qi != q-1) cout << " ";
+        }
+        cout << "\n";
+    }
+    return 0;
+}

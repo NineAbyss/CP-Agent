@@ -1,0 +1,179 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <cmath>
+#include <functional>
+using namespace std;
+
+// LCA预处理
+class LCA {
+private:
+    int n, logn;
+    vector<vector<int>> adj;
+    vector<vector<int>> up;
+    vector<int> depth;
+    
+    void dfs(int u, int p) {
+        up[u][0] = p;
+        for(int i = 1; i < logn; i++) {
+            up[u][i] = up[up[u][i-1]][i-1];
+        }
+        
+        for(int v : adj[u]) {
+            if(v != p) {
+                depth[v] = depth[u] + 1;
+                dfs(v, u);
+            }
+        }
+    }
+    
+public:
+    LCA(int n) : n(n) {
+        adj.resize(n+1);
+        logn = log2(n) + 1;
+        up.assign(n+1, vector<int>(logn, 0));
+        depth.resize(n+1, 0);
+    }
+    
+    void add_edge(int u, int v) {
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    void build() {
+        // 从任意根节点开始，这里用1
+        dfs(1, 0);
+    }
+    
+    int dist(int u, int v) {
+        if(u == v) return 0;
+        
+        int a = u, b = v;
+        if(depth[a] < depth[b]) swap(a, b);
+        
+        // 提升a到与b同一深度
+        int diff = depth[a] - depth[b];
+        for(int i = 0; i < logn; i++) {
+            if(diff & (1 << i)) {
+                a = up[a][i];
+            }
+        }
+        
+        if(a == b) return diff;
+        
+        // 同时提升
+        for(int i = logn-1; i >= 0; i--) {
+            if(up[a][i] != up[b][i]) {
+                a = up[a][i];
+                b = up[b][i];
+            }
+        }
+        
+        int lca = up[a][0];
+        return depth[u] + depth[v] - 2 * depth[lca];
+    }
+};
+
+void solve() {
+    int n;
+    cin >> n;
+    
+    string s;
+    cin >> s;
+    
+    LCA lca(n);
+    for(int i = 0; i < n-1; i++) {
+        int u, v;
+        cin >> u >> v;
+        lca.add_edge(u, v);
+    }
+    lca.build();
+    
+    // 获取所有选中的节点
+    vector<int> selected;
+    for(int i = 1; i <= n; i++) {
+        if(s[i-1] == '1') selected.push_back(i);
+    }
+    
+    int k = selected.size();
+    
+    // 预处理：对于每个选中节点，按距离排序其他选中节点
+    vector<vector<pair<int, int>>> dist_lists(n+1);
+    
+    // 只计算需要的距离
+    for(int i = 0; i < k; i++) {
+        int u = selected[i];
+        for(int j = 0; j < k; j++) {
+            if(i == j) continue;
+            int v = selected[j];
+            int d = lca.dist(u, v);
+            dist_lists[u].push_back({d, v});
+        }
+        sort(dist_lists[u].begin(), dist_lists[u].end());
+    }
+    
+    // 对每个选中的节点，使用优化DFS
+    vector<int> ans(n+1, -1);
+    
+    for(int start : selected) {
+        int max_len = 1;
+        
+        // 如果只有一个选中节点
+        if(k == 1) {
+            ans[start] = 1;
+            continue;
+        }
+        
+        // 使用DFS
+        vector<bool> used(n+1, false);
+        used[start] = true;
+        
+        function<void(int, int, int)> dfs;
+        dfs = [&](int u, int last_dist, int depth_val) {
+            max_len = max(max_len, depth_val);
+            
+            // 路径长度不会超过log2(n)+2
+            if(depth_val >= 20) return;
+            
+            // 二分查找第一个满足dist ≥ 2*last_dist的节点
+            int min_dist = (depth_val == 1) ? 0 : 2 * last_dist;
+            
+            // 在dist_lists[u]中查找 vector<pair<int, int>>::iterator it = lower_bound(dist_lists[u].begin(), dist_lists[u].end(),
+                                 make_pair(min_dist, 0));
+            
+            for(; it != dist_lists[u].end(); ++it) {
+                int v = it->second;
+                if(used[v]) continue;
+                
+                used[v] = true;
+                dfs(v, it->first, depth_val + 1);
+                used[v] = false;
+            }
+        };
+        
+        dfs(start, 0, 1);
+        
+        ans[start] = max_len;
+    }
+    
+    // 输出结果
+    for(int i = 1; i <= n; i++) {
+        cout << ans[i] << " ";
+    }
+    cout << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while(t--) {
+        solve();
+    }
+    
+    return 0;
+}

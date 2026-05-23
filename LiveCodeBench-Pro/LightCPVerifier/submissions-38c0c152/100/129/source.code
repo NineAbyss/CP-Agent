@@ -1,0 +1,102 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct SegTree {
+    int n;
+    vector<int> max_val, lazy;
+    SegTree(int size) {
+        n = size;
+        max_val.assign(4*n, 0);
+        lazy.assign(4*n, 0);
+        build(1, 1, n);
+    }
+    void build(int node, int l, int r) {
+        if (l == r) {
+            max_val[node] = -l;
+            return;
+        }
+        int mid = (l+r)/2;
+        build(node*2, l, mid);
+        build(node*2+1, mid+1, r);
+        max_val[node] = max(max_val[node*2], max_val[node*2+1]);
+    }
+    void push(int node) {
+        if (lazy[node]) {
+            max_val[node*2] += lazy[node];
+            lazy[node*2] += lazy[node];
+            max_val[node*2+1] += lazy[node];
+            lazy[node*2+1] += lazy[node];
+            lazy[node] = 0;
+        }
+    }
+    void update(int node, int l, int r, int ql, int qr, int val) {
+        if (ql > qr) return;
+        if (ql <= l && r <= qr) {
+            max_val[node] += val;
+            lazy[node] += val;
+            return;
+        }
+        push(node);
+        int mid = (l+r)/2;
+        if (ql <= mid) update(node*2, l, mid, ql, qr, val);
+        if (qr > mid) update(node*2+1, mid+1, r, ql, qr, val);
+        max_val[node] = max(max_val[node*2], max_val[node*2+1]);
+    }
+    int query(int node, int l, int r, int ql, int qr) {
+        if (ql > qr) return -1e9;
+        if (ql <= l && r <= qr) {
+            return max_val[node];
+        }
+        push(node);
+        int mid = (l+r)/2;
+        int res = -1e9;
+        if (ql <= mid) res = max(res, query(node*2, l, mid, ql, qr));
+        if (qr > mid) res = max(res, query(node*2+1, mid+1, r, ql, qr));
+        return res;
+    }
+    void add(int l, int r, int val) {
+        update(1, 1, n, l, r, val);
+    }
+    int get_max(int l, int r) {
+        return query(1, 1, n, l, r);
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n+1);
+        for (int i=1; i<=n; i++) cin >> a[i];
+        
+        SegTree segL(n);
+        int left_max = 0;
+        for (int i=1; i<=n; i++) {
+            int val = a[i];
+            if (val < n) segL.add(val+1, n, 1);
+            int mx = segL.get_max(1, i);
+            if (mx < 0) left_max = i;
+        }
+        
+        SegTree segR(n);
+        int right_max = 0;
+        for (int k=1; k<=n; k++) {
+            int idx = n - k + 1;
+            int val = a[idx];
+            if (val < n) segR.add(val+1, n, 1);
+            int mx = segR.get_max(1, k);
+            if (mx < 0) right_max = k;
+        }
+        
+        int k = min({left_max, right_max, n/2});
+        long long beauty = 1LL * k * (n - k);
+        cout << beauty << '\n';
+    }
+    return 0;
+}

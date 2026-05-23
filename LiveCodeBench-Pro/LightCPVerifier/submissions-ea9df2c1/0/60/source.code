@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int n, k;
+    cin >> n >> k;
+    string s;
+    cin >> s;
+    
+    // next[pos][c] : from position pos (0-indexed) inclusive, first occurrence of char c // use only first k letters, map 'a'..'a'+k-1 to 0..k-1
+    vector<vector<int>> nxt(n + 1, vector<int>(k, n));
+    for (int c = 0; c < k; c++) nxt[n][c] = n;
+    for (int i = n - 1; i >= 0; i--) {
+        for (int c = 0; c < k; c++) nxt[i][c] = nxt[i + 1][c];
+        int idx = s[i] - 'a';
+        nxt[i][idx] = i;
+    }
+    
+    // dist[pos] : minimum letters to append starting from state pos to make it not a subsequence
+    vector<int> dist(n + 1, 0);
+    dist[n] = 1; // adding one letter will exceed length n
+    for (int cur = n - 1; cur >= 0; cur--) {
+        int best = n - cur + 1; // just add enough letters to exceed remaining length
+        for (int c = 0; c < k; c++) {
+            int pos = nxt[cur][c];
+            if (pos == n) {
+                best = min(best, 1);
+            } else {
+                best = min(best, 1 + dist[pos + 1]);
+            }
+        }
+        dist[cur] = best;
+    }
+    
+    int q;
+    cin >> q;
+    while (q--) {
+        string t;
+        cin >> t;
+        int cur = 0;
+        bool fail = false;
+        for (char ch : t) {
+            int idx = ch - 'a';
+            if (cur == n) {
+                fail = true;
+                break;
+            }
+            int pos = nxt[cur][idx];
+            if (pos == n) {
+                fail = true;
+                break;
+            }
+            cur = pos + 1;
+        }
+        if (fail) {
+            cout << 0 << '\n';
+        } else {
+            cout << dist[cur] << '\n';
+        }
+    }
+    
+    return 0;
+}

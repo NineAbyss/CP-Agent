@@ -1,0 +1,105 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+        
+        int max_val = 2 * n;
+        vector<int> cnt_a(max_val + 1, 0), cnt_b(max_val + 1, 0), total(max_val + 1, 0);
+        for (int i = 0; i < n; i++) {
+            cnt_a[a[i]]++;
+            cnt_b[b[i]]++;
+            total[a[i]]++;
+            total[b[i]]++;
+        }
+        
+        // compute maximum answer: sum over d of min(2, total[d])
+        int ans = 0;
+        for (int d = 1; d <= max_val; d++) {
+            ans += min(2, total[d]);
+        }
+        cout << ans << '\n';
+        
+        // collect digits that need to appear in a or b
+        vector<int> need_a, need_b;
+        for (int d = 1; d <= max_val; d++) {
+            if (total[d] >= 2) {
+                if (cnt_a[d] == 0) need_a.push_back(d);
+                if (cnt_b[d] == 0) need_b.push_back(d);
+            }
+        }
+        
+        // positions for each digit
+        vector<vector<int>> pos_a(max_val + 1), pos_b(max_val + 1);
+        for (int i = 0; i < n; i++) {
+            pos_a[a[i]].push_back(i);
+            pos_b[b[i]].push_back(i);
+        }
+        
+        vector<bool> swap_flag(n, false), used(n, false);
+        // first pass: positions that satisfy both needs simultaneously
+        for (int i = 0; i < n; i++) {
+            if (a[i] == b[i]) continue;
+            auto it_a = find(need_a.begin(), need_a.end(), b[i]);
+            auto it_b = find(need_b.begin(), need_b.end(), a[i]);
+            if (it_a != need_a.end() && it_b != need_b.end()) {
+                swap_flag[i] = true;
+                used[i] = true;
+                need_a.erase(it_a);
+                need_b.erase(it_b);
+            }
+        }
+        
+        // second pass: satisfy remaining need_a (digits that must go to a)
+        for (int d : need_a) {
+            for (int i : pos_b[d]) {
+                if (!used[i]) {
+                    swap_flag[i] = true;
+                    used[i] = true;
+                    break;
+                }
+            }
+        }
+        
+        // third pass: satisfy remaining need_b (digits that must go to b)
+        for (int d : need_b) {
+            for (int i : pos_a[d]) {
+                if (!used[i]) {
+                    swap_flag[i] = true;
+                    used[i] = true;
+                    break;
+                }
+            }
+        }
+        
+        // apply swaps
+        vector<int> a_out = a, b_out = b;
+        for (int i = 0; i < n; i++) {
+            if (swap_flag[i]) {
+                swap(a_out[i], b_out[i]);
+            }
+        }
+        
+        // output final arrays
+        for (int i = 0; i < n; i++) {
+            cout << a_out[i] << " \n"[i == n-1];
+        }
+        for (int i = 0; i < n; i++) {
+            cout << b_out[i] << " \n"[i == n-1];
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

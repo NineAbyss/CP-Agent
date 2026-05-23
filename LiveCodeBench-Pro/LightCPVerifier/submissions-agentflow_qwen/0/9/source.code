@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, m;
+        cin >> n >> m;
+        vector<vector<int>> a(n, vector<int>(m));
+        vector<int> row_max(n, 0);
+        vector<int> col_max(m, 0);
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                cin >> a[i][j];
+                row_max[i] = max(row_max[i], a[i][j]);
+                col_max[j] = max(col_max[j], a[i][j]);
+            }
+        }
+
+        vector<tuple<int, int, int>> vals;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                vals.emplace_back(a[i][j], i, j);
+            }
+        }
+        sort(vals.begin(), vals.end(), greater<tuple<int,int,int>>());
+        if (vals.size() > 100) {
+            vals.resize(100);
+        }
+
+        int best_ans = 1000;
+        for (int r = 0; r < n; r++) {
+            for (int c = 0; c < m; c++) {
+                int B_val = max(row_max[r], col_max[c]) - 1;
+                int A_val = 0;
+                for (const auto& item : vals) {
+                    int val = get<0>(item), i = get<1>(item), j = get<2>(item);
+                    if (i != r && j != c) {
+                        A_val = val;
+                        break;
+                    }
+                }
+                best_ans = min(best_ans, max(A_val, B_val));
+            }
+        }
+        cout << best_ans << '\n';
+    }
+    return 0;
+}

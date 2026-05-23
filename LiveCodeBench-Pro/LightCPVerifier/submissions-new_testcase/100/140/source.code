@@ -1,0 +1,124 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> a(n), b(n);
+    for (int i = 0; i < n; i++) cin >> a[i];
+    for (int i = 0; i < n; i++) cin >> b[i];
+    
+    // positions of values in b (1-indexed)
+    vector<int> pos_b(n+1);
+    for (int i = 0; i < n; i++) {
+        pos_b[b[i]] = i+1;
+    }
+    
+    // compute f[i] = pos_b[a[i]]
+    vector<int> f(n+1);
+    for (int i = 1; i <= n; i++) {
+        f[i] = pos_b[a[i-1]];
+    }
+    
+    // check involution
+    for (int i = 1; i <= n; i++) {
+        if (f[f[i]] != i) {
+            cout << -1 << endl;
+            return;
+        }
+    }
+    
+    // check parity condition
+    int fixed = 0;
+    for (int i = 1; i <= n; i++) {
+        if (f[i] == i) fixed++;
+    }
+    if (n % 2 == 0) {
+        if (fixed != 0) {
+            cout << -1 << endl;
+            return;
+        }
+    } else {
+        if (fixed != 1) {
+            cout << -1 << endl;
+            return;
+        }
+    }
+    
+    // construct sigma: we need a permutation sigma such that sigma[f[i]] = n+1 - sigma[i]
+    vector<int> sigma(n+1, 0);
+    vector<bool> used(n+1, false);
+    int center = (n+1)/2;
+    
+    // list of symmetric pairs
+    vector<pair<int,int>> pairs;
+    for (int i = 1; i <= n/2; i++) {
+        pairs.push_back({i, n+1-i});
+    }
+    int pair_ptr = 0;
+    
+    for (int i = 1; i <= n; i++) {
+        if (sigma[i] != 0) continue;
+        if (f[i] == i) {
+            sigma[i] = center;
+            used[center] = true;
+        } else {
+            int j = f[i];
+            // find an unused symmetric pair
+            while (pair_ptr < (int)pairs.size() && 
+                   (used[pairs[pair_ptr].first] || used[pairs[pair_ptr].second])) {
+                pair_ptr++;
+            }
+            // there must be one available
+            int L = pairs[pair_ptr].first;
+            int R = pairs[pair_ptr].second;
+            sigma[i] = L;
+            sigma[j] = R;
+            used[L] = used[R] = true;
+            pair_ptr++;
+        }
+    }
+    
+    // compute inverse permutation inv: inv[sigma[i]] = i
+    vector<int> inv(n+1);
+    for (int i = 1; i <= n; i++) {
+        inv[sigma[i]] = i;
+    }
+    
+    // decompose inv into cycles and produce swaps
+    vector<pair<int,int>> swaps;
+    vector<bool> visited(n+1, false);
+    for (int i = 1; i <= n; i++) {
+        if (!visited[i] && inv[i] != i) {
+            vector<int> cycle;
+            int x = i;
+            while (!visited[x]) {
+                visited[x] = true;
+                cycle.push_back(x);
+                x = inv[x];
+            }
+            for (size_t k = 1; k < cycle.size(); k++) {
+                swaps.push_back({cycle[0], cycle[k]});
+            }
+        }
+    }
+    
+    cout << swaps.size() << endl;
+    for (auto& p : swaps) {
+        cout << p.first << " " << p.second << endl;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

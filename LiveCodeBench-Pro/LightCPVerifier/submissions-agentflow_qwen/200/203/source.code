@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+// DP for counting numbers in [0, n] that can be written as sum of at most k zebra numbers
+ll dp[70][200][2]; // dp[pos][carry][tight]
+vector<int> digits;
+
+ll dfs(int pos, int carry, bool tight, int k) {
+    if (pos == digits.size()) return carry == 0;
+    if (dp[pos][carry][tight] != -1) return dp[pos][carry][tight];
+
+    ll res = 0;
+    int limit = tight ? digits[pos] : 3;
+    for (int d = 0; d <= limit; d++) {
+        for (int use = 0; use <= k; use++) { // number of zebra numbers contributing '1' at this digit
+            int total = use + carry;
+            if (total % 4 != d) continue;
+            int new_carry = total / 4;
+            if (new_carry >= 200) continue;
+            res += dfs(pos+1, new_carry, tight && (d == limit), k);
+        }
+    }
+    return dp[pos][carry][tight] = res;
+}
+
+ll solve(ll n, int k) {
+    if (k <= 0) return 0;
+    if (k >= 60) return n + 1; // heuristic: large k can represent almost all numbers
+    digits.clear();
+    ll tn = n;
+    if (tn == 0) {
+        digits.push_back(0);
+    } else {
+        while (tn) {
+            digits.push_back(tn % 4);
+            tn /= 4;
+        }
+        reverse(digits.begin(), digits.end());
+    }
+    memset(dp, -1, sizeof(dp));
+    return dfs(0, 0, true, k);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        ll l, r; int k;
+        cin >> l >> r >> k;
+        ll F_r_k = solve(r, k);
+        ll F_r_km1 = solve(r, k-1);
+        ll F_l1_k = solve(l-1, k);
+        ll F_l1_km1 = solve(l-1, k-1);
+        ll ans = (F_r_k - F_r_km1) - (F_l1_k - F_l1_km1);
+        cout << ans << '\n';
+    }
+    return 0;
+}

@@ -1,0 +1,45 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int l[3], b[3];
+        for (int i = 0; i < 3; i++) {
+            cin >> l[i] >> b[i];
+        }
+        int area = l[0]*b[0] + l[1]*b[1] + l[2]*b[2];
+        int s = 0;
+        while (s*s < area) s++;
+        if (s*s != area) {
+            cout << "NO\n";
+            continue;
+        }
+        bool ok = false;
+        // Case 1: all rectangles have height s
+        if (b[0] == s && b[1] == s && b[2] == s && l[0]+l[1]+l[2] == s) {
+            ok = true;
+        }
+        // Case 2: all rectangles have width s
+        if (l[0] == s && l[1] == s && l[2] == s && b[0]+b[1]+b[2] == s) {
+            ok = true;
+        }
+        // Case 3: one rectangle has width s, the other two have equal height and their widths sum to s
+        for (int i = 0; i < 3; i++) {
+            int j = (i+1)%3, k = (i+2)%3;
+            if (l[i] == s && b[j] == s - b[i] && b[k] == s - b[i] && l[j] + l[k] == s) {
+                ok = true;
+            }
+        }
+        // Case 4: one rectangle has height s, the other two have equal width and their heights sum to s
+        for (int i = 0; i < 3; i++) {
+            int j = (i+1)%3, k = (i+2)%3;
+            if (b[i] == s && l[j] == s - l[i] && l[k] == s - l[i] && b[j] + b[k] == s) {
+                ok = true;
+            }
+        }
+        cout << (ok ? "YES" : "NO") << '\n';
+    }
+    return 0;
+}

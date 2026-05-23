@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 998244353;
+
+int modpow(int a, int e) {
+    int res = 1;
+    while (e) {
+        if (e & 1) res = 1LL * res * a % MOD;
+        a = 1LL * a * a % MOD;
+        e >>= 1;
+    }
+    return res;
+}
+
+void solve() {
+    int n;
+    cin >> n;
+    vector<int> p(n), q(n);
+    for (int i = 0; i < n; i++) cin >> p[i];
+    for (int i = 0; i < n; i++) cin >> q[i];
+    
+    vector<int> posP(n), posQ(n);
+    for (int i = 0; i < n; i++) {
+        posP[p[i]] = i;
+        posQ[q[i]] = i;
+    }
+    
+    vector<int> r(n, -1);
+    using T = tuple<long long, int, int>;
+    priority_queue<T> pq;
+    set<pair<int,int>> vis;
+    
+    pq.push({(1LL << (n-1)) + (1LL << (n-1)), n-1, n-1});
+    vis.insert({n-1, n-1});
+    
+    int cnt = 0;
+    while (!pq.empty() && cnt < n) {
+        auto [sum, x, y] = pq.top(); pq.pop();
+        int i = posP[x] + posQ[y];
+        if (i < n && r[i] == -1) {
+            r[i] = (modpow(2, x) + modpow(2, y)) % MOD;
+            cnt++;
+        }
+        if (x > 0 && !vis.count({x-1, y})) {
+            pq.push({(1LL << (x-1)) + (1LL << y), x-1, y});
+            vis.insert({x-1, y});
+        }
+        if (y > 0 && !vis.count({x, y-1})) {
+            pq.push({(1LL << x) + (1LL << (y-1)), x, y-1});
+            vis.insert({x, y-1});
+        }
+    }
+    
+    for (int i = 0; i < n; i++) {
+        cout << r[i] << " \n"[i == n-1];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

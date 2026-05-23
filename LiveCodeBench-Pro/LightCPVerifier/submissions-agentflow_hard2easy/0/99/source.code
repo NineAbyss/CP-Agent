@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int compute_score(const vector<int>& a, const vector<int>& b) {
+    int n = a.size();
+    int i = 0, j = 0;
+    int score = 0;
+    for (int round = 0; round < n; round++) {
+        if (a[i] > b[j]) {
+            score++;
+            i++;
+        } else {
+            j++;
+        }
+    }
+    return score;
+}
+
+int solve_one_case(const vector<int>& player, const vector<int>& dealer) {
+    int n = player.size();
+    int original_score = compute_score(player, dealer);
+    int best = original_score;
+    
+    if (n <= 2000) {
+        // 对于小n，尝试所有交换
+        for (int x = 0; x < n; x++) {
+            for (int y = x + 1; y < n; y++) {
+                vector<int> swapped = player;
+                swap(swapped[x], swapped[y]);
+                best = max(best, compute_score(swapped, dealer));
+            }
+        }
+    } else {
+        // 对于大n，使用启发式 // 尝试交换前20个位置
+        int K = min(n, 20);
+        for (int x = 0; x < K; x++) {
+            for (int y = x + 1; y < n; y++) {
+                vector<int> swapped = player;
+                swap(swapped[x], swapped[y]);
+                best = max(best, compute_score(swapped, dealer));
+            }
+        }
+        
+        // 也尝试把最大的牌换到前面
+        vector<int> indices(n);
+        iota(indices.begin(), indices.end(), 0);
+        sort(indices.begin(), indices.end(), [&](int i, int j) {
+            return player[i] > player[j];
+        });
+        
+        for (int i = 0; i < min(10, n); i++) {
+            for (int j = 0; j < min(10, n); j++) {
+                if (indices[i] == j) continue;
+                vector<int> swapped = player;
+                swap(swapped[j], swapped[indices[i]]);
+                best = max(best, compute_score(swapped, dealer));
+            }
+        }
+    }
+    
+    return best;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        
+        vector<int> player(n), dealer(n);
+        for (int i = 0; i < n; i++) cin >> player[i];
+        for (int i = 0; i < n; i++) cin >> dealer[i];
+        
+        cout << solve_one_case(player, dealer) << '\n';
+    }
+    
+    return 0;
+}

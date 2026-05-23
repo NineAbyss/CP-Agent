@@ -1,0 +1,198 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+// 计算排列的美丽值（O(n^2)，用于验证）
+ll compute_beauty_naive(const vector<int>& p) {
+    int n = p.size();
+    ll sum = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = i; j < n; j++) {
+            int len = j - i + 1;
+            if (len % 2 == 1) sum += max(p[i], p[j]);
+            else sum += min(p[i], p[j]);
+        }
+    }
+    return sum;
+}
+
+// 快速计算美丽值（O(n)）
+ll compute_beauty_fast(const vector<int>& p) {
+    int n = p.size();
+    // 常数部分：sum_{i=1}^n i + sum_{i<j} (i+j)/2
+    ll S = (ll)n * (n + 1) / 2;
+    ll constant = S + (ll)(n - 1) * n * (n + 1) / 4;
+    
+    // 计算 D = sum_{i<j} w_{ij} |p_i - p_j|
+    ll D = 0;
+    // 将位置按奇偶分组
+    vector<ll> odd_vals, even_vals;
+    for (int i = 0; i < n; i++) {
+        if (i % 2 == 0) odd_vals.push_back(p[i]);
+        else even_vals.push_back(p[i]);
+    }
+    
+    // 计算组内贡献（正贡献）
+    auto compute_group = [](const vector<ll>& vals) -> ll {
+        ll res = 0;
+        int m = vals.size();
+        vector<ll> sorted = vals;
+        sort(sorted.begin(), sorted.end());
+        // sum_{i<j} (sorted_j - sorted_i) = sum_{k=0}^{m-1} (2k - m + 1) * sorted_k
+        for (int k = 0; k < m; k++) {
+            res += (2LL * k - m + 1) * sorted[k];
+        }
+        return res;
+    };
+    
+    // 计算组间贡献（负贡献）
+    auto compute_between = [](const vector<ll>& a, const vector<ll>& b) -> ll {
+        ll res = 0;
+        vector<ll> all_a = a, all_b = b;
+        sort(all_a.begin(), all_a.end());
+        sort(all_b.begin(), all_b.end());
+        int i = 0, j = 0;
+        int m = a.size(), n = b.size();
+        // 归并计算绝对差之和
+        ll sum_a = 0, sum_b = 0;
+        for (ll x : all_a) sum_a += x;
+        for (ll x : all_b) sum_b += x;
+        
+        // sum_{x in A, y in B} |x - y| = sum_{x in A} (sum_{y in B, y < x} (x - y) + sum_{y in B, y > x} (y - x)) // 可以通过排序后计算
+        res = 0;
+        int idx = 0;
+        for (ll x : all_a) {
+            while (idx < n && all_b[idx] < x) idx++;
+            // all_b[0..idx-1] < x, all_b[idx..n-1] >= x
+            ll left_sum = (idx > 0) ? all_b[idx-1] * idx : 0;
+            if (idx > 1) left_sum = accumulate(all_b.begin(), all_b.begin() + idx, 0LL);
+            ll right_sum = sum_b - left_sum;
+            res += (x * idx - left_sum) + (right_sum - x * (n - idx));
+        }
+        return res;
+    };
+    
+    D += compute_group(odd_vals);
+    D += compute_group(even_vals);
+    D -= compute_between(odd_vals, even_vals);
+    
+    return constant + D / 2;
+}
+
+// 尝试构建交替排序排列
+vector<int> build_alternating(int n, const vector<int>& fixed, bool start_odd) {
+    vector<int> res(n, 0);
+    vector<bool> used(n + 1, false);
+    
+    // 放置固定元素
+    for (int i = 0; i < n; i++) {
+        if (fixed[i] != 0) {
+            res[i] = fixed[i];
+            used[fixed[i]] = true;
+        }
+    }
+    
+    // 收集未使用的数字
+    vector<int> unused;
+    for (int v = 1; v <= n; v++) {
+        if (!used[v]) unused.push_back(v);
+    }
+    sort(unused.begin(), unused.end());
+    
+    // 确定每个组的空位
+    vector<vector<int>> empty_pos(2); // 0:奇数位置，1:偶数位置
+    for (int i = 0; i < n; i++) {
+        if (res[i] == 0) {
+            if (i % 2 == 0) empty_pos[0].push_back(i);
+            else empty_pos[1].push_back(i);
+        }
+    }
+    
+    // 排序空位
+    for (int g = 0; g < 2; g++) {
+        sort(empty_pos[g].begin(), empty_pos[g].end());
+    }
+    
+    // 交替分配数字到组
+    vector<vector<int>> group_vals(2);
+    bool turn = start_odd; // true:奇数位置组，false:偶数位置组
+    for (int v : unused) {
+        if (turn) group_vals[0].push_back(v);
+        else group_vals[1].push_back(v);
+        turn = !turn;
+    }
+    
+    // 检查数量是否匹配
+    if (group_vals[0].size() != empty_pos[0].size() || 
+        group_vals[1].size() != empty_pos[1].size()) {
+        return {}; // 无效
+    }
+    
+    // 将数字分配到位置（排序数字匹配排序位置）
+    for (int g = 0; g < 2; g++) {
+        sort(group_vals[g].begin(), group_vals[g].end());
+        for (int i = 0; i < empty_pos[g].size(); i++) {
+            res[empty_pos[g][i]] = group_vals[g][i];
+        }
+    }
+    
+    return res;
+}
+
+ll solve_case(int n, const vector<int>& a) {
+    ll best = 0;
+    
+    // 尝试两种起始模式
+    for (int start = 0; start < 2; start++) {
+        vector<int> candidate = build_alternating(n, a, start == 0);
+        if (candidate.empty()) continue;
+        
+        // 验证是否为有效排列
+        bool valid = true;
+        vector<bool> seen(n + 1, false);
+        for (int i = 0; i < n; i++) {
+            if (candidate[i] < 1 || candidate[i] > n) {
+                valid = false;
+                break;
+            }
+            if (seen[candidate[i]]) {
+                valid = false;
+                break;
+            }
+            seen[candidate[i]] = true;
+            if (a[i] != 0 && candidate[i] != a[i]) {
+                valid = false;
+                break;
+            }
+        }
+        
+        if (valid) {
+            ll beauty = compute_beauty_fast(candidate);
+            if (beauty > best) best = beauty;
+        }
+    }
+    
+    return best;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+        
+        cout << solve_case(n, a) << '\n';
+    }
+    
+    return 0;
+}

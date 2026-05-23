@@ -1,0 +1,123 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 3;
+int smallC[3][3] = {
+    {1,0,0},
+    {1,1,0},
+    {1,2,1}
+};
+
+int comb_mod3(int n, int m) {
+    int res = 1;
+    while (n > 0 || m > 0) {
+        int ni = n % 3;
+        int mi = m % 3;
+        if (mi > ni) return 0;
+        res = (res * smallC[ni][mi]) % MOD;
+        n /= 3;
+        m /= 3;
+    }
+    return res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    int n, q;
+    cin >> n >> q;
+    vector<int> g(n+1);
+    for (int i=1; i<=n; i++) cin >> g[i];
+    
+    vector<int> queries_x(q), queries_y(q), queries_k(q);
+    for (int i=0; i<q; i++) {
+        cin >> queries_x[i] >> queries_y[i] >> queries_k[i];
+    }
+    
+    // Process each query sequentially, updating g each time
+    for (int qi=0; qi<q; qi++) {
+        int x = queries_x[qi], y = queries_y[qi], k = queries_k[qi];
+        g[x] = y;  // update edge
+        
+        // Find SCCs and chain lengths
+        vector<int> vis(n+1, 0), comp(n+1, 0), comp_size(n+1, 0);
+        int comp_id = 0;
+        // First pass: find cycles (SCCs)
+        for (int i=1; i<=n; i++) {
+            if (!vis[i]) {
+                int u = i;
+                while (!vis[u]) {
+                    vis[u] = i;  // mark with start index
+                    u = g[u];
+                }
+                if (vis[u] == i) {  // found a new cycle
+                    comp_id++;
+                    int v = u;
+                    do {
+                        comp[v] = comp_id;
+                        v = g[v];
+                    } while (v != u);
+                }
+            }
+        }
+        // Second pass: assign tree nodes to their cycle comp
+        fill(vis.begin(), vis.end(), 0);
+        for (int i=1; i<=n; i++) {
+            if (comp[i] == 0) {
+                int u = i;
+                while (comp[u] == 0) {
+                    u = g[u];
+                }
+                int root_comp = comp[u];
+                // walk again to assign
+                u = i;
+                while (comp[u] == 0) {
+                    comp[u] = root_comp;
+                    u = g[u];
+                }
+            }
+        }
+        // Compute comp sizes
+        for (int i=1; i<=n; i++) {
+            comp_size[comp[i]]++;
+        }
+        
+        // Build DAG of comps
+        vector<int> comp_out(n+1, 0);
+        for (int i=1; i<=n; i++) {
+            if (comp[i] != comp[g[i]]) {
+                comp_out[comp[i]] = comp[g[i]];
+            }
+        }
+        
+        // Find chain lengths: for each comp with indegree 0
+        vector<int> indeg(n+1, 0);
+        for (int i=1; i<=n; i++) {
+            if (comp_out[i] != 0) {
+                indeg[comp_out[i]]++;
+            }
+        }
+        
+        vector<int> chain_len;
+        for (int c=1; c<=comp_id; c++) {
+            if (indeg[c] == 0) {
+                int len = 0, cur = c;
+                while (cur != 0) {
+                    len++;
+                    cur = comp_out[cur];
+                }
+                chain_len.push_back(len);
+            }
+        }
+        
+        // Compute answer
+        int ans = 1;
+        for (int m : chain_len) {
+            ans = (ans * comb_mod3(k + m - 1, m)) % MOD;
+        }
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

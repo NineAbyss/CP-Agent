@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool check(long long x, int n, int k, const vector<long long>& l, const vector<long long>& r) {
+    vector<long long> mn(n);
+    long long sum_up = 0;
+    for (int i = 0; i < n; ++i) {
+        long long mx = max(l[i], r[i]);
+        mn[i] = min(l[i], r[i]);
+        sum_up += mx;
+    }
+    if (x <= sum_up) return false;
+    long long extra = x - sum_up;
+    sort(mn.begin(), mn.end(), greater<long long>());
+    int exceed = 0;
+    for (int i = 0; i < n; ++i) {
+        if (extra <= 0) break;
+        if (mn[i] > 0) {
+            long long take = min(mn[i], extra);
+            extra -= take;
+            ++exceed;
+        }
+    }
+    exceed += extra; // 每个剩余额外手套强制一个新颜色超过 up
+    return exceed >= k;
+}
+
+void solve() {
+    int n, k;
+    cin >> n >> k;
+    vector<long long> l(n), r(n);
+    for (int i = 0; i < n; ++i) cin >> l[i];
+    for (int i = 0; i < n; ++i) cin >> r[i];
+    
+    long long left = 1, right = 0;
+    for (int i = 0; i < n; ++i) right += l[i] + r[i];
+    long long ans = right;
+    while (left <= right) {
+        long long mid = left + (right - left) / 2;
+        if (check(mid, n, k, l, r)) {
+            ans = mid;
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

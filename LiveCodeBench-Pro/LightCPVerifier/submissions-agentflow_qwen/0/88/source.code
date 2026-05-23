@@ -1,0 +1,18 @@
+#include <iostream>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        long long n;  // 注意 n 可达 1e8，但结果 2n 最大为 2e8，在 int 范围内？不保险，用 long long
+        cin >> n;
+        cout << 2 * n << '\n';
+    }
+
+    return 0;
+}

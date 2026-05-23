@@ -1,0 +1,102 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXM = 500000;
+const int INF = 1e9;
+
+vector<int> costF(MAXM+1, INF);
+vector<int> dp(MAXM+1, INF);
+vector<int> ans(MAXM+1, -1);
+
+void precompute() {
+    // costF[f]: minimum vertices for F-value f
+    costF[1] = 1;
+    int maxF = (MAXM-1)/2;
+    for (int f = 2; f <= maxF; f++) {
+        // try all divisors d of f, d >= 2
+        for (int d = 2; d * d <= f; d++) {
+            if (f % d != 0) continue;
+            int b = d - 1;
+            int rest = f / d;
+            int cand = 1 + costF[b];
+            if (rest != 1) {
+                if (costF[rest] == INF) continue;
+                cand += costF[rest];
+            }
+            costF[f] = min(costF[f], cand);
+            // other divisor
+            int d2 = rest;
+            if (d2 >= 2 && d2 != d) {
+                int b2 = d2 - 1;
+                int rest2 = f / d2;
+                int cand2 = 1 + costF[b2];
+                if (rest2 != 1) {
+                    if (costF[rest2] == INF) continue;
+                    cand2 += costF[rest2];
+                }
+                costF[f] = min(costF[f], cand2);
+            }
+        }
+        // d = f
+        int d = f;
+        int b = d - 1;
+        int cand = 1 + costF[b];
+        costF[f] = min(costF[f], cand);
+    }
+    
+    // dp[m]: minimum total cost for product m
+    dp[1] = 0;
+    for (int m = 3; m <= MAXM; m += 2) {
+        for (int d = 3; d * d <= m; d += 2) {
+            if (m % d != 0) continue;
+            int f = (d-1)/2;
+            if (f > maxF) continue;
+            if (costF[f] == INF) continue;
+            int rest = m / d;
+            if (dp[rest] == INF) continue;
+            dp[m] = min(dp[m], dp[rest] + costF[f]);
+            // other divisor
+            int d2 = rest;
+            if (d2 % 2 == 1 && d2 >= 3 && d2 != d) {
+                int f2 = (d2-1)/2;
+                if (f2 > maxF) continue;
+                if (costF[f2] == INF) continue;
+                int rest2 = m / d2;
+                if (dp[rest2] == INF) continue;
+                dp[m] = min(dp[m], dp[rest2] + costF[f2]);
+            }
+        }
+        // d = m
+        int d = m;
+        int f = (d-1)/2;
+        if (f <= maxF && costF[f] != INF) {
+            int rest = 1;
+            if (dp[rest] == INF) continue;
+            dp[m] = min(dp[m], dp[rest] + costF[f]);
+        }
+    }
+    
+    ans[1] = 1;
+    for (int m = 3; m <= MAXM; m += 2) {
+        if (dp[m] != INF) {
+            ans[m] = 1 + dp[m];
+        }
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    precompute();
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        int m;
+        cin >> m;
+        cout << ans[m] << '\n';
+    }
+    
+    return 0;
+}

@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve(string s) {
+    int n = s.size();
+    int cntB = count(s.begin(), s.end(), 'B');
+    vector<int> wrongP, wrongB;
+    for (int i = 0; i < n; i++) {
+        if (i < cntB && s[i] == 'P') wrongP.push_back(i);
+        if (i >= cntB && s[i] == 'B') wrongB.push_back(i);
+    }
+    int m = wrongP.size();
+    long long sum = 0;
+    int odd_count = 0;
+    for (int i = 0; i < m; i++) {
+        int d = wrongB[i] - wrongP[i];
+        sum += d;
+        if (d % 2 == 1) odd_count++;
+    }
+    long long ans = (sum + odd_count) / 2; // independent sum
+    // subtract savings for consecutive blocks with odd distances
+    for (int i = 0; i < m; ) {
+        int j = i;
+        while (j < m && (j == i || (wrongP[j] == wrongP[j-1] + 1 && wrongB[j] == wrongB[j-1] + 1))) {
+            j++;
+        }
+        int len = j - i;
+        if (len > 1) {
+            bool all_odd = true;
+            for (int k = i; k < j; k++) {
+                if ((wrongB[k] - wrongP[k]) % 2 == 0) {
+                    all_odd = false;
+                    break;
+                }
+            }
+            if (all_odd) {
+                ans -= len / 2;
+            }
+        }
+        i = j;
+    }
+    return ans;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        string s;
+        cin >> n >> s;
+        cout << solve(s) << '\n';
+    }
+    return 0;
+}

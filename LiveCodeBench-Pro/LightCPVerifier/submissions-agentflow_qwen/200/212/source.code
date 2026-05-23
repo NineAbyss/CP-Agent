@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int T;
+    cin >> T;
+    while (T--) {
+        int n, m;
+        cin >> n >> m;
+        vector<int> a(n), b(n);
+        for (int i = 0; i < n; i++) cin >> a[i];
+        for (int i = 0; i < n; i++) cin >> b[i];
+
+        // Frequency check
+        map<int, int> cnt;
+        for (int x : a) cnt[x]++;
+        for (int x : b) cnt[x]--;
+        bool freq_ok = true;
+        for (auto &[x, c] : cnt) {
+            if (c != 0) {
+                freq_ok = false;
+                break;
+            }
+        }
+        if (!freq_ok) {
+            cout << "NO\n";
+            continue;
+        }
+
+        bool found = false;
+        for (int rot = 0; !found && rot < n; rot++) {
+            vector<int> c(n);
+            for (int i = 0; i < n; i++) {
+                c[i] = b[(i + rot) % n];
+            }
+
+            bool ok = true;
+            for (int x = 1; x < m; x++) {
+                vector<int> A, B;
+                for (int i = 0; i < n; i++) {
+                    if (a[i] == x || a[i] == x+1) A.push_back(a[i]);
+                    if (c[i] == x || c[i] == x+1) B.push_back(c[i]);
+                }
+                if (A != B) {
+                    ok = false;
+                    break;
+                }
+            }
+            if (ok) found = true;
+        }
+
+        cout << (found ? "YES" : "NO") << '\n';
+    }
+    return 0;
+}

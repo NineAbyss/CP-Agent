@@ -1,0 +1,55 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+using namespace std;
+
+void solve_case() {
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    unordered_map<int, int> count_map;
+
+    // Read array and count frequencies of each element
+    for (int i = 0; i < n; ++i) {
+        cin >> a[i];
+        count_map[a[i]]++;
+    }
+
+    vector<int> counts;  // Store frequencies of elements as a list
+    for (auto &pair : count_map) {
+        counts.push_back(pair.second);
+    }
+
+    sort(counts.begin(), counts.end(), greater<int>()); // Sort counts decreasing
+
+    int max_num_arrays = 0;
+    int sum_frequencies = 0;
+
+    for (int i = 0; i < counts.size(); ++i) {
+        // The limiting factor will determine the largest number of arrays we can form
+        sum_frequencies += counts[i];
+
+        if (sum_frequencies >= i + 1) {
+            // If sum of frequencies up to this point allows starting new arrays
+            max_num_arrays = i + 1;
+        } else {
+            break;
+        }
+    }
+
+    cout << max_num_arrays << "\n";
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve_case();
+    }
+    
+    return 0;
+}

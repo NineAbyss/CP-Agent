@@ -1,0 +1,30 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        long long n;
+        cin >> n;
+        string s;
+        for (int i = 0; i < 2; i++) {
+            cout << "digit" << endl;
+            cin >> s;
+        }
+        cout << "add " << (1000000000000000000LL - 10) << endl;
+        cin >> s;
+        cout << "digit" << endl;
+        cin >> s;
+        cout << "add " << n << endl;
+        cin >> s;
+        cout << "digit" << endl;
+        cin >> s;
+        cout << "digit" << endl;
+        cin >> s;
+        cout << "!" << endl;
+        cin >> s;
+    }
+    return 0;
+}

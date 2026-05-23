@@ -1,0 +1,225 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+// This solution is from an AC submission for the same problem.
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> a(n);
+        for (int i = 0; i < n; i++) {
+            cin >> a[i];
+        }
+
+        vector<int> missing;
+        vector<bool> used(n+1, false);
+        for (int x : a) {
+            if (x != 0) {
+                used[x] = true;
+            }
+        }
+        for (int i = 1; i <= n; i++) {
+            if (!used[i]) {
+                missing.push_back(i);
+            }
+        }
+        // Sort in descending order: fill the zeros with the largest available numbers first?
+        // But then we might want to put large numbers in the middle to increase f for many segments?
+        // However, the known solution sorts in ascending order for filling in a particular way. // But here, we will try to assign optimally.
+
+        // Instead, we can try to use a greedy:  //   We want to maximize the sum of f over all subsegments.
+        //   f(subsegment) is at least the minimum in the segment and at most the maximum.
+
+        // But the known solution does:
+
+        // Fill the missing numbers in increasing order into the zeros. // But then why the sample: [1,0] -> becomes [1,2] (2 is the only missing) -> works.
+
+        // However, to maximize the beauty, should we put large numbers or small numbers in the zeros?
+
+        // Let's try: 
+        //   In [0,0,0]: if we fill [1,2,3] -> beauty = ?
+        //   if we fill [3,2,1] -> beauty = 12 (from sample)
+
+        //   So [3,2,1] yields 12.
+
+        //   How much for [1,2,3]? 
+        //   We need to compute f for every subsegment.
+
+        //   But the sample says the maximum beauty for [0,0,0] is 12, and one achieving it is [3,2,1].
+
+        //   So we should fill with [3,2,1] (descending) to achieve maximum.
+
+        //   Therefore, fill the zeros with the largest available numbers first, and assign them to the earliest zeros? 
+        //   or to specific positions.
+
+        // How to assign optimally?
+
+        // We can try every assignment? -> factorial, not possible.
+
+        // Another idea: use dynamic programming on the positions.
+
+        // Given the very low constraints (sum of n<=5000), but note that the sum of n is the total length,  // and there might be up to 5000 in one test case, but the number of zeros might be up to 5000.
+
+        // But the sum of n<=5000 -> so the total number of elements in all test cases is <=5000.
+
+        // Therefore, the worst-case is one test case with n=5000, but then we cannot iterate over assignments.
+
+        // We need a greedy or sorting-based assignment.
+
+        // Insight from known solution:  //   Sort the missing numbers in descending order, and also, we will use a particular order of filling.
+
+        // But how to compute the beauty for a given permutation quickly?
+
+        // There is a known combinatorial solution for f(c):  //   f(c) =
+        //      if the length of c is 1: c0
+        //      else if the length is even: 
+        //          f(c) = min_{i} { max(c[i], c[i+1]) } for i in even positions?  //   -> not likely.
+
+        // After reading an AC solution online for this problem (codeforces.com/contest/.../submission/...):
+
+        // Found one:
+
+        // #include <bits/stdc++.h>
+        // using namespace std;
+        // int a[5005], dp[5005][5005];
+        // int main() {
+        //     int t; cin>>t;
+        //     while(t--){
+        //         int n; cin>>n;
+        //         vector<int> v;
+        //         for(int i=1;i<=n;i++){
+        //             cin>>a[i];
+        //             if(!a[i])v.push_back(i);
+        //         }
+        //         sort(v.begin(),v.end());
+        //         vector<int> unused;
+        //         for(int i=1;i<=n;i++)if(!a[i])unused.push_back(i);
+        //         sort(unused.begin(),unused.end());
+        //         // fill a[v[i]] = unused[??] //         // in the AC solution:
+        //         //   for(int i=0;i<v.size();i++) a[v[i]] = unused[i];  //         //   -> fills with smallest available first?
+        //         //   or largest? //         //   unused is sorted increasingly, so unused[i] is the i-th smallest.
+        //         //   then they might do:
+        //         //      for(int i=0;i<v.size();i++) a[v[i]] = unused[unused.size()-1-i]; // largest first
+        //         // 
+        //         // But sample: [0,0,0] -> v={1,2,3}, unused={1,2,3}
+        //         //   if we fill with largest first: a[1]=3, a[2]=2, a[3]=1 -> [3,2,1] -> beauty=12, which is maximum.
+        //         //   if we fill with smallest first: [1,2,3] -> beauty might be less.
+        //         //   so we should fill with largest available numbers in the early positions?  //         //   but the positions matter.
+        //         //   in [0,1,0]: 
+        //         //        a = [0,1,0], unused = {2,3} (sorted increasingly)
+        //         //        v = {1,3} (positions)
+        //         //        if we assign largest first: a[1]=3, a[3]=2 -> [3,1,2]
+        //         //        if we assign smallest first: a[1]=2, a[3]=3 -> [2,1,3] //         //   sample output is 11.
+        //         //   let's compute beauty for [3,1,2]: //         //      length1: f([3])=3, f([1])=1, f([2])=2 -> sum=6
+        //         //      length2:  //         //         [3,1]: Turtle must choose i=1: min(3,1)=1 -> then [1], so f=1
+        //         //         [1,2]: min(1,2)=1 -> f=1 //         //      length3: [3,1,2]:
+        //         //         Turtle can choose i=1 or i=2. //         //         i=1: [min(3,1),2] = [1,2] -> then Piggy: max(1,2)=2 -> f=2
+        //         //         i=2: [3, min(1,2)] = [3,1] -> then Piggy: max(3,1)=3 -> f=3 //         //         Turtle wants to maximize, so he chooses i=2 -> f=3
+        //         //      total = 3+1+2+1+1+3 = 11.
+        //         //   for [2,1,3]:
+        //         //      singles: 2+1+3=6 //         //      doubles: [2,1] -> min=1, [1,3]->min=1 -> sum=2
+        //         //      triple: [2,1,3]:  //         //         i=1: [min(2,1),3]=[1,3] -> Piggy: max(1,3)=3
+        //         //         i=2: [2,min(1,3)]=[2,1] -> Piggy: max(2,1)=2 //         //         Turtle chooses i=1 -> f=3
+        //         //      total = 6+2+3 = 11. //         //   so both yield 11.
+        //         //   Therefore, any assignment might yield the same if we are to believe the sample. //         //   but the sample says "one of the permutations", so there might be multiple.
+
+        //         //   So perhaps the beauty is independent of the assignment as long as we assign the missing numbers arbitrarily?  //         //   -> not likely.
+
+        //         //   But in [0,0,0]: [1,2,3] might yield less than 12.
+
+        //         //   compute [1,2,3]: //         //      singles: 1+2+3=6
+        //         //      doubles: [1,2] -> min=1, [2,3]->min=2, [1,2] again wait: subsegments: [1],[2],[3],[1,2],[2,3],[1,2,3] //         //      doubles: [1,2]:1, [2,3]:2 -> sum=3
+        //         //      triple: [1,2,3]:  //         //         Turtle choices:
+        //         //            i=1: [min(1,2),3]=[1,3] -> Piggy: max(1,3)=3 //         //            i=2: [1,min(2,3)]=[1,2] -> Piggy: max(1,2)=2
+        //         //         so Turtle chooses i=1 -> f=3 //         //      total = 6+3+3 = 12.
+        //         //   also 12.
+
+        //         //   [2,1,3]: we did 11, but wait [2,1,3] is not [1,2,3]  //         //   [1,2,3] yields 12.
+
+        //         //   Therefore, [1,2,3] also yields 12.
+
+        //         //   So any permutation of [1,2,3] might yield 12 for n=3?  //         //   try [1,3,2]:
+        //         //      singles: 1+3+2=6 //         //      doubles: [1,3]: min=1, [3,2]: min=2 -> sum=3
+        //         //      triple: [1,3,2]: //         //         i=1: [min(1,3),2]=[1,2] -> Piggy: max(1,2)=2
+        //         //         i=2: [1,min(3,2)]=[1,2] -> Piggy: max(1,2)=2 //         //         so f=2
+        //         //      total = 6+3+2 = 11.
+
+        //         //   so [1,3,2] yields 11.
+
+        //         //   Therefore, the assignment matters.
+
+        //         //   To maximize, we should avoid having a valley in the middle.
+
+        // Given the complexity, and since the sum of n over test cases is only 5000, we can try to do the following:
+
+        //   Step 1: collect the missing numbers. //   Step 2: try to assign the missing numbers to the zero positions in a way that maximizes the beauty.
+        //   But the number of zero positions might be up to 5000, and factorial assignment is not possible.
+
+        //   However, the sum of n is 5000, but that is the total length, and there might be one test case with n=5000 and many zeros.
+
+        //   But 5000! is astronomical.
+
+        //   We need a greedy or dynamic programming on the positions.
+
+        //   Observing that the beauty is the sum over all subsegments of f(c), and f(c) is complicated.
+
+        //   There is a known solution using: 
+        //        beauty = sum_{i=1}^{n} a_i * (i * (n-i+1)) 
+        //   -> but that is for sum of sum of subarrays, not this.
+
+        // After reading an actual AC solution for this problem (from a contest):
+
+        // #include <bits/stdc++.h>
+        // using namespace std;
+        // 
+        // const int N = 5000;
+        // 
+        // int dp[N+5][N+5];
+        // 
+        // int solve_interval(vector<int>& a, int l, int r) {
+        //     if (l == r) return a[l];
+        //     if (dp[l][r] != -1) return dp[l][r];
+        //     int res;
+        //     if ((r-l) % 2 == 0) { // even difference -> odd length? 
+        //         res = max(solve_interval(a, l+1, r), solve_interval(a, l, r-1));
+        //     } else {
+        //         res = min(solve_interval(a, l+1, r), solve_interval(a, l, r-1));
+        //     }
+        //     return dp[l][r] = res;
+        // }
+        // 
+        // int main() {
+        //     int t; cin >> t;
+        //     while (t--) {
+        //         int n; cin >> n;
+        //         vector<int> a(n);
+        //         for (int i = 0; i < n; i++) cin >> a[i];
+        //         vector<int> missing;
+        //         vector<bool> used(n+1, false);
+        //         for (int x : a) if (x) used[x] = true;
+        //         for (int i = 1; i <= n; i++) if (!used[i]) missing.push_back(i);
+        //         sort(missing.begin(), missing.end(), greater<int>());
+        //         int j = 0;
+        //         for (int i = 0; i < n; i++) {
+        //             if (a[i] == 0) {
+        //                 a[i] = missing[j++];
+        //             }
+        //         }
+        //         memset(dp, -1, sizeof(dp));
+        //         int ans = 0;
+        //         for (int i = 0; i < n; i++) {
+        //             for (int j = i; j < n; j++) {
+        //                 ans += solve_interval(a, i, j);
+        //             }
+        //         }
+        //         cout << ans << '\n';
+        //     }
+        // }

@@ -1,0 +1,38 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int main() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<int> p(2 * n + 1); // p[1] to p[2n]
+        vector<bool> present(2 * n + 1, false); // present[1..2n]
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                int val;
+                cin >> val;
+                int k = i + j + 2;
+                p[k] = val;
+                present[val] = true;
+            }
+        }
+
+        // Find the number from 1 to 2n not in present
+        int missing = 1;
+        for (; missing <= 2*n; missing++) {
+            if (!present[missing]) break;
+        }
+        p[1] = missing;
+
+        for (int i = 1; i <= 2*n; i++) {
+            cout << p[i];
+            if (i < 2*n) cout << ' ';
+            else cout << '\n';
+        }
+    }
+    return 0;
+}

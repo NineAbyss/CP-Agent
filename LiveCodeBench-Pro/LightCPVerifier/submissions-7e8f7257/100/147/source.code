@@ -1,0 +1,121 @@
+#include <iostream>
+#include <vector>
+#include <functional>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+const int MAX_BIT = 29; // 10^9 < 2^30
+
+struct TrieNode {
+    int child[2];
+    int cnt;
+    TrieNode() {
+        child[0] = child[1] = -1;
+        cnt = 0;
+    }
+};
+
+vector<TrieNode> trie;
+
+int new_node() {
+    trie.push_back(TrieNode());
+    return trie.size() - 1;
+}
+
+void insert(int root, int x) {
+    int node = root;
+    for (int bit = MAX_BIT; bit >= 0; --bit) {
+        int b = (x >> bit) & 1;
+        if (trie[node].child[b] == -1) {
+            int nxt = new_node();
+            trie[node].child[b] = nxt;
+        }
+        node = trie[node].child[b];
+        trie[node].cnt++;
+    }
+}
+
+void remove(int root, int x) {
+    int node = root;
+    for (int bit = MAX_BIT; bit >= 0; --bit) {
+        int b = (x >> bit) & 1;
+        node = trie[node].child[b];
+        trie[node].cnt--;
+    }
+}
+
+// 查询Trie中与x异或后值 >= k 的数的个数
+int query_ge(int root, int x, int k) {
+    // 递归函数
+    function<int(int, int, int, int)> dfs = [&](int node, int bit, int cur_xor, int cur_k) -> int {
+        if (bit < 0) {
+            return cur_xor >= cur_k ? trie[node].cnt : 0;
+        }
+        int k_bit = (cur_k >> bit) & 1;
+        int x_bit = (x >> bit) & 1;
+        int res = 0;
+        for (int c = 0; c < 2; ++c) {
+            int child = trie[node].child[c];
+            if (child == -1) continue;
+            int bit_xor = (x_bit ^ c);
+            int new_cur_xor = cur_xor | (bit_xor << bit);
+            int max_possible = new_cur_xor | ((1 << bit) - 1);
+            int min_possible = new_cur_xor;
+            if (max_possible < cur_k) {
+                continue;
+            }
+            if (min_possible >= cur_k) {
+                res += trie[child].cnt;
+                continue;
+            }
+            res += dfs(child, bit-1, new_cur_xor, cur_k);
+        }
+        return res;
+    };
+    return dfs(root, MAX_BIT, 0, k);
+}
+
+void solve() {
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k;
+        cin >> n >> k;
+        vector<int> a(n);
+        for (int i = 0; i < n; ++i) cin >> a[i];
+        if (k == 0) {
+            cout << 1 << '\n';
+            continue;
+        }
+        // 初始化Trie
+        trie.clear();
+        int root = new_node();
+        int l = 0;
+        long long pair_count = 0;
+        int ans = n + 1;
+        for (int r = 0; r < n; ++r) {
+            // 查询窗口中现有数与a[r]异或>=k的个数
+            int cnt = query_ge(root, a[r], k);
+            pair_count += cnt;
+            insert(root, a[r]);
+            while (pair_count > 0) {
+                ans = min(ans, r - l + 1);
+                // 删除a[l]
+                int cnt2 = query_ge(root, a[l], k);
+                pair_count -= cnt2;
+                remove(root, a[l]);
+                l++;
+            }
+        }
+        if (ans == n + 1) ans = -1;
+        cout << ans << '\n';
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    solve();
+    return 0;
+}

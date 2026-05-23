@@ -1,0 +1,62 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+bool check(int dx, int dy, long long x, long long y, long long s) {
+    long long u = x + y;
+    long long v = x - y;
+    // pockets: (0,0), (0,s), (s,0), (s,s) // pairs (u_target, v_target)
+    vector<pair<long long, long long>> pockets = {
+        {0, 0},
+        {s, -s},
+        {s, s},
+        {2*s, 0}
+    };
+    if (dx == dy) {
+        // moving along u axis, direction dir = dx
+        int dir = dx;
+        for (auto &p : pockets) {
+            long long u_target = p.first;
+            long long v_target = p.second;
+            if (v != v_target) continue;
+            long long diff = u_target - u;
+            if (diff % 2 != 0) continue;
+            long long k = diff / 2; // steps of size 2 // need k * dir >= 0 because step direction is dir
+            if (k * dir >= 0) return true;
+        }
+    } else {
+        // moving along v axis, direction dir = dx
+        int dir = dx;
+        for (auto &p : pockets) {
+            long long u_target = p.first;
+            long long v_target = p.second;
+            if (u != u_target) continue;
+            long long diff = v_target - v;
+            if (diff % 2 != 0) continue;
+            long long k = diff / 2;
+            if (k * dir >= 0) return true;
+        }
+    }
+    return false;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long s;
+        cin >> n >> s;
+        int cnt = 0;
+        for (int i = 0; i < n; i++) {
+            int dx, dy;
+            long long x, y;
+            cin >> dx >> dy >> x >> y;
+            if (check(dx, dy, x, y, s)) cnt++;
+        }
+        cout << cnt << '\n';
+    }
+    return 0;
+}

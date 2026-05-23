@@ -1,0 +1,77 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+typedef long long ll;
+const ll INF = LLONG_MAX;
+
+void solve() {
+    int n, m;
+    cin >> n >> m;
+    vector<ll> b(n);
+    for (int i = 0; i < n; i++) {
+        cin >> b[i];
+    }
+    
+    vector<vector<pair<int, ll>>> edges(n + 1);
+    for (int i = 0; i < m; i++) {
+        int s, t; ll w;
+        cin >> s >> t >> w;
+        edges[s].emplace_back(t, w);
+    }
+    
+    // Step 1: compute min_req[u] backwards
+    vector<ll> min_req(n + 1, INF);
+    min_req[n] = 0;
+    for (int u = n - 1; u >= 1; u--) {
+        for (auto &[v, w] : edges[u]) {
+            if (min_req[v] == INF) continue;
+            ll required = max(w, min_req[v]);
+            // we need to have at least (required - b[u-1]) batteries when arriving at u
+            ll need_from_u = max(0LL, required - b[u - 1]);
+            if (need_from_u < min_req[u]) {
+                min_req[u] = need_from_u;
+            }
+        }
+    }
+    
+    // Step 2: forward DP
+    vector<ll> dp(n + 1, INF);
+    dp[1] = 0;
+    if (dp[1] < min_req[1]) {
+        dp[1] = min_req[1];
+    }
+    
+    for (int u = 1; u <= n; u++) {
+        if (dp[u] == INF) continue;
+        for (auto &[v, w] : edges[u]) {
+            if (min_req[v] == INF) continue;
+            ll required = max(w, min_req[v]);
+            ll need = max(0LL, required - dp[u]);
+            if (need <= b[u - 1]) {
+                ll new_val = dp[u] + need;
+                if (new_val < dp[v]) {
+                    dp[v] = new_val;
+                }
+            }
+        }
+    }
+    
+    ll ans = dp[n];
+    if (ans == INF) ans = -1;
+    cout << ans << '\n';
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    int t;
+    cin >> t;
+    while (t--) {
+        solve();
+    }
+    return 0;
+}

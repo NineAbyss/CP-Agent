@@ -1,0 +1,38 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+const int MAX_M = 500000;
+vector<int> dp(MAX_M + 1, 1000000000); // 使用 1e9 作为无穷大
+
+void precompute() {
+    dp[1] = 0;
+    for (int j = 3; j <= MAX_M; j += 2) { // 枚举所有奇数因子 j >= 3
+        for (int i = j; i <= MAX_M; i += j) {
+            int prev = i / j;
+            if (dp[prev] != 1000000000) {
+                if (dp[prev] + (j - 1) < dp[i]) {
+                    dp[i] = dp[prev] + (j - 1);
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    precompute();
+    int t;
+    cin >> t;
+    while (t--) {
+        int m;
+        cin >> m;
+        if (m % 2 == 0) {
+            cout << "-1\n";
+        } else {
+            cout << 1 + dp[m] / 2 << '\n';
+        }
+    }
+    return 0;
+}

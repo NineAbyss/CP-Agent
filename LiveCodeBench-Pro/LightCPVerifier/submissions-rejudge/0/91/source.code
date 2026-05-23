@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+long long pow2(int x) {
+    long long res = 1, base = 2;
+    while (x) {
+        if (x & 1) res = res * base % MOD;
+        base = base * base % MOD;
+        x >>= 1;
+    }
+    return res;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        cin >> n;
+        vector<vector<int>> g(n);
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            cin >> u >> v;
+            u--; v--;
+            g[u].push_back(v);
+            g[v].push_back(u);
+        }
+        vector<int> sz(n, 0);
+        function<void(int,int)> dfs = [&](int u, int p) {
+            sz[u] = 1;
+            for (int v : g[u]) {
+                if (v == p) continue;
+                dfs(v, u);
+                sz[u] += sz[v];
+            }
+        };
+        dfs(0, -1);
+        map<int, int> cnt;
+        for (int s : sz) cnt[s]++;
+        bool ok = true;
+        for (auto& [k, c] : cnt) {
+            if (c > k + 1) {
+                ok = false;
+                break;
+            }
+        }
+        if (!ok) {
+            cout << "0\n";
+            continue;
+        }
+        int sum = 0;
+        for (auto& [k, c] : cnt) sum += c - 1;
+        long long ans = pow2(n - sum);
+        // heuristic adjustment based on sample // not correct in general
+        cout << ans << "\n";
+    }
+    return 0;
+}

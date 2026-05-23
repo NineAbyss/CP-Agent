@@ -1,0 +1,116 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const long long MAX_POS = 1000000000000000LL; // 10^15
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int t;
+    cin >> t;
+    while (t--) {
+        int n;
+        long long k;
+        cin >> n >> k;
+        vector<long long> p(n);
+        for (int i = 0; i < n; i++) {
+            cin >> p[i];
+        }
+        vector<long long> d(n);
+        for (int i = 0; i < n; i++) {
+            cin >> d[i];
+        }
+        int q;
+        cin >> q;
+        vector<long long> a(q);
+        for (int i = 0; i < q; i++) {
+            cin >> a[i];
+        }
+
+        // Create a map from position to delay
+        map<long long, long long> pos_to_d;
+        for (int i = 0; i < n; i++) {
+            pos_to_d[p[i]] = d[i];
+        }
+
+        // Precompute min and max positions
+        long long min_p = p[0];
+        long long max_p = p[n-1];
+
+        // Process each query
+        for (long long start : a) {
+            long long time = 0;
+            long long pos = start;
+            int dir = 1; // 1 for right, -1 for left
+            set<tuple<long long, int, long long>> seen; // (pos, dir, time%k)
+
+            // Initial step at time 0
+            if (pos_to_d.find(pos) != pos_to_d.end()) {
+                if ((time % k) == pos_to_d[pos]) {
+                    dir = -dir;
+                }
+            }
+            pos += dir;
+            time++;
+
+            // Simulate until escape or cycle
+            while (true) {
+                // Check if escaped
+                if (pos < 1 || pos > MAX_POS) {
+                    cout << "YES\n";
+                    break;
+                }
+
+                // If not on a traffic light, jump to next event
+                if (pos_to_d.find(pos) == pos_to_d.end()) {
+                    if (dir == 1) {
+                        // Find first position > pos
+                        auto it = upper_bound(p.begin(), p.end(), pos);
+                        if (it == p.end()) {
+                            cout << "YES\n";
+                            break;
+                        }
+                        long long next_pos = *it;
+                        long long dist = next_pos - pos;
+                        time += dist;
+                        pos = next_pos;
+                    } else { // dir == -1 // Find last position < pos
+                        auto it = lower_bound(p.begin(), p.end(), pos);
+                        if (it == p.begin()) {
+                            cout << "YES\n";
+                            break;
+                        }
+                        it--;
+                        long long next_pos = *it;
+                        long long dist = pos - next_pos;
+                        time += dist;
+                        pos = next_pos;
+                    }
+                    // After jump, we are at a traffic light at 'pos'
+                }
+
+                // Now pos is a traffic light
+                long long r = time % k;
+                tuple<long long, int, long long> state = make_tuple(pos, dir, r);
+
+                if (seen.find(state) != seen.end()) {
+                    cout << "NO\n";
+                    break;
+                }
+                seen.insert(state);
+
+                // At this light, check if red
+                if (r == pos_to_d[pos]) {
+                    dir = -dir;
+                }
+
+                // Move one step
+                pos += dir;
+                time++;
+                // Continue loop
+            }
+        }
+    }
+    return 0;
+}

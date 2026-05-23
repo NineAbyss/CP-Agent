@@ -1,0 +1,46 @@
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+vector<int> arrangeSticks(int n, const string& s) {
+    vector<int> result(n);
+    int minLength = 1;
+    int maxLength = n;
+    
+    // Start arranging sticks based on the string s.
+    for (int i = 0; i < n - 1; ++i) {
+        if (s[i] == '<') {
+            // Current position must have the largest stick remaining.
+            result[i] = maxLength--;
+        } else {
+            // Current position must have the smallest stick remaining.
+            result[i] = minLength++;
+        }
+    }
+    // The last position can be either the remaining minLength or maxLength, // which, in this sequence, will be equal to each other.
+    result[n - 1] = minLength; // Same as maxLength here.
+
+    return result;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    
+    for (int testCase = 0; testCase < t; ++testCase) {
+        int n;
+        cin >> n;
+        string s;
+        cin >> s;
+        
+        vector<int> arrangement = arrangeSticks(n, s);
+
+        for (int i = 0; i < n; ++i) {
+            cout << arrangement[i] << " ";
+        }
+        cout << endl;
+    }
+    
+    return 0;
+}
